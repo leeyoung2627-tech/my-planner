@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>두목의 플래너</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5f4ff;display:flex;justify-content:center;padding:20px;min-height:100vh}
+.app{display:grid;grid-template-columns:1fr 290px;min-height:640px;border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1000px;box-shadow:0 4px 24px #0001}
+.left{display:flex;flex-direction:column;border-right:0.5px solid #eee}
+.top-nav{display:flex;align-items:center;gap:8px;padding:.75rem 1rem;border-bottom:0.5px solid #eee;flex-shrink:0}
+.nav-btn{background:none;border:none;cursor:pointer;color:#666;padding:2px 8px;border-radius:4px;font-size:18px;line-height:1}
+.nav-btn:hover{background:#f0f0f0}
+.period-label{font-size:15px;font-weight:600;color:#222;flex:1}
+.view-toggle{display:flex;gap:4px}
+.vbtn{padding:4px 10px;border-radius:8px;border:0.5px solid #ddd;font-size:12px;cursor:pointer;background:transparent;color:#888}
+.vbtn.active{background:#EEEDFE;border-color:#AFA9EC;color:#3C3489}
+.cal-wrap{padding:.75rem 1rem;flex:1;overflow-y:auto}
+.dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+.dow{text-align:center;font-size:11px;color:#aaa;padding:2px 0}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.day-cell{min-height:60px;display:flex;flex-direction:column;align-items:center;padding:4px 2px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
+.day-cell:hover{background:#f5f4ff}
+.day-cell.other{color:#ccc}
+.day-cell.today .dn{background:#534AB7;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+.day-cell.selected{border-color:#AFA9EC;background:#EEEDFE}
+.dot-row{display:flex;gap:2px;justify-content:center}
+.dot{width:4px;height:4px;border-radius:50%;background:#534AB7}
+.week-wrap{padding:.75rem 1rem;flex:1;overflow-y:auto}
+.week-head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}
+.wh-cell{text-align:center}
+.wh-dow{font-size:11px;color:#aaa}
+.wh-num{font-size:14px;font-weight:500;color:#222;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:2px auto 0}
+.wh-num.today{background:#534AB7;color:#fff}
+.wh-num.selected{background:#EEEDFE;color:#3C3489}
+.week-body{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:start}
+.day-col{min-height:200px;border:0.5px solid #eee;border-radius:8px;padding:5px;display:flex;flex-direction:column;gap:3px;cursor:pointer}
+.day-col:hover{background:#f9f8ff}
+.day-col.selected{border-color:#AFA9EC;background:#EEEDFE44}
+.week-event-item{background:#EEEDFE;border-radius:4px;padding:3px 5px;font-size:11px;color:#3C3489;line-height:1.3;word-break:break-all;cursor:pointer}
+.week-event-item:hover{background:#dddaf5}
+.week-add-btn{font-size:10px;color:#bbb;cursor:pointer;padding:2px;text-align:center;border-radius:4px;margin-top:auto}
+.week-add-btn:hover{background:#eee;color:#888}
+.right{display:flex;flex-direction:column;background:#fafafa}
+.right-date{padding:.6rem 1rem;font-size:13px;font-weight:600;color:#222;border-bottom:0.5px solid #eee;flex-shrink:0}
+.tabs{display:flex;border-bottom:0.5px solid #eee;flex-shrink:0}
+.tab{flex:1;padding:7px 2px;text-align:center;font-size:11px;color:#aaa;cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:#534AB7;border-bottom-color:#534AB7;background:#fff}
+.tab-content{flex:1;padding:.75rem 1rem;overflow-y:auto;display:none;flex-direction:column;gap:6px}
+.tab-content.active{display:flex}
+.section-title{font-size:11px;color:#aaa;margin-top:6px}
+.item-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid #f0f0f0}
+.item-row:last-of-type{border-bottom:none}
+.check{width:16px;height:16px;border-radius:4px;border:0.5px solid #ddd;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px}
+.check.done{background:#534AB7;border-color:#534AB7;color:#fff}
+.item-text{font-size:13px;color:#222;flex:1}
+.item-text.done{text-decoration:line-through;color:#bbb}
+.item-time{font-size:11px;color:#aaa}
+.add-btn{display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer;padding:3px 0;background:none;border:none;margin-top:2px}
+.add-btn:hover{color:#666}
+.habit-card{background:#fff;border:0.5px solid #eee;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.habit-top{display:flex;align-items:center;justify-content:space-between}
+.habit-name{font-size:13px;color:#222}
+.habit-badge{font-size:11px;padding:2px 7px;border-radius:999px}
+.habit-badge.done{background:#E1F5EE;color:#0F6E56}
+.habit-badge.fail{background:#f5f5f5;color:#aaa}
+.habit-badge.prog{background:#EEEDFE;color:#3C3489}
+.habit-dots{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.hdot{width:22px;height:22px;border-radius:50%;border:1.5px solid #ddd;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:#ccc;transition:all .15s}
+.hdot.filled{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.hdot.target{border-color:#AFA9EC;border-style:dashed}
+.habit-goal{font-size:11px;color:#aaa}
+.habit-actions{display:flex;gap:6px;justify-content:flex-end}
+.habit-mini-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 7px;border-radius:4px;cursor:pointer}
+.habit-mini-btn:hover{background:#f5f5f5}
+.money-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid #f0f0f0}
+.money-row:last-of-type{border-bottom:none}
+.money-cat{font-size:12px;color:#666}
+.money-amt{font-size:13px;font-weight:500}
+.money-amt.out{color:#D85A30}
+.money-amt.in{color:#1D9E75}
+.meal-slot{padding:6px 8px;border-radius:8px;border:0.5px solid #eee;background:#fff}
+.meal-label{font-size:11px;color:#aaa;margin-bottom:2px}
+.meal-text{font-size:13px;color:#222}
+.summary-bar{padding:.6rem 1rem;border-top:0.5px solid #eee;display:flex;gap:6px;flex-shrink:0}
+.sum-chip{flex:1;text-align:center;padding:4px 2px;border-radius:8px;font-size:11px}
+.sum-chip.s{background:#EEEDFE;color:#3C3489}
+.sum-chip.h{background:#E1F5EE;color:#0F6E56}
+.sum-chip.m{background:#FAECE7;color:#993C1D}
+.modal-bg{position:fixed;inset:0;background:#00000040;display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:#fff;border-radius:12px;padding:20px;width:280px;display:flex;flex-direction:column;gap:10px;border:0.5px solid #eee;box-shadow:0 8px 32px #0002}
+.modal h3{font-size:14px;font-weight:600;color:#222}
+.modal input,.modal select{width:100%;padding:6px 10px;border-radius:6px;border:0.5px solid #ddd;background:#fafafa;color:#222;font-size:13px;outline:none;font-family:inherit}
+.modal-label{font-size:12px;color:#666}
+.modal-row{display:flex;gap:8px}
+.modal-row input,.modal-row select{flex:1}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.mbtn{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;border:none;font-family:inherit}
+.mbtn.cancel{background:#f0f0f0;color:#666}
+.mbtn.ok{background:#534AB7;color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="left">
+    <div class="top-nav">
+      <button class="nav-btn" onclick="movePeriod(-1)">‹</button>
+      <span class="period-label" id="periodLabel"></span>
+      <button class="nav-btn" onclick="movePeriod(1)">›</button>
+      <div class="view-toggle">
+        <button class="vbtn active" id="btnMonth" onclick="switchView('month')">월</button>
+        <button class="vbtn" id="btnWeek" onclick="switchView('week')">주</button>
+      </div>
+    </div>
+    <div id="monthView" class="cal-wrap"></div>
+    <div id="weekView" class="week-wrap" style="display:none"></div>
+  </div>
+  <div class="right">
+    <div class="right-date" id="rightDate"></div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('schedule',this)">📅 일정</div>
+      <div class="tab" onclick="switchTab('habit',this)">✅ 습관</div>
+      <div class="tab" onclick="switchTab('money',this)">💰 가계부</div>
+      <div class="tab" onclick="switchTab('meal',this)">🥗 식단</div>
+    </div>
+    <div id="tab-schedule" class="tab-content active">
+      <p class="section-title">오늘 일정</p>
+      <div id="schedule-list">
+        <div class="item-row"><div class="check done" onclick="toggleCheck(this)">✓</div><span class="item-text done">스튜디오 출근</span><span class="item-time">14:00</span></div>
+        <div class="item-row"><div class="check" onclick="toggleCheck(this)"></div><span class="item-text">원고 마감 확인</span><span class="item-time">17:00</span></div>
+        <div class="item-row"><div class="check" onclick="toggleCheck(this)"></div><span class="item-text">베르 저녁 산책</span><span class="item-time">19:30</span></div>
+      </div>
+      <button class="add-btn" onclick="openScheduleModal()">＋ 일정 추가</button>
+    </div>
+    <div id="tab-habit" class="tab-content">
+      <p class="section-title">이번 주 습관</p>
+      <div id="habit-list"></div>
+      <button class="add-btn" onclick="openHabitModal()">＋ 습관 추가</button>
+    </div>
+    <div id="tab-money" class="tab-content">
+      <p class="section-title">오늘 내역</p>
+      <div class="money-row"><span class="money-cat">☕ 커피</span><span class="money-amt out">-4,500</span></div>
+      <div class="money-row"><span class="money-cat">🍚 점심</span><span class="money-amt out">-9,000</span></div>
+      <div class="money-row"><span class="money-cat">🐕 베르 간식</span><span class="money-amt out">-12,000</span></div>
+      <button class="add-btn" onclick="addMoney()">＋ 내역 추가</button>
+      <p class="section-title" style="margin-top:8px">이번 달 합계</p>
+      <div class="money-row"><span class="money-cat">총 지출</span><span class="money-amt out">-287,500</span></div>
+      <div class="money-row"><span class="money-cat">총 수입</span><span class="money-amt in">+2,400,000</span></div>
+    </div>
+    <div id="tab-meal" class="tab-content">
+      <div class="meal-slot"><div class="meal-label">아침</div><div class="meal-text">닭가슴살 + 고구마</div></div>
+      <div class="meal-slot"><div class="meal-label">점심</div><div class="meal-text">제육볶음 + 밥</div></div>
+      <div class="meal-slot" style="border-style:dashed"><div class="meal-label">저녁</div><div class="meal-text" style="color:#ccc">미입력</div></div>
+      <button class="add-btn">＋ 간식 추가</button>
+    </div>
+    <div class="summary-bar">
+      <div class="sum-chip s" id="sum-s">일정 3개</div>
+      <div class="sum-chip h" id="sum-h">습관 -</div>
+      <div class="sum-chip m">-25,500원</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="scheduleModal" style="display:none">
+  <div class="modal">
+    <h3>일정 추가</h3>
+    <div class="modal-label">일정 이름</div>
+    <input id="sch-name" placeholder="예: 병원 예약"/>
+    <div class="modal-label">시간 (선택)</div>
+    <input id="sch-time" type="time"/>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('scheduleModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmSchedule()">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="habitModal" style="display:none">
+  <div class="modal">
+    <h3>습관 추가</h3>
+    <div class="modal-label">습관 이름</div>
+    <input id="hb-name" placeholder="예: 크로키 연습"/>
+    <div class="modal-label">이모지 (선택)</div>
+    <input id="hb-emoji" placeholder="예: ✏️"/>
+    <div class="modal-label">목표 주기 / 횟수</div>
+    <div class="modal-row">
+      <select id="hb-period">
+        <option value="week">주 단위</option>
+        <option value="month">월 단위</option>
+      </select>
+      <input id="hb-target" type="number" min="1" max="31" value="3" placeholder="횟수"/>
+    </div>
+    <div class="modal-label" style="color:#aaa;font-size:11px" id="hb-preview">주 3회 목표</div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('habitModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmHabit()">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="habitEditModal" style="display:none">
+  <div class="modal">
+    <h3>목표 수정</h3>
+    <div class="modal-label">목표 주기 / 횟수</div>
+    <div class="modal-row">
+      <select id="he-period">
+        <option value="week">주 단위</option>
+        <option value="month">월 단위</option>
+      </select>
+      <input id="he-target" type="number" min="1" max="31" value="3"/>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('habitEditModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmHabitEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const today=new Date();
+let cur=new Date(today.getFullYear(),today.getMonth(),1);
+let selDate=new Date(today);
+let curView='month';
+const DAYS=['일','월','화','수','목','금','토'];
+let habits=[
+  {id:1,name:'2시 전 출근',emoji:'🌅',period:'week',target:5,done:3},
+  {id:2,name:'베르 산책',emoji:'🐕',period:'week',target:7,done:5},
+  {id:3,name:'크로키 연습',emoji:'✏️',period:'week',target:3,done:1},
+  {id:4,name:'독서 30분',emoji:'📚',period:'week',target:2,done:2},
+];
+let editingHabitId=null;
+let weekEvents={};
+function getWeekKey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+const td0=new Date(today);
+weekEvents[getWeekKey(td0)]=['스튜디오 출근','원고 마감 확인'];
+const yd=new Date(today);yd.setDate(yd.getDate()-1);
+weekEvents[getWeekKey(yd)]=['베르 병원'];
+const td1=new Date(today);td1.setDate(td1.getDate()+1);
+weekEvents[getWeekKey(td1)]=['웹툰 회의','마감 제출'];
+
+function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function movePeriod(dir){
+  if(curView==='month'){cur=new Date(cur.getFullYear(),cur.getMonth()+dir,1);renderMonth();}
+  else{selDate=new Date(selDate);selDate.setDate(selDate.getDate()+dir*7);renderWeek();updateRightDate();}
+}
+function renderMonth(){
+  document.getElementById('periodLabel').textContent=cur.getFullYear()+'년 '+(cur.getMonth()+1)+'월';
+  const start=new Date(cur.getFullYear(),cur.getMonth(),1).getDay();
+  const total=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
+  const prevTotal=new Date(cur.getFullYear(),cur.getMonth(),0).getDate();
+  let html='<div class="dow-row">'+DAYS.map(d=>`<div class="dow">${d}</div>`).join('')+'</div><div class="month-grid">';
+  for(let i=0;i<start;i++)html+=`<div class="day-cell other"><span class="dn">${prevTotal-start+1+i}</span></div>`;
+  for(let d=1;d<=total;d++){
+    const dt=new Date(cur.getFullYear(),cur.getMonth(),d);
+    const key=getWeekKey(dt);
+    const isToday=fmt(dt)===fmt(today);
+    const isSel=fmt(dt)===fmt(selDate);
+    const hasEv=weekEvents[key]&&weekEvents[key].length>0;
+    html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><span class="dn">${d}</span><div class="dot-row">${hasEv?'<div class="dot"></div>':''}</div></div>`;
+  }
+  const rem=(7-(start+total)%7)%7;
+  for(let i=1;i<=rem&&rem<7;i++)html+=`<div class="day-cell other"><span class="dn">${i}</span></div>`;
+  html+='</div>';
+  document.getElementById('monthView').innerHTML=html;
+}
+function getWeekStart(d){const s=new Date(d);s.setDate(d.getDate()-d.getDay());return s;}
+function renderWeek(){
+  const ws=getWeekStart(selDate);
+  const we=new Date(ws);we.setDate(ws.getDate()+6);
+  const m1=ws.getMonth()+1,m2=we.getMonth()+1;
+  let label=ws.getFullYear()+'년 '+m1+'월 '+ws.getDate()+'일';
+  if(m1!==m2)label+=' ~ '+m2+'월 '+we.getDate()+'일';
+  else label+=' ~ '+we.getDate()+'일';
+  document.getElementById('periodLabel').textContent=label;
+  let headHtml='<div class="week-head-row">';
+  let bodyHtml='<div class="week-body">';
+  for(let i=0;i<7;i++){
+    const d=new Date(ws);d.setDate(ws.getDate()+i);
+    const isT=fmt(d)===fmt(today);
+    const isS=fmt(d)===fmt(selDate);
+    headHtml+=`<div class="wh-cell"><div class="wh-dow">${DAYS[i]}</div><div class="wh-num${isT?' today':isS?' selected':''}">${d.getDate()}</div></div>`;
+    const key=getWeekKey(d);
+    const evs=weekEvents[key]||[];
+    const dStr=`${d.getFullYear()},${d.getMonth()},${d.getDate()}`;
+    bodyHtml+=`<div class="day-col${isS?' selected':''}" onclick="selectDayFromWeek(${dStr})">`;
+    evs.forEach((ev,idx)=>{bodyHtml+=`<div class="week-event-item" onclick="event.stopPropagation();editWeekEvent('${key}',${idx})">${ev}</div>`;});
+    bodyHtml+=`<div class="week-add-btn" onclick="event.stopPropagation();addWeekEvent('${key}')">＋</div></div>`;
+  }
+  document.getElementById('weekView').innerHTML=headHtml+'</div>'+bodyHtml+'</div>';
+}
+function selectDay(d){selDate=new Date(cur.getFullYear(),cur.getMonth(),d);renderMonth();updateRightDate();}
+function selectDayFromWeek(y,m,d){selDate=new Date(y,m,d);renderWeek();updateRightDate();}
+function updateRightDate(){
+  const d=selDate;
+  document.getElementById('rightDate').textContent=d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 '+DAYS[d.getDay()]+'요일';
+}
+function addWeekEvent(key){
+  const name=prompt('일정 입력:');
+  if(!name||!name.trim())return;
+  if(!weekEvents[key])weekEvents[key]=[];
+  weekEvents[key].push(name.trim());
+  renderWeek();renderMonth();
+}
+function editWeekEvent(key,idx){
+  const c=weekEvents[key][idx];
+  const name=prompt('수정 (비우면 삭제):',c);
+  if(name===null)return;
+  if(name.trim()==='')weekEvents[key].splice(idx,1);
+  else weekEvents[key][idx]=name.trim();
+  renderWeek();renderMonth();
+}
+function switchView(v){
+  curView=v;
+  document.getElementById('monthView').style.display=v==='month'?'':'none';
+  document.getElementById('weekView').style.display=v==='week'?'':'none';
+  document.getElementById('btnMonth').classList.toggle('active',v==='month');
+  document.getElementById('btnWeek').classList.toggle('active',v==='week');
+  if(v==='week')renderWeek();else renderMonth();
+}
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+function toggleCheck(el){
+  el.classList.toggle('done');el.textContent=el.classList.contains('done')?'✓':'';
+  el.nextElementSibling.classList.toggle('done');
+}
+function renderHabits(){
+  const list=document.getElementById('habit-list');list.innerHTML='';
+  let tt=0,td2=0;
+  habits.forEach(h=>{
+    tt+=h.target;td2+=Math.min(h.done,h.target);
+    const pct=Math.round(Math.min(h.done/h.target,1)*100);
+    const isDone=h.done>=h.target;
+    const badgeClass=isDone?'done':h.done>0?'prog':'fail';
+    const badgeText=isDone?'✓ 달성':h.done+'/'+h.target;
+    const pl=h.period==='week'?'주':'월';
+    let dotsHtml='<div class="habit-dots">';
+    for(let i=0;i<Math.max(h.target,h.done);i++){
+      const filled=i<h.done,isTarget=i<h.target;
+      dotsHtml+=`<div class="hdot${filled?' filled':''}${!filled&&isTarget?' target':''}" onclick="toggleHabitDot(${h.id},${i})">${filled?'✓':''}</div>`;
+    }
+    dotsHtml+='</div>';
+    const card=document.createElement('div');card.className='habit-card';
+    card.innerHTML=`<div class="habit-top"><span class="habit-name">${h.emoji} ${h.name}</span><span class="habit-badge ${badgeClass}">${badgeText}</span></div>${dotsHtml}<div style="display:flex;justify-content:space-between;align-items:center"><span class="habit-goal">${pl} ${h.target}회 목표 · ${pct}%</span><div class="habit-actions"><button class="habit-mini-btn" onclick="openHabitEdit(${h.id})">목표 수정</button><button class="habit-mini-btn" onclick="deleteHabit(${h.id})">삭제</button></div></div>`;
+    list.appendChild(card);
+  });
+  const pct=tt>0?Math.round(td2/tt*100):0;
+  document.getElementById('sum-h').textContent='습관 '+pct+'%';
+}
+function toggleHabitDot(id,idx){
+  const h=habits.find(x=>x.id===id);if(!h)return;
+  if(idx<h.done)h.done=idx;else h.done=idx+1;
+  renderHabits();
+}
+function openHabitModal(){
+  document.getElementById('habitModal').style.display='flex';
+  document.getElementById('hb-name').value='';
+  document.getElementById('hb-emoji').value='';
+  document.getElementById('hb-target').value=3;
+  updateHabitPreview();
+}
+function updateHabitPreview(){
+  const p=document.getElementById('hb-period').value==='week'?'주':'월';
+  const t=document.getElementById('hb-target').value;
+  document.getElementById('hb-preview').textContent=p+' '+t+'회 목표';
+}
+document.addEventListener('input',e=>{if(e.target.id==='hb-target'||e.target.id==='hb-period')updateHabitPreview();});
+function confirmHabit(){
+  const name=document.getElementById('hb-name').value.trim();
+  if(!name)return alert('이름을 입력해주세요');
+  const emoji=document.getElementById('hb-emoji').value.trim()||'⭐';
+  const period=document.getElementById('hb-period').value;
+  const target=parseInt(document.getElementById('hb-target').value)||3;
+  habits.push({id:Date.now(),name,emoji,period,target,done:0});
+  renderHabits();closeModal('habitModal');
+}
+function openHabitEdit(id){
+  editingHabitId=id;
+  const h=habits.find(x=>x.id===id);if(!h)return;
+  document.getElementById('he-period').value=h.period;
+  document.getElementById('he-target').value=h.target;
+  document.getElementById('habitEditModal').style.display='flex';
+}
+function confirmHabitEdit(){
+  const h=habits.find(x=>x.id===editingHabitId);if(!h)return;
+  h.period=document.getElementById('he-period').value;
+  h.target=parseInt(document.getElementById('he-target').value)||1;
+  renderHabits();closeModal('habitEditModal');
+}
+function deleteHabit(id){if(!confirm('삭제할까요?'))return;habits=habits.filter(x=>x.id!==id);renderHabits();}
+function openScheduleModal(){document.getElementById('scheduleModal').style.display='flex';}
+function confirmSchedule(){
+  const name=document.getElementById('sch-name').value.trim();if(!name)return;
+  const time=document.getElementById('sch-time').value;
+  const list=document.getElementById('schedule-list');
+  const row=document.createElement('div');row.className='item-row';
+  row.innerHTML=`<div class="check" onclick="toggleCheck(this)"></div><span class="item-text">${name}</span>${time?`<span class="item-time">${time}</span>`:''}`;
+  list.appendChild(row);closeModal('scheduleModal');
+}
+function addMoney(){const t=prompt('내역 입력 (예: 점심 -8000)');if(t)alert('추가됨: '+t);}
+function closeModal(id){document.getElementById(id).style.display='none';}
+document.querySelectorAll('.modal-bg').forEach(bg=>{bg.addEventListener('click',e=>{if(e.target===bg)bg.style.display='none';});});
+renderMonth();updateRightDate();renderHabits();
+</script>
+</body>
+</html>
