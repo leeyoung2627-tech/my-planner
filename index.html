@@ -8,7 +8,6 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5f4ff;display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh;gap:10px}
 
-/* 로그인 */
 .login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;width:100%}
 .login-box{background:#fff;border-radius:16px;padding:40px;width:320px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 4px 24px #0001;border:0.5px solid #eee}
 .login-title{font-size:20px;font-weight:700;color:#222}
@@ -18,32 +17,33 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .google-btn img{width:20px;height:20px}
 
 /* 상단 메모바 */
-.top-memo-bar{width:100%;max-width:1200px;background:#fff;border-radius:12px;border:0.5px solid #ddd;padding:10px 16px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 2px 8px #0001}
+.top-memo-bar{width:100%;max-width:1260px;background:#fff;border-radius:12px;border:0.5px solid #ddd;padding:10px 16px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 2px 8px #0001}
 .top-memo-label{font-size:11px;color:#aaa;white-space:nowrap;padding-top:3px;flex-shrink:0}
 .top-memo-input{flex:1;border:none;outline:none;font-size:13px;color:#222;font-family:inherit;resize:none;line-height:1.6;background:transparent;min-height:24px;max-height:120px;overflow-y:auto}
 
-/* 앱 */
-.app{display:grid;grid-template-columns:1fr 360px;min-height:640px;border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1200px;box-shadow:0 4px 24px #0001}
+/* 앱 레이아웃 — 왼쪽 | 오른쪽 패널 | 디데이 사이드바 */
+.app{display:grid;grid-template-columns:1fr 340px 160px;min-height:640px;border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1260px;box-shadow:0 4px 24px #0001}
+
+/* 왼쪽 */
 .left{display:flex;flex-direction:column;border-right:0.5px solid #eee;min-width:0}
-.top-nav{display:flex;align-items:center;gap:8px;padding:.75rem 1rem;border-bottom:0.5px solid #eee;flex-shrink:0}
-.nav-btn{background:none;border:none;cursor:pointer;color:#666;padding:2px 8px;border-radius:4px;font-size:18px;line-height:1}
+.top-nav{display:flex;align-items:center;gap:6px;padding:.65rem .85rem;border-bottom:0.5px solid #eee;flex-shrink:0}
+.nav-btn{background:none;border:none;cursor:pointer;color:#666;padding:2px 6px;border-radius:4px;font-size:17px;line-height:1}
 .nav-btn:hover{background:#f0f0f0}
-.period-label{font-size:15px;font-weight:600;color:#222;flex:1}
+.period-label{font-size:14px;font-weight:600;color:#222;flex:1}
 .view-toggle{display:flex;gap:4px}
-.vbtn{padding:4px 10px;border-radius:8px;border:0.5px solid #ddd;font-size:12px;cursor:pointer;background:transparent;color:#888}
+.vbtn{padding:3px 9px;border-radius:8px;border:0.5px solid #ddd;font-size:12px;cursor:pointer;background:transparent;color:#888}
 .vbtn.active{background:#EEEDFE;border-color:#AFA9EC;color:#3C3489}
-.user-area{display:flex;align-items:center;gap:8px}
-.user-name{font-size:12px;color:#888}
-.logout-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit}
+.user-area{display:flex;align-items:center;gap:6px}
+.user-name{font-size:11px;color:#888}
+.logout-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:inherit}
 .logout-btn:hover{background:#f5f5f5}
 
-/* 왼쪽 뷰 영역 */
-.left-view{flex:1;overflow-y:auto;position:relative}
-.cal-wrap{padding:.75rem 1rem}
+.left-view{flex:1;overflow-y:auto}
+.cal-wrap{padding:.65rem .85rem}
 .dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
 .dow{text-align:center;font-size:11px;color:#aaa;padding:2px 0}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.day-cell{min-height:60px;display:flex;flex-direction:column;align-items:center;padding:4px 2px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
+.day-cell{min-height:58px;display:flex;flex-direction:column;align-items:center;padding:4px 2px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
 .day-cell:hover{background:#f5f4ff}
 .day-cell.other{color:#ccc}
 .day-cell.today .dn{background:#534AB7;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center}
@@ -51,15 +51,15 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .dot-row{display:flex;gap:2px;justify-content:center}
 .dot{width:4px;height:4px;border-radius:50%;background:#534AB7}
 
-.week-wrap{padding:.75rem 1rem}
+.week-wrap{padding:.65rem .85rem}
 .week-head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}
 .wh-cell{text-align:center}
 .wh-dow{font-size:11px;color:#aaa}
-.wh-num{font-size:14px;font-weight:500;color:#222;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:2px auto 0}
+.wh-num{font-size:13px;font-weight:500;color:#222;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:2px auto 0}
 .wh-num.today{background:#534AB7;color:#fff}
 .wh-num.selected{background:#EEEDFE;color:#3C3489}
 .week-body{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:start}
-.day-col{min-height:200px;border:0.5px solid #eee;border-radius:8px;padding:5px;display:flex;flex-direction:column;gap:3px;cursor:pointer}
+.day-col{min-height:180px;border:0.5px solid #eee;border-radius:8px;padding:5px;display:flex;flex-direction:column;gap:3px;cursor:pointer}
 .day-col:hover{background:#f9f8ff}
 .day-col.selected{border-color:#AFA9EC;background:#EEEDFE44}
 .week-event-item{background:#EEEDFE;border-radius:4px;padding:3px 5px;font-size:11px;color:#3C3489;line-height:1.3;word-break:break-all;cursor:pointer}
@@ -67,13 +67,28 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .week-add-btn{font-size:10px;color:#bbb;cursor:pointer;padding:2px;text-align:center;border-radius:4px;margin-top:auto}
 .week-add-btn:hover{background:#eee;color:#888}
 
-/* 메모 뷰 (왼쪽 영역에 펼쳐짐) */
-.memo-view{padding:1rem;display:flex;flex-direction:column;gap:10px}
-.memo-view-header{display:flex;align-items:center;justify-content:space-between}
-.memo-view-title{font-size:14px;font-weight:600;color:#222}
-.memo-back-btn{font-size:12px;color:#aaa;background:none;border:0.5px solid #eee;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit}
-.memo-back-btn:hover{background:#f5f5f5}
-.memo-detail-box{background:#fafafa;border:0.5px solid #eee;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+/* 습관 뷰 (왼쪽) */
+.habit-view{padding:.85rem}
+.habit-view-header{font-size:13px;font-weight:600;color:#222;margin-bottom:10px}
+.habit-card{background:#fff;border:0.5px solid #eee;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.habit-top{display:flex;align-items:center;justify-content:space-between}
+.habit-name{font-size:13px;color:#222}
+.habit-badge{font-size:11px;padding:2px 7px;border-radius:999px}
+.habit-badge.done{background:#E1F5EE;color:#0F6E56}
+.habit-badge.fail{background:#f5f5f5;color:#aaa}
+.habit-badge.prog{background:#EEEDFE;color:#3C3489}
+.habit-dots{display:flex;gap:5px;flex-wrap:wrap}
+.hdot{width:22px;height:22px;border-radius:50%;border:1.5px solid #ddd;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:#ccc;transition:all .15s}
+.hdot.filled{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.hdot.target{border-color:#AFA9EC;border-style:dashed}
+.habit-goal{font-size:11px;color:#aaa}
+.habit-actions{display:flex;gap:6px}
+.habit-mini-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:inherit}
+.habit-mini-btn:hover{background:#f5f5f5}
+
+/* 메모 뷰 (왼쪽) */
+.memo-view{padding:.85rem;display:flex;flex-direction:column;gap:10px}
+.memo-detail-box{background:#fafafa;border:0.5px solid #eee;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
 .memo-detail-cat{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px}
 .memo-detail-cat.정체성{background:#FFF3E0;color:#E65100}
 .memo-detail-cat.할일{background:#E8F5E9;color:#2E7D32}
@@ -87,14 +102,13 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .mdabtn.del{background:#FAECE7;color:#993C1D}
 
 /* 오른쪽 패널 */
-.right{display:flex;flex-direction:column;background:#fafafa;min-width:0}
+.right{display:flex;flex-direction:column;background:#fafafa;border-right:0.5px solid #eee;min-width:0}
 .right-date{padding:.6rem 1rem;font-size:13px;font-weight:600;color:#222;border-bottom:0.5px solid #eee;flex-shrink:0}
 .tabs{display:flex;border-bottom:0.5px solid #eee;flex-shrink:0}
-.tab{flex:1;min-width:44px;padding:7px 2px;text-align:center;font-size:11px;color:#aaa;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab{flex:1;min-width:40px;padding:7px 2px;text-align:center;font-size:11px;color:#aaa;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
 .tab.active{color:#534AB7;border-bottom-color:#534AB7;background:#fff}
 .tab-content{flex:1;padding:.75rem 1rem;overflow-y:auto;display:none;flex-direction:column;gap:6px}
 .tab-content.active{display:flex}
-
 .section-title{font-size:11px;color:#aaa}
 .item-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid #f0f0f0}
 .item-row:last-of-type{border-bottom:none}
@@ -106,7 +120,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .add-btn{display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer;padding:3px 0;background:none;border:none;font-family:inherit;margin-top:2px}
 .add-btn:hover{color:#666}
 
-/* 무지출 체크 */
+/* 무지출 */
 .no-spend-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:0.5px solid #eee;border-radius:8px;cursor:pointer;flex-shrink:0}
 .no-spend-bar:hover{background:#f9f8ff}
 .ns-check{width:18px;height:18px;border-radius:4px;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
@@ -114,23 +128,6 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .ns-label{font-size:13px;color:#222}
 .ns-badge{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:999px;background:#E1F5EE;color:#0F6E56;display:none}
 .ns-badge.show{display:block}
-
-/* 습관 */
-.habit-card{background:#fff;border:0.5px solid #eee;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
-.habit-top{display:flex;align-items:center;justify-content:space-between}
-.habit-name{font-size:13px;color:#222}
-.habit-badge{font-size:11px;padding:2px 7px;border-radius:999px}
-.habit-badge.done{background:#E1F5EE;color:#0F6E56}
-.habit-badge.fail{background:#f5f5f5;color:#aaa}
-.habit-badge.prog{background:#EEEDFE;color:#3C3489}
-.habit-dots{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
-.hdot{width:22px;height:22px;border-radius:50%;border:1.5px solid #ddd;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:#ccc;transition:all .15s}
-.hdot.filled{background:#1D9E75;border-color:#1D9E75;color:#fff}
-.hdot.target{border-color:#AFA9EC;border-style:dashed}
-.habit-goal{font-size:11px;color:#aaa}
-.habit-actions{display:flex;gap:6px}
-.habit-mini-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:inherit}
-.habit-mini-btn:hover{background:#f5f5f5}
 
 /* 가계부 */
 .money-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid #f0f0f0}
@@ -146,7 +143,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .meal-text{font-size:13px;color:#222;outline:none;min-height:20px;line-height:1.6}
 .meal-text:empty:before{content:attr(data-ph);color:#ccc;pointer-events:none}
 
-/* 메모 탭 (오른쪽) */
+/* 메모 탭 */
 .memo-filter{display:flex;gap:5px;flex-wrap:wrap}
 .filter-chip{padding:3px 9px;border-radius:999px;font-size:11px;border:0.5px solid #ddd;cursor:pointer;background:#fff;color:#888;font-family:inherit}
 .filter-chip.active{background:#EEEDFE;border-color:#AFA9EC;color:#3C3489}
@@ -171,6 +168,22 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .sum-chip.h{background:#E1F5EE;color:#0F6E56}
 .sum-chip.m{background:#FAECE7;color:#993C1D}
 
+/* 디데이 사이드바 */
+.dday-sidebar{display:flex;flex-direction:column;background:#fafafa;padding:.75rem .65rem;gap:8px;overflow-y:auto}
+.dday-header{font-size:11px;font-weight:600;color:#aaa;letter-spacing:.04em;padding-bottom:4px;border-bottom:0.5px solid #eee}
+.dday-card{background:#fff;border:0.5px solid #eee;border-radius:10px;padding:9px 10px;display:flex;flex-direction:column;gap:3px;position:relative}
+.dday-title{font-size:12px;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:16px}
+.dday-date{font-size:10px;color:#aaa}
+.dday-num{font-size:18px;font-weight:700;line-height:1.1}
+.dday-num.future{color:#534AB7}
+.dday-num.today{color:#1D9E75}
+.dday-num.past{color:#D85A30}
+.dday-sub{font-size:10px;color:#aaa}
+.dday-del{position:absolute;top:6px;right:6px;font-size:10px;color:#ddd;background:none;border:none;cursor:pointer;padding:1px 3px;border-radius:3px;font-family:inherit}
+.dday-del:hover{color:#D85A30}
+.dday-add-btn{display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer;padding:6px;background:#fff;border:0.5px dashed #ddd;border-radius:10px;font-family:inherit}
+.dday-add-btn:hover{color:#534AB7;border-color:#AFA9EC}
+
 .saving-indicator{position:fixed;bottom:20px;right:20px;background:#534AB7;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;display:none;z-index:999}
 
 /* 모달 */
@@ -191,7 +204,6 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 </head>
 <body>
 
-<!-- 로그인 -->
 <div class="login-wrap" id="loginWrap">
   <div class="login-box">
     <div style="font-size:40px">📅</div>
@@ -204,15 +216,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
   </div>
 </div>
 
-<!-- 상단 메모바 -->
 <div class="top-memo-bar" id="topMemoBar" style="display:none">
   <span class="top-memo-label">📌 메모</span>
   <textarea class="top-memo-input" id="topMemoInput" placeholder="빠른 메모..." rows="1"
     oninput="autoResizeTopMemo(this)" onblur="saveTopMemo()"></textarea>
 </div>
 
-<!-- 메인 앱 -->
 <div class="app" id="mainApp" style="display:none">
+  <!-- 왼쪽 -->
   <div class="left">
     <div class="top-nav">
       <button class="nav-btn" id="leftBackBtn" onclick="handleLeftBack()" style="display:none">←</button>
@@ -231,35 +242,33 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
     <div class="left-view" id="leftView">
       <div id="monthView" class="cal-wrap"></div>
       <div id="weekView" class="week-wrap" style="display:none"></div>
+      <div id="habitView" class="habit-view" style="display:none">
+        <div class="habit-view-header">습관 트래커</div>
+        <div id="habitViewList"></div>
+        <button class="add-btn" onclick="openHabitModal()" style="margin-top:4px">＋ 습관 추가</button>
+      </div>
       <div id="memoView" class="memo-view" style="display:none"></div>
     </div>
   </div>
 
+  <!-- 오른쪽 패널 -->
   <div class="right">
     <div class="right-date" id="rightDate"></div>
     <div class="tabs">
       <div class="tab active" onclick="switchTab('schedule',this)">📅 일정</div>
-      <div class="tab" onclick="switchTab('habit',this)">✅ 습관</div>
       <div class="tab" onclick="switchTab('money',this)">💰 가계부</div>
       <div class="tab" onclick="switchTab('meal',this)">🥗 식단</div>
       <div class="tab" onclick="switchTab('memo',this)">📝 메모</div>
+      <div class="tab" onclick="switchTab('habit-tab',this)">✅ 습관</div>
     </div>
 
-    <!-- 일정 -->
     <div id="tab-schedule" class="tab-content active">
       <div id="schedule-list"></div>
       <button class="add-btn" onclick="openScheduleModal()">＋ 일정 추가</button>
     </div>
 
-    <!-- 습관 -->
-    <div id="tab-habit" class="tab-content">
-      <div id="habit-list"></div>
-      <button class="add-btn" onclick="openHabitModal()">＋ 습관 추가</button>
-    </div>
-
-    <!-- 가계부 -->
     <div id="tab-money" class="tab-content">
-      <div class="no-spend-bar" id="noSpendBar" onclick="toggleNoSpend()">
+      <div class="no-spend-bar" onclick="toggleNoSpend()">
         <div class="ns-check" id="nsCheck"></div>
         <span class="ns-label">오늘 무지출 💪</span>
         <span class="ns-badge" id="nsBadge">✓ 달성!</span>
@@ -270,14 +279,12 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
       <div id="money-summary"></div>
     </div>
 
-    <!-- 식단 -->
     <div id="tab-meal" class="tab-content">
       <div id="meal-list"></div>
     </div>
 
-    <!-- 메모 -->
     <div id="tab-memo" class="tab-content">
-      <div class="memo-filter" id="memoFilter">
+      <div class="memo-filter">
         <button class="filter-chip active" onclick="filterMemo('전체',this)">전체</button>
         <button class="filter-chip" onclick="filterMemo('정체성',this)">🌟 정체성</button>
         <button class="filter-chip" onclick="filterMemo('할일',this)">✅ 할일</button>
@@ -288,11 +295,23 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
       <button class="add-btn" onclick="openMemoModal()">＋ 메모 추가</button>
     </div>
 
+    <div id="tab-habit-tab" class="tab-content">
+      <div id="habit-list-right"></div>
+      <button class="add-btn" onclick="openHabitModal()">＋ 습관 추가</button>
+    </div>
+
     <div class="summary-bar">
       <div class="sum-chip s" id="sum-s">일정 -</div>
       <div class="sum-chip h" id="sum-h">습관 -</div>
       <div class="sum-chip m" id="sum-m">가계부 -</div>
     </div>
+  </div>
+
+  <!-- 디데이 사이드바 -->
+  <div class="dday-sidebar">
+    <div class="dday-header">D-DAY</div>
+    <div id="ddayList"></div>
+    <button class="dday-add-btn" id="ddayAddBtn" onclick="openDdayModal()">＋ 추가</button>
   </div>
 </div>
 
@@ -389,6 +408,21 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
   </div>
 </div>
 
+<!-- 디데이 추가 -->
+<div class="modal-bg" id="ddayModal" style="display:none">
+  <div class="modal">
+    <h3>D-Day 추가</h3>
+    <div class="modal-label">이름</div>
+    <input id="dd-name" placeholder="예: 공모전 마감"/>
+    <div class="modal-label">날짜</div>
+    <input id="dd-date" type="date"/>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('ddayModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmDday()">추가</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -408,29 +442,29 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-let currentUser = null;
-const today = new Date();
-let cur = new Date(today.getFullYear(), today.getMonth(), 1);
-let selDate = new Date(today);
-let curView = 'month';
-let leftMode = 'cal'; // 'cal' | 'memo'
-const DAYS = ['일','월','화','수','목','금','토'];
-let habits = [], editingHabitId = null;
-let weekEvents = {}, moneyData = {}, mealData = {};
-let memos = [], editingMemoId = null, currentMemoFilter = '전체';
-let viewingMemoId = null;
-let noSpendData = {};
-let topMemoContent = '';
-let mealSaveTimers = {};
+let currentUser=null;
+const today=new Date();
+let cur=new Date(today.getFullYear(),today.getMonth(),1);
+let selDate=new Date(today);
+let curView='month';
+let leftMode='cal'; // 'cal'|'habit'|'memo'
+const DAYS=['일','월','화','수','목','금','토'];
+let habits=[],editingHabitId=null;
+let weekEvents={},moneyData={},mealData={};
+let memos=[],editingMemoId=null,currentMemoFilter='전체',viewingMemoId=null;
+let noSpendData={};
+let ddayList=[];
+let topMemoContent='';
+let mealSaveTimers={};
 
 function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function showSaving(){const el=document.getElementById('savingIndicator');el.style.display='block';setTimeout(()=>el.style.display='none',1200);}
 
 // ── Auth ──
-window.loginWithGoogle = async()=>{try{await signInWithPopup(auth,provider);}catch(e){alert('로그인 실패: '+e.message);}};
-window.logoutUser = async()=>await signOut(auth);
+window.loginWithGoogle=async()=>{try{await signInWithPopup(auth,provider);}catch(e){alert('로그인 실패: '+e.message);}};
+window.logoutUser=async()=>await signOut(auth);
 
-onAuthStateChanged(auth, async user=>{
+onAuthStateChanged(auth,async user=>{
   if(user){
     currentUser=user;
     document.getElementById('loginWrap').style.display='none';
@@ -438,8 +472,7 @@ onAuthStateChanged(auth, async user=>{
     document.getElementById('mainApp').style.display='grid';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
-    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();
-    loadTopMemo();
+    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();loadTopMemo();
   } else {
     currentUser=null;
     document.getElementById('loginWrap').style.display='flex';
@@ -453,13 +486,14 @@ async function saveData(type,key,value){if(!currentUser)return;showSaving();awai
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,tmS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,tmS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
     getDocs(collection(db,'users',currentUser.uid,'meal')),
     getDocs(collection(db,'users',currentUser.uid,'memos')),
     getDocs(collection(db,'users',currentUser.uid,'nospend')),
+    getDocs(collection(db,'users',currentUser.uid,'ddays')),
     getDoc(doc(db,'users',currentUser.uid,'settings','topMemo')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
@@ -469,6 +503,8 @@ async function loadAllData(){
   memos=[];moS.forEach(d=>{memos.push({id:d.id,...d.data()});});
   memos.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   noSpendData={};nsS.forEach(d=>{noSpendData[d.id]=d.data().done||false;});
+  ddayList=[];ddS.forEach(d=>{ddayList.push({id:d.id,...d.data()});});
+  ddayList.sort((a,b)=>new Date(a.date)-new Date(b.date));
   topMemoContent=tmS.exists()?tmS.data().text||'':'';
 }
 
@@ -479,13 +515,55 @@ window.saveTopMemo=async function(){
   const text=document.getElementById('topMemoInput').value;
   if(text===topMemoContent)return;
   topMemoContent=text;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','topMemo'),{text});
-  showSaving();
+  await setDoc(doc(db,'users',currentUser.uid,'settings','topMemo'),{text});showSaving();
+};
+
+// ── 왼쪽 모드 전환 ──
+function setLeftMode(mode){
+  leftMode=mode;
+  document.getElementById('monthView').style.display='none';
+  document.getElementById('weekView').style.display='none';
+  document.getElementById('habitView').style.display='none';
+  document.getElementById('memoView').style.display='none';
+  document.getElementById('navPrev').style.display=mode==='cal'?'':'none';
+  document.getElementById('navNext').style.display=mode==='cal'?'':'none';
+  document.getElementById('viewToggle').style.display=mode==='cal'?'':'none';
+  document.getElementById('leftBackBtn').style.display=mode==='cal'?'none':'';
+  if(mode==='cal'){
+    if(curView==='week'){document.getElementById('weekView').style.display='';renderWeek();}
+    else{document.getElementById('monthView').style.display='';renderMonth();}
+    document.getElementById('periodLabel').textContent=curView==='month'?cur.getFullYear()+'년 '+(cur.getMonth()+1)+'월':'';
+  } else if(mode==='habit'){
+    document.getElementById('habitView').style.display='';
+    document.getElementById('periodLabel').textContent='습관 트래커';
+    renderHabitsLeft();
+  } else if(mode==='memo'){
+    document.getElementById('memoView').style.display='flex';
+    document.getElementById('periodLabel').textContent='메모 보기';
+  }
+}
+window.handleLeftBack=function(){setLeftMode('cal');};
+
+// ── 탭 전환 — 메모/습관 탭 클릭 시 왼쪽도 전환 ──
+window.switchTab=function(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='memo'){
+    // 메모 탭: 왼쪽에 목록만, 상세는 카드 클릭 시
+    if(leftMode!=='memo'&&leftMode!=='cal')setLeftMode('cal');
+  } else if(name==='habit-tab'){
+    setLeftMode('habit');
+  } else {
+    // 다른 탭 클릭 → 달력으로 복귀
+    if(leftMode!=='cal')setLeftMode('cal');
+  }
 };
 
 // ── 캘린더 ──
 window.movePeriod=function(dir){
-  if(leftMode==='memo')return;
+  if(leftMode!=='cal')return;
   if(curView==='month'){cur=new Date(cur.getFullYear(),cur.getMonth()+dir,1);renderMonth();}
   else{selDate=new Date(selDate);selDate.setDate(selDate.getDate()+dir*7);renderWeek();updateRightDate();}
 };
@@ -510,8 +588,7 @@ function renderMonth(){
 }
 function getWeekStart(d){const s=new Date(d);s.setDate(d.getDate()-d.getDay());return s;}
 function renderWeek(){
-  const ws=getWeekStart(selDate);
-  const we=new Date(ws);we.setDate(ws.getDate()+6);
+  const ws=getWeekStart(selDate);const we=new Date(ws);we.setDate(ws.getDate()+6);
   const m1=ws.getMonth()+1,m2=we.getMonth()+1;
   let label=ws.getFullYear()+'년 '+m1+'월 '+ws.getDate()+'일';
   if(m1!==m2)label+=' ~ '+m2+'월 '+we.getDate()+'일';else label+=' ~ '+we.getDate()+'일';
@@ -534,16 +611,13 @@ window.selectDayFromWeek=function(y,m,d){selDate=new Date(y,m,d);renderWeek();up
 function updateRightDate(){document.getElementById('rightDate').textContent=selDate.getFullYear()+'년 '+(selDate.getMonth()+1)+'월 '+selDate.getDate()+'일 '+DAYS[selDate.getDay()]+'요일';}
 window.addWeekEvent=async function(key){
   const name=prompt('일정 입력:');if(!name||!name.trim())return;
-  if(!weekEvents[key])weekEvents[key]=[];
-  weekEvents[key].push(name.trim());
-  await saveData('events',key,{items:weekEvents[key]});
-  renderWeek();renderMonth();renderSchedule();
+  if(!weekEvents[key])weekEvents[key]=[];weekEvents[key].push(name.trim());
+  await saveData('events',key,{items:weekEvents[key]});renderWeek();renderMonth();renderSchedule();
 };
 window.editWeekEvent=async function(key,idx){
   const c=weekEvents[key][idx];const name=prompt('수정 (비우면 삭제):',c);if(name===null)return;
   if(name.trim()==='')weekEvents[key].splice(idx,1);else weekEvents[key][idx]=name.trim();
-  await saveData('events',key,{items:weekEvents[key]});
-  renderWeek();renderMonth();renderSchedule();
+  await saveData('events',key,{items:weekEvents[key]});renderWeek();renderMonth();renderSchedule();
 };
 window.switchView=function(v){
   curView=v;
@@ -552,63 +626,6 @@ window.switchView=function(v){
   document.getElementById('btnMonth').classList.toggle('active',v==='month');
   document.getElementById('btnWeek').classList.toggle('active',v==='week');
   if(v==='week')renderWeek();else renderMonth();
-};
-window.switchTab=function(name,el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');document.getElementById('tab-'+name).classList.add('active');
-};
-
-// ── 왼쪽 메모 뷰 ──
-function showMemoInLeft(id){
-  leftMode='memo';
-  viewingMemoId=id;
-  const memo=memos.find(m=>m.id===id);if(!memo)return;
-  document.getElementById('monthView').style.display='none';
-  document.getElementById('weekView').style.display='none';
-  document.getElementById('memoView').style.display='flex';
-  document.getElementById('navPrev').style.display='none';
-  document.getElementById('navNext').style.display='none';
-  document.getElementById('viewToggle').style.display='none';
-  document.getElementById('leftBackBtn').style.display='';
-  document.getElementById('periodLabel').textContent='메모 보기';
-  const catLabel={'정체성':'🌟 정체성','할일':'✅ 할일','아이디어':'💡 아이디어','기타':'📌 기타'};
-  document.getElementById('memoView').innerHTML=`
-    <div class="memo-detail-box">
-      <span class="memo-detail-cat ${memo.category||'기타'}">${catLabel[memo.category]||'📌 기타'}</span>
-      <input class="memo-detail-title-text" id="mvTitle" value="${memo.title||''}" placeholder="제목"/>
-      <hr style="border:none;border-top:0.5px solid #eee"/>
-      <textarea class="memo-detail-body-text" id="mvBody" placeholder="내용을 입력하세요...">${memo.body||''}</textarea>
-      <div class="memo-detail-actions">
-        <button class="mdabtn del" onclick="deleteMemoFromView('${id}')">삭제</button>
-        <button class="mdabtn save" onclick="saveMemoFromView('${id}')">저장</button>
-      </div>
-    </div>`;
-}
-window.handleLeftBack=function(){
-  leftMode='cal';viewingMemoId=null;
-  document.getElementById('memoView').style.display='none';
-  document.getElementById('navPrev').style.display='';
-  document.getElementById('navNext').style.display='';
-  document.getElementById('viewToggle').style.display='';
-  document.getElementById('leftBackBtn').style.display='none';
-  if(curView==='week'){document.getElementById('weekView').style.display='';renderWeek();}
-  else{document.getElementById('monthView').style.display='';renderMonth();}
-  document.getElementById('periodLabel').textContent=curView==='month'?cur.getFullYear()+'년 '+(cur.getMonth()+1)+'월':'';
-};
-window.saveMemoFromView=async function(id){
-  const title=document.getElementById('mvTitle').value.trim();
-  const body=document.getElementById('mvBody').value.trim();
-  const m=memos.find(x=>x.id===id);if(!m)return;
-  m.title=title;m.body=body;
-  await saveData('memos',id,{title,category:m.category,body,createdAt:m.createdAt||Date.now()});
-  renderMemos();
-};
-window.deleteMemoFromView=async function(id){
-  if(!confirm('삭제할까요?'))return;
-  memos=memos.filter(m=>m.id!==id);
-  await deleteData('memos',id);
-  renderMemos();handleLeftBack();
 };
 
 // ── 일정 ──
@@ -625,22 +642,18 @@ function renderSchedule(){
 window.toggleScheduleCheck=function(el){el.classList.toggle('done');el.textContent=el.classList.contains('done')?'✓':'';el.nextElementSibling.classList.toggle('done');};
 window.deleteScheduleItem=async function(key,idx){
   if(!confirm('삭제할까요?'))return;
-  weekEvents[key].splice(idx,1);
-  await saveData('events',key,{items:weekEvents[key]});
+  weekEvents[key].splice(idx,1);await saveData('events',key,{items:weekEvents[key]});
   renderSchedule();renderMonth();if(curView==='week')renderWeek();
 };
 window.openScheduleModal=function(){
-  // 입력창 초기화
-  document.getElementById('sch-name').value='';
-  document.getElementById('sch-time').value='';
+  document.getElementById('sch-name').value='';document.getElementById('sch-time').value='';
   document.getElementById('scheduleModal').style.display='flex';
   setTimeout(()=>document.getElementById('sch-name').focus(),50);
 };
 window.confirmSchedule=async function(){
   const name=document.getElementById('sch-name').value.trim();if(!name)return;
   const time=document.getElementById('sch-time').value;
-  const key=fmt(selDate);
-  if(!weekEvents[key])weekEvents[key]=[];
+  const key=fmt(selDate);if(!weekEvents[key])weekEvents[key]=[];
   weekEvents[key].push(time?`[${time}] ${name}`:name);
   await saveData('events',key,{items:weekEvents[key]});
   closeModal('scheduleModal');renderSchedule();renderMonth();if(curView==='week')renderWeek();
@@ -648,24 +661,19 @@ window.confirmSchedule=async function(){
 
 // ── 무지출 ──
 function renderNoSpend(){
-  const key=fmt(selDate);
-  const done=noSpendData[key]||false;
-  const check=document.getElementById('nsCheck');
-  const badge=document.getElementById('nsBadge');
-  check.className='ns-check'+(done?' done':'');
-  check.textContent=done?'✓':'';
+  const key=fmt(selDate);const done=noSpendData[key]||false;
+  const check=document.getElementById('nsCheck'),badge=document.getElementById('nsBadge');
+  check.className='ns-check'+(done?' done':'');check.textContent=done?'✓':'';
   badge.className='ns-badge'+(done?' show':'');
 }
 window.toggleNoSpend=async function(){
-  const key=fmt(selDate);
-  noSpendData[key]=!noSpendData[key];
-  await saveData('nospend',key,{done:noSpendData[key]});
-  renderNoSpend();
+  const key=fmt(selDate);noSpendData[key]=!noSpendData[key];
+  await saveData('nospend',key,{done:noSpendData[key]});renderNoSpend();
 };
 
-// ── 습관 ──
-function renderHabits(){
-  const list=document.getElementById('habit-list');list.innerHTML='';
+// ── 습관 (왼쪽 + 오른쪽 탭 공용) ──
+function buildHabitCards(containerId){
+  const list=document.getElementById(containerId);list.innerHTML='';
   let tt=0,td2=0;
   habits.forEach(h=>{
     tt+=h.target;td2+=Math.min(h.done||0,h.target);
@@ -684,21 +692,26 @@ function renderHabits(){
     card.innerHTML=`<div class="habit-top"><span class="habit-name">${h.emoji||'⭐'} ${h.name}</span><span class="habit-badge ${bC}">${bT}</span></div>${dots}<div style="display:flex;justify-content:space-between;align-items:center"><span class="habit-goal">${pl} ${h.target}회 목표 · ${pct}%</span><div class="habit-actions"><button class="habit-mini-btn" onclick="openHabitEdit('${h.id}')">목표 수정</button><button class="habit-mini-btn" onclick="deleteHabit('${h.id}')">삭제</button></div></div>`;
     list.appendChild(card);
   });
+  return{tt,td2};
+}
+function renderHabits(){
+  const{tt,td2}=buildHabitCards('habit-list-right');
   const pct=tt>0?Math.round(td2/tt*100):0;
   document.getElementById('sum-h').textContent='습관 '+pct+'%';
 }
+function renderHabitsLeft(){buildHabitCards('habitViewList');}
 window.toggleHabitDot=async function(id,idx){
   const h=habits.find(x=>x.id===id);if(!h)return;
   if(idx<(h.done||0))h.done=idx;else h.done=idx+1;
   await saveData('habits',id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done});
-  renderHabits();
+  renderHabits();if(leftMode==='habit')renderHabitsLeft();
 };
 window.openHabitModal=function(){
   document.getElementById('habitModal').style.display='flex';
   document.getElementById('hb-name').value='';document.getElementById('hb-emoji').value='';document.getElementById('hb-target').value=3;
   updateHabitPreview();
 };
-function updateHabitPreview(){const p=document.getElementById('hb-period').value==='week'?'주':'월';document.getElementById('hb-preview').textContent=p+' '+document.getElementById('hb-target').value+'회 목표';}
+function updateHabitPreview(){document.getElementById('hb-preview').textContent=(document.getElementById('hb-period').value==='week'?'주':'월')+' '+document.getElementById('hb-target').value+'회 목표';}
 document.addEventListener('input',e=>{if(e.target.id==='hb-target'||e.target.id==='hb-period')updateHabitPreview();});
 window.confirmHabit=async function(){
   const name=document.getElementById('hb-name').value.trim();if(!name)return alert('이름을 입력해주세요');
@@ -708,7 +721,7 @@ window.confirmHabit=async function(){
   const id='h_'+Date.now();
   habits.push({id,name,emoji,period,target,done:0});
   await saveData('habits',id,{name,emoji,period,target,done:0});
-  renderHabits();closeModal('habitModal');
+  renderHabits();if(leftMode==='habit')renderHabitsLeft();closeModal('habitModal');
 };
 window.openHabitEdit=function(id){
   editingHabitId=id;const h=habits.find(x=>x.id===id);if(!h)return;
@@ -719,11 +732,12 @@ window.confirmHabitEdit=async function(){
   const h=habits.find(x=>x.id===editingHabitId);if(!h)return;
   h.period=document.getElementById('he-period').value;h.target=parseInt(document.getElementById('he-target').value)||1;
   await saveData('habits',h.id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done||0});
-  renderHabits();closeModal('habitEditModal');
+  renderHabits();if(leftMode==='habit')renderHabitsLeft();closeModal('habitEditModal');
 };
 window.deleteHabit=async function(id){
   if(!confirm('삭제할까요?'))return;
-  habits=habits.filter(x=>x.id!==id);await deleteData('habits',id);renderHabits();
+  habits=habits.filter(x=>x.id!==id);await deleteData('habits',id);
+  renderHabits();if(leftMode==='habit')renderHabitsLeft();
 };
 
 // ── 가계부 ──
@@ -754,37 +768,31 @@ window.confirmMoney=async function(){
   const amount=parseInt(document.getElementById('mn-amount').value);if(!amount)return;
   const key=fmt(selDate);if(!moneyData[key])moneyData[key]=[];
   moneyData[key].push({name,type,amount});
-  await saveData('money',key,{items:moneyData[key]});
-  closeModal('moneyModal');renderMoney();renderMonth();
+  await saveData('money',key,{items:moneyData[key]});closeModal('moneyModal');renderMoney();renderMonth();
 };
 window.deleteMoney=async function(key,idx){
   if(!confirm('삭제할까요?'))return;
   moneyData[key].splice(idx,1);await saveData('money',key,{items:moneyData[key]});renderMoney();
 };
 
-// ── 식단 (딜레이 개선 + placeholder 즉시 사라짐) ──
+// ── 식단 ──
 function renderMeal(){
   const key=fmt(selDate);const data=mealData[key]||{};
   const slots=[['breakfast','아침'],['lunch','점심'],['dinner','저녁'],['snack','간식']];
   document.getElementById('meal-list').innerHTML=slots.map(([k,label])=>`
     <div class="meal-slot">
       <div class="meal-label">${label}</div>
-      <div class="meal-text" contenteditable="true" data-ph="입력하세요"
-        data-key="${k}"
-        onfocus="this.dataset.focused='1'"
-        onblur="this.dataset.focused='';mealBlur(this,'${key}','${k}')"
+      <div class="meal-text" contenteditable="true" data-ph="입력하세요" data-key="${k}"
         oninput="mealInput(this,'${key}','${k}')"
+        onblur="mealBlur(this,'${key}','${k}')"
         style="outline:none">${data[k]||''}</div>
     </div>`).join('');
 }
 window.mealInput=function(el,dateKey,mealKey){
-  // 즉시 로컬 반영 후 debounce 저장
   if(!mealData[dateKey])mealData[dateKey]={};
   mealData[dateKey][mealKey]=el.innerText;
   clearTimeout(mealSaveTimers[mealKey]);
-  mealSaveTimers[mealKey]=setTimeout(async()=>{
-    await saveData('meal',dateKey,mealData[dateKey]);
-  },600);
+  mealSaveTimers[mealKey]=setTimeout(async()=>{await saveData('meal',dateKey,mealData[dateKey]);},600);
 };
 window.mealBlur=async function(el,dateKey,mealKey){
   clearTimeout(mealSaveTimers[mealKey]);
@@ -803,10 +811,43 @@ function renderMemos(){
     const card=document.createElement('div');card.className='memo-card';
     const dateStr=memo.createdAt?new Date(memo.createdAt).toLocaleDateString('ko-KR',{month:'long',day:'numeric'}):'';
     card.innerHTML=`<div class="memo-card-top"><span class="memo-card-title">${memo.title||'제목 없음'}</span><span class="memo-cat-badge ${memo.category||'기타'}">${catLabel(memo.category)}</span><button class="memo-delete" onclick="event.stopPropagation();deleteMemo('${memo.id}')">✕</button></div><div class="memo-card-body">${memo.body||''}</div><div class="memo-card-date">${dateStr}</div>`;
-    card.addEventListener('click',()=>showMemoInLeft(memo.id));
+    card.addEventListener('click',()=>openMemoInLeft(memo.id));
     list.appendChild(card);
   });
 }
+function openMemoInLeft(id){
+  viewingMemoId=id;
+  const memo=memos.find(m=>m.id===id);if(!memo)return;
+  setLeftMode('memo');
+  const mv=document.getElementById('memoView');
+  mv.innerHTML=`
+    <div class="memo-detail-box">
+      <span class="memo-detail-cat ${memo.category||'기타'}">${catLabel(memo.category)}</span>
+      <input class="memo-detail-title-text" id="mvTitle" value="${(memo.title||'').replace(/"/g,'&quot;')}" placeholder="제목"/>
+      <hr style="border:none;border-top:0.5px solid #eee"/>
+      <textarea class="memo-detail-body-text" id="mvBody" placeholder="내용을 입력하세요...">${memo.body||''}</textarea>
+      <div class="memo-detail-actions">
+        <button class="mdabtn del" onclick="deleteMemoFromView('${id}')">삭제</button>
+        <button class="mdabtn save" onclick="saveMemoFromView('${id}')">저장</button>
+      </div>
+    </div>`;
+}
+window.handleLeftBack=function(){
+  viewingMemoId=null;setLeftMode('cal');
+};
+window.saveMemoFromView=async function(id){
+  const title=document.getElementById('mvTitle').value.trim();
+  const body=document.getElementById('mvBody').value.trim();
+  const m=memos.find(x=>x.id===id);if(!m)return;
+  m.title=title;m.body=body;
+  await saveData('memos',id,{title,category:m.category,body,createdAt:m.createdAt||Date.now()});
+  renderMemos();
+};
+window.deleteMemoFromView=async function(id){
+  if(!confirm('삭제할까요?'))return;
+  memos=memos.filter(m=>m.id!==id);await deleteData('memos',id);
+  renderMemos();setLeftMode('cal');
+};
 window.filterMemo=function(cat,el){
   currentMemoFilter=cat;
   document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
@@ -839,7 +880,48 @@ window.confirmMemo=async function(){
 window.deleteMemo=async function(id){
   if(!confirm('삭제할까요?'))return;
   memos=memos.filter(m=>m.id!==id);await deleteData('memos',id);renderMemos();
-  if(viewingMemoId===id)handleLeftBack();
+  if(viewingMemoId===id)setLeftMode('cal');
+};
+
+// ── 디데이 ──
+function calcDday(dateStr){
+  const target=new Date(dateStr);target.setHours(0,0,0,0);
+  const now=new Date();now.setHours(0,0,0,0);
+  return Math.round((target-now)/(1000*60*60*24));
+}
+function renderDdays(){
+  const list=document.getElementById('ddayList');list.innerHTML='';
+  const addBtn=document.getElementById('ddayAddBtn');
+  ddayList.forEach(dd=>{
+    const diff=calcDday(dd.date);
+    let numText,numClass,subText;
+    if(diff>0){numText='D-'+diff;numClass='future';subText=dd.date+' 까지';}
+    else if(diff===0){numText='D-Day';numClass='today';subText='오늘!';}
+    else{numText='D+'+Math.abs(diff);numClass='past';subText=dd.date+' 지남';}
+    const card=document.createElement('div');card.className='dday-card';
+    card.innerHTML=`<button class="dday-del" onclick="deleteDday('${dd.id}')">✕</button><div class="dday-title">${dd.name}</div><div class="dday-num ${numClass}">${numText}</div><div class="dday-sub">${subText}</div>`;
+    list.appendChild(card);
+  });
+  addBtn.style.display=ddayList.length>=5?'none':'flex';
+}
+window.openDdayModal=function(){
+  document.getElementById('dd-name').value='';
+  document.getElementById('dd-date').value='';
+  document.getElementById('ddayModal').style.display='flex';
+};
+window.confirmDday=async function(){
+  if(ddayList.length>=5)return alert('최대 5개까지 추가할 수 있어요');
+  const name=document.getElementById('dd-name').value.trim();if(!name)return;
+  const date=document.getElementById('dd-date').value;if(!date)return;
+  const id='d_'+Date.now();
+  ddayList.push({id,name,date});
+  ddayList.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  await saveData('ddays',id,{name,date});
+  closeModal('ddayModal');renderDdays();
+};
+window.deleteDday=async function(id){
+  if(!confirm('삭제할까요?'))return;
+  ddayList=ddayList.filter(d=>d.id!==id);await deleteData('ddays',id);renderDdays();
 };
 
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
