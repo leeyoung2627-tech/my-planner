@@ -201,6 +201,25 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .sum-chip.h{background:#E1F5EE;color:#0F6E56}
 .sum-chip.m{background:#FAECE7;color:#993C1D}
 
+/* 기념일 탭 */
+.anniv-card{background:#fff;border:0.5px solid #eee;border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:10px}
+.anniv-card:hover{border-color:#AFA9EC}
+.anniv-emoji{font-size:18px;flex-shrink:0}
+.anniv-info{flex:1;min-width:0}
+.anniv-title{font-size:13px;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.anniv-date{font-size:11px;color:#aaa;margin-top:1px}
+.anniv-dday{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+.anniv-dday.future{background:#EEEDFE;color:#3C3489}
+.anniv-dday.today{background:#E1F5EE;color:#0F6E56}
+.anniv-dday.past{background:#f5f5f5;color:#aaa}
+.anniv-repeat{font-size:10px;color:#aaa;margin-top:2px}
+.anniv-del{font-size:11px;color:#ddd;background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:4px;font-family:inherit;flex-shrink:0}
+.anniv-del:hover{color:#D85A30}
+
+/* 달력 공휴일/기념일 표시 */
+.day-cell-holiday{font-size:9px;color:#D85A30;text-align:center;line-height:1.2;word-break:keep-all}
+.day-cell-anniv{font-size:9px;color:#534AB7;text-align:center;line-height:1.2;word-break:keep-all}
+
 /* 디데이 */
 .dday-sidebar{display:flex;flex-direction:column;background:#fafafa;padding:.75rem .65rem;gap:8px;overflow-y:auto}
 .dday-header{font-size:11px;font-weight:600;color:#aaa;letter-spacing:.04em;padding-bottom:4px;border-bottom:0.5px solid #eee}
@@ -292,6 +311,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
       <div class="tab" onclick="switchTab('meal',this)">🥗 식단</div>
       <div class="tab" onclick="switchTab('memo',this)">📝 메모</div>
       <div class="tab" onclick="switchTab('habit-tab',this)">✅ 습관</div>
+      <div class="tab" onclick="switchTab('anniv',this)">🎂 기념일</div>
     </div>
 
     <div id="tab-schedule" class="tab-content active">
@@ -342,6 +362,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
     <div id="tab-habit-tab" class="tab-content">
       <div id="habit-list-right"></div>
       <button class="add-btn" onclick="openHabitModal()">＋ 습관 추가</button>
+    </div>
+
+    <div id="tab-anniv" class="tab-content">
+      <div id="anniv-list"></div>
+      <button class="add-btn" onclick="openAnnivModal()">＋ 기념일 추가</button>
     </div>
 
     <div class="summary-bar">
@@ -479,6 +504,27 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
   </div>
 </div>
 
+<!-- 기념일 추가 모달 -->
+<div class="modal-bg" id="annivModal" style="display:none">
+  <div class="modal">
+    <h3>기념일 추가</h3>
+    <div class="modal-label">이름</div>
+    <input id="av-name" placeholder="예: 부모님 결혼기념일"/>
+    <div class="modal-label">이모지 (선택)</div>
+    <input id="av-emoji" placeholder="예: 🎂"/>
+    <div class="modal-label">날짜</div>
+    <input id="av-date" type="date"/>
+    <div class="modal-label" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="av-repeat" style="width:auto"/>
+      <span>매년 반복 (생일, 기념일 등)</span>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('annivModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmAnniv()">추가</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -510,7 +556,8 @@ let weekEvents={},moneyData={},mealData={};
 let memos=[],editingMemoId=null,currentMemoFilter='전체',viewingMemoId=null;
 let noSpendData={};
 let ddayList=[];
-let budgetData={}; // {YYYY-M: amount}
+let budgetData={};
+let anniversaries=[];
 let topMemoContent='';
 let mealSaveTimers={};
 let dragSrcKey=null,dragSrcIdx=null;
@@ -531,7 +578,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('mainApp').style.display='grid';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
-    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();loadTopMemo();
+    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();loadTopMemo();
   } else {
     currentUser=null;
     document.getElementById('loginWrap').style.display='flex';
@@ -545,7 +592,7 @@ async function saveData(type,key,value){if(!currentUser)return;showSaving();awai
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -555,6 +602,7 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'ddays')),
     getDocs(collection(db,'users',currentUser.uid,'budget')),
     getDoc(doc(db,'users',currentUser.uid,'settings','topMemo')),
+    getDocs(collection(db,'users',currentUser.uid,'anniversaries')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -567,6 +615,8 @@ async function loadAllData(){
   ddayList.sort((a,b)=>new Date(a.date)-new Date(b.date));
   budgetData={};bdS.forEach(d=>{budgetData[d.id]=d.data().amount||0;});
   topMemoContent=tmS.exists()?tmS.data().text||'':'';
+  anniversaries=[];avS.forEach(d=>{anniversaries.push({id:d.id,...d.data()});});
+  anniversaries.sort((a,b)=>nextAnnivDate(a)-nextAnnivDate(b));
 }
 
 // ── 상단 메모 ──
@@ -624,13 +674,63 @@ window.switchTab=function(name,el){
   } else if(name==='memo'){
     if(leftMode==='memo'){}
     else setLeftMode('cal');
+  } else if(name==='anniv'){
+    if(leftMode!=='cal')setLeftMode('cal');
+    renderAnniversaries();
   } else {
     // 일정, 식단 — 달력으로 복귀
     if(leftMode!=='cal')setLeftMode('cal');
   }
 };
 
-// ── 캘린더 ──
+// ── 한국 공휴일 (고정) ──
+const HOLIDAYS={
+  '1-1':'신정','3-1':'삼일절','5-5':'어린이날','6-6':'현충일',
+  '8-15':'광복절','10-3':'개천절','10-9':'한글날','12-25':'성탄절'
+};
+// 음력 공휴일은 매년 달라지므로 2025~2027 주요 날짜만 하드코딩
+const LUNAR_HOLIDAYS={
+  '2025-1-28':'설날연휴','2025-1-29':'설날','2025-1-30':'설날연휴',
+  '2025-5-5':'어린이날/어버이날','2025-10-5':'추석연휴','2025-10-6':'추석','2025-10-7':'추석연휴',
+  '2026-2-16':'설날연휴','2026-2-17':'설날','2026-2-18':'설날연휴',
+  '2026-9-24':'추석연휴','2026-9-25':'추석','2026-9-26':'추석연휴',
+  '2027-2-6':'설날연휴','2027-2-7':'설날','2027-2-8':'설날연휴',
+  '2027-9-14':'추석연휴','2027-9-15':'추석','2027-9-16':'추석연휴',
+};
+function getHoliday(date){
+  const key=fmt(date);
+  if(LUNAR_HOLIDAYS[key])return LUNAR_HOLIDAYS[key];
+  const fixedKey=(date.getMonth()+1)+'-'+date.getDate();
+  return HOLIDAYS[fixedKey]||null;
+}
+
+// ── 기념일 헬퍼 ──
+function nextAnnivDate(av){
+  const [y,m,d]=av.date.split('-').map(Number);
+  if(!av.repeat)return new Date(av.date);
+  const now=new Date();now.setHours(0,0,0,0);
+  let next=new Date(now.getFullYear(),m-1,d);
+  if(next<now)next=new Date(now.getFullYear()+1,m-1,d);
+  return next;
+}
+function calcAnnivDday(av){
+  const next=nextAnnivDate(av);
+  const now=new Date();now.setHours(0,0,0,0);
+  return Math.round((next-now)/(1000*60*60*24));
+}
+// 특정 날짜에 해당하는 기념일 반환 (반복 포함)
+function getAnnivForDate(date){
+  return anniversaries.filter(av=>{
+    if(av.repeat){
+      const [,m,d]=av.date.split('-').map(Number);
+      return date.getMonth()+1===m&&date.getDate()===d;
+    }else{
+      return fmt(date)===av.date;
+    }
+  });
+}
+
+// ── 캘린더 (공휴일+기념일 포함) ──
 window.movePeriod=function(dir){
   if(curView==='month'||leftMode==='money-cal'){
     cur=new Date(cur.getFullYear(),cur.getMonth()+dir,1);
@@ -651,8 +751,17 @@ function renderMonth(){
     const dt=new Date(cur.getFullYear(),cur.getMonth(),d);
     const key=fmt(dt);
     const isToday=fmt(dt)===fmt(today),isSel=fmt(dt)===fmt(selDate);
+    const isSun=dt.getDay()===0,isSat=dt.getDay()===6;
+    const holiday=getHoliday(dt);
+    const annivs=getAnnivForDate(dt);
     const hasEv=weekEvents[key]&&weekEvents[key].length>0;
-    html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><span class="dn">${d}</span><div class="dot-row">${hasEv?'<div class="dot"></div>':''}</div></div>`;
+    const dnColor=holiday||isSun?'color:#D85A30':isSat?'color:#534AB7':'';
+    html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})">
+      <span class="dn" style="${dnColor}">${d}</span>
+      ${holiday?`<div class="day-cell-holiday">${holiday}</div>`:''}
+      ${annivs.map(av=>`<div class="day-cell-anniv">${av.emoji||'🎂'} ${av.name}</div>`).join('')}
+      <div class="dot-row">${hasEv?'<div class="dot"></div>':''}</div>
+    </div>`;
   }
   const rem=(7-(start+total)%7)%7;
   for(let i=1;i<=rem&&rem<7;i++)html+=`<div class="day-cell other"><span class="dn">${i}</span></div>`;
@@ -1070,6 +1179,62 @@ window.confirmDday=async function(){
 window.deleteDday=async function(id){
   if(!confirm('삭제할까요?'))return;
   ddayList=ddayList.filter(d=>d.id!==id);await deleteData('ddays',id);renderDdays();
+};
+
+// ── 기념일 ──
+function renderAnniversaries(){
+  const list=document.getElementById('anniv-list');
+  if(!list)return;
+  list.innerHTML='';
+  if(!anniversaries.length){
+    list.innerHTML='<div style="font-size:13px;color:#ccc;text-align:center;padding:20px 0">기념일이 없어요</div>';
+    return;
+  }
+  anniversaries.forEach(av=>{
+    const diff=calcAnnivDday(av);
+    let ddayText,ddayClass;
+    if(diff>0){ddayText='D-'+diff;ddayClass='future';}
+    else if(diff===0){ddayText='D-Day';ddayClass='today';}
+    else{ddayText='지남';ddayClass='past';}
+    const [y,m,d]=av.date.split('-').map(Number);
+    const dateLabel=av.repeat?`매년 ${m}월 ${d}일`:`${y}년 ${m}월 ${d}일`;
+    const card=document.createElement('div');card.className='anniv-card';
+    card.innerHTML=`
+      <div class="anniv-emoji">${av.emoji||'🎂'}</div>
+      <div class="anniv-info">
+        <div class="anniv-title">${av.name}</div>
+        <div class="anniv-date">${dateLabel}</div>
+        ${av.repeat?`<div class="anniv-repeat">🔁 매년 반복</div>`:''}
+      </div>
+      <span class="anniv-dday ${ddayClass}">${ddayText}</span>
+      <button class="anniv-del" onclick="deleteAnniv('${av.id}')">✕</button>`;
+    list.appendChild(card);
+  });
+}
+window.openAnnivModal=function(){
+  document.getElementById('av-name').value='';
+  document.getElementById('av-emoji').value='';
+  document.getElementById('av-date').value='';
+  document.getElementById('av-repeat').checked=false;
+  document.getElementById('annivModal').style.display='flex';
+};
+window.confirmAnniv=async function(){
+  const name=document.getElementById('av-name').value.trim();if(!name)return alert('이름을 입력해주세요');
+  const emoji=document.getElementById('av-emoji').value.trim()||'🎂';
+  const date=document.getElementById('av-date').value;if(!date)return alert('날짜를 선택해주세요');
+  const repeat=document.getElementById('av-repeat').checked;
+  const id='av_'+Date.now();
+  const newAv={id,name,emoji,date,repeat};
+  anniversaries.push(newAv);
+  anniversaries.sort((a,b)=>nextAnnivDate(a)-nextAnnivDate(b));
+  await saveData('anniversaries',id,{name,emoji,date,repeat});
+  closeModal('annivModal');renderAnniversaries();renderMonth();
+};
+window.deleteAnniv=async function(id){
+  if(!confirm('삭제할까요?'))return;
+  anniversaries=anniversaries.filter(a=>a.id!==id);
+  await deleteData('anniversaries',id);
+  renderAnniversaries();renderMonth();
 };
 
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
