@@ -4,6 +4,15 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>두목의 플래너</title>
+<script>
+// 배경색 깜빡임 방지 — CSS 로드 전에 즉시 적용
+(function(){
+  const bg=localStorage.getItem('planner_bg');
+  const pattern=localStorage.getItem('planner_pattern');
+  if(bg)document.documentElement.style.setProperty('--init-bg',bg);
+  if(bg){document.addEventListener('DOMContentLoaded',function(){document.body.style.background=bg;});}
+})();
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5f4ff;display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh;gap:10px}
@@ -386,11 +395,10 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 
     <div id="tab-meal" class="tab-content">
       <div style="background:#fff;border:0.5px solid #eee;border-radius:8px;padding:10px 12px;flex-shrink:0">
-        <div style="font-size:11px;color:#aaa;margin-bottom:5px">🗒️ 식단 계획 메모</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:5px">🗒️ 식단 계획 메모 (날짜 무관 고정)</div>
         <div contenteditable="true" id="mealPlanNote"
           style="font-size:13px;color:#222;outline:none;min-height:40px;max-height:100px;overflow-y:auto;line-height:1.7"
-          data-ph="오늘 어떤 식단을 할지 미리 적어두세요..."
-          oninput="mealPlanInput(this)"
+          data-ph="식단 계획, 먹고 싶은 것, 주의할 것..."
           onblur="saveMealPlanNote()"></div>
       </div>
       <div id="meal-list"></div>
@@ -415,10 +423,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 
     <div id="tab-habit-tab" class="tab-content" style="padding:0">
       <div class="postit-wrap" style="height:100%">
-        <div class="postit-label">📝 습관 메모</div>
         <div class="postit-box" style="flex:1">
-          <div class="postit-lines"></div>
-          <textarea class="postit-textarea" id="habitPostit" placeholder="습관을 만들며 느낀 점, 다짐, 기록..." onblur="saveHabitPostit()"></textarea>
+          <textarea class="postit-textarea" id="habitPostit" placeholder="" onblur="saveHabitPostit()"></textarea>
         </div>
         <div class="postit-save-hint">Ctrl+S 로 저장</div>
       </div>
@@ -730,7 +736,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('mainApp').style.display='grid';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
-    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();renderFolders();loadTopMemo();loadHabitPostit();loadBgSetting();
+    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();renderFolders();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();
   } else {
     currentUser=null;
     document.getElementById('loginWrap').style.display='flex';
@@ -744,7 +750,7 @@ async function saveData(type,key,value){if(!currentUser)return;showSaving();awai
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -757,13 +763,18 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'anniversaries')),
     getDocs(collection(db,'users',currentUser.uid,'folders')),
     getDoc(doc(db,'users',currentUser.uid,'settings','habitPostit')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
+  habits.sort((a,b)=>(a.order??999)-(b.order??999));
   moneyData={};mnS.forEach(d=>{moneyData[d.id]=d.data().items||[];});
   mealData={};mlS.forEach(d=>{mealData[d.id]=d.data();});
   memos=[];moS.forEach(d=>{memos.push({id:d.id,...d.data()});});
-  memos.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  memos.sort((a,b)=>{
+    if(a.order!=null&&b.order!=null)return a.order-b.order;
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
   noSpendData={};nsS.forEach(d=>{noSpendData[d.id]=d.data().done||false;});
   ddayList=[];ddS.forEach(d=>{ddayList.push({id:d.id,...d.data()});});
   ddayList.sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -773,6 +784,7 @@ async function loadAllData(){
   anniversaries.sort((a,b)=>nextAnnivDate(a)-nextAnnivDate(b));
   folders=[];fdS.forEach(d=>{folders.push({id:d.id,...d.data()});});
   habitPostitContent=hpS.exists()?hpS.data().text||'':'';
+  window._mealPlanNoteContent=mpnS.exists()?mpnS.data().text||'':'';
 }
 
 // ── 상단 메모 ──
@@ -1143,7 +1155,7 @@ window.confirmBudget=async function(){
 function buildHabitCards(containerId){
   const list=document.getElementById(containerId);list.innerHTML='';
   let tt=0,td2=0;
-  habits.forEach(h=>{
+  habits.forEach((h,idx)=>{
     tt+=h.target;td2+=Math.min(h.done||0,h.target);
     const pct=Math.round(Math.min((h.done||0)/h.target,1)*100);
     const isDone=(h.done||0)>=h.target;
@@ -1156,8 +1168,44 @@ function buildHabitCards(containerId){
       dots+=`<div class="hdot${f?' filled':''}${!f&&t?' target':''}" onclick="toggleHabitDot('${h.id}',${i})">${f?'✓':''}</div>`;
     }
     dots+='</div>';
-    const card=document.createElement('div');card.className='habit-card';
-    card.innerHTML=`<div class="habit-top"><span class="habit-name editable-title" onclick="openHabitNameEditModal('${h.id}')">${h.emoji||'⭐'} ${h.name}</span><span class="habit-badge ${bC}">${bT}</span></div>${dots}<div style="display:flex;justify-content:space-between;align-items:center"><span class="habit-goal">${pl} ${h.target}회 목표 · ${pct}%</span><div class="habit-actions"><button class="habit-mini-btn" onclick="openHabitNameEditModal('${h.id}')">수정</button><button class="habit-mini-btn" onclick="deleteHabit('${h.id}')">삭제</button></div></div>`;
+    const card=document.createElement('div');
+    card.className='habit-card';
+    card.draggable=true;
+    card.dataset.idx=idx;
+    card.innerHTML=`
+      <div class="habit-top">
+        <span style="font-size:14px;color:#ccc;cursor:grab;padding-right:6px;user-select:none">⠿</span>
+        <span class="habit-name editable-title" onclick="openHabitNameEditModal('${h.id}')">${h.emoji||'⭐'} ${h.name}</span>
+        <span class="habit-badge ${bC}">${bT}</span>
+      </div>
+      ${dots}
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="habit-goal">${pl} ${h.target}회 목표 · ${pct}%</span>
+        <div class="habit-actions">
+          <button class="habit-mini-btn" onclick="openHabitNameEditModal('${h.id}')">수정</button>
+          <button class="habit-mini-btn" onclick="deleteHabit('${h.id}')">삭제</button>
+        </div>
+      </div>`;
+    // 드래그 이벤트
+    card.addEventListener('dragstart',e=>{
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('habit-idx',String(idx));
+      card.style.opacity='.4';
+    });
+    card.addEventListener('dragend',()=>{card.style.opacity='1';});
+    card.addEventListener('dragover',e=>{e.preventDefault();card.style.outline='1.5px solid #AFA9EC';});
+    card.addEventListener('dragleave',()=>{card.style.outline='';});
+    card.addEventListener('drop',async e=>{
+      e.preventDefault();card.style.outline='';
+      const from=parseInt(e.dataTransfer.getData('habit-idx'));
+      const to=idx;
+      if(from===to||isNaN(from))return;
+      const [moved]=habits.splice(from,1);
+      habits.splice(to,0,moved);
+      // order 필드로 순서 저장
+      await Promise.all(habits.map((h,order)=>saveData('habits',h.id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done||0,order})));
+      renderHabits();
+    });
     list.appendChild(card);
   });
   return{tt,td2};
@@ -1268,9 +1316,6 @@ window.deleteMoney=async function(key,idx){
 // ── 식단 ──
 function renderMeal(){
   const key=fmt(selDate);const data=mealData[key]||{};
-  // 식단 계획 메모 로드
-  const noteEl=document.getElementById('mealPlanNote');
-  if(noteEl){noteEl.innerHTML=data.planNote||'';}
   const slots=[['breakfast','아침'],['lunch','점심'],['dinner','저녁'],['snack','간식']];
   document.getElementById('meal-list').innerHTML=slots.map(([k,label])=>`
     <div class="meal-slot">
@@ -1281,15 +1326,17 @@ function renderMeal(){
         style="outline:none">${data[k]||''}</div>
     </div>`).join('');
 }
-window.mealPlanInput=function(el){
-  // 즉시 로컬 반영만 (blur에서 저장)
-};
+function loadMealPlanNote(){
+  // 고정 메모 — 날짜 무관하게 'settings/mealPlanNote'에서 로드
+  const el=document.getElementById('mealPlanNote');if(!el)return;
+  el.innerHTML=window._mealPlanNoteContent||'';
+}
 window.saveMealPlanNote=async function(){
-  const key=fmt(selDate);
-  const text=document.getElementById('mealPlanNote').innerHTML;
-  if(!mealData[key])mealData[key]={};
-  mealData[key].planNote=text;
-  await saveData('meal',key,mealData[key]);
+  const el=document.getElementById('mealPlanNote');if(!el)return;
+  const text=el.innerHTML;
+  if(text===window._mealPlanNoteContent)return;
+  window._mealPlanNoteContent=text;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote'),{text});showSaving();
 };
 window.mealInput=function(el,dateKey,mealKey){
   if(!mealData[dateKey])mealData[dateKey]={};mealData[dateKey][mealKey]=el.innerText;
@@ -1373,21 +1420,6 @@ function renderMemos(){
     card.addEventListener('click',()=>openMemoInLeft(memo.id));
     list.appendChild(card);
   });
-
-  // 폴더들을 드롭 타겟으로 (폴더 리스트)
-  document.querySelectorAll('.folder-item').forEach(fi=>{
-    fi.addEventListener('dragover',e=>{e.preventDefault();fi.style.background='#EEEDFE';fi.style.borderColor='#AFA9EC';});
-    fi.addEventListener('dragleave',()=>{fi.style.background='';fi.style.borderColor='';});
-    fi.addEventListener('drop',async e=>{
-      e.preventDefault();fi.style.background='';fi.style.borderColor='';
-      const id=e.dataTransfer.getData('memo-id');if(!id)return;
-      const fdId=fi.dataset.folderId;
-      const m=memos.find(x=>x.id===id);if(!m)return;
-      m.folderId=fdId||null;
-      await saveData('memos',id,{title:m.title,category:m.category,body:m.body,folderId:m.folderId,createdAt:m.createdAt||Date.now()});
-      renderMemos();renderFolders();
-    });
-  });
 }
 function openMemoInLeft(id){
   viewingMemoId=id;const memo=memos.find(m=>m.id===id);if(!memo)return;
@@ -1411,16 +1443,16 @@ window.saveMemoFromView=async function(id){
   const body=document.getElementById('mvBody').value.trim();
   const m=memos.find(x=>x.id===id);if(!m)return;
   m.title=title;m.body=body;
-  await saveData('memos',id,{title,category:m.category,body,createdAt:m.createdAt||Date.now()});renderMemos();
+  await saveData('memos',id,{title,category:m.category,body,createdAt:m.createdAt||Date.now()});renderMemos();renderFolders();
 };
 window.deleteMemoFromView=async function(id){
   if(!confirm('삭제할까요?'))return;
-  memos=memos.filter(m=>m.id!==id);await deleteData('memos',id);renderMemos();setLeftMode('cal');
+  memos=memos.filter(m=>m.id!==id);await deleteData('memos',id);renderMemos();renderFolders();setLeftMode('cal');
 };
 window.filterMemo=function(cat,el){
   currentMemoFilter=cat;
   document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');renderMemos();
+  el.classList.add('active');renderMemos();renderFolders();
 };
 window.openMemoModal=function(id){
   editingMemoId=id||null;const memo=id?memos.find(m=>m.id===id):null;
@@ -1452,7 +1484,7 @@ window.confirmMemo=async function(){
 };
 window.deleteMemo=async function(id){
   if(!confirm('삭제할까요?'))return;
-  memos=memos.filter(m=>m.id!==id);await deleteData('memos',id);renderMemos();
+  memos=memos.filter(m=>m.id!==id);await deleteData('memos',id);renderMemos();renderFolders();
   if(viewingMemoId===id)setLeftMode('cal');
 };
 
@@ -1571,6 +1603,17 @@ function renderFolders(){
   allItem.className='folder-item'+(currentFolderId===null?' active':'');
   allItem.innerHTML=`<span class="folder-icon">📋</span><span class="folder-name">전체 메모</span><span class="folder-count">${memos.length}</span>`;
   allItem.onclick=()=>{currentFolderId=null;renderFolders();renderMemos();};
+  // 전체 항목도 드롭 타겟 (폴더 밖으로 꺼내기)
+  allItem.addEventListener('dragover',e=>{e.preventDefault();allItem.style.background='#EEEDFE';});
+  allItem.addEventListener('dragleave',()=>{allItem.style.background='';});
+  allItem.addEventListener('drop',async e=>{
+    e.preventDefault();allItem.style.background='';
+    const id=e.dataTransfer.getData('memo-id');if(!id)return;
+    const m=memos.find(x=>x.id===id);if(!m||!m.folderId)return;
+    m.folderId=null;
+    await saveData('memos',id,{title:m.title,category:m.category,body:m.body,folderId:null,createdAt:m.createdAt||Date.now()});
+    renderMemos();renderFolders();
+  });
   list.appendChild(allItem);
   folders.forEach(fd=>{
     const cnt=memos.filter(m=>m.folderId===fd.id).length;
@@ -1579,6 +1622,17 @@ function renderFolders(){
     item.dataset.folderId=fd.id;
     item.innerHTML=`<span class="folder-icon">${fd.emoji||'📁'}</span><span class="folder-name">${fd.name}</span><span class="folder-count">${cnt}</span><button class="folder-del" onclick="event.stopPropagation();deleteFolder('${fd.id}')">✕</button>`;
     item.onclick=()=>{currentFolderId=fd.id;renderFolders();renderMemos();};
+    // 폴더 아이템 드롭 이벤트
+    item.addEventListener('dragover',e=>{e.preventDefault();item.style.background='#EEEDFE';item.style.borderColor='#AFA9EC';});
+    item.addEventListener('dragleave',()=>{item.style.background='';item.style.borderColor='';});
+    item.addEventListener('drop',async e=>{
+      e.preventDefault();item.style.background='';item.style.borderColor='';
+      const id=e.dataTransfer.getData('memo-id');if(!id)return;
+      const m=memos.find(x=>x.id===id);if(!m||m.folderId===fd.id)return;
+      m.folderId=fd.id;
+      await saveData('memos',id,{title:m.title,category:m.category,body:m.body,folderId:fd.id,createdAt:m.createdAt||Date.now()});
+      renderMemos();renderFolders();
+    });
     list.appendChild(item);
   });
 }
