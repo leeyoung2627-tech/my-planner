@@ -25,7 +25,45 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .top-memo-input{flex:1;border:none;outline:none;font-size:13px;color:#222;font-family:inherit;resize:none;line-height:1.6;background:transparent;min-height:24px;max-height:120px;overflow-y:auto}
 
 /* 앱 레이아웃 */
-.app{display:grid;grid-template-columns:1fr 340px 160px;min-height:640px;border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1260px;box-shadow:0 4px 24px #0001}
+.app{display:grid;grid-template-columns:1fr 340px 160px;min-height:960px;border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1260px;box-shadow:0 4px 24px #0001}
+
+/* 배경 설정 버튼 */
+.bg-setting-btn{position:fixed;bottom:20px;left:20px;width:36px;height:36px;border-radius:50%;background:#fff;border:0.5px solid #ddd;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #0002;z-index:50}
+.bg-setting-btn:hover{background:#f5f4ff}
+.bg-panel{position:fixed;bottom:64px;left:20px;background:#fff;border:0.5px solid #ddd;border-radius:12px;padding:14px;width:260px;box-shadow:0 4px 20px #0002;z-index:50;display:none;flex-direction:column;gap:10px}
+.bg-panel.open{display:flex}
+.bg-panel-title{font-size:12px;font-weight:600;color:#666}
+.bg-swatches{display:flex;flex-wrap:wrap;gap:6px}
+.bg-swatch{width:32px;height:32px;border-radius:8px;cursor:pointer;border:2px solid transparent;flex-shrink:0}
+.bg-swatch:hover,.bg-swatch.active{border-color:#534AB7}
+.bg-pattern-row{display:flex;gap:6px;flex-wrap:wrap}
+.bg-pattern{padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;border:0.5px solid #ddd;background:#fafafa;color:#666;font-family:inherit}
+.bg-pattern:hover,.bg-pattern.active{background:#EEEDFE;border-color:#AFA9EC;color:#3C3489}
+
+/* 포스트잇 메모 (습관 탭 오른쪽) */
+.postit-wrap{padding:.85rem;display:flex;flex-direction:column;height:100%}
+.postit-label{font-size:11px;color:#aaa;margin-bottom:8px}
+.postit-box{flex:1;position:relative;background:linear-gradient(160deg,#fffde7 85%,#fff9c4 100%);border-radius:4px 4px 0 4px;box-shadow:2px 4px 12px #0002,0 1px 3px #0001;padding:14px 14px 32px;display:flex;flex-direction:column}
+.postit-box::after{content:'';position:absolute;bottom:0;right:0;width:32px;height:32px;background:linear-gradient(225deg,#f0e060 50%,#fffde7 50%);border-radius:0 0 4px 0;box-shadow:-2px -2px 4px #0001}
+.postit-textarea{flex:1;border:none;outline:none;background:transparent;font-size:13px;color:#555;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;line-height:1.8;resize:none;min-height:200px;width:100%}
+.postit-lines{position:absolute;inset:44px 14px 32px;pointer-events:none;background-image:repeating-linear-gradient(transparent,transparent 28px,#e8e0a0 28px,#e8e0a0 29px)}
+.postit-save-hint{font-size:10px;color:#bbb;margin-top:6px;text-align:right}
+
+/* 메모 폴더 */
+.folder-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.folder-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;cursor:pointer;border:0.5px solid transparent}
+.folder-item:hover{background:#f5f4ff}
+.folder-item.active{background:#EEEDFE;border-color:#AFA9EC}
+.folder-icon{font-size:14px;flex-shrink:0}
+.folder-name{font-size:13px;color:#222;flex:1}
+.folder-count{font-size:11px;color:#aaa}
+.folder-del{font-size:11px;color:#ddd;background:none;border:none;cursor:pointer;padding:1px 4px;border-radius:3px;font-family:inherit}
+.folder-del:hover{color:#D85A30}
+.folder-divider{height:0.5px;background:#eee;margin:4px 0}
+
+/* 수정 가능 항목 인라인 에디터 */
+.editable-title{cursor:pointer;border-bottom:1px dashed transparent}
+.editable-title:hover{border-bottom-color:#aaa}
 
 /* 왼쪽 */
 .left{display:flex;flex-direction:column;border-right:0.5px solid #eee;min-width:0}
@@ -157,7 +195,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .budget-edit-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:1px 7px;border-radius:4px;cursor:pointer;font-family:inherit}
 .budget-edit-btn:hover{background:#f5f5f5}
 .budget-track{height:12px;border-radius:999px;background:#f0f0f0;overflow:hidden;position:relative}
-.budget-fill{height:100%;border-radius:999px;transition:width .4s;background:linear-gradient(90deg,#1D9E75,#D85A30)}
+.budget-fill{height:100%;border-radius:999px;transition:width .4s;background:#D85A30}
 .budget-nums{display:flex;justify-content:space-between;font-size:11px}
 .budget-spent{color:#D85A30;font-weight:500}
 .budget-remain{color:#aaa}
@@ -348,6 +386,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
     </div>
 
     <div id="tab-memo" class="tab-content">
+      <div class="folder-list" id="folderList"></div>
+      <div class="folder-divider"></div>
       <div class="memo-filter">
         <button class="filter-chip active" onclick="filterMemo('전체',this)">전체</button>
         <button class="filter-chip" onclick="filterMemo('정체성',this)">🌟 정체성</button>
@@ -356,12 +396,25 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
         <button class="filter-chip" onclick="filterMemo('기타',this)">📌 기타</button>
       </div>
       <div id="memo-list"></div>
-      <button class="add-btn" onclick="openMemoModal()">＋ 메모 추가</button>
+      <div style="display:flex;gap:6px;margin-top:2px">
+        <button class="add-btn" onclick="openMemoModal()">＋ 메모 추가</button>
+        <button class="add-btn" onclick="openFolderModal()" style="color:#534AB7">📁 폴더 추가</button>
+      </div>
     </div>
 
-    <div id="tab-habit-tab" class="tab-content">
-      <div id="habit-list-right"></div>
-      <button class="add-btn" onclick="openHabitModal()">＋ 습관 추가</button>
+    <div id="tab-habit-tab" class="tab-content" style="padding:0;flex-direction:row;gap:0">
+      <div style="flex:1;padding:.75rem 1rem;overflow-y:auto;display:flex;flex-direction:column;gap:6px;border-right:0.5px solid #eee">
+        <div id="habit-list-right"></div>
+        <button class="add-btn" onclick="openHabitModal()">＋ 습관 추가</button>
+      </div>
+      <div class="postit-wrap" style="width:160px;flex-shrink:0">
+        <div class="postit-label">📝 습관 메모</div>
+        <div class="postit-box">
+          <div class="postit-lines"></div>
+          <textarea class="postit-textarea" id="habitPostit" placeholder="습관을 만들며 느낀 점, 다짐..." onblur="saveHabitPostit()"></textarea>
+        </div>
+        <div class="postit-save-hint">Ctrl+S 로 저장</div>
+      </div>
     </div>
 
     <div id="tab-anniv" class="tab-content">
@@ -384,6 +437,29 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 </div>
 
 <div class="saving-indicator" id="savingIndicator">저장 중...</div>
+
+<!-- 배경 설정 -->
+<button class="bg-setting-btn" onclick="toggleBgPanel()" title="배경 설정">🎨</button>
+<div class="bg-panel" id="bgPanel">
+  <div class="bg-panel-title">배경 색상</div>
+  <div class="bg-swatches">
+    <div class="bg-swatch active" data-bg="linear-gradient(135deg,#f5f4ff,#eeedfe)" style="background:linear-gradient(135deg,#f5f4ff,#eeedfe)" onclick="setBg(this,'linear-gradient(135deg,#f5f4ff,#eeedfe)')"></div>
+    <div class="bg-swatch" data-bg="linear-gradient(135deg,#e8f5e9,#f1f8e9)" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9)" onclick="setBg(this,'linear-gradient(135deg,#e8f5e9,#f1f8e9)')"></div>
+    <div class="bg-swatch" data-bg="linear-gradient(135deg,#fce4ec,#fdf3f5)" style="background:linear-gradient(135deg,#fce4ec,#fdf3f5)" onclick="setBg(this,'linear-gradient(135deg,#fce4ec,#fdf3f5)')"></div>
+    <div class="bg-swatch" data-bg="linear-gradient(135deg,#e3f2fd,#e8eaf6)" style="background:linear-gradient(135deg,#e3f2fd,#e8eaf6)" onclick="setBg(this,'linear-gradient(135deg,#e3f2fd,#e8eaf6)')"></div>
+    <div class="bg-swatch" data-bg="linear-gradient(135deg,#fff8e1,#fff3cd)" style="background:linear-gradient(135deg,#fff8e1,#fff3cd)" onclick="setBg(this,'linear-gradient(135deg,#fff8e1,#fff3cd)')"></div>
+    <div class="bg-swatch" data-bg="linear-gradient(135deg,#f3e5f5,#ede7f6)" style="background:linear-gradient(135deg,#f3e5f5,#ede7f6)" onclick="setBg(this,'linear-gradient(135deg,#f3e5f5,#ede7f6)')"></div>
+    <div class="bg-swatch" data-bg="linear-gradient(135deg,#e0f2f1,#e0f7fa)" style="background:linear-gradient(135deg,#e0f2f1,#e0f7fa)" onclick="setBg(this,'linear-gradient(135deg,#e0f2f1,#e0f7fa)')"></div>
+    <div class="bg-swatch" data-bg="linear-gradient(135deg,#263238,#37474f)" style="background:linear-gradient(135deg,#263238,#37474f)" onclick="setBg(this,'linear-gradient(135deg,#263238,#37474f)')"></div>
+  </div>
+  <div class="bg-panel-title">패턴</div>
+  <div class="bg-pattern-row">
+    <button class="bg-pattern" onclick="setBgPattern('none')">없음</button>
+    <button class="bg-pattern" onclick="setBgPattern('dots')">도트</button>
+    <button class="bg-pattern" onclick="setBgPattern('grid')">격자</button>
+    <button class="bg-pattern" onclick="setBgPattern('diagonal')">사선</button>
+  </div>
+</div>
 
 <!-- 일정 모달 -->
 <div class="modal-bg" id="scheduleModal" style="display:none">
@@ -478,6 +554,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
       <option value="아이디어">💡 아이디어</option>
       <option value="기타">📌 기타</option>
     </select>
+    <div class="modal-label">폴더 (선택)</div>
+    <select id="memo-folder"><option value="">폴더 없음</option></select>
     <div class="modal-label">제목</div>
     <input id="memo-title" placeholder="메모 제목"/>
     <div class="modal-label">내용</div>
@@ -500,6 +578,71 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('ddayModal')">취소</button>
       <button class="mbtn ok" onclick="confirmDday()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- 디데이 수정 -->
+<div class="modal-bg" id="ddayEditModal" style="display:none">
+  <div class="modal">
+    <h3>D-Day 수정</h3>
+    <div class="modal-label">이름</div>
+    <input id="dde-name" placeholder="D-Day 이름"/>
+    <div class="modal-label">날짜</div>
+    <input id="dde-date" type="date"/>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('ddayEditModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmDdayEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 일정 수정 -->
+<div class="modal-bg" id="scheduleEditModal" style="display:none">
+  <div class="modal">
+    <h3>일정 수정</h3>
+    <div class="modal-label">일정 이름</div>
+    <input id="sche-name" placeholder="일정 이름"/>
+    <div class="modal-label">시간 (선택)</div>
+    <input id="sche-time" type="time"/>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('scheduleEditModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmScheduleEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 습관 이름/이모지 수정 -->
+<div class="modal-bg" id="habitNameEditModal" style="display:none">
+  <div class="modal">
+    <h3>습관 정보 수정</h3>
+    <div class="modal-label">이름</div>
+    <input id="hne-name" placeholder="습관 이름"/>
+    <div class="modal-label">이모지</div>
+    <input id="hne-emoji" placeholder="예: ✏️"/>
+    <div class="modal-label">목표 주기 / 횟수</div>
+    <div class="modal-row">
+      <select id="hne-period"><option value="week">주 단위</option><option value="month">월 단위</option></select>
+      <input id="hne-target" type="number" min="1" max="31" value="3"/>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('habitNameEditModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmHabitNameEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 폴더 추가 -->
+<div class="modal-bg" id="folderModal" style="display:none">
+  <div class="modal">
+    <h3>폴더 추가</h3>
+    <div class="modal-label">폴더 이름</div>
+    <input id="fd-name" placeholder="예: 작업 아이디어"/>
+    <div class="modal-label">이모지 (선택)</div>
+    <input id="fd-emoji" placeholder="예: 📁"/>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('folderModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmFolder()">추가</button>
     </div>
   </div>
 </div>
@@ -558,6 +701,8 @@ let noSpendData={};
 let ddayList=[];
 let budgetData={};
 let anniversaries=[];
+let folders=[],currentFolderId=null,editingDdayId=null,editingScheduleKey=null,editingScheduleIdx=null,editingHabitNameId=null;
+let habitPostitContent='';
 let topMemoContent='';
 let mealSaveTimers={};
 let dragSrcKey=null,dragSrcIdx=null;
@@ -578,7 +723,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('mainApp').style.display='grid';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
-    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();loadTopMemo();
+    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();renderFolders();loadTopMemo();loadHabitPostit();loadBgSetting();
   } else {
     currentUser=null;
     document.getElementById('loginWrap').style.display='flex';
@@ -592,7 +737,7 @@ async function saveData(type,key,value){if(!currentUser)return;showSaving();awai
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -603,6 +748,8 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'budget')),
     getDoc(doc(db,'users',currentUser.uid,'settings','topMemo')),
     getDocs(collection(db,'users',currentUser.uid,'anniversaries')),
+    getDocs(collection(db,'users',currentUser.uid,'folders')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','habitPostit')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -617,6 +764,8 @@ async function loadAllData(){
   topMemoContent=tmS.exists()?tmS.data().text||'':'';
   anniversaries=[];avS.forEach(d=>{anniversaries.push({id:d.id,...d.data()});});
   anniversaries.sort((a,b)=>nextAnnivDate(a)-nextAnnivDate(b));
+  folders=[];fdS.forEach(d=>{folders.push({id:d.id,...d.data()});});
+  habitPostitContent=hpS.exists()?hpS.data().text||'':'';
 }
 
 // ── 상단 메모 ──
@@ -875,7 +1024,7 @@ function renderSchedule(){
   const list=document.getElementById('schedule-list');list.innerHTML='';
   evs.forEach((ev,idx)=>{
     const row=document.createElement('div');row.className='item-row';
-    row.innerHTML=`<div class="check" onclick="toggleScheduleCheck(this)"></div><span class="item-text">${ev}</span><span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteScheduleItem('${key}',${idx})">✕</span>`;
+    row.innerHTML=`<div class="check" onclick="toggleScheduleCheck(this)"></div><span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})">${ev}</span><span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteScheduleItem('${key}',${idx})">✕</span>`;
     list.appendChild(row);
   });
   document.getElementById('sum-s').textContent='일정 '+evs.length+'개';
@@ -890,6 +1039,21 @@ window.openScheduleModal=function(){
   document.getElementById('sch-name').value='';document.getElementById('sch-time').value='';
   document.getElementById('scheduleModal').style.display='flex';
   setTimeout(()=>document.getElementById('sch-name').focus(),50);
+};
+window.openScheduleEditModal=function(key,idx){
+  editingScheduleKey=key;editingScheduleIdx=idx;
+  const ev=weekEvents[key]?.[idx]||'';
+  const timeMatch=ev.match(/^\[(\d{2}:\d{2})\] (.*)/);
+  document.getElementById('sche-name').value=timeMatch?timeMatch[2]:ev;
+  document.getElementById('sche-time').value=timeMatch?timeMatch[1]:'';
+  document.getElementById('scheduleEditModal').style.display='flex';
+};
+window.confirmScheduleEdit=async function(){
+  const name=document.getElementById('sche-name').value.trim();if(!name)return;
+  const time=document.getElementById('sche-time').value;
+  weekEvents[editingScheduleKey][editingScheduleIdx]=time?`[${time}] ${name}`:name;
+  await saveData('events',editingScheduleKey,{items:weekEvents[editingScheduleKey]});
+  closeModal('scheduleEditModal');renderSchedule();if(curView==='week')renderWeek();
 };
 window.confirmSchedule=async function(){
   const name=document.getElementById('sch-name').value.trim();if(!name)return;
@@ -958,7 +1122,7 @@ function buildHabitCards(containerId){
     }
     dots+='</div>';
     const card=document.createElement('div');card.className='habit-card';
-    card.innerHTML=`<div class="habit-top"><span class="habit-name">${h.emoji||'⭐'} ${h.name}</span><span class="habit-badge ${bC}">${bT}</span></div>${dots}<div style="display:flex;justify-content:space-between;align-items:center"><span class="habit-goal">${pl} ${h.target}회 목표 · ${pct}%</span><div class="habit-actions"><button class="habit-mini-btn" onclick="openHabitEdit('${h.id}')">목표 수정</button><button class="habit-mini-btn" onclick="deleteHabit('${h.id}')">삭제</button></div></div>`;
+    card.innerHTML=`<div class="habit-top"><span class="habit-name editable-title" onclick="openHabitNameEditModal('${h.id}')">${h.emoji||'⭐'} ${h.name}</span><span class="habit-badge ${bC}">${bT}</span></div>${dots}<div style="display:flex;justify-content:space-between;align-items:center"><span class="habit-goal">${pl} ${h.target}회 목표 · ${pct}%</span><div class="habit-actions"><button class="habit-mini-btn" onclick="openHabitNameEditModal('${h.id}')">수정</button><button class="habit-mini-btn" onclick="deleteHabit('${h.id}')">삭제</button></div></div>`;
     list.appendChild(card);
   });
   return{tt,td2};
@@ -974,6 +1138,23 @@ window.toggleHabitDot=async function(id,idx){
   if(idx<(h.done||0))h.done=idx;else h.done=idx+1;
   await saveData('habits',id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done});
   renderHabits();if(leftMode==='habit')renderHabitsLeft();
+};
+window.openHabitNameEditModal=function(id){
+  editingHabitNameId=id;const h=habits.find(x=>x.id===id);if(!h)return;
+  document.getElementById('hne-name').value=h.name;
+  document.getElementById('hne-emoji').value=h.emoji||'';
+  document.getElementById('hne-period').value=h.period;
+  document.getElementById('hne-target').value=h.target;
+  document.getElementById('habitNameEditModal').style.display='flex';
+};
+window.confirmHabitNameEdit=async function(){
+  const h=habits.find(x=>x.id===editingHabitNameId);if(!h)return;
+  h.name=document.getElementById('hne-name').value.trim()||h.name;
+  h.emoji=document.getElementById('hne-emoji').value.trim()||h.emoji;
+  h.period=document.getElementById('hne-period').value;
+  h.target=parseInt(document.getElementById('hne-target').value)||h.target;
+  await saveData('habits',h.id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done||0});
+  renderHabits();if(leftMode==='habit')renderHabitsLeft();closeModal('habitNameEditModal');
 };
 window.openHabitModal=function(){
   document.getElementById('habitModal').style.display='flex';
@@ -1074,12 +1255,15 @@ window.mealBlur=async function(el,dateKey,mealKey){
 function catLabel(c){return{'정체성':'🌟 정체성','할일':'✅ 할일','아이디어':'💡 아이디어','기타':'📌 기타'}[c]||'📌 기타';}
 function renderMemos(){
   const list=document.getElementById('memo-list');list.innerHTML='';
-  const filtered=currentMemoFilter==='전체'?memos:memos.filter(m=>m.category===currentMemoFilter);
+  let filtered=currentMemoFilter==='전체'?[...memos]:memos.filter(m=>m.category===currentMemoFilter);
+  if(currentFolderId!==null)filtered=filtered.filter(m=>m.folderId===currentFolderId);
   if(!filtered.length){list.innerHTML='<div style="font-size:13px;color:#ccc;text-align:center;padding:20px 0">메모가 없어요</div>';return;}
   filtered.forEach(memo=>{
     const card=document.createElement('div');card.className='memo-card';
     const dateStr=memo.createdAt?new Date(memo.createdAt).toLocaleDateString('ko-KR',{month:'long',day:'numeric'}):'';
-    card.innerHTML=`<div class="memo-card-top"><span class="memo-card-title">${memo.title||'제목 없음'}</span><span class="memo-cat-badge ${memo.category||'기타'}">${catLabel(memo.category)}</span><button class="memo-delete" onclick="event.stopPropagation();deleteMemo('${memo.id}')">✕</button></div><div class="memo-card-body">${memo.body||''}</div><div class="memo-card-date">${dateStr}</div>`;
+    const fd=folders.find(f=>f.id===memo.folderId);
+    const fdBadge=fd?`<span style="font-size:10px;color:#aaa">${fd.emoji||'📁'} ${fd.name}</span>`:'';
+    card.innerHTML=`<div class="memo-card-top"><span class="memo-card-title">${memo.title||'제목 없음'}</span><span class="memo-cat-badge ${memo.category||'기타'}">${catLabel(memo.category)}</span><button class="memo-delete" onclick="event.stopPropagation();deleteMemo('${memo.id}')">✕</button></div><div class="memo-card-body">${memo.body||''}</div><div style="display:flex;justify-content:space-between;align-items:center"><div class="memo-card-date">${dateStr}</div>${fdBadge}</div>`;
     card.addEventListener('click',()=>openMemoInLeft(memo.id));
     list.appendChild(card);
   });
@@ -1123,20 +1307,27 @@ window.openMemoModal=function(id){
   document.getElementById('memo-cat').value=memo?.category||'정체성';
   document.getElementById('memo-title').value=memo?.title||'';
   document.getElementById('memo-body').value=memo?.body||'';
+  // 폴더 옵션 채우기
+  const sel=document.getElementById('memo-folder');
+  sel.innerHTML='<option value="">폴더 없음</option>';
+  folders.forEach(fd=>{sel.innerHTML+=`<option value="${fd.id}">${fd.emoji||'📁'} ${fd.name}</option>`;});
+  sel.value=memo?.folderId||currentFolderId||'';
   document.getElementById('memoModal').style.display='flex';
 };
 window.confirmMemo=async function(){
   const title=document.getElementById('memo-title').value.trim();if(!title)return alert('제목을 입력해주세요');
-  const category=document.getElementById('memo-cat').value;const body=document.getElementById('memo-body').value.trim();
+  const category=document.getElementById('memo-cat').value;
+  const body=document.getElementById('memo-body').value.trim();
+  const folderId=document.getElementById('memo-folder').value||null;
   if(editingMemoId){
     const m=memos.find(x=>x.id===editingMemoId);if(!m)return;
-    m.title=title;m.category=category;m.body=body;
-    await saveData('memos',editingMemoId,{title,category,body,createdAt:m.createdAt||Date.now()});
+    m.title=title;m.category=category;m.body=body;m.folderId=folderId;
+    await saveData('memos',editingMemoId,{title,category,body,folderId,createdAt:m.createdAt||Date.now()});
   } else {
-    const id='m_'+Date.now();memos.unshift({id,title,category,body,createdAt:Date.now()});
-    await saveData('memos',id,{title,category,body,createdAt:Date.now()});
+    const id='m_'+Date.now();memos.unshift({id,title,category,body,folderId,createdAt:Date.now()});
+    await saveData('memos',id,{title,category,body,folderId,createdAt:Date.now()});
   }
-  closeModal('memoModal');renderMemos();
+  closeModal('memoModal');renderMemos();renderFolders();
 };
 window.deleteMemo=async function(id){
   if(!confirm('삭제할까요?'))return;
@@ -1159,7 +1350,7 @@ function renderDdays(){
     else if(diff===0){numText='D-Day';numClass='today';subText='오늘!';}
     else{numText='D+'+Math.abs(diff);numClass='past';subText=dd.date+' 지남';}
     const card=document.createElement('div');card.className='dday-card';
-    card.innerHTML=`<button class="dday-del" onclick="deleteDday('${dd.id}')">✕</button><div class="dday-title">${dd.name}</div><div class="dday-num ${numClass}">${numText}</div><div class="dday-sub">${subText}</div>`;
+    card.innerHTML=`<button class="dday-del" onclick="deleteDday('${dd.id}')">✕</button><div class="dday-title editable-title" onclick="openDdayEditModal('${dd.id}')">${dd.name}</div><div class="dday-num ${numClass}">${numText}</div><div class="dday-sub">${subText}</div>`;
     list.appendChild(card);
   });
   document.getElementById('ddayAddBtn').style.display=ddayList.length>=5?'none':'flex';
@@ -1167,6 +1358,19 @@ function renderDdays(){
 window.openDdayModal=function(){
   document.getElementById('dd-name').value='';document.getElementById('dd-date').value='';
   document.getElementById('ddayModal').style.display='flex';
+};
+window.openDdayEditModal=function(id){
+  editingDdayId=id;const dd=ddayList.find(x=>x.id===id);if(!dd)return;
+  document.getElementById('dde-name').value=dd.name;
+  document.getElementById('dde-date').value=dd.date;
+  document.getElementById('ddayEditModal').style.display='flex';
+};
+window.confirmDdayEdit=async function(){
+  const dd=ddayList.find(x=>x.id===editingDdayId);if(!dd)return;
+  dd.name=document.getElementById('dde-name').value.trim()||dd.name;
+  dd.date=document.getElementById('dde-date').value||dd.date;
+  await saveData('ddays',dd.id,{name:dd.name,date:dd.date});
+  closeModal('ddayEditModal');renderDdays();
 };
 window.confirmDday=async function(){
   if(ddayList.length>=5)return alert('최대 5개까지 추가할 수 있어요');
@@ -1236,6 +1440,112 @@ window.deleteAnniv=async function(id){
   await deleteData('anniversaries',id);
   renderAnniversaries();renderMonth();
 };
+
+// ── 폴더 ──
+function renderFolders(){
+  const list=document.getElementById('folderList');if(!list)return;
+  list.innerHTML='';
+  // 전체 항목
+  const allItem=document.createElement('div');
+  allItem.className='folder-item'+(currentFolderId===null?' active':'');
+  allItem.innerHTML=`<span class="folder-icon">📋</span><span class="folder-name">전체 메모</span><span class="folder-count">${memos.length}</span>`;
+  allItem.onclick=()=>{currentFolderId=null;renderFolders();renderMemos();};
+  list.appendChild(allItem);
+  folders.forEach(fd=>{
+    const cnt=memos.filter(m=>m.folderId===fd.id).length;
+    const item=document.createElement('div');
+    item.className='folder-item'+(currentFolderId===fd.id?' active':'');
+    item.innerHTML=`<span class="folder-icon">${fd.emoji||'📁'}</span><span class="folder-name">${fd.name}</span><span class="folder-count">${cnt}</span><button class="folder-del" onclick="event.stopPropagation();deleteFolder('${fd.id}')">✕</button>`;
+    item.onclick=()=>{currentFolderId=fd.id;renderFolders();renderMemos();};
+    list.appendChild(item);
+  });
+}
+window.openFolderModal=function(){
+  document.getElementById('fd-name').value='';
+  document.getElementById('fd-emoji').value='';
+  document.getElementById('folderModal').style.display='flex';
+};
+window.confirmFolder=async function(){
+  const name=document.getElementById('fd-name').value.trim();if(!name)return alert('이름을 입력해주세요');
+  const emoji=document.getElementById('fd-emoji').value.trim()||'📁';
+  const id='fd_'+Date.now();
+  folders.push({id,name,emoji});
+  await saveData('folders',id,{name,emoji});
+  closeModal('folderModal');renderFolders();
+};
+window.deleteFolder=async function(id){
+  if(!confirm('폴더를 삭제하면 안의 메모는 전체로 이동해요. 계속할까요?'))return;
+  memos.forEach(m=>{if(m.folderId===id){m.folderId=null;saveData('memos',m.id,{...m});}});
+  folders=folders.filter(f=>f.id!==id);
+  await deleteData('folders',id);
+  if(currentFolderId===id)currentFolderId=null;
+  renderFolders();renderMemos();
+};
+
+// ── 포스트잇 메모 (습관 탭) ──
+function loadHabitPostit(){
+  const el=document.getElementById('habitPostit');if(el)el.value=habitPostitContent;
+}
+window.saveHabitPostit=async function(){
+  const el=document.getElementById('habitPostit');if(!el)return;
+  const text=el.value;
+  if(text===habitPostitContent)return;
+  habitPostitContent=text;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','habitPostit'),{text});showSaving();
+};
+
+// ── 배경 설정 ──
+function loadBgSetting(){
+  const bg=localStorage.getItem('planner_bg');
+  const pattern=localStorage.getItem('planner_pattern');
+  if(bg)document.body.style.background=bg;
+  if(pattern)applyPattern(pattern);
+}
+window.toggleBgPanel=function(){document.getElementById('bgPanel').classList.toggle('open');};
+window.setBg=function(el,bg){
+  document.body.style.background=bg;
+  localStorage.setItem('planner_bg',bg);
+  document.querySelectorAll('.bg-swatch').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+};
+window.setBgPattern=function(pattern){
+  applyPattern(pattern);
+  localStorage.setItem('planner_pattern',pattern);
+  document.querySelectorAll('.bg-pattern').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bg-pattern').forEach(b=>{if(b.textContent.toLowerCase().includes(pattern)||pattern==='none'&&b.textContent==='없음')b.classList.add('active');});
+};
+function applyPattern(pattern){
+  const overlayId='bg-pattern-overlay';
+  let overlay=document.getElementById(overlayId);
+  if(!overlay){overlay=document.createElement('div');overlay.id=overlayId;overlay.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:0';document.body.prepend(overlay);}
+  const patterns={
+    none:'',
+    dots:'radial-gradient(circle,#0002 1px,transparent 1px)',
+    grid:'linear-gradient(#0001 1px,transparent 1px),linear-gradient(90deg,#0001 1px,transparent 1px)',
+    diagonal:'repeating-linear-gradient(45deg,#0001,#0001 1px,transparent 1px,transparent 8px)',
+  };
+  const sizes={none:'',dots:'16px 16px',grid:'20px 20px',diagonal:'8px 8px'};
+  overlay.style.backgroundImage=patterns[pattern]||'';
+  overlay.style.backgroundSize=sizes[pattern]||'';
+}
+
+// ── Ctrl+S 저장 ──
+document.addEventListener('keydown',async e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){
+    e.preventDefault();
+    // 포스트잇 저장
+    const postit=document.getElementById('habitPostit');
+    if(postit&&postit.value!==habitPostitContent)await window.saveHabitPostit();
+    // 상단 메모 저장
+    await window.saveTopMemo();
+    // 메모 뷰 저장
+    if(viewingMemoId){
+      const t=document.getElementById('mvTitle');const b=document.getElementById('mvBody');
+      if(t&&b)await window.saveMemoFromView(viewingMemoId);
+    }
+    showSaving();
+  }
+});
 
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
 document.querySelectorAll('.modal-bg').forEach(bg=>{bg.addEventListener('click',e=>{if(e.target===bg)bg.style.display='none';});});
