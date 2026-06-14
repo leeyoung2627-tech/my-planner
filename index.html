@@ -15,6 +15,7 @@
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+[contenteditable],[spellcheck]{-webkit-spell-check:none;spell-check:none}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5f4ff;display:flex;flex-direction:column;align-items:center;padding:16px 16px 80px;min-height:100vh;gap:10px}
 
 /* 초기 로딩 — 깜빡임 방지 */
@@ -320,7 +321,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 
 <div class="top-memo-bar" id="topMemoBar">
   <span class="top-memo-label">📌 메모</span>
-  <textarea class="top-memo-input" id="topMemoInput" placeholder="빠른 메모..." rows="1"
+  <textarea class="top-memo-input" id="topMemoInput" placeholder="빠른 메모..." rows="1" spellcheck="false"
     oninput="autoResizeTopMemo(this)" onblur="saveTopMemo()"></textarea>
 </div>
 
@@ -396,7 +397,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
     <div id="tab-meal" class="tab-content">
       <div style="background:#fff;border:0.5px solid #eee;border-radius:8px;padding:10px 12px;flex-shrink:0">
         <div style="font-size:11px;color:#aaa;margin-bottom:5px">🗒️ 식단 계획 메모</div>
-        <div contenteditable="true" id="mealPlanNote"
+        <div contenteditable="true" id="mealPlanNote" spellcheck="false"
           style="font-size:13px;color:#222;outline:none;min-height:40px;max-height:100px;overflow-y:auto;line-height:1.7"
           data-ph="식단 계획, 먹고 싶은 것, 주의할 것..."
           onblur="saveMealPlanNote()"></div>
@@ -424,7 +425,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
     <div id="tab-habit-tab" class="tab-content" style="padding:0">
       <div class="postit-wrap" style="height:100%">
         <div class="postit-box" style="flex:1">
-          <textarea class="postit-textarea" id="habitPostit" placeholder="" onblur="saveHabitPostit()"></textarea>
+          <textarea class="postit-textarea" id="habitPostit" placeholder="" spellcheck="false" onblur="saveHabitPostit()"></textarea>
         </div>
         <div class="postit-save-hint">Ctrl+S 로 저장</div>
       </div>
@@ -572,7 +573,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
     <div class="modal-label">제목</div>
     <input id="memo-title" placeholder="메모 제목"/>
     <div class="modal-label">내용</div>
-    <textarea id="memo-body" placeholder="내용을 입력하세요..."></textarea>
+    <textarea id="memo-body" placeholder="내용을 입력하세요..." spellcheck="false"></textarea>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('memoModal')">취소</button>
       <button class="mbtn ok" onclick="confirmMemo()">저장</button>
@@ -1320,7 +1321,7 @@ function renderMeal(){
   document.getElementById('meal-list').innerHTML=slots.map(([k,label])=>`
     <div class="meal-slot">
       <div class="meal-label">${label}</div>
-      <div class="meal-text" contenteditable="true" data-ph="입력하세요" data-key="${k}"
+      <div class="meal-text" contenteditable="true" spellcheck="false" data-ph="입력하세요" data-key="${k}"
         oninput="mealInput(this,'${key}','${k}')"
         onblur="mealBlur(this,'${key}','${k}')"
         style="outline:none">${data[k]||''}</div>
@@ -1436,7 +1437,7 @@ function openMemoInLeft(id){
       <span class="memo-detail-cat ${memo.category||'기타'}">${catLabel(memo.category)}</span>
       <input class="memo-detail-title-text" id="mvTitle" value="${(memo.title||'').replace(/"/g,'&quot;')}" placeholder="제목"/>
       <hr style="border:none;border-top:0.5px solid #eee"/>
-      <textarea class="memo-detail-body-text" id="mvBody" placeholder="내용을 입력하세요...">${memo.body||''}</textarea>
+      <textarea class="memo-detail-body-text" id="mvBody" spellcheck="false" placeholder="내용을 입력하세요...">${memo.body||''}</textarea>
       <div class="memo-detail-actions">
         <button class="mdabtn del" onclick="deleteMemoFromView('${id}')">삭제</button>
         <button class="mdabtn save" onclick="saveMemoFromView('${id}')">저장</button>
