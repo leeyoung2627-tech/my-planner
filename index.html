@@ -669,8 +669,20 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
     <input id="av-name" placeholder="예: 부모님 결혼기념일"/>
     <div class="modal-label">이모지 (선택)</div>
     <input id="av-emoji" placeholder="예: 🎂"/>
-    <div class="modal-label">날짜</div>
-    <input id="av-date" type="date"/>
+    <div class="modal-label">날짜 종류</div>
+    <select id="av-lunar" onchange="toggleAnnivDateInput()">
+      <option value="solar">양력</option>
+      <option value="lunar">음력</option>
+    </select>
+    <div class="modal-label" id="av-date-label">날짜</div>
+    <input id="av-date" type="date" placeholder="양력 날짜"/>
+    <div id="av-lunar-fields" style="display:none;flex-direction:column;gap:8px">
+      <div class="modal-label">음력 월/일</div>
+      <div class="modal-row">
+        <input id="av-lunar-month" type="number" min="1" max="12" placeholder="월 (1~12)"/>
+        <input id="av-lunar-day" type="number" min="1" max="30" placeholder="일 (1~30)"/>
+      </div>
+    </div>
     <div class="modal-label" style="display:flex;align-items:center;gap:8px">
       <input type="checkbox" id="av-repeat" style="width:auto"/>
       <span>매년 반복 (생일, 기념일 등)</span>
@@ -874,10 +886,73 @@ function getHoliday(date){
 }
 
 // ── 기념일 헬퍼 ──
+// ── 음력 변환 (2025~2050) ──
+// 각 연도의 음력 1월 1일 양력 날짜 + 월별 일수(29 or 30)
+const LUNAR_DATA={
+  2025:{s:'2025-01-29',m:[30,29,30,29,30,30,29,30,29,30,29,30]},
+  2026:{s:'2026-02-17',m:[29,30,29,30,29,30,29,30,30,29,30,29]},
+  2027:{s:'2027-02-06',m:[30,29,30,29,30,29,30,29,30,30,29,30]},
+  2028:{s:'2028-01-26',m:[29,30,30,29,30,29,30,29,29,30,30,29]},
+  2029:{s:'2029-02-13',m:[30,29,30,30,29,30,29,30,29,29,30,30]},
+  2030:{s:'2030-02-03',m:[29,30,29,30,30,29,30,29,30,29,29,30]},
+  2031:{s:'2031-01-23',m:[30,29,30,29,30,29,30,30,29,30,29,29]},
+  2032:{s:'2032-02-11',m:[30,30,29,30,29,30,29,30,29,30,30,29]},
+  2033:{s:'2033-01-31',m:[29,30,30,29,30,29,30,29,30,29,30,29]},
+  2034:{s:'2034-02-19',m:[30,29,30,29,30,30,29,30,29,30,29,30]},
+  2035:{s:'2035-02-08',m:[29,30,29,30,29,30,29,30,30,29,30,29]},
+  2036:{s:'2036-01-28',m:[30,29,30,29,30,29,30,29,30,29,30,30]},
+  2037:{s:'2037-02-15',m:[29,30,29,30,29,30,29,30,29,30,29,30]},
+  2038:{s:'2038-02-04',m:[30,29,30,29,30,29,30,29,30,29,30,29]},
+  2039:{s:'2039-01-24',m:[30,30,29,30,29,30,29,30,29,30,29,29]},
+  2040:{s:'2040-02-12',m:[30,30,29,30,30,29,30,29,30,29,30,29]},
+  2041:{s:'2041-02-01',m:[29,30,29,30,30,29,30,29,30,30,29,30]},
+  2042:{s:'2042-01-22',m:[29,29,30,29,30,29,30,30,29,30,30,29]},
+  2043:{s:'2043-02-10',m:[30,29,29,30,29,30,29,30,29,30,30,30]},
+  2044:{s:'2044-01-30',m:[29,30,29,29,30,29,30,29,30,29,30,30]},
+  2045:{s:'2045-02-17',m:[30,29,30,29,29,30,29,30,29,30,29,30]},
+  2046:{s:'2046-02-06',m:[30,30,29,30,29,29,30,29,30,29,30,29]},
+  2047:{s:'2047-01-26',m:[30,30,29,30,29,30,29,30,29,30,29,29]},
+  2048:{s:'2048-02-14',m:[30,30,29,30,30,29,30,29,30,29,30,29]},
+  2049:{s:'2049-02-02',m:[29,30,29,30,30,29,30,30,29,30,29,30]},
+  2050:{s:'2050-01-23',m:[29,29,30,29,30,29,30,30,29,30,30,29]},
+};
+
+// 음력 월/일 → 해당 연도 양력 날짜 반환
+function lunarToSolar(lunarYear,lunarMonth,lunarDay){
+  const data=LUNAR_DATA[lunarYear];
+  if(!data)return null;
+  const base=new Date(data.s);
+  let offset=0;
+  for(let i=0;i<lunarMonth-1;i++)offset+=data.m[i];
+  offset+=lunarDay-1;
+  const result=new Date(base);result.setDate(base.getDate()+offset);
+  return result;
+}
+
+// 음력 기념일의 올해 양력 날짜 반환 (매년 반복)
+function lunarAnnivToSolar(lunarMonth,lunarDay,targetYear){
+  return lunarToSolar(targetYear,lunarMonth,lunarDay);
+}
+
+window.toggleAnnivDateInput=function(){
+  const isLunar=document.getElementById('av-lunar').value==='lunar';
+  document.getElementById('av-date').style.display=isLunar?'none':'';
+  document.getElementById('av-lunar-fields').style.display=isLunar?'flex':'none';
+  document.getElementById('av-date-label').textContent=isLunar?'음력 날짜 입력':'날짜';
+};
+
 function nextAnnivDate(av){
+  const now=new Date();now.setHours(0,0,0,0);
+  if(av.lunar){
+    // 음력: 올해 양력 날짜 계산
+    const lm=av.lunarMonth,ld=av.lunarDay;
+    const thisYear=now.getFullYear();
+    let solar=lunarAnnivToSolar(lm,ld,thisYear);
+    if(!solar||solar<now)solar=lunarAnnivToSolar(lm,ld,thisYear+1);
+    return solar||now;
+  }
   const [y,m,d]=av.date.split('-').map(Number);
   if(!av.repeat)return new Date(av.date);
-  const now=new Date();now.setHours(0,0,0,0);
   let next=new Date(now.getFullYear(),m-1,d);
   if(next<now)next=new Date(now.getFullYear()+1,m-1,d);
   return next;
@@ -890,12 +965,17 @@ function calcAnnivDday(av){
 // 특정 날짜에 해당하는 기념일 반환 (반복 포함)
 function getAnnivForDate(date){
   return anniversaries.filter(av=>{
+    if(av.lunar){
+      // 음력: 해당 연도 양력 날짜로 변환해서 비교
+      const solar=lunarAnnivToSolar(av.lunarMonth,av.lunarDay,date.getFullYear());
+      if(!solar)return false;
+      return fmt(solar)===fmt(date);
+    }
     if(av.repeat){
       const [,m,d]=av.date.split('-').map(Number);
       return date.getMonth()+1===m&&date.getDate()===d;
-    }else{
-      return fmt(date)===av.date;
     }
+    return fmt(date)===av.date;
   });
 }
 
@@ -1587,15 +1667,23 @@ function renderAnniversaries(){
     if(diff>0){ddayText='D-'+diff;ddayClass='future';}
     else if(diff===0){ddayText='D-Day';ddayClass='today';}
     else{ddayText='지남';ddayClass='past';}
-    const [y,m,d]=av.date.split('-').map(Number);
-    const dateLabel=av.repeat?`매년 ${m}월 ${d}일`:`${y}년 ${m}월 ${d}일`;
+    const [y,m,d]=av.lunar?[null,av.lunarMonth,av.lunarDay]:(av.date||'').split('-').map(Number);
+    let dateLabel,lunarLabel='';
+    if(av.lunar){
+      dateLabel=`음력 매년 ${av.lunarMonth}월 ${av.lunarDay}일`;
+      const solar=lunarAnnivToSolar(av.lunarMonth,av.lunarDay,new Date().getFullYear());
+      if(solar)lunarLabel=`<div class="anniv-repeat">🌙 음력 → 올해 ${solar.getMonth()+1}월 ${solar.getDate()}일</div>`;
+    } else {
+      dateLabel=av.repeat?`매년 ${m}월 ${d}일`:`${y}년 ${m}월 ${d}일`;
+    }
     const card=document.createElement('div');card.className='anniv-card';
     card.innerHTML=`
       <div class="anniv-emoji">${av.emoji||'🎂'}</div>
       <div class="anniv-info">
         <div class="anniv-title">${av.name}</div>
         <div class="anniv-date">${dateLabel}</div>
-        ${av.repeat?`<div class="anniv-repeat">🔁 매년 반복</div>`:''}
+        ${av.repeat&&!av.lunar?`<div class="anniv-repeat">🔁 매년 반복</div>`:''}
+        ${lunarLabel}
       </div>
       <span class="anniv-dday ${ddayClass}">${ddayText}</span>
       <button class="anniv-del" onclick="deleteAnniv('${av.id}')">✕</button>`;
@@ -1607,18 +1695,32 @@ window.openAnnivModal=function(){
   document.getElementById('av-emoji').value='';
   document.getElementById('av-date').value='';
   document.getElementById('av-repeat').checked=false;
+  document.getElementById('av-lunar').value='solar';
+  document.getElementById('av-lunar-month').value='';
+  document.getElementById('av-lunar-day').value='';
+  document.getElementById('av-lunar-fields').style.display='none';
+  document.getElementById('av-date').style.display='';
   document.getElementById('annivModal').style.display='flex';
 };
 window.confirmAnniv=async function(){
   const name=document.getElementById('av-name').value.trim();if(!name)return alert('이름을 입력해주세요');
   const emoji=document.getElementById('av-emoji').value.trim()||'🎂';
-  const date=document.getElementById('av-date').value;if(!date)return alert('날짜를 선택해주세요');
+  const isLunar=document.getElementById('av-lunar').value==='lunar';
   const repeat=document.getElementById('av-repeat').checked;
   const id='av_'+Date.now();
-  const newAv={id,name,emoji,date,repeat};
+  let newAv;
+  if(isLunar){
+    const lm=parseInt(document.getElementById('av-lunar-month').value);
+    const ld=parseInt(document.getElementById('av-lunar-day').value);
+    if(!lm||!ld||lm<1||lm>12||ld<1||ld>30)return alert('음력 월/일을 올바르게 입력해주세요');
+    newAv={id,name,emoji,lunar:true,lunarMonth:lm,lunarDay:ld,date:'',repeat:true};
+  } else {
+    const date=document.getElementById('av-date').value;if(!date)return alert('날짜를 선택해주세요');
+    newAv={id,name,emoji,lunar:false,date,repeat};
+  }
   anniversaries.push(newAv);
   anniversaries.sort((a,b)=>nextAnnivDate(a)-nextAnnivDate(b));
-  await saveData('anniversaries',id,{name,emoji,date,repeat});
+  await saveData('anniversaries',id,newAv);
   closeModal('annivModal');renderAnniversaries();renderMonth();
 };
 window.deleteAnniv=async function(id){
