@@ -37,8 +37,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 /* 앱 레이아웃 */
 .app{display:grid;grid-template-columns:1fr 340px 215px;min-height:calc(100vh - 230px);border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1260px;box-shadow:0 4px 24px #0001}
 
-/* 노트 버튼 (디데이 아래쪽 고정) */
-.note-buttons{position:fixed;right:12px;bottom:60px;display:flex;flex-direction:column;gap:10px;z-index:40}
+/* 노트 버튼 */
+.note-buttons{position:fixed;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:40}
 .note-btn{width:68px;height:68px;background:#fff;border:1.5px solid #ddd;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:12px;font-weight:600;color:#444;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:6px}
 .note-btn:hover{background:#f5f4ff;border-color:#AFA9EC;color:#534AB7;box-shadow:0 4px 12px #534AB720}
 .note-btn:active{transform:scale(.97)}
@@ -1255,16 +1255,19 @@ function buildHabitCards(containerId){
   const list=document.getElementById(containerId);list.innerHTML='';
   let tt=0,td2=0;
   habits.forEach((h,idx)=>{
-    tt+=h.target;td2+=Math.min(h.done||0,h.target);
-    const pct=Math.round(Math.min((h.done||0)/h.target,1)*100);
-    const isDone=(h.done||0)>=h.target;
-    const bC=isDone?'done':(h.done||0)>0?'prog':'fail';
-    const bT=isDone?'✓ 달성':(h.done||0)+'/'+h.target;
+    tt+=h.target;
+    const checked=h.checked||[];
+    const actualDone=checked.length;
+    td2+=Math.min(actualDone,h.target);
+    const pct=Math.round(Math.min(actualDone/h.target,1)*100);
+    const isDone=actualDone>=h.target;
+    const bC=isDone?'done':actualDone>0?'prog':'fail';
+    const bT=isDone?'✓ 달성':actualDone+'/'+h.target;
     const pl=h.period==='week'?'주':'월';
     let dots='<div class="habit-dots">';
-    for(let i=0;i<Math.max(h.target,h.done||0);i++){
-      const f=i<(h.done||0),t=i<h.target;
-      dots+=`<div class="hdot${f?' filled':''}${!f&&t?' target':''}" onclick="toggleHabitDot('${h.id}',${i})">${i+1}</div>`;
+    for(let i=0;i<h.target;i++){
+      const f=checked.includes(i);
+      dots+=`<div class="hdot${f?' filled':''}${!f?' target':''}" onclick="toggleHabitDot('${h.id}',${i})">${i+1}</div>`;
     }
     dots+='</div>';
     const card=document.createElement('div');
@@ -1320,8 +1323,14 @@ function renderHabits(){
 function renderHabitsLeft(){buildHabitCards('habitViewList');}
 window.toggleHabitDot=async function(id,idx){
   const h=habits.find(x=>x.id===id);if(!h)return;
-  if(idx<(h.done||0))h.done=idx;else h.done=idx+1;
-  await saveData('habits',id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done});
+  // 개별 토글: 해당 칸만 on/off
+  if(!h.checked)h.checked=[];
+  // checked 배열 방식으로 관리
+  const ci=h.checked.indexOf(idx);
+  if(ci>=0)h.checked.splice(ci,1);
+  else h.checked.push(idx);
+  h.done=h.checked.length;
+  await saveData('habits',id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done,checked:h.checked});
   renderHabits();if(leftMode==='habit')renderHabitsLeft();
 };
 window.openHabitNameEditModal=function(id){
@@ -1883,6 +1892,20 @@ window.showLayoutTip=function(){
   tip.style.display='block';
   setTimeout(()=>{tip.style.display='none';},3000);
 };
+
+// 노트 버튼 위치 — 메인창 오른쪽 끝 + 100px
+function positionNoteButtons(){
+  const app=document.getElementById('mainApp');
+  const btns=document.querySelector('.note-buttons');
+  if(!app||!btns)return;
+  const rect=app.getBoundingClientRect();
+  btns.style.left=(rect.right+16)+'px';
+}
+window.addEventListener('resize',positionNoteButtons);
+document.addEventListener('DOMContentLoaded',()=>{setTimeout(positionNoteButtons,100);});
+// 로그인 후에도 위치 재계산
+setTimeout(positionNoteButtons,500);
+setTimeout(positionNoteButtons,1500);
 
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
 document.querySelectorAll('.modal-bg').forEach(bg=>{bg.addEventListener('click',e=>{if(e.target===bg)bg.style.display='none';});});
