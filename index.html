@@ -34,7 +34,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .top-memo-input{flex:1;border:none;outline:none;font-size:13px;color:#222;font-family:inherit;resize:none;line-height:1.6;background:transparent;min-height:24px;max-height:120px;overflow-y:auto}
 
 /* 앱 레이아웃 */
-.app{display:grid;grid-template-columns:1fr 340px 160px;min-height:960px;border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1260px;box-shadow:0 4px 24px #0001}
+.app{display:grid;grid-template-columns:1fr 340px 160px;min-height:0;border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1260px;box-shadow:0 4px 24px #0001}
 
 /* 배경 설정 버튼 */
 .bg-setting-btn{position:fixed;bottom:20px;left:20px;width:36px;height:36px;border-radius:50%;background:#fff;border:0.5px solid #ddd;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #0002;z-index:50}
@@ -91,7 +91,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .logout-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:inherit}
 .logout-btn:hover{background:#f5f5f5}
 
-.left-view{flex:1;overflow-y:auto}
+.left-view{flex:1;overflow-y:auto;min-height:0}
 
 /* 일정 달력 */
 .cal-wrap{padding:.65rem .85rem}
@@ -100,7 +100,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 
 /* 날짜 칸 2배 높이 */
-.day-cell{min-height:110px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
+.day-cell{min-height:76px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
 .day-cell:hover{background:#f5f4ff}
 .day-cell.other{color:#ccc}
 .day-cell.today .dn{background:#534AB7;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
@@ -110,7 +110,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 
 /* 가계부 달력 — 금액 표시 */
 .money-cal-wrap{padding:.65rem .85rem}
-.money-day-cell{min-height:110px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
+.money-day-cell{min-height:76px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
 .money-day-cell:hover{background:#fff8f5}
 .money-day-cell.other{color:#ccc}
 .money-day-cell.today .mdn{background:#534AB7;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px}
@@ -274,7 +274,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .dday-sidebar{display:flex;flex-direction:column;background:#fafafa;padding:.75rem .65rem;gap:8px;overflow-y:auto}
 .dday-header{font-size:11px;font-weight:600;color:#aaa;letter-spacing:.04em;padding-bottom:4px;border-bottom:0.5px solid #eee}
 .dday-card{background:#fff;border:0.5px solid #eee;border-radius:10px;padding:9px 10px;display:flex;flex-direction:column;gap:3px;position:relative}
-.dday-title{font-size:12px;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:16px}
+.dday-title{font-size:12px;font-weight:600;color:#222;white-space:normal;word-break:keep-all;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;padding-right:16px;line-height:1.4}
 .dday-date{font-size:10px;color:#aaa}
 .dday-num{font-size:18px;font-weight:700;line-height:1.1}
 .dday-num.future{color:#534AB7}
@@ -1354,7 +1354,13 @@ function catLabel(c){return{'정체성':'🌟 정체성','할일':'✅ 할일','
 function renderMemos(){
   const list=document.getElementById('memo-list');list.innerHTML='';
   let filtered=currentMemoFilter==='전체'?[...memos]:memos.filter(m=>m.category===currentMemoFilter);
-  if(currentFolderId!==null)filtered=filtered.filter(m=>m.folderId===currentFolderId);
+  if(currentFolderId!==null){
+    // 특정 폴더 선택 → 해당 폴더 메모만
+    filtered=filtered.filter(m=>m.folderId===currentFolderId);
+  } else {
+    // 기본 "메모" 탭 → 폴더에 속하지 않은 메모만
+    filtered=filtered.filter(m=>!m.folderId);
+  }
   if(!filtered.length){list.innerHTML='<div style="font-size:13px;color:#ccc;text-align:center;padding:20px 0">메모가 없어요</div>';return;}
 
   // 폴더 드롭 존 (폴더 모드일 때)
@@ -1601,7 +1607,7 @@ function renderFolders(){
   // 전체 항목
   const allItem=document.createElement('div');
   allItem.className='folder-item'+(currentFolderId===null?' active':'');
-  allItem.innerHTML=`<span class="folder-icon">📋</span><span class="folder-name">전체 메모</span><span class="folder-count">${memos.length}</span>`;
+  allItem.innerHTML=`<span class="folder-icon">📋</span><span class="folder-name">메모</span><span class="folder-count">${memos.filter(m=>!m.folderId).length}</span>`;
   allItem.onclick=()=>{currentFolderId=null;renderFolders();renderMemos();};
   // 전체 항목도 드롭 타겟 (폴더 밖으로 꺼내기)
   allItem.addEventListener('dragover',e=>{e.preventDefault();allItem.style.background='#EEEDFE';});
