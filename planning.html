@@ -1771,5 +1771,17 @@ function toast(msg){
   applyBg(state.theme?.bg||'#F2F2F5', false);
 })();
 </script>
+<script>
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){
+    e.preventDefault();
+    if(typeof saveNow==='function')saveNow();
+    var dot=document.getElementById('saveDot');
+    var txt=document.getElementById('saveText');
+    if(dot){dot.classList.add('on');setTimeout(function(){dot.classList.remove('on');},1200);}
+    if(txt){var prev=txt.textContent;txt.textContent='저장됨 ✓';setTimeout(function(){txt.textContent=prev;},1200);}
+  }
+});
+</script>
 </body>
 </html>

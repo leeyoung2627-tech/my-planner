@@ -1075,8 +1075,11 @@
                     setTimeout(() => { const nextCut = document.querySelector(`textarea[data-cut="${idx+1}"][data-col="1"][data-sub="0"]`); if(nextCut) nextCut.focus(); }, 50);
                 }
             }
-            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-                e.preventDefault(); saveFile(e.shiftKey); 
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S') && !e.shiftKey) {
+                e.preventDefault(); saveLocal(); showToast('저장됨 ✓');
+            }
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 's' || e.key === 'S')) {
+                e.preventDefault(); saveFile(true);
             }
             
             if ((e.ctrlKey || e.metaKey) && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {

@@ -37,11 +37,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 /* 앱 레이아웃 */
 .app{display:grid;grid-template-columns:1fr 340px 215px;min-height:calc(100vh - 230px);border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1260px;box-shadow:0 4px 24px #0001}
 
-/* 노트 버튼 (배경 오른쪽) */
-.note-buttons{position:fixed;right:20px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:14px;z-index:40}
-.note-btn{width:72px;height:72px;background:#fff;border:2.5px solid #333;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:3px 3px 0 #333;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:13px;font-weight:700;color:#222;text-align:center;line-height:1.4;text-decoration:none;transition:transform .1s,box-shadow .1s;user-select:none;padding:6px}
-.note-btn:hover{transform:translate(1px,1px);box-shadow:2px 2px 0 #333;background:#fafafa}
-.note-btn:active{transform:translate(3px,3px);box-shadow:0 0 0 #333}
+/* 노트 버튼 (디데이 아래쪽 고정) */
+.note-buttons{position:fixed;right:12px;bottom:60px;display:flex;flex-direction:column;gap:10px;z-index:40}
+.note-btn{width:68px;height:68px;background:#fff;border:1.5px solid #ddd;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:12px;font-weight:600;color:#444;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:6px}
+.note-btn:hover{background:#f5f4ff;border-color:#AFA9EC;color:#534AB7;box-shadow:0 4px 12px #534AB720}
+.note-btn:active{transform:scale(.97)}
 
 /* 배경 설정 버튼 */
 .bg-setting-btn{position:fixed;bottom:20px;left:20px;width:36px;height:36px;border-radius:50%;background:#fff;border:0.5px solid #ddd;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #0002;z-index:50}
