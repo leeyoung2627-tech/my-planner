@@ -65,6 +65,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .editable-title{cursor:pointer;border-bottom:1px dashed transparent}
 .editable-title:hover{border-bottom-color:#aaa}
 
+/* 식단 메모 placeholder */
+#mealPlanNote:empty:before{content:attr(data-ph);color:#ccc;pointer-events:none}
+
 /* 왼쪽 */
 .left{display:flex;flex-direction:column;border-right:0.5px solid #eee;min-width:0}
 .top-nav{display:flex;align-items:center;gap:6px;padding:.65rem .85rem;border-bottom:0.5px solid #eee;flex-shrink:0}
@@ -382,6 +385,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
     </div>
 
     <div id="tab-meal" class="tab-content">
+      <div style="background:#fff;border:0.5px solid #eee;border-radius:8px;padding:10px 12px;flex-shrink:0">
+        <div style="font-size:11px;color:#aaa;margin-bottom:5px">🗒️ 식단 계획 메모</div>
+        <div contenteditable="true" id="mealPlanNote"
+          style="font-size:13px;color:#222;outline:none;min-height:40px;max-height:100px;overflow-y:auto;line-height:1.7"
+          data-ph="오늘 어떤 식단을 할지 미리 적어두세요..."
+          oninput="mealPlanInput(this)"
+          onblur="saveMealPlanNote()"></div>
+      </div>
       <div id="meal-list"></div>
     </div>
 
@@ -402,16 +413,12 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
       </div>
     </div>
 
-    <div id="tab-habit-tab" class="tab-content" style="padding:0;flex-direction:row;gap:0">
-      <div style="flex:1;padding:.75rem 1rem;overflow-y:auto;display:flex;flex-direction:column;gap:6px;border-right:0.5px solid #eee">
-        <div id="habit-list-right"></div>
-        <button class="add-btn" onclick="openHabitModal()">＋ 습관 추가</button>
-      </div>
-      <div class="postit-wrap" style="width:160px;flex-shrink:0">
+    <div id="tab-habit-tab" class="tab-content" style="padding:0">
+      <div class="postit-wrap" style="height:100%">
         <div class="postit-label">📝 습관 메모</div>
-        <div class="postit-box">
+        <div class="postit-box" style="flex:1">
           <div class="postit-lines"></div>
-          <textarea class="postit-textarea" id="habitPostit" placeholder="습관을 만들며 느낀 점, 다짐..." onblur="saveHabitPostit()"></textarea>
+          <textarea class="postit-textarea" id="habitPostit" placeholder="습관을 만들며 느낀 점, 다짐, 기록..." onblur="saveHabitPostit()"></textarea>
         </div>
         <div class="postit-save-hint">Ctrl+S 로 저장</div>
       </div>
@@ -1023,8 +1030,36 @@ function renderSchedule(){
   const key=fmt(selDate);const evs=weekEvents[key]||[];
   const list=document.getElementById('schedule-list');list.innerHTML='';
   evs.forEach((ev,idx)=>{
-    const row=document.createElement('div');row.className='item-row';
-    row.innerHTML=`<div class="check" onclick="toggleScheduleCheck(this)"></div><span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})">${ev}</span><span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteScheduleItem('${key}',${idx})">✕</span>`;
+    const row=document.createElement('div');
+    row.className='item-row';
+    row.draggable=true;
+    row.dataset.idx=idx;
+    row.style.cursor='grab';
+    row.innerHTML=`
+      <span style="font-size:14px;color:#ccc;cursor:grab;padding:0 4px 0 0;user-select:none">⠿</span>
+      <div class="check" onclick="toggleScheduleCheck(this)"></div>
+      <span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})">${ev}</span>
+      <span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteScheduleItem('${key}',${idx})">✕</span>`;
+    // 드래그 이벤트
+    row.addEventListener('dragstart',e=>{
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',idx);
+      row.style.opacity='.4';
+    });
+    row.addEventListener('dragend',()=>{row.style.opacity='1';});
+    row.addEventListener('dragover',e=>{e.preventDefault();row.style.background='#f0eeff';});
+    row.addEventListener('dragleave',()=>{row.style.background='';});
+    row.addEventListener('drop',async e=>{
+      e.preventDefault();row.style.background='';
+      const from=parseInt(e.dataTransfer.getData('text/plain'));
+      const to=idx;
+      if(from===to)return;
+      const arr=weekEvents[key];
+      const [moved]=arr.splice(from,1);
+      arr.splice(to,0,moved);
+      await saveData('events',key,{items:arr});
+      renderSchedule();if(curView==='week')renderWeek();
+    });
     list.appendChild(row);
   });
   document.getElementById('sum-s').textContent='일정 '+evs.length+'개';
@@ -1128,9 +1163,12 @@ function buildHabitCards(containerId){
   return{tt,td2};
 }
 function renderHabits(){
-  const{tt,td2}=buildHabitCards('habit-list-right');
+  // habit-list-right는 제거됨 — 왼쪽 뷰에만 표시
+  let tt=0,td2=0;
+  habits.forEach(h=>{tt+=h.target;td2+=Math.min(h.done||0,h.target);});
   const pct=tt>0?Math.round(td2/tt*100):0;
   document.getElementById('sum-h').textContent='습관 '+pct+'%';
+  if(leftMode==='habit')renderHabitsLeft();
 }
 function renderHabitsLeft(){buildHabitCards('habitViewList');}
 window.toggleHabitDot=async function(id,idx){
@@ -1230,6 +1268,9 @@ window.deleteMoney=async function(key,idx){
 // ── 식단 ──
 function renderMeal(){
   const key=fmt(selDate);const data=mealData[key]||{};
+  // 식단 계획 메모 로드
+  const noteEl=document.getElementById('mealPlanNote');
+  if(noteEl){noteEl.innerHTML=data.planNote||'';}
   const slots=[['breakfast','아침'],['lunch','점심'],['dinner','저녁'],['snack','간식']];
   document.getElementById('meal-list').innerHTML=slots.map(([k,label])=>`
     <div class="meal-slot">
@@ -1240,6 +1281,16 @@ function renderMeal(){
         style="outline:none">${data[k]||''}</div>
     </div>`).join('');
 }
+window.mealPlanInput=function(el){
+  // 즉시 로컬 반영만 (blur에서 저장)
+};
+window.saveMealPlanNote=async function(){
+  const key=fmt(selDate);
+  const text=document.getElementById('mealPlanNote').innerHTML;
+  if(!mealData[key])mealData[key]={};
+  mealData[key].planNote=text;
+  await saveData('meal',key,mealData[key]);
+};
 window.mealInput=function(el,dateKey,mealKey){
   if(!mealData[dateKey])mealData[dateKey]={};mealData[dateKey][mealKey]=el.innerText;
   clearTimeout(mealSaveTimers[mealKey]);
@@ -1258,14 +1309,84 @@ function renderMemos(){
   let filtered=currentMemoFilter==='전체'?[...memos]:memos.filter(m=>m.category===currentMemoFilter);
   if(currentFolderId!==null)filtered=filtered.filter(m=>m.folderId===currentFolderId);
   if(!filtered.length){list.innerHTML='<div style="font-size:13px;color:#ccc;text-align:center;padding:20px 0">메모가 없어요</div>';return;}
-  filtered.forEach(memo=>{
+
+  // 폴더 드롭 존 (폴더 모드일 때)
+  if(currentFolderId!==null){
+    const dropBack=document.createElement('div');
+    dropBack.style.cssText='font-size:11px;color:#aaa;text-align:center;padding:4px;border:0.5px dashed #ddd;border-radius:6px;cursor:pointer;margin-bottom:4px';
+    dropBack.textContent='↑ 전체로 꺼내기 (드래그하거나 클릭)';
+    dropBack.addEventListener('dragover',e=>{e.preventDefault();dropBack.style.background='#EEEDFE';});
+    dropBack.addEventListener('dragleave',()=>{dropBack.style.background='';});
+    dropBack.addEventListener('drop',async e=>{
+      e.preventDefault();dropBack.style.background='';
+      const id=e.dataTransfer.getData('memo-id');if(!id)return;
+      const m=memos.find(x=>x.id===id);if(!m)return;
+      m.folderId=null;
+      await saveData('memos',id,{title:m.title,category:m.category,body:m.body,folderId:null,createdAt:m.createdAt||Date.now()});
+      renderMemos();renderFolders();
+    });
+    list.appendChild(dropBack);
+  }
+
+  filtered.forEach((memo,i)=>{
     const card=document.createElement('div');card.className='memo-card';
+    card.draggable=true;
+    card.dataset.id=memo.id;
+    card.style.cursor='grab';
     const dateStr=memo.createdAt?new Date(memo.createdAt).toLocaleDateString('ko-KR',{month:'long',day:'numeric'}):'';
     const fd=folders.find(f=>f.id===memo.folderId);
     const fdBadge=fd?`<span style="font-size:10px;color:#aaa">${fd.emoji||'📁'} ${fd.name}</span>`:'';
-    card.innerHTML=`<div class="memo-card-top"><span class="memo-card-title">${memo.title||'제목 없음'}</span><span class="memo-cat-badge ${memo.category||'기타'}">${catLabel(memo.category)}</span><button class="memo-delete" onclick="event.stopPropagation();deleteMemo('${memo.id}')">✕</button></div><div class="memo-card-body">${memo.body||''}</div><div style="display:flex;justify-content:space-between;align-items:center"><div class="memo-card-date">${dateStr}</div>${fdBadge}</div>`;
+    card.innerHTML=`
+      <div class="memo-card-top">
+        <span style="font-size:12px;color:#ccc;cursor:grab;padding-right:4px;user-select:none">⠿</span>
+        <span class="memo-card-title">${memo.title||'제목 없음'}</span>
+        <span class="memo-cat-badge ${memo.category||'기타'}">${catLabel(memo.category)}</span>
+        <button class="memo-delete" onclick="event.stopPropagation();deleteMemo('${memo.id}')">✕</button>
+      </div>
+      <div class="memo-card-body">${memo.body||''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="memo-card-date">${dateStr}</div>${fdBadge}
+      </div>`;
+    // 드래그 이벤트
+    card.addEventListener('dragstart',e=>{
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('memo-id',memo.id);
+      e.dataTransfer.setData('memo-order',String(i));
+      card.style.opacity='.4';
+    });
+    card.addEventListener('dragend',()=>{card.style.opacity='1';});
+    card.addEventListener('dragover',e=>{e.preventDefault();card.style.outline='1.5px solid #AFA9EC';});
+    card.addEventListener('dragleave',()=>{card.style.outline='';});
+    card.addEventListener('drop',async e=>{
+      e.preventDefault();card.style.outline='';
+      const fromId=e.dataTransfer.getData('memo-id');if(!fromId||fromId===memo.id)return;
+      // 순서 변경: memos 배열에서 from을 to 위치로
+      const fromIdxGlobal=memos.findIndex(m=>m.id===fromId);
+      const toIdxGlobal=memos.findIndex(m=>m.id===memo.id);
+      if(fromIdxGlobal===-1||toIdxGlobal===-1)return;
+      const [moved]=memos.splice(fromIdxGlobal,1);
+      memos.splice(toIdxGlobal,0,moved);
+      // 순서 저장 (order 필드)
+      await Promise.all(memos.map((m,order)=>saveData('memos',m.id,{title:m.title,category:m.category,body:m.body,folderId:m.folderId||null,createdAt:m.createdAt||Date.now(),order})));
+      renderMemos();renderFolders();
+    });
     card.addEventListener('click',()=>openMemoInLeft(memo.id));
     list.appendChild(card);
+  });
+
+  // 폴더들을 드롭 타겟으로 (폴더 리스트)
+  document.querySelectorAll('.folder-item').forEach(fi=>{
+    fi.addEventListener('dragover',e=>{e.preventDefault();fi.style.background='#EEEDFE';fi.style.borderColor='#AFA9EC';});
+    fi.addEventListener('dragleave',()=>{fi.style.background='';fi.style.borderColor='';});
+    fi.addEventListener('drop',async e=>{
+      e.preventDefault();fi.style.background='';fi.style.borderColor='';
+      const id=e.dataTransfer.getData('memo-id');if(!id)return;
+      const fdId=fi.dataset.folderId;
+      const m=memos.find(x=>x.id===id);if(!m)return;
+      m.folderId=fdId||null;
+      await saveData('memos',id,{title:m.title,category:m.category,body:m.body,folderId:m.folderId,createdAt:m.createdAt||Date.now()});
+      renderMemos();renderFolders();
+    });
   });
 }
 function openMemoInLeft(id){
@@ -1455,6 +1576,7 @@ function renderFolders(){
     const cnt=memos.filter(m=>m.folderId===fd.id).length;
     const item=document.createElement('div');
     item.className='folder-item'+(currentFolderId===fd.id?' active':'');
+    item.dataset.folderId=fd.id;
     item.innerHTML=`<span class="folder-icon">${fd.emoji||'📁'}</span><span class="folder-name">${fd.name}</span><span class="folder-count">${cnt}</span><button class="folder-del" onclick="event.stopPropagation();deleteFolder('${fd.id}')">✕</button>`;
     item.onclick=()=>{currentFolderId=fd.id;renderFolders();renderMemos();};
     list.appendChild(item);
