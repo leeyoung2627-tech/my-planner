@@ -777,7 +777,7 @@ async function loadAllData(){
   });
   noSpendData={};nsS.forEach(d=>{noSpendData[d.id]=d.data().done||false;});
   ddayList=[];ddS.forEach(d=>{ddayList.push({id:d.id,...d.data()});});
-  ddayList.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  ddayList.sort((a,b)=>(a.order??new Date(a.date).getTime())-(b.order??new Date(b.date).getTime()));
   budgetData={};bdS.forEach(d=>{budgetData[d.id]=d.data().amount||0;});
   topMemoContent=tmS.exists()?tmS.data().text||'':'';
   anniversaries=[];avS.forEach(d=>{anniversaries.push({id:d.id,...d.data()});});
@@ -1502,14 +1502,41 @@ function calcDday(dateStr){
 }
 function renderDdays(){
   const list=document.getElementById('ddayList');list.innerHTML='';
-  ddayList.forEach(dd=>{
+  ddayList.forEach((dd,idx)=>{
     const diff=calcDday(dd.date);
     let numText,numClass,subText;
     if(diff>0){numText='D-'+diff;numClass='future';subText=dd.date+' 까지';}
     else if(diff===0){numText='D-Day';numClass='today';subText='오늘!';}
     else{numText='D+'+Math.abs(diff);numClass='past';subText=dd.date+' 지남';}
-    const card=document.createElement('div');card.className='dday-card';
-    card.innerHTML=`<button class="dday-del" onclick="deleteDday('${dd.id}')">✕</button><div class="dday-title editable-title" onclick="openDdayEditModal('${dd.id}')">${dd.name}</div><div class="dday-num ${numClass}">${numText}</div><div class="dday-sub">${subText}</div>`;
+    const card=document.createElement('div');
+    card.className='dday-card';
+    card.draggable=true;
+    card.dataset.idx=idx;
+    card.innerHTML=`
+      <span style="position:absolute;top:7px;left:7px;font-size:12px;color:#ddd;cursor:grab;user-select:none">⠿</span>
+      <button class="dday-del" onclick="deleteDday('${dd.id}')">✕</button>
+      <div class="dday-title editable-title" style="padding-left:16px" onclick="openDdayEditModal('${dd.id}')">${dd.name}</div>
+      <div class="dday-num ${numClass}">${numText}</div>
+      <div class="dday-sub">${subText}</div>`;
+    card.addEventListener('dragstart',e=>{
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('dday-idx',String(idx));
+      card.style.opacity='.4';
+    });
+    card.addEventListener('dragend',()=>{card.style.opacity='1';});
+    card.addEventListener('dragover',e=>{e.preventDefault();card.style.outline='1.5px solid #AFA9EC';});
+    card.addEventListener('dragleave',()=>{card.style.outline='';});
+    card.addEventListener('drop',async e=>{
+      e.preventDefault();card.style.outline='';
+      const from=parseInt(e.dataTransfer.getData('dday-idx'));
+      const to=idx;
+      if(from===to||isNaN(from))return;
+      const [moved]=ddayList.splice(from,1);
+      ddayList.splice(to,0,moved);
+      // order 필드로 저장
+      await Promise.all(ddayList.map((d,order)=>saveData('ddays',d.id,{name:d.name,date:d.date,order})));
+      renderDdays();
+    });
     list.appendChild(card);
   });
   document.getElementById('ddayAddBtn').style.display=ddayList.length>=5?'none':'flex';
