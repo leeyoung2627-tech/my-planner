@@ -134,12 +134,37 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .ctx-item.danger:hover{background:#fff5f5}
 .ctx-divider{border:none;border-top:1px solid var(--border);margin:3px 0}
 
-/* 토스트 */
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(30,30,40,.88);color:#fff;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:600;opacity:0;transition:opacity .25s;z-index:3000;pointer-events:none}
+/* 테마 버튼 */
+.theme-btn{position:fixed;bottom:20px;left:20px;width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid var(--border);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.1);z-index:100}
+.theme-btn:hover{background:var(--base-light)}
+
+/* 테마 패널 */
+.theme-panel{position:fixed;bottom:64px;left:20px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;width:290px;box-shadow:0 6px 24px rgba(0,0,0,.12);z-index:100;display:none;flex-direction:column;gap:12px;max-height:80vh;overflow-y:auto}
+.theme-panel.open{display:flex}
+.theme-panel::-webkit-scrollbar{width:4px}
+.theme-panel::-webkit-scrollbar-thumb{background:#eee;border-radius:2px}
+.tp-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.04em}
+.tp-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.tp-preset{border-radius:8px;height:44px;cursor:pointer;border:2px solid transparent;transition:.15s;display:flex;align-items:flex-end;overflow:hidden}
+.tp-preset:hover{transform:scale(1.04)}
+.tp-preset.active{box-shadow:0 0 0 2px var(--base)}
+.tp-preset-name{font-size:9px;font-weight:700;padding:2px 4px;width:100%;text-align:center;background:rgba(0,0,0,.2);color:rgba(255,255,255,.95)}
+.tp-color-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tp-color-label{font-size:12px;color:#555;flex:1}
+.tp-color-wrap{display:flex;align-items:center;gap:5px}
+.tp-preview{width:22px;height:22px;border-radius:50%;border:1.5px solid #eee;cursor:pointer;flex-shrink:0}
+.tp-color-wrap input[type=color]{width:0;height:0;opacity:0;padding:0;border:none;position:absolute}
+.tp-hex{font-size:11px;color:#888;font-family:monospace;width:56px}
+.tp-font-btns{display:flex;gap:4px;flex-wrap:wrap}
+.tp-font-btn{padding:3px 9px;border-radius:5px;border:1px solid #eee;font-size:11px;cursor:pointer;background:#fafafa;color:#555;transition:.15s}
+.tp-font-btn:hover,.tp-font-btn.active{background:var(--base-light);border-color:var(--base);color:var(--base)}
+.tp-divider{border:none;border-top:0.5px solid #f0f0f0}
+.tp-reset{width:100%;padding:6px;border:1px solid #eee;border-radius:7px;background:transparent;font-size:12px;color:#aaa;cursor:pointer;font-family:inherit}
+.tp-reset:hover{background:#fafafa;color:#666}
 .toast.show{opacity:1}
 
-/* 로그인 화면 */
-.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px}
+/* 토스트 */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(30,30,40,.88);color:#fff;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:600;opacity:0;transition:opacity .25s;z-index:3000;pointer-events:none}display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px}
 .login-box{background:#fff;border:1px solid var(--border);border-radius:16px;padding:40px;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:var(--shadow)}
 .google-btn{display:flex;align-items:center;gap:10px;padding:10px 20px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:14px;color:var(--text);font-family:inherit;width:100%;justify-content:center}
 .google-btn:hover{background:#f5f5f5}
@@ -208,6 +233,48 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
       <div class="side-content" id="sideContent"></div>
     </div>
   </div>
+</div>
+
+<button class="theme-btn" onclick="toggleThemePanel()" title="테마 설정">🎨</button>
+<div class="theme-panel" id="themePanel">
+  <div class="tp-title">테마 프리셋</div>
+  <div class="tp-presets" id="wpThemePresets"></div>
+  <hr class="tp-divider"/>
+  <div class="tp-title">세부 설정</div>
+  <div class="tp-color-row">
+    <span class="tp-color-label">🎨 포인트 색</span>
+    <div class="tp-color-wrap">
+      <div class="tp-preview" id="wp-prev-accent" onclick="document.getElementById('wp-inp-accent').click()"></div>
+      <span class="tp-hex" id="wp-hex-accent">#534AB7</span>
+      <input type="color" id="wp-inp-accent" oninput="wpCustomColor('accent',this.value)"/>
+    </div>
+  </div>
+  <div class="tp-color-row">
+    <span class="tp-color-label">📄 배경색</span>
+    <div class="tp-color-wrap">
+      <div class="tp-preview" id="wp-prev-bg" onclick="document.getElementById('wp-inp-bg').click()"></div>
+      <span class="tp-hex" id="wp-hex-bg">#f5f4ff</span>
+      <input type="color" id="wp-inp-bg" oninput="wpCustomColor('bg',this.value)"/>
+    </div>
+  </div>
+  <div class="tp-color-row">
+    <span class="tp-color-label">🖊️ 폰트 색</span>
+    <div class="tp-color-wrap">
+      <div class="tp-preview" id="wp-prev-text" onclick="document.getElementById('wp-inp-text').click()"></div>
+      <span class="tp-hex" id="wp-hex-text">#222222</span>
+      <input type="color" id="wp-inp-text" oninput="wpCustomColor('text',this.value)"/>
+    </div>
+  </div>
+  <hr class="tp-divider"/>
+  <div class="tp-title">폰트</div>
+  <div class="tp-font-btns">
+    <button class="tp-font-btn active" onclick="wpSetFont('system',this)">시스템</button>
+    <button class="tp-font-btn" onclick="wpSetFont('serif',this)">명조</button>
+    <button class="tp-font-btn" onclick="wpSetFont('mono',this)">모노</button>
+    <button class="tp-font-btn" onclick="wpSetFont('nanum',this)">나눔</button>
+  </div>
+  <hr class="tp-divider"/>
+  <button class="tp-reset" onclick="wpResetTheme()">↺ 기본값 초기화</button>
 </div>
 
 <div class="ctx-menu" id="ctxMenu"></div>
@@ -549,10 +616,107 @@ window.showToast=function(msg){
   clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1800);
 };
 
-// ── Ctrl+S ──
-document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();window.saveNow();}
+// ── 테마 시스템 ──
+const WP_THEMES=[
+  {name:'기본',accent:'#534AB7',accentLight:'#EEEDFE',bg:'#f5f4ff',text:'#222222'},
+  {name:'로즈',accent:'#e84393',accentLight:'#fce4f0',bg:'#fff0f6',text:'#222222'},
+  {name:'포레스트',accent:'#2d7a4f',accentLight:'#e0f5ea',bg:'#f0faf4',text:'#1a2e22'},
+  {name:'오션',accent:'#0077cc',accentLight:'#e0f0ff',bg:'#f0f7ff',text:'#0d1f33'},
+  {name:'선셋',accent:'#d4572a',accentLight:'#fceee8',bg:'#fff8f5',text:'#2d1206'},
+  {name:'라벤더',accent:'#8b5cf6',accentLight:'#f3e8ff',bg:'#faf5ff',text:'#1e1033'},
+  {name:'민트',accent:'#0891b2',accentLight:'#e0f7fa',bg:'#f0fdff',text:'#0e2d33'},
+  {name:'다크',accent:'#818cf8',accentLight:'#312e81',bg:'#1e1e2e',text:'#e0e0f0'},
+  {name:'샌드',accent:'#b45309',accentLight:'#fef3c7',bg:'#fdf8ee',text:'#2d1a04'},
+  {name:'슬레이트',accent:'#475569',accentLight:'#e2e8f0',bg:'#f1f5f9',text:'#1e293b'},
+  {name:'체리',accent:'#be123c',accentLight:'#ffe4e6',bg:'#fff5f5',text:'#1c0a0d'},
+  {name:'모노',accent:'#333333',accentLight:'#f0f0f0',bg:'#f5f5f5',text:'#111111'},
+];
+const WP_FONTS={
+  system:"'Apple SD Gothic Neo','Malgun Gothic',sans-serif",
+  serif:"'Noto Serif KR',Georgia,serif",
+  mono:"'D2Coding','Courier New',monospace",
+  nanum:"'Nanum Gothic',sans-serif",
+};
+let wpTheme={...WP_THEMES[0]};
+let wpFont='system';
+
+function wpLoadTheme(){
+  const s=localStorage.getItem('writing_theme_v1');
+  if(s){try{wpTheme=JSON.parse(s);}catch(e){}}
+  const f=localStorage.getItem('writing_font');if(f)wpFont=f;
+  wpApplyTheme();wpApplyFont(wpFont);
+}
+function wpApplyTheme(){
+  const t=wpTheme;
+  const r=document.documentElement;
+  r.style.setProperty('--base',t.accent);
+  r.style.setProperty('--base-light',t.accentLight);
+  r.style.setProperty('--bg',t.bg);
+  document.body.style.background=t.bg;
+  document.body.style.color=t.text;
+  localStorage.setItem('writing_theme_v1',JSON.stringify(t));
+  wpUpdatePreviews();
+}
+function wpUpdatePreviews(){
+  const t=wpTheme;
+  [['wp-prev-accent','wp-hex-accent',t.accent],
+   ['wp-prev-bg','wp-hex-bg',t.bg],
+   ['wp-prev-text','wp-hex-text',t.text]].forEach(([pid,hid,val])=>{
+    const p=document.getElementById(pid);const h=document.getElementById(hid);
+    if(p)p.style.background=val;if(h)h.textContent=val;
+  });
+  document.getElementById('wp-inp-accent').value=t.accent;
+  document.getElementById('wp-inp-bg').value=t.bg;
+  document.getElementById('wp-inp-text').value=t.text;
+}
+function wpRenderPresets(){
+  const wrap=document.getElementById('wpThemePresets');if(!wrap)return;
+  wrap.innerHTML='';
+  WP_THEMES.forEach(t=>{
+    const el=document.createElement('div');el.className='tp-preset';
+    el.style.background=`linear-gradient(135deg,${t.bg},${t.accentLight})`;
+    el.style.borderTop=`3px solid ${t.accent}`;
+    const isActive=wpTheme.accent===t.accent&&wpTheme.bg===t.bg;
+    if(isActive)el.classList.add('active');
+    el.innerHTML=`<div class="tp-preset-name">${t.name}</div>`;
+    el.onclick=()=>{wpTheme={...t};wpApplyTheme();wpRenderPresets();};
+    wrap.appendChild(el);
+  });
+}
+window.toggleThemePanel=function(){
+  const p=document.getElementById('themePanel');
+  const open=p.classList.toggle('open');
+  if(open){wpRenderPresets();wpUpdatePreviews();}
+};
+window.wpCustomColor=function(key,val){
+  wpTheme[key]=val;wpApplyTheme();
+};
+window.wpSetFont=function(fontKey,btn){
+  wpFont=fontKey;wpApplyFont(fontKey);
+  localStorage.setItem('writing_font',fontKey);
+  document.querySelectorAll('.tp-font-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+};
+function wpApplyFont(fontKey){
+  document.body.style.fontFamily=WP_FONTS[fontKey]||WP_FONTS.system;
+}
+window.wpResetTheme=function(){
+  wpTheme={...WP_THEMES[0]};wpFont='system';
+  wpApplyTheme();wpApplyFont('system');
+  localStorage.removeItem('writing_theme_v1');
+  localStorage.removeItem('writing_font');
+  wpRenderPresets();wpUpdatePreviews();
+  document.querySelectorAll('.tp-font-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.tp-font-btn')?.classList.add('active');
+};
+// 클릭 외부 닫기
+document.addEventListener('click',e=>{
+  const p=document.getElementById('themePanel');
+  const b=document.querySelector('.theme-btn');
+  if(p&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');
 });
+
+wpLoadTheme();
 </script>
 </body>
 </html>
