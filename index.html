@@ -19,7 +19,7 @@
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5f4ff;display:flex;flex-direction:column;align-items:center;padding:16px 110px 80px 16px;min-height:100vh;gap:10px}
 
 /* 초기 로딩 — 깜빡임 방지 */
-#loginWrap,#topMemoBar,#mainApp{display:none}
+#loginWrap,#topMemoBar,#mainApp,#savingIndicator,.note-buttons,.bg-setting-btn,#bgPanel{display:none}
 
 .login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;width:100%}
 .login-box{background:#fff;border-radius:16px;padding:40px;width:320px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 4px 24px #0001;border:0.5px solid #eee}
@@ -765,9 +765,12 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('loginWrap').style.display='none';
     document.getElementById('topMemoBar').style.display='flex';
     document.getElementById('mainApp').style.display='grid';
+    document.querySelector('.note-buttons').style.display='flex';
+    document.querySelector('.bg-setting-btn').style.display='flex';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();renderFolders();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();
+    positionNoteButtons();
   } else {
     currentUser=null;
     document.getElementById('loginWrap').style.display='flex';
@@ -1899,13 +1902,12 @@ function positionNoteButtons(){
   const btns=document.querySelector('.note-buttons');
   if(!app||!btns)return;
   const rect=app.getBoundingClientRect();
+  // 메인창 오른쪽 끝 + 16px
   btns.style.left=(rect.right+16)+'px';
+  btns.style.top=rect.top+'px';
+  btns.style.transform='none';
 }
 window.addEventListener('resize',positionNoteButtons);
-document.addEventListener('DOMContentLoaded',()=>{setTimeout(positionNoteButtons,100);});
-// 로그인 후에도 위치 재계산
-setTimeout(positionNoteButtons,500);
-setTimeout(positionNoteButtons,1500);
 
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
 document.querySelectorAll('.modal-bg').forEach(bg=>{bg.addEventListener('click',e=>{if(e.target===bg)bg.style.display='none';});});
