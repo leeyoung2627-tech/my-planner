@@ -1883,22 +1883,33 @@ function renderFolders(){
     item.className='folder-item'+(currentFolderId===fd.id?' active':'');
     item.dataset.folderId=fd.id;
     item.draggable=true;
-    // 내용: 핸들 + 이모지 + 이름(수정가능) + 카운트 + 삭제
     item.innerHTML=`
       <span style="font-size:12px;color:#ccc;cursor:grab;user-select:none;flex-shrink:0">⠿</span>
       <span class="folder-icon">${fd.emoji||'📁'}</span>
-      <input class="folder-name-input" value="${fd.name}" spellcheck="false"
-        style="flex:1;border:none;background:transparent;font-size:13px;color:#222;outline:none;font-family:inherit;cursor:pointer;min-width:0"
-        onclick="event.stopPropagation()"
-        onblur="renameFolderBlur('${fd.id}',this)"
-        onkeydown="if(event.key==='Enter')this.blur()"/>
+      <span class="folder-name" title="더블클릭으로 이름 수정">${fd.name}</span>
       <span class="folder-count">${cnt}</span>
       <button class="folder-del" onclick="event.stopPropagation();deleteFolder('${fd.id}')">✕</button>`;
-    // 클릭: 인풋 아닌 곳 클릭 시 폴더 선택
+
+    // 단일클릭: 폴더 선택
     item.onclick=(e)=>{
-      if(e.target.classList.contains('folder-name-input')||e.target.classList.contains('folder-del'))return;
+      if(e.target.classList.contains('folder-del'))return;
       currentFolderId=fd.id;renderFolders();renderMemos();
     };
+
+    // 더블클릭: 이름 인라인 편집
+    const nameSpan=item.querySelector('.folder-name');
+    nameSpan.addEventListener('dblclick',e=>{
+      e.stopPropagation();
+      const input=document.createElement('input');
+      input.value=fd.name;
+      input.spellcheck=false;
+      input.style.cssText='flex:1;border:none;border-bottom:1.5px solid var(--accent);background:transparent;font-size:13px;color:#222;outline:none;font-family:inherit;min-width:0;width:100%';
+      nameSpan.replaceWith(input);
+      input.focus();input.select();
+      const finish=()=>{ renameFolderBlur(fd.id,input); };
+      input.addEventListener('blur',finish);
+      input.addEventListener('keydown',ev=>{if(ev.key==='Enter')input.blur();if(ev.key==='Escape'){input.value=fd.name;input.blur();}});
+    });
     // 폴더 드래그 순서
     item.addEventListener('dragstart',e=>{
       e.dataTransfer.setData('folder-idx',String(fi));
@@ -1935,12 +1946,27 @@ function renderFolders(){
 }
 window.renameFolderBlur=async function(id,input){
   const fd=folders.find(f=>f.id===id);if(!fd)return;
-  const newName=input.value.trim();
-  if(!newName){input.value=fd.name;return;}
+  const newName=input.value.trim()||fd.name;
+  // input을 span으로 복원
+  const span=document.createElement('span');
+  span.className='folder-name';
+  span.title='더블클릭으로 이름 수정';
+  span.textContent=newName;
+  input.replaceWith(span);
+  // 더블클릭 이벤트 재등록
+  span.addEventListener('dblclick',e=>{
+    e.stopPropagation();
+    const ni=document.createElement('input');
+    ni.value=newName;ni.spellcheck=false;
+    ni.style.cssText='flex:1;border:none;border-bottom:1.5px solid var(--accent);background:transparent;font-size:13px;color:#222;outline:none;font-family:inherit;min-width:0;width:100%';
+    span.replaceWith(ni);ni.focus();ni.select();
+    const finish=()=>{window.renameFolderBlur(id,ni);};
+    ni.addEventListener('blur',finish);
+    ni.addEventListener('keydown',ev=>{if(ev.key==='Enter')ni.blur();if(ev.key==='Escape'){ni.value=fd.name;ni.blur();}});
+  });
   if(newName===fd.name)return;
   fd.name=newName;
   await saveData('folders',id,{name:fd.name,emoji:fd.emoji});
-  renderFolders();
 };
 window.openFolderModal=function(){
   document.getElementById('fd-name').value='';
