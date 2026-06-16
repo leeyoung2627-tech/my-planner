@@ -24,7 +24,7 @@
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);display:flex;flex-direction:column;align-items:center;padding:16px 110px 80px 16px;min-height:100vh;gap:10px}
 
 /* 초기 로딩 — 깜빡임 방지 */
-#loginWrap,#topMemoBar,#mainApp,#savingIndicator,#bgPanel{display:none}
+#loginWrap,#topMemoBar,#mainApp,#savingIndicator{display:none}
 .note-buttons{visibility:hidden;opacity:0;transition:opacity .2s}
 
 .login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;width:100%}
@@ -2095,8 +2095,9 @@ function renderThemePresets(){
 
 window.toggleBgPanel=function(){
   const panel=document.getElementById('bgPanel');
-  const isOpen=panel.classList.toggle('open');
-  if(isOpen){renderThemePresets();updatePanelPreviews();}
+  const isOpen=panel.style.display==='flex';
+  panel.style.display=isOpen?'none':'flex';
+  if(!isOpen){renderThemePresets();updatePanelPreviews();}
 };
 window.onCustomColor=function(key,val){
   currentTheme[key]=val;
@@ -2191,7 +2192,7 @@ window.addEventListener('resize',positionNoteButtons);
 document.addEventListener('click',e=>{
   const p=document.getElementById('bgPanel');
   const b=document.querySelector('.bg-setting-btn');
-  if(p&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');
+  if(p&&!p.contains(e.target)&&e.target!==b)p.style.display='none';
 });
 
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
