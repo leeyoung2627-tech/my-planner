@@ -25,7 +25,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 
 /* 초기 로딩 — 깜빡임 방지 */
 #loginWrap,#topMemoBar,#mainApp,#savingIndicator,#bgPanel{display:none}
-.note-buttons,.bg-setting-btn{visibility:hidden;opacity:0;transition:opacity .2s}
+.note-buttons{visibility:hidden;opacity:0;transition:opacity .2s}
 
 .login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;width:100%}
 .login-box{background:#fff;border-radius:16px;padding:40px;width:320px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 4px 24px #0001;border:0.5px solid #eee}
@@ -838,6 +838,13 @@ function showSaving(){const el=document.getElementById('savingIndicator');el.sty
 window.loginWithGoogle=async()=>{try{await signInWithPopup(auth,provider);}catch(e){alert('로그인 실패: '+e.message);}};
 window.logoutUser=async()=>await signOut(auth);
 
+// 테마 버튼은 로그인 여부와 무관하게 항상 표시
+document.addEventListener('DOMContentLoaded',()=>{
+  const btn=document.querySelector('.bg-setting-btn');
+  if(btn){btn.style.visibility='visible';btn.style.opacity='1';}
+  loadBgSetting();
+});
+
 onAuthStateChanged(auth,async user=>{
   if(user){
     currentUser=user;
@@ -846,8 +853,6 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('mainApp').style.display='grid';
     document.querySelector('.note-buttons').style.visibility='visible';
     document.querySelector('.note-buttons').style.opacity='1';
-    document.querySelector('.bg-setting-btn').style.visibility='visible';
-    document.querySelector('.bg-setting-btn').style.opacity='1';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();renderFolders();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();
