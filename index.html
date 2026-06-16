@@ -48,6 +48,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .note-btn{width:68px;height:68px;background:#fff;border:1.5px solid #ddd;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:12px;font-weight:600;color:#444;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:6px}
 .note-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 13%,transparent)}
 .note-btn:active{transform:scale(.97)}
+.note-btn-secondary{border-color:#b8e0c4;color:#2d7a4f}
+.note-btn-secondary:hover{background:#e8f5ed;border-color:#2d7a4f;color:#2d7a4f;box-shadow:0 4px 12px #2d7a4f20}
 
 /* 테마 버튼 */
 .bg-setting-btn{position:fixed;bottom:20px;left:20px;width:36px;height:36px;border-radius:50%;background:#fff;border:0.5px solid #ddd;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #0002;z-index:50}
@@ -499,6 +501,19 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   <a class="note-btn" href="/planning.html" target="_blank" title="기획 노트로 이동">기획<br>노트</a>
   <a class="note-btn" href="/writing.html" target="_blank" title="글 콘티 노트로 이동">글 콘티<br>노트</a>
   <a class="note-btn" href="https://nameboard-mangalayout.netlify.app/" target="_blank" title="출판 콘티 노트로 이동" onclick="showLayoutTip()">출판콘티<br>노트</a>
+  <a class="note-btn" href="https://app.xmind.com/home/my-works/q4uVwW3kLT" target="_blank" title="Xmind 마인드맵">Xmind</a>
+  <a class="note-btn note-btn-secondary" href="https://cafe.naver.com/greencaejj" target="_blank" title="우리끼리 카페">우리끼리</a>
+  <a href="https://claude.ai" target="_blank" title="Claude AI" style="
+    width:34px;height:34px;border-radius:8px;background:#fff;border:1.5px solid #ddd;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px #0001;text-decoration:none;transition:all .15s;flex-shrink:0;
+    align-self:center;
+  " onmouseover="this.style.borderColor='#e8611a';this.style.boxShadow='0 3px 10px #e8611a30'" onmouseout="this.style.borderColor='#ddd';this.style.boxShadow='0 2px 6px #0001'">
+    <svg width="18" height="18" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M32 6C17.6 6 6 17.6 6 32s11.6 26 26 26 26-11.6 26-26S46.4 6 32 6z" fill="#e8611a"/>
+      <path d="M24 44l5-13.5L35 44m-9.5-3.5h9M20 20h24" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
 </div>
 
 <!-- 출판 콘티 안내 토스트 -->
@@ -1114,7 +1129,7 @@ function renderMonth(){
     const dnColor=holiday||isSun?'color:#D85A30':isSat?'color:var(--accent)':'';
     // 일정 텍스트 (최대 3개, 나머지는 +N)
     const maxShow=3;
-    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map(ev=>`<div class="day-cell-ev">${ev}</div>`).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
+    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map(ev=>{const done=ev.startsWith('[✓] ');const txt=done?ev.slice(4):ev;return`<div class="day-cell-ev"${done?' style="text-decoration:line-through;opacity:.5"':''}>${txt}</div>`;}).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
     html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})">
       <span class="dn" style="${dnColor}">${d}</span>
       ${holiday?`<div class="day-cell-holiday">${holiday}</div>`:''}
@@ -1175,10 +1190,12 @@ function renderWeek(){
       ondragleave="this.classList.remove('drag-over')"
       ondrop="dropEvent(event,'${key}')">`;
     evs.forEach((ev,idx)=>{
+      const done=ev.startsWith('[✓] ');const txt=done?ev.slice(4):ev;
       bH+=`<div class="week-event-item" draggable="true"
         ondragstart="dragStart(event,'${key}',${idx})"
         ondragend="dragEnd(event)"
-        onclick="event.stopPropagation();editWeekEvent('${key}',${idx})">${ev}</div>`;
+        onclick="event.stopPropagation();editWeekEvent('${key}',${idx})"
+        style="${done?'text-decoration:line-through;opacity:.5':''}">${txt}</div>`;
     });
     bH+=`<div class="week-add-btn" onclick="event.stopPropagation();addWeekEvent('${key}')">＋</div></div>`;
   }
@@ -1233,6 +1250,8 @@ function renderSchedule(){
   const key=fmt(selDate);const evs=weekEvents[key]||[];
   const list=document.getElementById('schedule-list');list.innerHTML='';
   evs.forEach((ev,idx)=>{
+    const isDone=ev.startsWith('[✓] ');
+    const displayText=isDone?ev.slice(4):ev;
     const row=document.createElement('div');
     row.className='item-row';
     row.draggable=true;
@@ -1240,8 +1259,8 @@ function renderSchedule(){
     row.style.cursor='grab';
     row.innerHTML=`
       <span style="font-size:14px;color:#ccc;cursor:grab;padding:0 4px 0 0;user-select:none">⠿</span>
-      <div class="check" onclick="toggleScheduleCheck(this)"></div>
-      <span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})">${ev}</span>
+      <div class="check${isDone?' done':''}" onclick="toggleScheduleCheck(this,'${key}',${idx})">${isDone?'✓':''}</div>
+      <span class="item-text editable-title${isDone?' done':''}" onclick="openScheduleEditModal('${key}',${idx})">${displayText}</span>
       <span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteScheduleItem('${key}',${idx})">✕</span>`;
     // 드래그 이벤트
     row.addEventListener('dragstart',e=>{
@@ -1267,7 +1286,15 @@ function renderSchedule(){
   });
   document.getElementById('sum-s').textContent='일정 '+evs.length+'개';
 }
-window.toggleScheduleCheck=function(el){el.classList.toggle('done');el.textContent=el.classList.contains('done')?'✓':'';el.nextElementSibling.classList.toggle('done');};
+window.toggleScheduleCheck=async function(el,key,idx){
+  const arr=weekEvents[key];if(!arr)return;
+  const ev=arr[idx];
+  const isDone=ev.startsWith('[✓] ');
+  arr[idx]=isDone?ev.slice(4):'[✓] '+ev;
+  await saveData('events',key,{items:arr});
+  renderSchedule();
+  if(curView==='week')renderWeek();else renderMonth();
+};
 window.deleteScheduleItem=async function(key,idx){
   if(!confirm('삭제할까요?'))return;
   weekEvents[key].splice(idx,1);await saveData('events',key,{items:weekEvents[key]});
@@ -1281,7 +1308,8 @@ window.openScheduleModal=function(){
 };
 window.openScheduleEditModal=function(key,idx){
   editingScheduleKey=key;editingScheduleIdx=idx;
-  const ev=weekEvents[key]?.[idx]||'';
+  let ev=weekEvents[key]?.[idx]||'';
+  if(ev.startsWith('[✓] '))ev=ev.slice(4);
   const timeMatch=ev.match(/^\[(\d{2}:\d{2})\] (.*)/);
   document.getElementById('sche-name').value=timeMatch?timeMatch[2]:ev;
   document.getElementById('sche-time').value=timeMatch?timeMatch[1]:'';
@@ -1290,7 +1318,10 @@ window.openScheduleEditModal=function(key,idx){
 window.confirmScheduleEdit=async function(){
   const name=document.getElementById('sche-name').value.trim();if(!name)return;
   const time=document.getElementById('sche-time').value;
-  weekEvents[editingScheduleKey][editingScheduleIdx]=time?`[${time}] ${name}`:name;
+  const prev=weekEvents[editingScheduleKey][editingScheduleIdx]||'';
+  const wasDone=prev.startsWith('[✓] ');
+  const newVal=time?`[${time}] ${name}`:name;
+  weekEvents[editingScheduleKey][editingScheduleIdx]=wasDone?'[✓] '+newVal:newVal;
   await saveData('events',editingScheduleKey,{items:weekEvents[editingScheduleKey]});
   closeModal('scheduleEditModal');renderSchedule();
   if(curView==='week')renderWeek();else renderMonth();
