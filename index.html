@@ -17,7 +17,8 @@
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5f4ff;display:flex;flex-direction:column;align-items:center;padding:16px 110px 80px 16px;min-height:100vh;gap:10px}
 
 /* 초기 로딩 — 깜빡임 방지 */
-#loginWrap,#topMemoBar,#mainApp,#savingIndicator,.note-buttons,.bg-setting-btn,#bgPanel{display:none}
+#loginWrap,#topMemoBar,#mainApp,#savingIndicator,#bgPanel{display:none}
+.note-buttons,.bg-setting-btn{visibility:hidden;opacity:0;transition:opacity .2s}
 
 .login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;width:100%}
 .login-box{background:#fff;border-radius:16px;padding:40px;width:320px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 4px 24px #0001;border:0.5px solid #eee}
@@ -133,7 +134,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f5
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 
 /* 날짜 칸 2배 높이 */
-.day-cell{min-height:110px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
+.day-cell{min-height:130px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
+.day-cell-events{display:flex;flex-direction:column;gap:1px;width:100%;align-items:stretch;margin-top:2px}
+.day-cell-ev{font-size:10px;background:#EEEDFE;color:#3C3489;border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4}
 .day-cell:hover{background:#f5f4ff}
 .day-cell.other{color:#ccc}
 .day-cell.today .dn{background:#534AB7;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
@@ -834,8 +837,10 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('loginWrap').style.display='none';
     document.getElementById('topMemoBar').style.display='flex';
     document.getElementById('mainApp').style.display='grid';
-    document.querySelector('.note-buttons').style.display='flex';
-    document.querySelector('.bg-setting-btn').style.display='flex';
+    document.querySelector('.note-buttons').style.visibility='visible';
+    document.querySelector('.note-buttons').style.opacity='1';
+    document.querySelector('.bg-setting-btn').style.visibility='visible';
+    document.querySelector('.bg-setting-btn').style.opacity='1';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();renderFolders();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();
@@ -1093,13 +1098,16 @@ function renderMonth(){
     const isSun=dt.getDay()===0,isSat=dt.getDay()===6;
     const holiday=getHoliday(dt);
     const annivs=getAnnivForDate(dt);
-    const hasEv=weekEvents[key]&&weekEvents[key].length>0;
+    const evs=weekEvents[key]||[];
     const dnColor=holiday||isSun?'color:#D85A30':isSat?'color:#534AB7':'';
+    // 일정 텍스트 (최대 3개, 나머지는 +N)
+    const maxShow=3;
+    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map(ev=>`<div class="day-cell-ev">${ev}</div>`).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:#f0eeff;color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
     html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})">
       <span class="dn" style="${dnColor}">${d}</span>
       ${holiday?`<div class="day-cell-holiday">${holiday}</div>`:''}
       ${annivs.map(av=>`<div class="day-cell-anniv">${av.emoji||'🎂'} ${av.name}</div>`).join('')}
-      <div class="dot-row">${hasEv?'<div class="dot"></div>':''}</div>
+      ${evHtml}
     </div>`;
   }
   const rem=(7-(start+total)%7)%7;
@@ -1530,6 +1538,14 @@ window.mealBlur=async function(el,dateKey,mealKey){
 };
 
 // ── 메모 ──
+window.cycleMemoCategory=async function(id){
+  const cats=['정체성','할일','아이디어','기타'];
+  const m=memos.find(x=>x.id===id);if(!m)return;
+  const idx=cats.indexOf(m.category||'기타');
+  m.category=cats[(idx+1)%cats.length];
+  await saveData('memos',id,{title:m.title,category:m.category,body:m.body,folderId:m.folderId||null,createdAt:m.createdAt||Date.now()});
+  renderMemos();renderFolders();
+};
 function catLabel(c){return{'정체성':'🌟 정체성','할일':'✅ 할일','아이디어':'💡 아이디어','기타':'📌 기타'}[c]||'📌 기타';}
 function renderMemos(){
   const list=document.getElementById('memo-list');list.innerHTML='';
@@ -1569,11 +1585,10 @@ function renderMemos(){
     const dateStr=memo.createdAt?new Date(memo.createdAt).toLocaleDateString('ko-KR',{month:'long',day:'numeric'}):'';
     const fd=folders.find(f=>f.id===memo.folderId);
     const fdBadge=fd?`<span style="font-size:10px;color:#aaa">${fd.emoji||'📁'} ${fd.name}</span>`:'';
-    card.innerHTML=`
-      <div class="memo-card-top">
+    card.innerHTML=`<div class="memo-card-top">
         <span style="font-size:12px;color:#ccc;cursor:grab;padding-right:4px;user-select:none">⠿</span>
         <span class="memo-card-title">${memo.title||'제목 없음'}</span>
-        <span class="memo-cat-badge ${memo.category||'기타'}">${catLabel(memo.category)}</span>
+        <span class="memo-cat-badge ${memo.category||'기타'}" title="클릭해서 카테고리 변경" style="cursor:pointer" onclick="event.stopPropagation();cycleMemoCategory('${memo.id}')">${catLabel(memo.category)}</span>
         <button class="memo-delete" onclick="event.stopPropagation();deleteMemo('${memo.id}')">✕</button>
       </div>
       <div class="memo-card-body">${memo.body||''}</div>
@@ -1833,12 +1848,11 @@ window.deleteAnniv=async function(id){
 function renderFolders(){
   const list=document.getElementById('folderList');if(!list)return;
   list.innerHTML='';
-  // 전체 항목
+  // 전체(메모) 항목
   const allItem=document.createElement('div');
   allItem.className='folder-item'+(currentFolderId===null?' active':'');
   allItem.innerHTML=`<span class="folder-icon">📋</span><span class="folder-name">메모</span><span class="folder-count">${memos.filter(m=>!m.folderId).length}</span>`;
   allItem.onclick=()=>{currentFolderId=null;renderFolders();renderMemos();};
-  // 전체 항목도 드롭 타겟 (폴더 밖으로 꺼내기)
   allItem.addEventListener('dragover',e=>{e.preventDefault();allItem.style.background='#EEEDFE';});
   allItem.addEventListener('dragleave',()=>{allItem.style.background='';});
   allItem.addEventListener('drop',async e=>{
@@ -1850,27 +1864,72 @@ function renderFolders(){
     renderMemos();renderFolders();
   });
   list.appendChild(allItem);
-  folders.forEach(fd=>{
+
+  folders.forEach((fd,fi)=>{
     const cnt=memos.filter(m=>m.folderId===fd.id).length;
     const item=document.createElement('div');
     item.className='folder-item'+(currentFolderId===fd.id?' active':'');
     item.dataset.folderId=fd.id;
-    item.innerHTML=`<span class="folder-icon">${fd.emoji||'📁'}</span><span class="folder-name">${fd.name}</span><span class="folder-count">${cnt}</span><button class="folder-del" onclick="event.stopPropagation();deleteFolder('${fd.id}')">✕</button>`;
-    item.onclick=()=>{currentFolderId=fd.id;renderFolders();renderMemos();};
-    // 폴더 아이템 드롭 이벤트
-    item.addEventListener('dragover',e=>{e.preventDefault();item.style.background='#EEEDFE';item.style.borderColor='#AFA9EC';});
-    item.addEventListener('dragleave',()=>{item.style.background='';item.style.borderColor='';});
+    item.draggable=true;
+    // 내용: 핸들 + 이모지 + 이름(수정가능) + 카운트 + 삭제
+    item.innerHTML=`
+      <span style="font-size:12px;color:#ccc;cursor:grab;user-select:none;flex-shrink:0">⠿</span>
+      <span class="folder-icon">${fd.emoji||'📁'}</span>
+      <input class="folder-name-input" value="${fd.name}" spellcheck="false"
+        style="flex:1;border:none;background:transparent;font-size:13px;color:#222;outline:none;font-family:inherit;cursor:pointer;min-width:0"
+        onclick="event.stopPropagation()"
+        onblur="renameFolderBlur('${fd.id}',this)"
+        onkeydown="if(event.key==='Enter')this.blur()"/>
+      <span class="folder-count">${cnt}</span>
+      <button class="folder-del" onclick="event.stopPropagation();deleteFolder('${fd.id}')">✕</button>`;
+    // 클릭: 인풋 아닌 곳 클릭 시 폴더 선택
+    item.onclick=(e)=>{
+      if(e.target.classList.contains('folder-name-input')||e.target.classList.contains('folder-del'))return;
+      currentFolderId=fd.id;renderFolders();renderMemos();
+    };
+    // 폴더 드래그 순서
+    item.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('folder-idx',String(fi));
+      item.style.opacity='.4';
+    });
+    item.addEventListener('dragend',()=>{item.style.opacity='1';});
+    item.addEventListener('dragover',e=>{
+      e.preventDefault();
+      const fromFolder=e.dataTransfer.types.includes('folder-idx');
+      if(fromFolder)item.style.outline='2px solid #AFA9EC';
+      else{item.style.background='#EEEDFE';item.style.borderColor='#AFA9EC';}
+    });
+    item.addEventListener('dragleave',()=>{item.style.outline='';item.style.background='';item.style.borderColor='';});
     item.addEventListener('drop',async e=>{
-      e.preventDefault();item.style.background='';item.style.borderColor='';
-      const id=e.dataTransfer.getData('memo-id');if(!id)return;
-      const m=memos.find(x=>x.id===id);if(!m||m.folderId===fd.id)return;
+      e.preventDefault();item.style.outline='';item.style.background='';item.style.borderColor='';
+      const fromFolderIdx=e.dataTransfer.getData('folder-idx');
+      if(fromFolderIdx!==''){
+        // 폴더 순서 변경
+        const from=parseInt(fromFolderIdx);const to=fi;
+        if(from===to)return;
+        const [moved]=folders.splice(from,1);folders.splice(to,0,moved);
+        await Promise.all(folders.map((f,order)=>saveData('folders',f.id,{name:f.name,emoji:f.emoji,order})));
+        renderFolders();return;
+      }
+      // 메모 폴더 이동
+      const memoId=e.dataTransfer.getData('memo-id');if(!memoId)return;
+      const m=memos.find(x=>x.id===memoId);if(!m||m.folderId===fd.id)return;
       m.folderId=fd.id;
-      await saveData('memos',id,{title:m.title,category:m.category,body:m.body,folderId:fd.id,createdAt:m.createdAt||Date.now()});
+      await saveData('memos',memoId,{title:m.title,category:m.category,body:m.body,folderId:fd.id,createdAt:m.createdAt||Date.now()});
       renderMemos();renderFolders();
     });
     list.appendChild(item);
   });
 }
+window.renameFolderBlur=async function(id,input){
+  const fd=folders.find(f=>f.id===id);if(!fd)return;
+  const newName=input.value.trim();
+  if(!newName){input.value=fd.name;return;}
+  if(newName===fd.name)return;
+  fd.name=newName;
+  await saveData('folders',id,{name:fd.name,emoji:fd.emoji});
+  renderFolders();
+};
 window.openFolderModal=function(){
   document.getElementById('fd-name').value='';
   document.getElementById('fd-emoji').value='';

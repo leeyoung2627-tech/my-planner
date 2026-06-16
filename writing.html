@@ -447,7 +447,11 @@ function renderCuts(){
 function buildCutEl(cut,ci){
   if(cut.type==='space'){
     const el=document.createElement('div');el.className='cut-item space-cut';
-    el.innerHTML=`<div class="cut-no">${ci+1}</div><div class="space-cell"><input class="space-input" spellcheck="false" placeholder="여백 / 장면전환 / 지문..." value="${esc(cut.text||'')}" oninput="onSpaceChange(${ci},this.value)"/></div>`;
+    const no=document.createElement('div');no.className='cut-no';no.textContent=ci+1;
+    no.onclick=e=>openCutMenu(e,ci);
+    const cell=document.createElement('div');cell.className='space-cell';
+    cell.innerHTML=`<input class="space-input" spellcheck="false" placeholder="여백 / 장면전환 / 지문..." value="${esc(cut.text||'')}" oninput="onSpaceChange(${ci},this.value)"/>`;
+    el.appendChild(no);el.appendChild(cell);
     return el;
   }
   if(cut.type==='dialog'){
@@ -714,6 +718,11 @@ document.addEventListener('click',e=>{
   const p=document.getElementById('themePanel');
   const b=document.querySelector('.theme-btn');
   if(p&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');
+});
+
+// ── Ctrl+S ──
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();window.saveNow();}
 });
 
 wpLoadTheme();
