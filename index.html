@@ -1890,11 +1890,19 @@ function renderFolders(){
       <span class="folder-count">${cnt}</span>
       <button class="folder-del" onclick="event.stopPropagation();deleteFolder('${fd.id}')">✕</button>`;
 
-    // 단일클릭: 폴더 선택
-    item.onclick=(e)=>{
+    // 단일클릭: 폴더 선택 / 더블클릭: 이름 편집 (타이머로 구분)
+    let clickTimer=null;
+    item.addEventListener('click',(e)=>{
       if(e.target.classList.contains('folder-del'))return;
-      currentFolderId=fd.id;renderFolders();renderMemos();
-    };
+      if(e.detail===2){
+        // 더블클릭 — 단일클릭 타이머 취소
+        clearTimeout(clickTimer);
+        return;
+      }
+      clickTimer=setTimeout(()=>{
+        currentFolderId=fd.id;renderFolders();renderMemos();
+      },220);
+    });
 
     // 더블클릭: 이름 인라인 편집
     const nameSpan=item.querySelector('.folder-name');
@@ -1906,8 +1914,7 @@ function renderFolders(){
       input.style.cssText='flex:1;border:none;border-bottom:1.5px solid var(--accent);background:transparent;font-size:13px;color:#222;outline:none;font-family:inherit;min-width:0;width:100%';
       nameSpan.replaceWith(input);
       input.focus();input.select();
-      const finish=()=>{ renameFolderBlur(fd.id,input); };
-      input.addEventListener('blur',finish);
+      input.addEventListener('blur',()=>{ renameFolderBlur(fd.id,input); });
       input.addEventListener('keydown',ev=>{if(ev.key==='Enter')input.blur();if(ev.key==='Escape'){input.value=fd.name;input.blur();}});
     });
     // 폴더 드래그 순서
