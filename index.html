@@ -957,7 +957,7 @@ async function saveData(type,key,value){if(!currentUser)return;showSaving();awai
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -972,6 +972,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','habitPostit')),
     getDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote')),
     getDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','customTags')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -997,6 +998,11 @@ async function loadAllData(){
   fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
   if(!fixedCosts.fixed)fixedCosts.fixed=[];
   if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
+  if(ctS.exists()){
+    const ct=ctS.data();
+    if(ct.out)OUT_TAGS=ct.out;
+    if(ct.in)IN_TAGS=ct.in;
+  }
 }
 
 // ── 상단 메모 ──
@@ -1586,20 +1592,50 @@ window.deleteHabit=async function(id){
 };
 
 // ── 가계부 태그 ──
-const OUT_TAGS=['식비','교통','쇼핑','의료','문화','고정비','기타지출'];
-const IN_TAGS=['급여','용돈','부업','기타수입'];
+let OUT_TAGS=['식비','교통','쇼핑','의료','문화','고정비','기타지출'];
+let IN_TAGS=['급여','용돈','부업','기타수입'];
+async function saveCustomTags(){
+  if(!currentUser)return;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','customTags'),{out:OUT_TAGS,in:IN_TAGS});
+}
 let selectedTag='';
 window.updateTagsByType=function(){
   const type=document.getElementById('mn-type').value;
   const tags=type==='out'?OUT_TAGS:IN_TAGS;
   selectedTag='';
-  document.getElementById('mn-tags').innerHTML=tags.map(t=>
-    `<div class="tag-chip" onclick="selectTag(this,'${t}')">${t}</div>`
-  ).join('');
+  document.getElementById('mn-tags').innerHTML=
+    tags.map(t=>`<div class="tag-chip" onclick="selectTag(this,'${t}')">${t}</div>`).join('')+
+    `<div class="tag-chip" style="border-style:dashed;color:var(--accent);border-color:var(--accent)" onclick="addCustomTag('${type}','mn','updateTagsByType')">＋</div>`;
 };
 window.selectTag=function(el,tag){
   document.querySelectorAll('#mn-tags .tag-chip').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');selectedTag=tag;
+};
+window.updateEditTagsByType=function(){
+  const type=document.getElementById('mne-type').value;
+  const tags=type==='out'?OUT_TAGS:IN_TAGS;
+  document.getElementById('mne-tags').innerHTML=
+    tags.map(t=>`<div class="tag-chip${selectedEditTag===t?' selected':''}" onclick="selectEditTag(this,'${t}')">${t}</div>`).join('')+
+    `<div class="tag-chip" style="border-style:dashed;color:var(--accent);border-color:var(--accent)" onclick="addCustomTag('${type}','mne','updateEditTagsByType')">＋</div>`;
+};
+window.selectEditTag=function(el,tag){
+  document.querySelectorAll('#mne-tags .tag-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');selectedEditTag=tag;
+};
+window.addCustomTag=async function(type,prefix,refreshFn){
+  const name=prompt('추가할 태그 이름을 입력하세요');
+  if(!name||!name.trim())return;
+  const tag=name.trim();
+  const arr=type==='out'?OUT_TAGS:IN_TAGS;
+  if(arr.includes(tag)){alert('이미 있는 태그예요');return;}
+  arr.push(tag);
+  await saveCustomTags();
+  window[refreshFn]();
+  setTimeout(()=>{
+    document.querySelectorAll(`#${prefix}-tags .tag-chip`).forEach(c=>{
+      if(c.textContent===tag)c.click();
+    });
+  },30);
 };
 
 // ── 가계부 세부탭 전환 ──
@@ -1668,17 +1704,6 @@ window.openMoneyEditModal=function(key,idx){
   document.getElementById('moneyEditModal').style.display='flex';
 };
 let selectedEditTag='';
-window.updateEditTagsByType=function(){
-  const type=document.getElementById('mne-type').value;
-  const tags=type==='out'?OUT_TAGS:IN_TAGS;
-  document.getElementById('mne-tags').innerHTML=tags.map(t=>
-    `<div class="tag-chip${selectedEditTag===t?' selected':''}" onclick="selectEditTag(this,'${t}')">${t}</div>`
-  ).join('');
-};
-window.selectEditTag=function(el,tag){
-  document.querySelectorAll('#mne-tags .tag-chip').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');selectedEditTag=tag;
-};
 window.confirmMoneyEdit=async function(){
   const name=document.getElementById('mne-name').value.trim();if(!name)return;
   const amount=parseInt(document.getElementById('mne-amount').value);if(!amount)return;
