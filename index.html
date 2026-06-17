@@ -708,6 +708,26 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   </div>
 </div>
 
+<!-- 가계부 수정 -->
+<div class="modal-bg" id="moneyEditModal" style="display:none">
+  <div class="modal">
+    <h3>내역 수정</h3>
+    <div class="modal-label">내용</div>
+    <input id="mne-name" placeholder="예: 점심식사"/>
+    <div class="modal-label">금액</div>
+    <div class="modal-row">
+      <select id="mne-type" onchange="updateEditTagsByType()"><option value="out">지출 (−)</option><option value="in">수입 (+)</option></select>
+      <input id="mne-amount" type="number" placeholder="금액" min="0"/>
+    </div>
+    <div class="modal-label">태그 <span style="font-size:10px;color:#bbb">(선택)</span></div>
+    <div class="tag-chips" id="mne-tags"></div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('moneyEditModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmMoneyEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 예산 설정 -->
 <div class="modal-bg" id="budgetModal" style="display:none">
   <div class="modal">
@@ -1601,7 +1621,12 @@ function renderMoney(){
     const row=document.createElement('div');row.className='money-row';
     const amt=item.type==='out'?-item.amount:item.amount;total+=amt;
     const tagBadge=item.tag?`<span style="font-size:10px;background:#f0f0f0;color:#888;padding:1px 6px;border-radius:8px;margin-right:4px">${item.tag}</span>`:'';
-    row.innerHTML=`<span class="money-cat">${item.name}${tagBadge}</span><div style="display:flex;align-items:center;gap:8px"><span class="money-amt ${item.type}">${item.type==='out'?'-':'+'}${item.amount.toLocaleString()}</span><span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteMoney('${key}',${idx})">✕</span></div>`;
+    row.innerHTML=`
+      <span class="money-cat" style="cursor:pointer;flex:1" onclick="openMoneyEditModal('${key}',${idx})">${item.name}${tagBadge}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="money-amt ${item.type}" style="cursor:pointer" onclick="openMoneyEditModal('${key}',${idx})">${item.type==='out'?'-':'+'}${item.amount.toLocaleString()}</span>
+        <span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteMoney('${key}',${idx})">✕</span>
+      </div>`;
     list.appendChild(row);
   });
   const mKey=selDate.getFullYear()+'-'+(selDate.getMonth()+1);
@@ -1630,6 +1655,37 @@ window.deleteMoney=async function(key,idx){
   if(!confirm('삭제할까요?'))return;
   moneyData[key].splice(idx,1);await saveData('money',key,{items:moneyData[key]});
   renderMoney();if(leftMode==='money-cal')renderMoneyCal();
+};
+let editMoneyKey='',editMoneyIdx=-1;
+window.openMoneyEditModal=function(key,idx){
+  editMoneyKey=key;editMoneyIdx=idx;
+  const item=moneyData[key][idx];
+  document.getElementById('mne-name').value=item.name;
+  document.getElementById('mne-amount').value=item.amount;
+  document.getElementById('mne-type').value=item.type;
+  selectedEditTag=item.tag||'';
+  updateEditTagsByType();
+  document.getElementById('moneyEditModal').style.display='flex';
+};
+let selectedEditTag='';
+window.updateEditTagsByType=function(){
+  const type=document.getElementById('mne-type').value;
+  const tags=type==='out'?OUT_TAGS:IN_TAGS;
+  document.getElementById('mne-tags').innerHTML=tags.map(t=>
+    `<div class="tag-chip${selectedEditTag===t?' selected':''}" onclick="selectEditTag(this,'${t}')">${t}</div>`
+  ).join('');
+};
+window.selectEditTag=function(el,tag){
+  document.querySelectorAll('#mne-tags .tag-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');selectedEditTag=tag;
+};
+window.confirmMoneyEdit=async function(){
+  const name=document.getElementById('mne-name').value.trim();if(!name)return;
+  const amount=parseInt(document.getElementById('mne-amount').value);if(!amount)return;
+  const type=document.getElementById('mne-type').value;
+  moneyData[editMoneyKey][editMoneyIdx]={name,type,amount,tag:selectedEditTag||''};
+  await saveData('money',editMoneyKey,{items:moneyData[editMoneyKey]});
+  closeModal('moneyEditModal');renderMoney();if(leftMode==='money-cal')renderMoneyCal();
 };
 
 // ── 통계 ──
