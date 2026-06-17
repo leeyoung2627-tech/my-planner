@@ -1009,6 +1009,7 @@ async function loadAllData(){
 function loadTopMemo(){document.getElementById('topMemoInput').value=topMemoContent;autoResizeTopMemo(document.getElementById('topMemoInput'));}
 window.autoResizeTopMemo=function(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';};
 window.saveTopMemo=async function(){
+  if(!currentUser)return;
   const text=document.getElementById('topMemoInput').value;
   if(text===topMemoContent)return;topMemoContent=text;
   await setDoc(doc(db,'users',currentUser.uid,'settings','topMemo'),{text});showSaving();
@@ -2345,6 +2346,7 @@ function loadHabitPostit(){
   const el=document.getElementById('habitPostit');if(el)el.value=habitPostitContent;
 }
 window.saveHabitPostit=async function(){
+  if(!currentUser)return;
   const el=document.getElementById('habitPostit');if(!el)return;
   const text=el.value;
   if(text===habitPostitContent)return;
@@ -2531,17 +2533,27 @@ function applyPattern(pattern){
 document.addEventListener('keydown',async e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){
     e.preventDefault();
-    // 포스트잇 저장
-    const postit=document.getElementById('habitPostit');
-    if(postit&&postit.value!==habitPostitContent)await window.saveHabitPostit();
-    // 상단 메모 저장
-    await window.saveTopMemo();
-    // 메모 뷰 저장
-    if(viewingMemoId){
-      const t=document.getElementById('mvTitle');const b=document.getElementById('mvBody');
-      if(t&&b)await window.saveMemoFromView(viewingMemoId);
+    if(!currentUser){showSaving();return;}
+    try{
+      // 포스트잇 저장
+      const postit=document.getElementById('habitPostit');
+      if(postit&&postit.value!==habitPostitContent)await window.saveHabitPostit();
+      // 상단 메모 저장
+      const topInput=document.getElementById('topMemoInput');
+      if(topInput)await window.saveTopMemo();
+      // 메모 뷰 저장
+      if(viewingMemoId){
+        const t=document.getElementById('mvTitle');const b=document.getElementById('mvBody');
+        if(t&&b)await window.saveMemoFromView(viewingMemoId);
+      }
+      // 식단 계획 메모 저장
+      const mealNote=document.getElementById('mealPlanNote');
+      if(mealNote&&typeof window.saveMealPlanNote==='function')await window.saveMealPlanNote();
+      showSaving();
+    }catch(err){
+      console.error('Ctrl+S 저장 중 오류:',err);
+      showSaving();
     }
-    showSaving();
   }
 });
 
