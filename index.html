@@ -918,6 +918,7 @@ async function loadAllData(){
   anniversaries=[];avS.forEach(d=>{anniversaries.push({id:d.id,...d.data()});});
   anniversaries.sort((a,b)=>nextAnnivDate(a)-nextAnnivDate(b));
   folders=[];fdS.forEach(d=>{folders.push({id:d.id,...d.data()});});
+  folders.sort((a,b)=>(a.order??9999)-(b.order??9999));
   habitPostitContent=hpS.exists()?hpS.data().text||'':'';
   window._mealPlanNoteContent=mpnS.exists()?mpnS.data().text||'':'';
 }
