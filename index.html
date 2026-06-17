@@ -1306,6 +1306,11 @@ window.selectDay=function(d){
   selDate=new Date(cur.getFullYear(),cur.getMonth(),d);
   if(leftMode==='money-cal')renderMoneyCal();else renderMonth();
   updateRightDate();renderSchedule();renderMoney();renderMeal();renderNoSpend();
+  // 가계부 달력에서 날짜 클릭 시 내역 탭으로 자동 전환
+  if(leftMode==='money-cal'){
+    const ledgerTab=document.querySelector('.money-subtab');
+    if(ledgerTab)switchMoneyTab('ledger',ledgerTab);
+  }
 };
 window.selectDayFromWeek=function(y,m,d){selDate=new Date(y,m,d);renderWeek();updateRightDate();renderSchedule();renderMoney();renderMeal();renderNoSpend();};
 function updateRightDate(){document.getElementById('rightDate').textContent=selDate.getFullYear()+'년 '+(selDate.getMonth()+1)+'월 '+selDate.getDate()+'일 '+DAYS[selDate.getDay()]+'요일';}
