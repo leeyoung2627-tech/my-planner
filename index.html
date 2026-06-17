@@ -1716,10 +1716,27 @@ window.confirmMoneyEdit=async function(){
 // ── 통계 ──
 let statsCur=new Date();
 const TAG_COLORS={
-  '식비':'#FF6B6B','교통':'#4ECDC4','쇼핑':'#A29BFE','의료':'#FFA726',
-  '문화':'#26C6DA','고정비':'#78909C','기타지출':'#BDBDBD',
-  '급여':'#1D9E75','용돈':'#66BB6A','부업':'#42A5F5','기타수입':'#9CCC65','(미분류)':'#E0E0E0'
+  '식비':'#FFB3B3',   // 연분홍
+  '교통':'#B3E5D5',   // 민트
+  '쇼핑':'#D4B8F0',   // 연보라
+  '의료':'#FFD9A8',   // 복숭아
+  '문화':'#B8DCF8',   // 하늘
+  '고정비':'#F7C9D0', // 로즈
+  '기타지출':'#D6D6D6',// 연회색
+  '급여':'#A8E6CF',   // 세이지그린
+  '용돈':'#C8E6C9',   // 연초록
+  '부업':'#B3D1F5',   // 베이비블루
+  '기타수입':'#FFF0B3',// 버터옐로
+  '(미분류)':'#E8E8E8'
 };
+// 커스텀 태그용 파스텔 팔레트 (순환 사용)
+const EXTRA_PASTEL=['#F9C6D0','#FAD9A1','#C5E8B7','#B8D8F8','#E0C8F5','#FDE8C8','#C2EDE8','#F5C6E8','#D5EAB3','#C8D5F8'];
+function getTagColor(tag){
+  if(TAG_COLORS[tag])return TAG_COLORS[tag];
+  // 커스텀 태그: 이름 기반 고정 색상 (같은 태그는 항상 같은 색)
+  let hash=0;for(let i=0;i<tag.length;i++)hash=(hash*31+tag.charCodeAt(i))%EXTRA_PASTEL.length;
+  return EXTRA_PASTEL[Math.abs(hash)];
+}
 function renderMoneyStats(){
   const el=document.getElementById('money-stats-content');
   const y=statsCur.getFullYear(),m=statsCur.getMonth()+1;
@@ -1741,7 +1758,7 @@ function renderMoneyStats(){
   let conicParts=[];let acc=0;
   entries.forEach(([tag,amt])=>{
     const pct=totalOut>0?amt/totalOut*100:0;
-    const color=TAG_COLORS[tag]||'#ccc';
+    const color=getTagColor(tag);
     conicParts.push(`${color} ${acc.toFixed(1)}% ${(acc+pct).toFixed(1)}%`);
     acc+=pct;
   });
@@ -1763,7 +1780,7 @@ function renderMoneyStats(){
         entries.map(([tag,amt])=>`
           <div class="pie-legend-row">
             <div style="display:flex;align-items:center">
-              <div class="pie-legend-dot" style="background:${TAG_COLORS[tag]||'#ccc'}"></div>
+              <div class="pie-legend-dot" style="background:${getTagColor(tag)}"></div>
               <span>${tag}</span>
             </div>
             <div style="display:flex;gap:8px;color:#666">
