@@ -117,7 +117,38 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .editable-title{cursor:pointer;border-bottom:1px dashed transparent}
 .editable-title:hover{border-bottom-color:#aaa}
 
-/* 식단 메모 placeholder */
+/* 가계부 세부탭 */
+.money-subtabs{display:flex;gap:4px;margin-bottom:8px;background:#f8f8f8;border-radius:8px;padding:3px}
+.money-subtab{flex:1;text-align:center;font-size:11px;padding:5px 2px;border-radius:6px;cursor:pointer;color:#888;transition:all .15s}
+.money-subtab.active{background:#fff;color:var(--accent);font-weight:600;box-shadow:0 1px 4px #0001}
+.mtab-content{display:none;flex-direction:column;gap:6px}
+.mtab-content.active{display:flex}
+/* 태그 선택 */
+.tag-chips{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
+.tag-chip{padding:3px 9px;border-radius:12px;font-size:11px;border:1px solid #e0e0e0;cursor:pointer;color:#666;background:#fafafa;transition:all .12s}
+.tag-chip.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* 통계 */
+.stats-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.stats-month-nav button{background:none;border:none;font-size:16px;cursor:pointer;color:#888;padding:2px 6px}
+.stats-month-nav span{font-size:13px;font-weight:600}
+.pie-wrap{position:relative;width:150px;height:150px;margin:0 auto 12px}
+.pie-svg{width:150px;height:150px;transform:rotate(-90deg)}
+.pie-legend{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.pie-legend-row{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.pie-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-right:6px}
+.pie-total{text-align:center;font-size:12px;color:#888;margin-bottom:6px}
+/* 고정비 */
+.fixed-section-title{font-size:12px;font-weight:700;color:#555;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid #eee}
+.fixed-table{width:100%;border-collapse:collapse;font-size:12px}
+.fixed-table th{color:#999;font-weight:500;padding:4px 6px;text-align:left;border-bottom:1px solid #eee}
+.fixed-table td{padding:5px 6px;border-bottom:0.5px solid #f5f5f5;vertical-align:middle}
+.fixed-table td:last-child{text-align:right}
+.fixed-input{border:none;background:transparent;font-size:12px;width:100%;outline:none;font-family:inherit;color:#222}
+.fixed-input:focus{background:#fafafa;border-radius:4px}
+.fixed-add-btn{background:none;border:1px dashed #ddd;border-radius:6px;width:100%;padding:5px;font-size:11px;color:#aaa;cursor:pointer;margin-top:4px}
+.fixed-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.fixed-del{color:#ddd;background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px}
+.fixed-del:hover{color:#e66}
 #mealPlanNote:empty:before{content:attr(data-ph);color:#ccc;pointer-events:none}
 
 /* 왼쪽 */
@@ -415,27 +446,46 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
     </div>
 
     <div id="tab-money" class="tab-content">
-      <!-- 예산 박스 -->
-      <div class="budget-box" id="budgetBox">
-        <div class="budget-top">
-          <span class="budget-label">이번 달 예산</span>
-          <button class="budget-edit-btn" onclick="openBudgetModal()">설정</button>
-        </div>
-        <div class="budget-track"><div class="budget-fill" id="budgetFill" style="width:0%"></div></div>
-        <div class="budget-nums">
-          <span class="budget-spent" id="budgetSpent">지출 0원</span>
-          <span class="budget-remain" id="budgetRemain">예산 미설정</span>
-        </div>
+      <!-- 세부 탭 -->
+      <div class="money-subtabs">
+        <div class="money-subtab active" onclick="switchMoneyTab('ledger',this)">내역</div>
+        <div class="money-subtab" onclick="switchMoneyTab('stats',this)">📊 통계</div>
+        <div class="money-subtab" onclick="switchMoneyTab('fixed',this)">📌 고정비</div>
       </div>
-      <div class="no-spend-bar" onclick="toggleNoSpend()">
-        <div class="ns-check" id="nsCheck"></div>
-        <span class="ns-label">오늘 무지출 💪</span>
-        <span class="ns-badge" id="nsBadge">✓ 달성!</span>
+
+      <!-- 내역 탭 -->
+      <div id="mtab-ledger" class="mtab-content active">
+        <div class="budget-box" id="budgetBox">
+          <div class="budget-top">
+            <span class="budget-label">이번 달 예산</span>
+            <button class="budget-edit-btn" onclick="openBudgetModal()">설정</button>
+          </div>
+          <div class="budget-track"><div class="budget-fill" id="budgetFill" style="width:0%"></div></div>
+          <div class="budget-nums">
+            <span class="budget-spent" id="budgetSpent">지출 0원</span>
+            <span class="budget-remain" id="budgetRemain">예산 미설정</span>
+          </div>
+        </div>
+        <div class="no-spend-bar" onclick="toggleNoSpend()">
+          <div class="ns-check" id="nsCheck"></div>
+          <span class="ns-label">오늘 무지출 💪</span>
+          <span class="ns-badge" id="nsBadge">✓ 달성!</span>
+        </div>
+        <div id="money-list"></div>
+        <button class="add-btn" onclick="openMoneyModal()">＋ 내역 추가</button>
+        <p class="section-title" style="margin-top:8px">이번 달 합계</p>
+        <div id="money-summary"></div>
       </div>
-      <div id="money-list"></div>
-      <button class="add-btn" onclick="openMoneyModal()">＋ 내역 추가</button>
-      <p class="section-title" style="margin-top:8px">이번 달 합계</p>
-      <div id="money-summary"></div>
+
+      <!-- 통계 탭 -->
+      <div id="mtab-stats" class="mtab-content">
+        <div id="money-stats-content"></div>
+      </div>
+
+      <!-- 고정비 탭 -->
+      <div id="mtab-fixed" class="mtab-content">
+        <div id="fixed-costs-content"></div>
+      </div>
     </div>
 
     <div id="tab-meal" class="tab-content">
@@ -646,9 +696,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
     <input id="mn-name" placeholder="예: 점심식사"/>
     <div class="modal-label">금액</div>
     <div class="modal-row">
-      <select id="mn-type"><option value="out">지출 (−)</option><option value="in">수입 (+)</option></select>
+      <select id="mn-type" onchange="updateTagsByType()"><option value="out">지출 (−)</option><option value="in">수입 (+)</option></select>
       <input id="mn-amount" type="number" placeholder="금액" min="0"/>
     </div>
+    <div class="modal-label">태그 <span style="font-size:10px;color:#bbb">(선택)</span></div>
+    <div class="tag-chips" id="mn-tags"></div>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('moneyModal')">취소</button>
       <button class="mbtn ok" onclick="confirmMoney()">추가</button>
@@ -833,7 +885,7 @@ let curView='month';
 let leftMode='cal'; // 'cal'|'money-cal'|'habit'|'memo'
 const DAYS=['일','월','화','수','목','금','토'];
 let habits=[],editingHabitId=null;
-let weekEvents={},moneyData={},mealData={};
+let weekEvents={},moneyData={},mealData={},fixedCosts={fixed:[],semifixed:[]};
 let memos=[],editingMemoId=null,currentMemoFilter='전체',viewingMemoId=null;
 let noSpendData={};
 let ddayList=[];
@@ -885,7 +937,7 @@ async function saveData(type,key,value){if(!currentUser)return;showSaving();awai
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -899,6 +951,7 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'folders')),
     getDoc(doc(db,'users',currentUser.uid,'settings','habitPostit')),
     getDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -921,6 +974,9 @@ async function loadAllData(){
   folders.sort((a,b)=>(a.order??9999)-(b.order??9999));
   habitPostitContent=hpS.exists()?hpS.data().text||'':'';
   window._mealPlanNoteContent=mpnS.exists()?mpnS.data().text||'':'';
+  fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
+  if(!fixedCosts.fixed)fixedCosts.fixed=[];
+  if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
 }
 
 // ── 상단 메모 ──
@@ -1509,6 +1565,33 @@ window.deleteHabit=async function(id){
   renderHabits();
 };
 
+// ── 가계부 태그 ──
+const OUT_TAGS=['식비','교통','쇼핑','의료','문화','고정비','기타지출'];
+const IN_TAGS=['급여','용돈','부업','기타수입'];
+let selectedTag='';
+window.updateTagsByType=function(){
+  const type=document.getElementById('mn-type').value;
+  const tags=type==='out'?OUT_TAGS:IN_TAGS;
+  selectedTag='';
+  document.getElementById('mn-tags').innerHTML=tags.map(t=>
+    `<div class="tag-chip" onclick="selectTag(this,'${t}')">${t}</div>`
+  ).join('');
+};
+window.selectTag=function(el,tag){
+  document.querySelectorAll('#mn-tags .tag-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');selectedTag=tag;
+};
+
+// ── 가계부 세부탭 전환 ──
+window.switchMoneyTab=function(name,el){
+  document.querySelectorAll('.money-subtab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.mtab-content').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('mtab-'+name).classList.add('active');
+  if(name==='stats')renderMoneyStats();
+  if(name==='fixed')renderFixedCosts();
+};
+
 // ── 가계부 ──
 function renderMoney(){
   const key=fmt(selDate);const items=moneyData[key]||[];
@@ -1517,7 +1600,8 @@ function renderMoney(){
   items.forEach((item,idx)=>{
     const row=document.createElement('div');row.className='money-row';
     const amt=item.type==='out'?-item.amount:item.amount;total+=amt;
-    row.innerHTML=`<span class="money-cat">${item.name}</span><div style="display:flex;align-items:center;gap:8px"><span class="money-amt ${item.type}">${item.type==='out'?'-':'+'}${item.amount.toLocaleString()}</span><span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteMoney('${key}',${idx})">✕</span></div>`;
+    const tagBadge=item.tag?`<span style="font-size:10px;background:#f0f0f0;color:#888;padding:1px 6px;border-radius:8px;margin-right:4px">${item.tag}</span>`:'';
+    row.innerHTML=`<span class="money-cat">${item.name}${tagBadge}</span><div style="display:flex;align-items:center;gap:8px"><span class="money-amt ${item.type}">${item.type==='out'?'-':'+'}${item.amount.toLocaleString()}</span><span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteMoney('${key}',${idx})">✕</span></div>`;
     list.appendChild(row);
   });
   const mKey=selDate.getFullYear()+'-'+(selDate.getMonth()+1);
@@ -1529,6 +1613,8 @@ function renderMoney(){
 }
 window.openMoneyModal=function(){
   document.getElementById('mn-name').value='';document.getElementById('mn-amount').value='';
+  document.getElementById('mn-type').value='out';
+  selectedTag='';updateTagsByType();
   document.getElementById('moneyModal').style.display='flex';
 };
 window.confirmMoney=async function(){
@@ -1536,7 +1622,7 @@ window.confirmMoney=async function(){
   const type=document.getElementById('mn-type').value;
   const amount=parseInt(document.getElementById('mn-amount').value);if(!amount)return;
   const key=fmt(selDate);if(!moneyData[key])moneyData[key]=[];
-  moneyData[key].push({name,type,amount});
+  moneyData[key].push({name,type,amount,tag:selectedTag||''});
   await saveData('money',key,{items:moneyData[key]});closeModal('moneyModal');
   renderMoney();if(leftMode==='money-cal')renderMoneyCal();
 };
@@ -1544,6 +1630,127 @@ window.deleteMoney=async function(key,idx){
   if(!confirm('삭제할까요?'))return;
   moneyData[key].splice(idx,1);await saveData('money',key,{items:moneyData[key]});
   renderMoney();if(leftMode==='money-cal')renderMoneyCal();
+};
+
+// ── 통계 ──
+let statsCur=new Date();
+const TAG_COLORS={
+  '식비':'#FF6B6B','교통':'#4ECDC4','쇼핑':'#A29BFE','의료':'#FFA726',
+  '문화':'#26C6DA','고정비':'#78909C','기타지출':'#BDBDBD',
+  '급여':'#1D9E75','용돈':'#66BB6A','부업':'#42A5F5','기타수입':'#9CCC65','(미분류)':'#E0E0E0'
+};
+function renderMoneyStats(){
+  const el=document.getElementById('money-stats-content');
+  const y=statsCur.getFullYear(),m=statsCur.getMonth()+1;
+  const mKey=`${y}-${m}`;
+  // 해당 월 데이터 집계
+  const tagMap={};let totalOut=0;
+  Object.keys(moneyData).forEach(k=>{
+    if(k.startsWith(mKey+'-')){
+      moneyData[k].forEach(i=>{
+        if(i.type!=='out')return;
+        const t=i.tag||'(미분류)';
+        tagMap[t]=(tagMap[t]||0)+i.amount;
+        totalOut+=i.amount;
+      });
+    }
+  });
+  const entries=Object.entries(tagMap).sort((a,b)=>b[1]-a[1]);
+  // SVG 파이차트 (conic-gradient 방식)
+  let conicParts=[];let acc=0;
+  entries.forEach(([tag,amt])=>{
+    const pct=totalOut>0?amt/totalOut*100:0;
+    const color=TAG_COLORS[tag]||'#ccc';
+    conicParts.push(`${color} ${acc.toFixed(1)}% ${(acc+pct).toFixed(1)}%`);
+    acc+=pct;
+  });
+  const pieStyle=entries.length>0
+    ?`conic-gradient(${conicParts.join(',')})`
+    :'conic-gradient(#eee 0% 100%)';
+  el.innerHTML=`
+    <div class="stats-month-nav">
+      <button onclick="statsMove(-1)">‹</button>
+      <span>${y}년 ${m}월 지출 통계</span>
+      <button onclick="statsMove(1)">›</button>
+    </div>
+    <div class="pie-wrap">
+      <div style="width:150px;height:150px;border-radius:50%;background:${pieStyle}"></div>
+    </div>
+    <div class="pie-total">총 지출 ${totalOut.toLocaleString()}원</div>
+    <div class="pie-legend">
+      ${entries.length===0?'<div style="text-align:center;color:#ccc;font-size:12px;padding:16px 0">이달 지출 내역이 없어요</div>':
+        entries.map(([tag,amt])=>`
+          <div class="pie-legend-row">
+            <div style="display:flex;align-items:center">
+              <div class="pie-legend-dot" style="background:${TAG_COLORS[tag]||'#ccc'}"></div>
+              <span>${tag}</span>
+            </div>
+            <div style="display:flex;gap:8px;color:#666">
+              <span>${totalOut>0?Math.round(amt/totalOut*100):0}%</span>
+              <span style="font-weight:500">${amt.toLocaleString()}원</span>
+            </div>
+          </div>`).join('')}
+    </div>`;
+}
+window.statsMove=function(dir){
+  statsCur=new Date(statsCur.getFullYear(),statsCur.getMonth()+dir,1);
+  renderMoneyStats();
+};
+
+// ── 고정비 ──
+function renderFixedCosts(){
+  const el=document.getElementById('fixed-costs-content');
+  const makeTable=(type,label)=>{
+    const rows=fixedCosts[type]||[];
+    return `
+      <div class="fixed-section-title">${label}</div>
+      <table class="fixed-table">
+        <tr><th>항목</th><th>금액</th><th></th></tr>
+        ${rows.map((r,i)=>`
+          <tr>
+            <td><input class="fixed-input" value="${r.name}" placeholder="항목명"
+              onblur="updateFixedRow('${type}',${i},'name',this.value)"/></td>
+            <td><input class="fixed-input" value="${r.amount}" placeholder="0" type="text"
+              style="text-align:right"
+              onblur="updateFixedRow('${type}',${i},'amount',this.value)"/></td>
+            <td><button class="fixed-del" onclick="deleteFixedRow('${type}',${i})">✕</button></td>
+          </tr>`).join('')}
+      </table>
+      <button class="fixed-add-btn" onclick="addFixedRow('${type}')">＋ 추가</button>`;
+  };
+  const fixed=fixedCosts.fixed||[];
+  const semi=fixedCosts.semifixed||[];
+  const fTotal=fixed.reduce((s,r)=>s+parseAmount(r.amount),0);
+  const sTotal=semi.reduce((s,r)=>s+parseAmount(r.amount),0);
+  el.innerHTML=`
+    ${makeTable('fixed','📌 고정비')}
+    <div style="font-size:11px;color:#888;text-align:right;margin:2px 0 10px">합계 ${fTotal.toLocaleString()}원</div>
+    ${makeTable('semifixed','📎 반고정비')}
+    <div style="font-size:11px;color:#888;text-align:right;margin:2px 0 10px">합계 ${sTotal.toLocaleString()}원</div>
+    <div style="font-size:12px;font-weight:600;text-align:right;color:var(--accent);padding:6px 0;border-top:1px solid #eee">
+      월 고정지출 합계 ${(fTotal+sTotal).toLocaleString()}원
+    </div>`;
+}
+function parseAmount(v){const n=parseInt(String(v).replace(/,/g,''));return isNaN(n)?0:n;}
+window.addFixedRow=function(type){
+  fixedCosts[type].push({name:'',amount:''});
+  renderFixedCosts();
+  // 포커스 마지막 행 이름 칸
+  setTimeout(()=>{
+    const inputs=document.querySelectorAll(`#fixed-costs-content .fixed-input`);
+    if(inputs.length)inputs[inputs.length-2].focus();
+  },50);
+};
+window.updateFixedRow=async function(type,idx,field,val){
+  fixedCosts[type][idx][field]=val;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);
+  showSaving();
+  renderFixedCosts();
+};
+window.deleteFixedRow=async function(type,idx){
+  fixedCosts[type].splice(idx,1);
+  await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);
+  renderFixedCosts();
 };
 
 // ── 식단 ──
