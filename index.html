@@ -1015,7 +1015,20 @@ onAuthStateChanged(auth,async user=>{
 });
 
 // ── Firestore ──
-async function saveData(type,key,value){if(!currentUser)return;showSaving();await setDoc(doc(db,'users',currentUser.uid,type,key),value);}
+async function saveData(type,key,value){
+  if(!currentUser)return;
+  showSaving();
+  try{
+    await setDoc(doc(db,'users',currentUser.uid,type,key),value);
+  }catch(err){
+    console.error('saveData 실패:',err);
+    if(err?.message?.includes('exceeds maximum size')||err?.code==='invalid-argument'){
+      alert('저장 실패: 데이터가 너무 커요. 이미지를 줄이거나 일부 내용을 삭제해주세요.');
+    } else {
+      alert('저장 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.\n('+err.message+')');
+    }
+  }
+}
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
@@ -2192,9 +2205,11 @@ function openMemoInLeft(id){
       if(item.type.startsWith('image/')){
         e.preventDefault();
         const file=item.getAsFile();
-        const reader=new FileReader();
-        reader.onload=ev=>_insertImgAtCursor(editor,ev.target.result);
-        reader.readAsDataURL(file);
+        _compressImage(file).then(compressed=>{
+          _insertImgAtCursor(editor,compressed);
+        }).catch(err=>{
+          console.error('붙여넣기 이미지 처리 실패:',err);
+        });
         return;
       }
     }
@@ -2328,15 +2343,49 @@ document.getElementById('memoImgLightbox').addEventListener('wheel',e=>{
   },{passive:true});
 })();
 function renderMemoImgPreview(){}// 하위 호환 빈 함수
+// 이미지 리사이즈+압축 (Firestore 1MB 문서 한도 대응)
+function _compressImage(file,maxDim=1000,quality=0.72){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        if(w>maxDim||h>maxDim){
+          if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}
+          else{w=Math.round(w*maxDim/h);h=maxDim;}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        let dataUrl=canvas.toDataURL('image/jpeg',quality);
+        // 압축해도 여전히 너무 크면(약 350KB 이상, base64 기준) 품질을 더 낮춰 재시도
+        if(dataUrl.length>350000&&quality>0.4){
+          dataUrl=canvas.toDataURL('image/jpeg',0.4);
+        }
+        resolve(dataUrl);
+      };
+      img.onerror=()=>reject(new Error('이미지를 읽을 수 없어요'));
+      img.src=e.target.result;
+    };
+    reader.onerror=()=>reject(new Error('파일을 읽을 수 없어요'));
+    reader.readAsDataURL(file);
+  });
+}
 window.memoImgAdd=function(input,id){
   const editor=document.getElementById('mvBody');
   if(!editor)return;
   const files=Array.from(input.files);
-  files.forEach(file=>{
+  files.forEach(async file=>{
     if(!file.type.startsWith('image/'))return;
-    const reader=new FileReader();
-    reader.onload=e=>_insertImgAtCursor(editor,e.target.result);
-    reader.readAsDataURL(file);
+    try{
+      const compressed=await _compressImage(file);
+      _insertImgAtCursor(editor,compressed);
+    }catch(err){
+      console.error('이미지 처리 실패:',err);
+      showToast?.('이미지를 처리하지 못했어요');
+    }
   });
   input.value='';
 };
@@ -2353,16 +2402,19 @@ window.handleLeftBack=function(){viewingMemoId=null;setLeftMode('cal');};
 window.saveMemoFromView=async function(id){
   const title=document.getElementById('mvTitle')?.value.trim();
   const bodyEl=document.getElementById('mvBody');
-  // contenteditable: innerHTML에 이미지+텍스트 모두 포함됨
   const body=bodyEl?bodyEl.innerHTML:'';
   const m=memos.find(x=>x.id===id);if(!m)return;
+  // Firestore 1MB 한도 사전 체크 (JSON 직렬화 크기 기준, 여유분 포함)
+  const payload={title:m.title,category:m.category,body,folderId:m.folderId||null,createdAt:m.createdAt||Date.now()};
+  const approxSize=new Blob([JSON.stringify(payload)]).size;
+  if(approxSize>900000){
+    alert(`저장 실패: 메모 크기가 너무 커요 (${Math.round(approxSize/1024)}KB). 이미지를 줄이거나 삭제해주세요. 이미지당 권장: 1장씩 추가해보세요.`);
+    return;
+  }
   m.title=title||m.title;m.body=body;
   await saveData('memos',id,{
+    ...payload,
     title:m.title,
-    category:m.category,
-    body,
-    folderId:m.folderId||null,
-    createdAt:m.createdAt||Date.now(),
     ...(typeof m.order!=='undefined'?{order:m.order}:{})
   });
   renderMemos();
