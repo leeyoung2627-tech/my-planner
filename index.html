@@ -2054,14 +2054,23 @@ function renderMemos(){
     card.addEventListener('drop',async e=>{
       e.preventDefault();card.style.outline='';
       const fromId=e.dataTransfer.getData('memo-id');if(!fromId||fromId===memo.id)return;
-      // 순서 변경: memos 배열에서 from을 to 위치로
+      const fromMemo=memos.find(m=>m.id===fromId);
+      const toMemo=memos.find(m=>m.id===memo.id);
+      if(!fromMemo||!toMemo)return;
+      // 안전장치: 다른 폴더 간 드래그는 순서 변경 로직을 타지 않음 (폴더 이동은 폴더 아이템 드롭에서만 처리)
+      if((fromMemo.folderId||null)!==(toMemo.folderId||null))return;
       const fromIdxGlobal=memos.findIndex(m=>m.id===fromId);
       const toIdxGlobal=memos.findIndex(m=>m.id===memo.id);
       if(fromIdxGlobal===-1||toIdxGlobal===-1)return;
       const [moved]=memos.splice(fromIdxGlobal,1);
-      memos.splice(toIdxGlobal,0,moved);
-      // 순서 저장 (order 필드)
-      await Promise.all(memos.map((m,order)=>saveData('memos',m.id,{title:m.title,category:m.category,body:m.body,folderId:m.folderId||null,createdAt:m.createdAt||Date.now(),order})));
+      const newToIdx=memos.findIndex(m=>m.id===memo.id);
+      memos.splice(newToIdx,0,moved);
+      // 순서 저장 — 변경된 두 메모만 정확히 저장 (전체 재저장으로 인한 폴더 데이터 손상 방지)
+      const groupIds=memos.filter(m=>(m.folderId||null)===(moved.folderId||null)).map(m=>m.id);
+      await Promise.all(groupIds.map((id,order)=>{
+        const m=memos.find(x=>x.id===id);
+        return saveData('memos',id,{title:m.title,category:m.category,body:m.body,folderId:m.folderId||null,createdAt:m.createdAt||Date.now(),order});
+      }));
       renderMemos();
     });
     card.addEventListener('click',()=>openMemoInLeft(memo.id));
@@ -2395,26 +2404,28 @@ function renderFolders(){
       input.addEventListener('blur',()=>{ renameFolderBlur(fd.id,input); });
       input.addEventListener('keydown',ev=>{if(ev.key==='Enter')input.blur();if(ev.key==='Escape'){input.value=fd.name;input.blur();}});
     });
-    // 폴더 드래그 순서
+    // 폴더 드래그 순서 — ID 기반으로 처리 (인덱스는 재렌더링 시 어긋날 수 있어 사용하지 않음)
     item.addEventListener('dragstart',e=>{
-      e.dataTransfer.setData('folder-idx',String(fi));
+      e.dataTransfer.setData('folder-id',fd.id);
       item.style.opacity='.4';
     });
     item.addEventListener('dragend',()=>{item.style.opacity='1';});
     item.addEventListener('dragover',e=>{
       e.preventDefault();
-      const fromFolder=e.dataTransfer.types.includes('folder-idx');
+      const fromFolder=e.dataTransfer.types.includes('folder-id');
       if(fromFolder)item.style.outline='2px solid var(--accent)';
       else{item.style.background='var(--accent-light)';item.style.borderColor='var(--accent)';}
     });
     item.addEventListener('dragleave',()=>{item.style.outline='';item.style.background='';item.style.borderColor='';});
     item.addEventListener('drop',async e=>{
       e.preventDefault();item.style.outline='';item.style.background='';item.style.borderColor='';
-      const fromFolderIdx=e.dataTransfer.getData('folder-idx');
-      if(fromFolderIdx!==''){
-        // 폴더 순서 변경
-        const from=parseInt(fromFolderIdx);const to=fi;
-        if(from===to)return;
+      const fromFolderId=e.dataTransfer.getData('folder-id');
+      if(fromFolderId){
+        // 폴더 순서 변경 — ID로 현재 위치를 다시 찾아서 처리 (안전)
+        if(fromFolderId===fd.id)return;
+        const from=folders.findIndex(f=>f.id===fromFolderId);
+        const to=folders.findIndex(f=>f.id===fd.id);
+        if(from===-1||to===-1||from===to)return;
         const [moved]=folders.splice(from,1);folders.splice(to,0,moved);
         await Promise.all(folders.map((f,order)=>saveData('folders',f.id,{name:f.name,emoji:f.emoji,order})));
         renderFolders();return;
