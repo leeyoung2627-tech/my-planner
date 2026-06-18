@@ -434,6 +434,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
       <div class="view-toggle" id="viewToggle">
         <button class="vbtn active" id="btnMonth" onclick="switchView('month')">월</button>
         <button class="vbtn" id="btnWeek" onclick="switchView('week')">주</button>
+        <button class="vbtn" id="btnAnniv" onclick="switchView('anniv')">🎂</button>
       </div>
       <div class="user-area">
         <span class="user-name" id="userName"></span>
@@ -451,6 +452,10 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
         <button class="add-btn" onclick="openHabitModal()" style="margin-top:4px">＋ 습관 추가</button>
       </div>
       <div id="memoView" class="memo-view" style="display:none"></div>
+      <div id="annivView" class="habit-view" style="display:none">
+        <div id="anniv-list-left"></div>
+        <button class="add-btn" onclick="openAnnivModal()" style="margin-top:4px">＋ 기념일 추가</button>
+      </div>
     </div>
   </div>
 
@@ -462,7 +467,6 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
       <div class="tab" onclick="switchTab('meal',this)">🥗 식단</div>
       <div class="tab" onclick="switchTab('memo',this)">📝 메모</div>
       <div class="tab" onclick="switchTab('habit-tab',this)">✅ 습관</div>
-      <div class="tab" onclick="switchTab('anniv',this)">🎂 기념일</div>
     </div>
 
     <div id="tab-schedule" class="tab-content active">
@@ -542,11 +546,6 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
         </div>
         <div class="postit-save-hint">Ctrl+S 로 저장</div>
       </div>
-    </div>
-
-    <div id="tab-anniv" class="tab-content">
-      <div id="anniv-list"></div>
-      <button class="add-btn" onclick="openAnnivModal()">＋ 기념일 추가</button>
     </div>
 
     <div class="summary-bar">
@@ -1055,17 +1054,21 @@ window.saveTopMemo=async function(){
 // ── 왼쪽 모드 전환 ──
 function setLeftMode(mode){
   leftMode=mode;
-  const views=['monthView','weekView','moneyCalView','mealCalView','habitView','memoView'];
+  const views=['monthView','weekView','moneyCalView','mealCalView','habitView','memoView','annivView'];
   views.forEach(v=>document.getElementById(v).style.display='none');
   const isCalMode=mode==='cal'||mode==='money-cal'||mode==='meal-cal';
   document.getElementById('navPrev').style.display=isCalMode?'':'none';
   document.getElementById('navNext').style.display=isCalMode?'':'none';
-  document.getElementById('viewToggle').style.display=mode==='cal'?'':'none';
+  document.getElementById('viewToggle').style.display=(mode==='cal'||mode==='anniv')?'':'none';
   document.getElementById('leftBackBtn').style.display=isCalMode?'none':'';
   if(mode==='cal'){
     if(curView==='week'){document.getElementById('weekView').style.display='';renderWeek();}
     else{document.getElementById('monthView').style.display='';renderMonth();}
     document.getElementById('periodLabel').textContent=curView==='month'?cur.getFullYear()+'년 '+(cur.getMonth()+1)+'월':'';
+    // 기념일 버튼 비활성화
+    document.getElementById('btnAnniv').classList.remove('active');
+    if(curView==='month')document.getElementById('btnMonth').classList.add('active');
+    else document.getElementById('btnWeek').classList.add('active');
   } else if(mode==='money-cal'){
     document.getElementById('moneyCalView').style.display='';
     renderMoneyCal();
@@ -1081,6 +1084,13 @@ function setLeftMode(mode){
   } else if(mode==='memo'){
     document.getElementById('memoView').style.display='flex';
     document.getElementById('periodLabel').textContent='메모 보기';
+  } else if(mode==='anniv'){
+    document.getElementById('annivView').style.display='';
+    document.getElementById('periodLabel').textContent='🎂 기념일';
+    document.getElementById('btnAnniv').classList.add('active');
+    document.getElementById('btnMonth').classList.remove('active');
+    document.getElementById('btnWeek').classList.remove('active');
+    renderAnniversariesLeft();
   }
 }
 window.handleLeftBack=function(){
@@ -1105,9 +1115,6 @@ window.switchTab=function(name,el){
   } else if(name==='memo'){
     if(leftMode==='memo'){}
     else setLeftMode('cal');
-  } else if(name==='anniv'){
-    if(leftMode!=='cal')setLeftMode('cal');
-    renderAnniversaries();
   } else {
     // 일정 — 달력으로 복귀
     if(leftMode!=='cal')setLeftMode('cal');
@@ -1398,11 +1405,21 @@ window.editWeekEvent=async function(key,idx){
   await saveData('events',key,{items:weekEvents[key]});renderWeek();renderSchedule();
 };
 window.switchView=function(v){
+  if(v==='anniv'){
+    setLeftMode('anniv');
+    return;
+  }
+  // 기념일 모드에서 월/주로 돌아올 때
   curView=v;
+  document.getElementById('annivView').style.display='none';
+  document.getElementById('btnAnniv').classList.remove('active');
   document.getElementById('monthView').style.display=v==='month'?'':'none';
   document.getElementById('weekView').style.display=v==='week'?'':'none';
   document.getElementById('btnMonth').classList.toggle('active',v==='month');
   document.getElementById('btnWeek').classList.toggle('active',v==='week');
+  document.getElementById('navPrev').style.display='';
+  document.getElementById('navNext').style.display='';
+  leftMode='cal';
   if(v==='week')renderWeek();else renderMonth();
 };
 
@@ -2341,12 +2358,11 @@ window.deleteDday=async function(id){
 };
 
 // ── 기념일 ──
-function renderAnniversaries(){
-  const list=document.getElementById('anniv-list');
-  if(!list)return;
-  list.innerHTML='';
+function buildAnnivCards(listEl){
+  if(!listEl)return;
+  listEl.innerHTML='';
   if(!anniversaries.length){
-    list.innerHTML='<div style="font-size:13px;color:#ccc;text-align:center;padding:20px 0">기념일이 없어요</div>';
+    listEl.innerHTML='<div style="font-size:13px;color:#ccc;text-align:center;padding:20px 0">기념일이 없어요</div>';
     return;
   }
   anniversaries.forEach(av=>{
@@ -2375,8 +2391,14 @@ function renderAnniversaries(){
       </div>
       <span class="anniv-dday ${ddayClass}">${ddayText}</span>
       <button class="anniv-del" onclick="deleteAnniv('${av.id}')">✕</button>`;
-    list.appendChild(card);
+    listEl.appendChild(card);
   });
+}
+function renderAnniversaries(){
+  buildAnnivCards(document.getElementById('anniv-list'));
+}
+function renderAnniversariesLeft(){
+  buildAnnivCards(document.getElementById('anniv-list-left'));
 }
 window.openAnnivModal=function(){
   document.getElementById('av-name').value='';
@@ -2409,13 +2431,13 @@ window.confirmAnniv=async function(){
   anniversaries.push(newAv);
   anniversaries.sort((a,b)=>nextAnnivDate(a)-nextAnnivDate(b));
   await saveData('anniversaries',id,newAv);
-  closeModal('annivModal');renderAnniversaries();renderMonth();
+  closeModal('annivModal');renderAnniversaries();renderAnniversariesLeft();renderMonth();
 };
 window.deleteAnniv=async function(id){
   if(!confirm('삭제할까요?'))return;
   anniversaries=anniversaries.filter(a=>a.id!==id);
   await deleteData('anniversaries',id);
-  renderAnniversaries();renderMonth();
+  renderAnniversaries();renderAnniversariesLeft();renderMonth();
 };
 
 // ── 폴더 ──
