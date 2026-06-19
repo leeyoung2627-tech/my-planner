@@ -282,7 +282,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 /* 날짜 칸 2배 높이 */
 .day-cell{height:130px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden}
 .day-cell-events{display:flex;flex-direction:column;gap:1px;width:100%;align-items:stretch;margin-top:2px;overflow:hidden}
-.day-cell-ev{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0}
+.day-cell-ev{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0;cursor:grab}
+.day-cell-ev.dragging{opacity:.4}
 .day-cell:hover{background:var(--accent-light)}
 .day-cell.other{color:#ccc}
 .day-cell.today .dn{background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
@@ -330,6 +331,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .week-add-btn{font-size:10px;color:#bbb;cursor:pointer;padding:2px;text-align:center;border-radius:4px;margin-top:auto}
 .week-add-btn:hover{background:#eee;color:#888}
 .day-col.drag-over{background:color-mix(in srgb,var(--accent-light) 53%,transparent);border-color:var(--accent)}
+.day-cell.drag-over{background:color-mix(in srgb,var(--accent-light) 60%,transparent);outline:1.5px solid var(--accent);outline-offset:-1.5px}
 
 /* 습관 뷰 */
 .habit-view{padding:.85rem}
@@ -1441,8 +1443,11 @@ function renderMonth(){
     const dnColor=holiday||isSun?'color:#D85A30':isSat?'color:var(--accent)':'';
     // 일정 텍스트 (최대 3개, 나머지는 +N)
     const maxShow=3;
-    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map(ev=>{const done=ev.startsWith('[✓] ');const txt=done?ev.slice(4):ev;return`<div class="day-cell-ev"${done?' style="text-decoration:line-through;opacity:.5"':''}>${txt}</div>`;}).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
-    html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})">
+    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map((ev,idx)=>{const done=ev.startsWith('[✓] ');const txt=done?ev.slice(4):ev;return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${idx})" ondragend="dragEnd(event)"${done?' style="text-decoration:line-through;opacity:.5"':''}>${txt}</div>`;}).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
+    html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="event.stopPropagation();dropEventMonth(event,'${key}')">
       <span class="dn" style="${dnColor}">${d}</span>
       ${holiday?`<div class="day-cell-holiday">${holiday}</div>`:''}
       ${annivs.map(av=>`<div class="day-cell-anniv">${av.emoji||'🎂'} ${av.name}</div>`).join('')}
@@ -1541,7 +1546,7 @@ function renderWeek(){
 
 // ── 드래그 앤 드롭 ──
 window.dragStart=function(e,key,idx){dragSrcKey=key;dragSrcIdx=idx;e.target.classList.add('dragging');};
-window.dragEnd=function(e){e.target.classList.remove('dragging');document.querySelectorAll('.day-col').forEach(c=>c.classList.remove('drag-over'));};
+window.dragEnd=function(e){e.target.classList.remove('dragging');document.querySelectorAll('.day-col,.day-cell').forEach(c=>c.classList.remove('drag-over'));};
 window.dropEvent=async function(e,targetKey){
   e.preventDefault();
   document.querySelectorAll('.day-col').forEach(c=>c.classList.remove('drag-over'));
@@ -1554,6 +1559,19 @@ window.dropEvent=async function(e,targetKey){
   await saveData('events',targetKey,{items:weekEvents[targetKey]});
   dragSrcKey=null;dragSrcIdx=null;
   renderWeek();renderSchedule();
+};
+window.dropEventMonth=async function(e,targetKey){
+  e.preventDefault();
+  document.querySelectorAll('.day-cell').forEach(c=>c.classList.remove('drag-over'));
+  if(!dragSrcKey||dragSrcIdx===null||dragSrcKey===targetKey)return;
+  const ev=weekEvents[dragSrcKey]?.[dragSrcIdx];if(!ev)return;
+  weekEvents[dragSrcKey].splice(dragSrcIdx,1);
+  if(!weekEvents[targetKey])weekEvents[targetKey]=[];
+  weekEvents[targetKey].push(ev);
+  await saveData('events',dragSrcKey,{items:weekEvents[dragSrcKey]});
+  await saveData('events',targetKey,{items:weekEvents[targetKey]});
+  dragSrcKey=null;dragSrcIdx=null;
+  renderMonth();renderSchedule();
 };
 
 window.selectDay=function(d){
