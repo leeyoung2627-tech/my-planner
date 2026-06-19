@@ -41,12 +41,12 @@ onAuthStateChanged(auth, user => {
   if (el) {
     if (user) {
       const name = user.displayName?.split(' ')[0] || user.email;
-      el.innerHTML = `<span style="font-size:12px;color:var(--muted)">${name}</span>
-        <button class="theme-btn" onclick="window._fbSignOut()" title="로그아웃" style="font-size:11px;padding:3px 8px">로그아웃</button>`;
+      el.innerHTML = `<span style="font-size:12px;color:var(--muted);white-space:nowrap">${name}</span>
+        <button onclick="window._fbSignOut()" title="로그아웃" style="font-size:12px;padding:5px 14px;white-space:nowrap;border:1px solid var(--line);background:var(--paper);border-radius:7px;cursor:pointer;font-family:var(--sans)">로그아웃</button>`;
       // 로그인 후 데이터 불러오기
       if (typeof window._plannerLoadFromFb === 'function') window._plannerLoadFromFb();
     } else {
-      el.innerHTML = `<button class="theme-btn" onclick="window._fbSignIn()" style="font-size:12px;padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:7px">Google 로그인</button>`;
+      el.innerHTML = `<button onclick="window._fbSignIn()" style="font-size:12px;padding:5px 14px;white-space:nowrap;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:var(--sans)">Google 로그인</button>`;
     }
   }
 });
@@ -326,7 +326,7 @@ onAuthStateChanged(auth, user => {
       <div class="brand">기획 <em>노트</em></div>
       <div class="work-title" id="headTitle"></div>
       <div class="save-status"><span class="save-dot" id="saveDot"></span><span id="saveText">불러오는 중…</span></div>
-      <div id="fbUserInfo" style="display:flex;align-items:center;gap:6px;margin-left:4px"></div>
+      <div id="fbUserInfo" style="display:flex;align-items:center;gap:6px;margin-left:4px;flex-wrap:nowrap;flex-shrink:0"></div>
       <button class="theme-btn" id="cloudBtn" title="클라우드 백업">☁️</button>
       <button class="theme-btn" id="themeBtn" title="테마 색 바꾸기">🎨</button>
     </div>
