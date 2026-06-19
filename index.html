@@ -51,6 +51,43 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .note-btn-secondary{border-color:#b8e0c4;color:#2d7a4f}
 .note-btn-secondary:hover{background:#e8f5ed;border-color:#2d7a4f;color:#2d7a4f;box-shadow:0 4px 12px #2d7a4f20}
 
+/* ── 미션 트래커 ── */
+#missionTracker{
+  position:fixed;z-index:40;
+  display:none;flex-direction:column;gap:0;
+  width:160px;
+}
+#missionTracker.visible{display:flex}
+/* 제목 박스 */
+.mt-title-wrap{background:#fff;border:1.5px solid #ddd;border-radius:12px 12px 0 0;border-bottom:none;padding:10px 14px 8px}
+.mt-title-input{width:100%;border:none;outline:none;font-size:17px;font-weight:800;color:#222;font-family:inherit;background:transparent;line-height:1.3;resize:none;overflow:hidden}
+.mt-title-input::placeholder{color:#ddd}
+/* 경로 캔버스 영역 */
+.mt-path-wrap{background:#fff;border:1.5px solid #ddd;border-radius:0 0 12px 12px;padding:10px 10px 14px;box-shadow:0 2px 12px #0001}
+.mt-path-svg{width:100%;overflow:visible;display:block}
+/* 노드 */
+.mt-node{cursor:pointer;transition:all .18s}
+.mt-node circle{fill:#fff;stroke:#ddd;stroke-width:2;transition:all .2s}
+.mt-node.done circle{fill:var(--accent);stroke:var(--accent)}
+.mt-node text{font-size:8.5px;fill:#888;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;text-anchor:middle;dominant-baseline:middle;pointer-events:none;transition:fill .2s}
+.mt-node.done text{fill:#fff}
+.mt-node:hover circle{stroke:var(--accent);filter:drop-shadow(0 2px 6px color-mix(in srgb,var(--accent) 30%,transparent))}
+/* start/success 배지 */
+.mt-badge{font-size:8px;font-weight:700;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+/* 하단 버튼 */
+.mt-add-btn{margin-top:6px;width:100%;background:none;border:1.5px dashed #ddd;border-radius:8px;color:#bbb;font-size:12px;cursor:pointer;padding:5px 0;font-family:inherit;transition:.15s}
+.mt-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* 노드 라벨 편집 팝업 */
+.mt-edit-popup{position:fixed;z-index:100;background:#fff;border:1.5px solid #eee;border-radius:10px;box-shadow:0 4px 20px #0002;padding:10px 12px;display:none;flex-direction:column;gap:7px;width:170px}
+.mt-edit-popup.open{display:flex}
+.mt-edit-popup input{border:none;outline:none;font-size:13px;font-family:inherit;color:#222;border-bottom:1.5px solid #eee;padding-bottom:4px;background:transparent}
+.mt-edit-popup input:focus{border-bottom-color:var(--accent)}
+.mt-edit-actions{display:flex;gap:6px;justify-content:flex-end}
+.mt-ep-btn{border:none;border-radius:6px;font-size:11px;padding:3px 10px;cursor:pointer;font-family:inherit}
+.mt-ep-save{background:var(--accent);color:#fff}
+.mt-ep-del{background:#f5f5f5;color:#999}
+.mt-ep-cancel{background:none;color:#bbb}
+
 /* 테마 버튼 */
 .bg-setting-btn{position:fixed;bottom:20px;left:20px;width:36px;height:36px;border-radius:50%;background:#fff;border:0.5px solid #ddd;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #0002;z-index:50}
 .bg-setting-btn:hover{background:#f5f4ff}
@@ -602,6 +639,27 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   </a>
 </div>
 
+<!-- 미션 트래커 -->
+<div id="missionTracker">
+  <div class="mt-title-wrap">
+    <textarea class="mt-title-input" id="mtTitle" rows="1" placeholder="미션 제목..." oninput="autoResizeMtTitle(this);saveMission()"></textarea>
+  </div>
+  <div class="mt-path-wrap">
+    <svg class="mt-path-svg" id="mtSvg"></svg>
+  </div>
+  <button class="mt-add-btn" onclick="addMissionNode()">＋ 미션 추가</button>
+</div>
+
+<!-- 노드 라벨 편집 팝업 -->
+<div class="mt-edit-popup" id="mtEditPopup">
+  <input type="text" id="mtEditInput" placeholder="미션 내용..." maxlength="20"/>
+  <div class="mt-edit-actions">
+    <button class="mt-ep-btn mt-ep-del" onclick="deleteMissionNode()">삭제</button>
+    <button class="mt-ep-btn mt-ep-cancel" onclick="closeMtEditPopup()">취소</button>
+    <button class="mt-ep-btn mt-ep-save" onclick="confirmMtEdit()">저장</button>
+  </div>
+</div>
+
 <!-- 출판 콘티 안내 토스트 -->
 <div id="layoutTip" style="display:none;position:fixed;bottom:70px;right:20px;background:#333;color:#fff;font-size:12px;padding:8px 12px;border-radius:8px;z-index:999;max-width:180px;line-height:1.5">
   💡 해당 사이트에서<br>Ctrl+S로 저장하세요
@@ -1006,6 +1064,7 @@ onAuthStateChanged(auth,async user=>{
     await loadAllData();
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();
     positionNoteButtons();
+    initMissionTracker();
   } else {
     currentUser=null;
     document.getElementById('loginWrap').style.display='flex';
@@ -1032,7 +1091,7 @@ async function saveData(type,key,value){
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -1048,6 +1107,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote')),
     getDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts')),
     getDoc(doc(db,'users',currentUser.uid,'settings','customTags')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','mission')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -1079,6 +1139,11 @@ async function loadAllData(){
     if(ct.in)IN_TAGS=ct.in;
     if(ct.memo)MEMO_CATS=ct.memo;
     if(ct.memoEmoji)MEMO_CAT_EMOJI={...MEMO_CAT_EMOJI,...ct.memoEmoji};
+  }
+  // 미션 트래커
+  if(msS.exists()){
+    const md=msS.data();
+    missionData={title:md.title||'',nodes:md.nodes||[]};
   }
 }
 
@@ -3058,6 +3123,221 @@ function positionNoteButtons(){
   btns.style.transform='none';
 }
 window.addEventListener('resize',positionNoteButtons);
+
+// ══════════════════════════════════════════
+//  미션 트래커
+// ══════════════════════════════════════════
+let missionData={title:'',nodes:[]};
+let _mtEditingIdx=null;
+
+function autoResizeMtTitle(el){
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+}
+
+function initMissionTracker(){
+  const tracker=document.getElementById('missionTracker');
+  tracker.classList.add('visible');
+  document.getElementById('mtTitle').value=missionData.title||'';
+  autoResizeMtTitle(document.getElementById('mtTitle'));
+  positionMissionTracker();
+  renderMissionSvg();
+}
+
+function positionMissionTracker(){
+  const app=document.getElementById('mainApp');
+  const tracker=document.getElementById('missionTracker');
+  if(!app||!tracker)return;
+  const rect=app.getBoundingClientRect();
+  // 메인창 왼쪽 끝에서 왼쪽으로 트래커폭+24px
+  const trackerW=160;
+  tracker.style.left=Math.max(8,(rect.left-trackerW-24))+'px';
+  tracker.style.top=rect.top+'px';
+}
+window.addEventListener('resize',positionMissionTracker);
+
+// SVG 경로 렌더링 — 지그재그 스네이크 레이아웃
+function renderMissionSvg(){
+  const nodes=missionData.nodes;
+  const svg=document.getElementById('mtSvg');
+  if(!svg)return;
+
+  const COL=2;           // 한 줄에 2개
+  const R=18;            // 원 반지름
+  const colW=60;         // 열 간격
+  const rowH=54;         // 행 간격
+  const padX=20, padY=26;
+
+  // 각 노드 좌표 계산 (스네이크: 홀수행은 오른→왼)
+  const coords=nodes.map((_,i)=>{
+    const row=Math.floor(i/COL);
+    const col=i%COL;
+    const x=padX+(row%2===0?col:COL-1-col)*colW;
+    const y=padY+row*rowH;
+    return{x,y};
+  });
+
+  const totalRows=Math.ceil(nodes.length/COL);
+  const svgW=padX*2+(COL-1)*colW;
+  const svgH=padY*2+Math.max(0,totalRows-1)*rowH+R;
+
+  svg.setAttribute('viewBox',`0 0 ${svgW} ${svgH}`);
+  svg.style.height=svgH+'px';
+  svg.innerHTML='';
+
+  // 연결선
+  const lineG=document.createElementNS('http://www.w3.org/2000/svg','g');
+  for(let i=0;i<coords.length-1;i++){
+    const a=coords[i],b=coords[i+1];
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);
+    line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
+    line.setAttribute('stroke',nodes[i].done&&nodes[i+1].done?'var(--accent)':'#e0e0e0');
+    line.setAttribute('stroke-width','2.5');
+    line.setAttribute('stroke-linecap','round');
+    lineG.appendChild(line);
+  }
+  svg.appendChild(lineG);
+
+  // START 배지
+  if(coords.length>0){
+    const startTxt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    startTxt.setAttribute('x',coords[0].x-R-2);
+    startTxt.setAttribute('y',coords[0].y-R-5);
+    startTxt.setAttribute('class','mt-badge');
+    startTxt.setAttribute('fill','var(--accent)');
+    startTxt.setAttribute('text-anchor','middle');
+    startTxt.textContent='START';
+    svg.appendChild(startTxt);
+  }
+
+  // 노드
+  coords.forEach((pos,i)=>{
+    const node=nodes[i];
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','mt-node'+(node.done?' done':''));
+    g.style.cursor='pointer';
+
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',pos.x);circle.setAttribute('cy',pos.y);
+    circle.setAttribute('r',R);
+    circle.setAttribute('fill',node.done?'var(--accent)':'#fff');
+    circle.setAttribute('stroke',node.done?'var(--accent)':'#ddd');
+    circle.setAttribute('stroke-width','2');
+
+    // 라벨 (긴 경우 줄바꿈)
+    const label=node.label||'미션';
+    const words=label.length>6?[label.slice(0,6),label.slice(6)]:[label];
+    const textG=document.createElementNS('http://www.w3.org/2000/svg','g');
+    words.forEach((w,wi)=>{
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',pos.x);
+      t.setAttribute('y',pos.y+(wi-(words.length-1)/2)*11);
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('dominant-baseline','middle');
+      t.setAttribute('font-size','8');
+      t.setAttribute('fill',node.done?'#fff':'#888');
+      t.setAttribute('font-family',"'Apple SD Gothic Neo','Malgun Gothic',sans-serif");
+      t.setAttribute('pointer-events','none');
+      t.textContent=w;
+      textG.appendChild(t);
+    });
+
+    // 클릭: 완료 토글 / 더블클릭: 편집
+    let clickTimer=null;
+    g.addEventListener('click',e=>{
+      e.stopPropagation();
+      if(clickTimer){clearTimeout(clickTimer);clickTimer=null;openMtEditPopup(i,e);return;}
+      clickTimer=setTimeout(()=>{clickTimer=null;toggleMissionNode(i);},220);
+    });
+
+    g.appendChild(circle);
+    g.appendChild(textG);
+    svg.appendChild(g);
+  });
+
+  // SUCCESS 배지 (마지막 노드)
+  if(coords.length>0){
+    const last=coords[coords.length-1];
+    const successTxt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    successTxt.setAttribute('x',last.x+R+2);
+    successTxt.setAttribute('y',last.y+R+12);
+    successTxt.setAttribute('class','mt-badge');
+    successTxt.setAttribute('fill','#f5a623');
+    successTxt.setAttribute('text-anchor','middle');
+    successTxt.textContent='🎉';
+    svg.appendChild(successTxt);
+  }
+}
+
+function toggleMissionNode(idx){
+  missionData.nodes[idx].done=!missionData.nodes[idx].done;
+  renderMissionSvg();
+  saveMission();
+}
+
+window.addMissionNode=function(){
+  missionData.nodes.push({id:Date.now().toString(),label:'미션',done:false});
+  renderMissionSvg();
+  saveMission();
+};
+
+// 편집 팝업
+function openMtEditPopup(idx,e){
+  _mtEditingIdx=idx;
+  const popup=document.getElementById('mtEditPopup');
+  const input=document.getElementById('mtEditInput');
+  input.value=missionData.nodes[idx].label||'';
+  popup.classList.add('open');
+  // 클릭 위치 근처에 팝업 배치
+  const px=Math.min(e.clientX,window.innerWidth-190);
+  const py=Math.min(e.clientY,window.innerHeight-120);
+  popup.style.left=px+'px';
+  popup.style.top=py+'px';
+  setTimeout(()=>input.focus(),50);
+}
+window.closeMtEditPopup=function(){
+  document.getElementById('mtEditPopup').classList.remove('open');
+  _mtEditingIdx=null;
+};
+window.confirmMtEdit=function(){
+  if(_mtEditingIdx===null)return;
+  const val=document.getElementById('mtEditInput').value.trim()||'미션';
+  missionData.nodes[_mtEditingIdx].label=val;
+  closeMtEditPopup();
+  renderMissionSvg();
+  saveMission();
+};
+window.deleteMissionNode=function(){
+  if(_mtEditingIdx===null)return;
+  missionData.nodes.splice(_mtEditingIdx,1);
+  closeMtEditPopup();
+  renderMissionSvg();
+  saveMission();
+};
+// Enter키로 저장
+document.getElementById('mtEditInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();window.confirmMtEdit();}
+  if(e.key==='Escape')window.closeMtEditPopup();
+});
+// 팝업 외부 클릭 닫기
+document.addEventListener('click',e=>{
+  const popup=document.getElementById('mtEditPopup');
+  if(popup.classList.contains('open')&&!popup.contains(e.target)){
+    window.closeMtEditPopup();
+  }
+});
+
+window.saveMission=async function(){
+  if(!currentUser)return;
+  const title=document.getElementById('mtTitle').value;
+  missionData.title=title;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','mission'),{
+    title:missionData.title,
+    nodes:missionData.nodes
+  });
+  showSaving();
+};
 // 테마 패널 외부 클릭 닫기
 document.addEventListener('click',e=>{
   const p=document.getElementById('bgPanel');
