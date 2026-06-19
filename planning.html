@@ -41,12 +41,12 @@ onAuthStateChanged(auth, user => {
   if (el) {
     if (user) {
       const name = user.displayName?.split(' ')[0] || user.email;
-      el.innerHTML = `<span style="font-size:12px;color:var(--muted)">${name}</span>
-        <button class="theme-btn" onclick="window._fbSignOut()" title="로그아웃" style="font-size:11px;padding:3px 8px">로그아웃</button>`;
+      el.innerHTML = `<span style="font-size:12px;color:var(--muted);white-space:nowrap">${name}</span>
+        <button onclick="window._fbSignOut()" style="font-size:12px;padding:5px 14px;white-space:nowrap;border:1px solid var(--line);background:var(--paper);border-radius:7px;cursor:pointer;font-family:var(--sans)">로그아웃</button>`;
       // 로그인 후 데이터 불러오기
       if (typeof window._plannerLoadFromFb === 'function') window._plannerLoadFromFb();
     } else {
-      el.innerHTML = `<button class="theme-btn" onclick="window._fbSignIn()" style="font-size:12px;padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:7px">Google 로그인</button>`;
+      el.innerHTML = `<button onclick="window._fbSignIn()" style="font-size:12px;padding:5px 14px;white-space:nowrap;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:var(--sans)">Google 로그인</button>`;
     }
   }
 });
@@ -79,24 +79,24 @@ onAuthStateChanged(auth, user => {
   nav button{flex:0 0 auto;border:none;background:none;padding:10px 14px;font-size:14.5px;color:var(--muted);border-bottom:2px solid transparent;border-radius:0}
   nav button.active{color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
 
-  /* ── 사이드바 레이아웃 ───────────────────────── */
-  .app-wrap{display:flex;min-height:100vh}
-  .sidebar{width:196px;flex:0 0 196px;background:var(--paper);border-right:1px solid var(--line);padding:14px 8px 24px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:10}
-  .sidebar-title{font-family:var(--serif);font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.14em;padding:2px 8px 8px}
-  .proj-btn{width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:8px;padding:8px 10px;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.4;transition:background .12s,border-color .12s;position:relative}
+  /* ── 사이드바 ───────────────────────── */
+  .app-wrap{display:flex;align-items:flex-start}
+  .sidebar{width:190px;flex:0 0 190px;background:var(--paper);border-right:1px solid var(--line);padding:14px 8px 24px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:10;box-sizing:border-box}
+  .sidebar-label{font-family:var(--serif);font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.14em;padding:2px 8px 10px;display:block}
+  .proj-btn{width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:8px;padding:8px 10px;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.4;transition:background .12s,border-color .12s;position:relative;display:block}
   .proj-btn:hover{background:var(--accent-soft);border-color:var(--line)}
   .proj-btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
-  .proj-btn .proj-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px}
-  .proj-btn .proj-genre{display:block;font-size:11px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .proj-btn.active .proj-genre{color:var(--accent-ink);opacity:.75}
-  .proj-del{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:none;color:var(--muted);font-size:14px;padding:2px 4px;border-radius:5px;opacity:0;cursor:pointer;line-height:1}
-  .proj-btn:hover .proj-del{opacity:1}
-  .proj-del:hover{color:#C0392B;background:#FBEDEA}
-  .sidebar-add{width:100%;border:1px dashed var(--line);background:none;border-radius:8px;padding:8px 10px;font-size:13px;color:var(--muted);cursor:pointer;text-align:left;margin-top:4px;display:flex;align-items:center;gap:6px;transition:border-color .12s,color .12s}
-  .sidebar-add:hover{border-color:var(--accent);color:var(--accent-ink)}
+  .proj-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+  .proj-genre{display:block;font-size:11px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+  .proj-btn.active .proj-genre{color:var(--accent-ink);opacity:.8}
+  .proj-del-btn{position:absolute;right:5px;top:50%;transform:translateY(-50%);border:none;background:none;color:var(--muted);font-size:13px;padding:2px 5px;border-radius:5px;opacity:0;cursor:pointer;line-height:1}
+  .proj-btn:hover .proj-del-btn{opacity:1}
+  .proj-del-btn:hover{color:#C0392B;background:#FBEDEA}
   .sidebar-divider{height:1px;background:var(--line);margin:8px 4px}
-  .content-area{flex:1;min-width:0}
-  @media(max-width:700px){.sidebar{display:none}.content-area{width:100%}}
+  .sidebar-add{width:100%;border:1px dashed var(--line);background:none;border-radius:8px;padding:8px 10px;font-size:13px;color:var(--muted);cursor:pointer;text-align:left;margin-top:4px;display:flex;align-items:center;gap:6px;transition:border-color .12s,color .12s;box-sizing:border-box}
+  .sidebar-add:hover{border-color:var(--accent);color:var(--accent-ink)}
+  .content-wrap{flex:1;min-width:0}
+  @media(max-width:700px){.sidebar{display:none}}
 
   /* ── 본문 ───────────────────────── */
   main{max-width:880px;margin:0 auto;padding:22px 20px 80px}
@@ -338,30 +338,26 @@ onAuthStateChanged(auth, user => {
 </style>
 </head>
 <body>
-
 <div class="app-wrap">
 
-<!-- 사이드바 -->
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-title">작품 목록</div>
+  <span class="sidebar-label">작품 목록</span>
   <div id="projList"></div>
   <div class="sidebar-divider"></div>
   <button class="sidebar-add" onclick="addProject()">
-    <span style="font-size:16px;line-height:1">＋</span>
+    <span style="font-size:16px;line-height:1;flex:0 0 auto">＋</span>
     <span>새 작품 추가</span>
   </button>
 </aside>
 
-<!-- 콘텐츠 영역 -->
-<div class="content-area">
-
+<div class="content-wrap">
 <header>
   <div class="head-in">
     <div class="head-row">
       <div class="brand">기획 <em>노트</em></div>
       <div class="work-title" id="headTitle"></div>
       <div class="save-status"><span class="save-dot" id="saveDot"></span><span id="saveText">불러오는 중…</span></div>
-      <div id="fbUserInfo" style="display:flex;align-items:center;gap:6px;margin-left:4px"></div>
+      <div id="fbUserInfo" style="display:flex;align-items:center;gap:6px;margin-left:4px;flex-wrap:nowrap;flex-shrink:0"></div>
       <button class="theme-btn" id="cloudBtn" title="클라우드 백업">☁️</button>
       <button class="theme-btn" id="themeBtn" title="테마 색 바꾸기">🎨</button>
     </div>
@@ -574,52 +570,76 @@ onAuthStateChanged(auth, user => {
 </div>
 
 <script>
-/* ───────────────────────── 작품 목록 (멀티 프로젝트) ───────────────────────── */
-let projects = [];        // [{id, name, genre, updatedAt}]
-let currentProjId = null; // 현재 열려 있는 작품 ID
 
-const PROJ_LIST_KEY = 'projList_v1';
+/* ═══════════════════════════════════════════════════════════
+   멀티 프로젝트 관리
+   ※ genId / normalizeState / defaultState 는 이 블록 아래에 정의되지만,
+      함수 선언이라 호이스팅으로 문제없음. 단 변수(let/const)는 주의.
+   ═══════════════════════════════════════════════════════════ */
 
-function projDocId(id){ return 'proj_' + id; }
+/* ─── 전역 변수 ─── */
+var projects = [];        // [{id, name, genre, updatedAt}]
+var currentProjId = null;
 
-/* Firestore 에서 프로젝트 목록 + 현재 작품 불러오기 */
+function _genId(){ return Math.random().toString(36).substring(2,9); }
+function _projDocId(id){ return 'proj_' + id; }
+
+/* ─── Firestore 헬퍼 ─── */
+async function _saveProjectData(id, data){
+  if(!window._fbUser) return;
+  var db=window._fbDb, docFn=window._fbDoc, setDocFn=window._fbSetDoc;
+  var payload = JSON.stringify(data);
+  if(payload.length > 900000){ setStatus('데이터가 너무 커요 (이미지 줄이기)', false); return; }
+  await setDocFn(docFn(db,'users',window._fbUser.uid,'settings',_projDocId(id)),{
+    data: payload, updatedAt: Date.now()
+  });
+}
+
+async function _saveProjList(){
+  if(!window._fbUser) return;
+  var db=window._fbDb, docFn=window._fbDoc, setDocFn=window._fbSetDoc;
+  await setDocFn(docFn(db,'users',window._fbUser.uid,'settings','projList'),{
+    data: JSON.stringify(projects), updatedAt: Date.now()
+  });
+}
+
+/* ─── 로드 ─── */
 window._plannerLoadFromFb = async function(){
   try{
-    const db=window._fbDb, doc=window._fbDoc, getDoc=window._fbGetDoc;
-    // 목록 불러오기
-    const listSnap = await getDoc(doc(db,'users',window._fbUser.uid,'settings','projList'));
+    var db=window._fbDb, docFn=window._fbDoc, getDocFn=window._fbGetDoc;
+    var listSnap = await getDocFn(docFn(db,'users',window._fbUser.uid,'settings','projList'));
     if(listSnap.exists() && listSnap.data().data){
       projects = JSON.parse(listSnap.data().data);
     } else {
       projects = [];
     }
-    // 프로젝트 없으면 기본 프로젝트 만들기
     if(projects.length === 0){
-      // 기존 단일 작품 데이터 마이그레이션 시도
-      const oldSnap = await getDoc(doc(db,'users',window._fbUser.uid,'settings','plannerDoc'));
-      const newId = genId();
-      projects = [{id: newId, name:'새 작품', genre:'', updatedAt: Date.now()}];
+      // 기존 단일 데이터 마이그레이션
+      var oldSnap = await getDocFn(docFn(db,'users',window._fbUser.uid,'settings','plannerDoc'));
+      var newId = _genId();
+      var meta = {id: newId, name:'새 작품', genre:'', updatedAt: Date.now()};
       if(oldSnap.exists() && oldSnap.data().data){
-        const oldData = oldSnap.data().data;
-        await saveProjectData(newId, JSON.parse(oldData));
-        const parsed = JSON.parse(oldData);
-        if(parsed.basic?.title) projects[0].name = parsed.basic.title;
-        if(parsed.basic?.genre) projects[0].genre = parsed.basic.genre;
+        var parsed = JSON.parse(oldSnap.data().data);
+        if(parsed.basic && parsed.basic.title) meta.name = parsed.basic.title;
+        if(parsed.basic && parsed.basic.genre) meta.genre = parsed.basic.genre;
+        await _saveProjectData(newId, parsed);
       }
-      await saveProjList();
+      projects = [meta];
+      await _saveProjList();
     }
     currentProjId = projects[0].id;
-    await loadProject(currentProjId);
-    renderSidebar();
+    await _loadProject(currentProjId);
+    _renderSidebar();
     setStatus('자동 저장됨', true);
   }catch(e){ console.error(e); setStatus('불러오기 실패', false); }
 };
 
-async function loadProject(id){
-  const db=window._fbDb, doc=window._fbDoc, getDoc=window._fbGetDoc;
-  const snap = await getDoc(doc(db,'users',window._fbUser.uid,'settings', projDocId(id)));
+async function _loadProject(id){
+  if(!window._fbUser) return;
+  var db=window._fbDb, docFn=window._fbDoc, getDocFn=window._fbGetDoc;
+  var snap = await getDocFn(docFn(db,'users',window._fbUser.uid,'settings',_projDocId(id)));
   if(snap.exists() && snap.data().data){
-    state = normalizeState({...defaultState(), ...JSON.parse(snap.data().data)});
+    state = normalizeState(Object.assign(defaultState(), JSON.parse(snap.data().data)));
   } else {
     state = defaultState();
   }
@@ -628,80 +648,85 @@ async function loadProject(id){
   renderTreatment();
   renderCharacters();
   updateHeadTitle();
-  applyTheme(state.theme?.accent||'#5856D6', false);
-  applyBg(state.theme?.bg||'#F2F2F5', false);
-  // 탭 초기화
-  document.querySelectorAll('#nav button').forEach((b,i)=>b.classList.toggle('active',i===0));
-  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===0));
+  applyTheme((state.theme && state.theme.accent)||'#5856D6', false);
+  applyBg((state.theme && state.theme.bg)||'#F2F2F5', false);
+  // 첫 탭으로 이동
+  document.querySelectorAll('#nav button').forEach(function(b,i){ b.classList.toggle('active',i===0); });
+  document.querySelectorAll('.panel').forEach(function(p,i){ p.classList.toggle('active',i===0); });
   window.scrollTo({top:0});
 }
 
-async function saveProjectData(id, data){
-  const db=window._fbDb, doc=window._fbDoc, setDoc=window._fbSetDoc;
-  const payload = JSON.stringify(data);
-  if(payload.length > 900000){ setStatus('데이터가 너무 커요 (이미지 줄이기)', false); return; }
-  await setDoc(doc(db,'users',window._fbUser.uid,'settings', projDocId(id)),{
-    data: payload, updatedAt: Date.now()
-  });
+/* ─── 저장 (saveNow 대체) ─── */
+async function _saveCurrentProject(){
+  if(!window._fbUser || !currentProjId) return;
+  await _saveProjectData(currentProjId, state);
+  // 사이드바 이름/장르 동기화
+  var proj = projects.find(function(p){ return p.id===currentProjId; });
+  if(proj){
+    var newName = (state.basic && state.basic.title) ? state.basic.title : '새 작품';
+    var newGenre = (state.basic && state.basic.genre) ? state.basic.genre : '';
+    if(proj.name !== newName || proj.genre !== newGenre){
+      proj.name = newName;
+      proj.genre = newGenre;
+      proj.updatedAt = Date.now();
+      await _saveProjList();
+      _renderSidebar();
+    }
+  }
 }
 
-async function saveProjList(){
-  const db=window._fbDb, doc=window._fbDoc, setDoc=window._fbSetDoc;
-  await setDoc(doc(db,'users',window._fbUser.uid,'settings','projList'),{
-    data: JSON.stringify(projects), updatedAt: Date.now()
-  });
+/* ─── 사이드바 클릭: 작품 전환 ─── */
+async function switchProject(id){
+  if(id === currentProjId) return;
+  setStatus('저장 중…', false);
+  await _saveCurrentProject();
+  setStatus('불러오는 중…', false);
+  await _loadProject(id);
+  _renderSidebar();
 }
 
+/* ─── 새 작품 추가 ─── */
 async function addProject(){
-  const id = genId();
-  projects.push({id, name:'새 작품', genre:'', updatedAt: Date.now()});
-  await saveProjList();
-  await switchProject(id);
-  renderSidebar();
+  if(!window._fbUser){ toast('로그인 후 사용해주세요.'); return; }
+  setStatus('저장 중…', false);
+  await _saveCurrentProject(); // 현재 작품 먼저 저장
+  var id = _genId();
+  projects.push({id: id, name:'새 작품', genre:'', updatedAt: Date.now()});
+  await _saveProjList();
+  await _loadProject(id);
+  _renderSidebar();
   toast('새 작품을 만들었어요!');
 }
 
-async function switchProject(id){
-  if(currentProjId) await saveNow(); // 현재 작품 저장
-  currentProjId = id;
-  setStatus('불러오는 중…', false);
-  await loadProject(id);
-  renderSidebar();
-}
-
+/* ─── 작품 삭제 ─── */
 async function deleteProject(id, e){
-  e && e.stopPropagation();
+  if(e){ e.stopPropagation(); e.preventDefault(); }
   if(projects.length <= 1){ toast('마지막 작품은 삭제할 수 없어요.'); return; }
-  const proj = projects.find(p=>p.id===id);
-  if(!confirm(`《${proj?.name||'이 작품'}》을 삭제할까요? 되돌릴 수 없어요.`)) return;
-  projects = projects.filter(p=>p.id!==id);
-  await saveProjList();
-  // Firestore 문서 삭제 (선택적 — 데이터 정리)
-  try{
-    const {deleteDoc} = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js');
-    const db=window._fbDb, doc=window._fbDoc;
-    await deleteDoc(doc(db,'users',window._fbUser.uid,'settings', projDocId(id)));
-  }catch(_){}
+  var proj = projects.find(function(p){ return p.id===id; });
+  if(!confirm('《'+(proj ? proj.name : '이 작품')+'》을 삭제할까요?\n되돌릴 수 없어요.')){ return; }
+  projects = projects.filter(function(p){ return p.id!==id; });
+  await _saveProjList();
   if(currentProjId === id){
-    await switchProject(projects[0].id);
-  } else {
-    renderSidebar();
+    await _loadProject(projects[0].id);
   }
+  _renderSidebar();
   toast('삭제했어요.');
 }
 
-function renderSidebar(){
-  const list = document.getElementById('projList');
+/* ─── 사이드바 렌더링 ─── */
+function _renderSidebar(){
+  var list = document.getElementById('projList');
   if(!list) return;
-  list.innerHTML = projects.map(p => {
-    const isActive = p.id === currentProjId;
-    return `<button class="proj-btn ${isActive?'active':''}" onclick="switchProject('${p.id}')" title="${p.name||'새 작품'}">
-      <span class="proj-name">${p.name||'새 작품'}</span>
-      ${p.genre ? `<span class="proj-genre">${p.genre}</span>` : ''}
-      <span class="proj-del" onclick="deleteProject('${p.id}', event)" title="삭제">✕</span>
-    </button>`;
+  list.innerHTML = projects.map(function(p){
+    var active = p.id === currentProjId;
+    return '<button class="proj-btn'+(active?' active':'')+'" onclick="switchProject(\''+p.id+'\')" title="'+(p.name||'새 작품')+'">'
+      +'<span class="proj-name">'+(p.name||'새 작품')+'</span>'
+      +(p.genre ? '<span class="proj-genre">'+p.genre+'</span>' : '')
+      +'<span class="proj-del-btn" onclick="deleteProject(\''+p.id+'\',event)" title="삭제">✕</span>'
+      +'</button>';
   }).join('');
 }
+
 
 /* ───────────────────────── 상태 ───────────────────────── */
 const KEY='webtoon_plan_v1';
@@ -745,25 +770,11 @@ function scheduleSave(){
 }
 async function saveNow(){
   if(!window._fbUser){ setStatus('로그인 필요',false); return; }
-  if(!currentProjId){ setStatus('로그인 필요',false); return; }
   try{
-    await saveProjectData(currentProjId, state);
-    // 사이드바 작품 이름·장르 동기화
-    const proj = projects.find(p=>p.id===currentProjId);
-    if(proj){
-      const newName = state.basic?.title || '새 작품';
-      const newGenre = state.basic?.genre || '';
-      if(proj.name !== newName || proj.genre !== newGenre){
-        proj.name = newName;
-        proj.genre = newGenre;
-        proj.updatedAt = Date.now();
-        await saveProjList();
-        renderSidebar();
-      }
-    }
+    await _saveCurrentProject();
     setStatus('자동 저장됨',true);
   }catch(e){ setStatus('저장 실패 — 백업 파일을 받아두세요',false); }
-  if(fsDir) fsSave(); // 폴더 설정 시 동시 저장
+  if(fsDir) fsSave();
 }
 function setStatus(t,on){
   document.getElementById('saveText').textContent=t;
@@ -773,26 +784,7 @@ async function loadState(){
   // Firebase 로드는 onAuthStateChanged 후 실행됨
   setStatus('로그인 후 불러옵니다',false);
 }
-window._plannerLoadFromFb = async function(){
-  try{
-    const db=window._fbDb, doc=window._fbDoc, getDoc=window._fbGetDoc;
-    const snap = await getDoc(doc(db,'users',window._fbUser.uid,'settings','plannerDoc'));
-    if(snap.exists() && snap.data().data){
-      const p = JSON.parse(snap.data().data);
-      state = normalizeState({...defaultState(), ...p});
-      // UI 갱신
-      bindStatics();
-      renderTreatment();
-      renderCharacters();
-      updateHeadTitle();
-      applyTheme(state.theme?.accent||'#5856D6', false);
-      applyBg(state.theme?.bg||'#F2F2F5', false);
-      setStatus('자동 저장됨', true);
-    } else {
-      setStatus('새 기획서', true);
-    }
-  }catch(e){ setStatus('불러오기 실패', false); }
-};
+/* _plannerLoadFromFb → 멀티프로젝트 블록으로 이전 */
 
 /* ───────────────────────── 입력 바인딩 ───────────────────────── */
 function getByPath(p){ return p.split('.').reduce((o,k)=>o?.[k], state); }
@@ -1997,7 +1989,6 @@ function toast(msg){
 
 /* ───────────────────────── 시작 ───────────────────────── */
 (async function init(){
-  // 기본 UI 먼저 세팅 (로그인 전에도 보이게)
   bindStatics();
   renderTreatment();
   renderCharacters();
@@ -2006,10 +1997,9 @@ function toast(msg){
   setupCloudBtn();
   setupEmoModal();
   updateFolderUI();
-  renderSidebar();
+  _renderSidebar();
   applyTheme(state.theme?.accent||'#5856D6', false);
   applyBg(state.theme?.bg||'#F2F2F5', false);
-  // 데이터 로드는 onAuthStateChanged → _plannerLoadFromFb 에서
   setStatus('로그인 후 불러옵니다', false);
 })();
 </script>
@@ -2025,7 +2015,7 @@ document.addEventListener('keydown',function(e){
   }
 });
 </script>
-</div><!-- /content-area -->
+</div><!-- /content-wrap -->
 </div><!-- /app-wrap -->
 </body>
 </html>
