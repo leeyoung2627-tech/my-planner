@@ -7,6 +7,50 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBqDMHkmBcSPFmFJq6mvbCCMzFPq5pMvdM",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "390514527681",
+  appId: "1:390514527681:web:c43fe2f97b44c4aeadff6f"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// 전역으로 노출 (기존 script 태그에서 접근)
+window._fbAuth = auth;
+window._fbDb = db;
+window._fbProvider = provider;
+window._fbDoc = doc;
+window._fbSetDoc = setDoc;
+window._fbGetDoc = getDoc;
+window._fbSignIn = () => signInWithPopup(auth, provider);
+window._fbSignOut = () => signOut(auth);
+
+onAuthStateChanged(auth, user => {
+  window._fbUser = user || null;
+  const el = document.getElementById('fbUserInfo');
+  if (el) {
+    if (user) {
+      const name = user.displayName?.split(' ')[0] || user.email;
+      el.innerHTML = `<span style="font-size:12px;color:var(--muted)">${name}</span>
+        <button class="theme-btn" onclick="window._fbSignOut()" title="로그아웃" style="font-size:11px;padding:3px 8px">로그아웃</button>`;
+      // 로그인 후 데이터 불러오기
+      if (typeof window._plannerLoadFromFb === 'function') window._plannerLoadFromFb();
+    } else {
+      el.innerHTML = `<button class="theme-btn" onclick="window._fbSignIn()" style="font-size:12px;padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:7px">Google 로그인</button>`;
+    }
+  }
+});
+</script>
 <style>
   :root{
     --bg:#F2F2F5; --paper:#FFFFFF; --ink:#1A1A20; --muted:#71717A;
@@ -282,6 +326,7 @@
       <div class="brand">기획 <em>노트</em></div>
       <div class="work-title" id="headTitle"></div>
       <div class="save-status"><span class="save-dot" id="saveDot"></span><span id="saveText">불러오는 중…</span></div>
+      <div id="fbUserInfo" style="display:flex;align-items:center;gap:6px;margin-left:4px"></div>
       <button class="theme-btn" id="cloudBtn" title="클라우드 백업">☁️</button>
       <button class="theme-btn" id="themeBtn" title="테마 색 바꾸기">🎨</button>
     </div>
@@ -525,7 +570,7 @@ const defaultState = () => ({
 });
 
 let state = defaultState();
-let storageOK = !!window.storage;
+let storageOK = true; // Firebase는 항상 OK (로그인 시)
 
 /* ───────────────────────── 저장 ───────────────────────── */
 let saveTimer=null;
@@ -535,9 +580,20 @@ function scheduleSave(){
   saveTimer=setTimeout(saveNow,700);
 }
 async function saveNow(){
-  if(!storageOK){ setStatus('저장 안 됨',false); return; }
+  if(!window._fbUser){ setStatus('로그인 필요',false); return; }
   try{
-    await window.storage.set(KEY, JSON.stringify(state));
+    const payload = JSON.stringify(state);
+    // Firestore 문서 1MB 제한 — 이미지 많으면 경고
+    if(payload.length > 900000){
+      setStatus('데이터가 너무 커요 (이미지 줄이기)', false);
+      if(fsDir) fsSave();
+      return;
+    }
+    const db=window._fbDb, doc=window._fbDoc, setDoc=window._fbSetDoc;
+    await setDoc(doc(db,'users',window._fbUser.uid,'settings','plannerDoc'),{
+      data: payload,
+      updatedAt: Date.now()
+    });
     setStatus('자동 저장됨',true);
   }catch(e){ setStatus('저장 실패 — 백업 파일을 받아두세요',false); }
   if(fsDir) fsSave(); // 폴더 설정 시 동시 저장
@@ -547,13 +603,29 @@ function setStatus(t,on){
   document.getElementById('saveDot').classList.toggle('on',!!on);
 }
 async function loadState(){
-  if(!storageOK){ setStatus('새 기획서',true); return; }
-  try{
-    const r = await window.storage.get(KEY);
-    if(r && r.value){ const p=JSON.parse(r.value); state=normalizeState({...defaultState(),...p}); }
-    setStatus('자동 저장됨',true);
-  }catch(e){ setStatus('새 기획서',true); }
+  // Firebase 로드는 onAuthStateChanged 후 실행됨
+  setStatus('로그인 후 불러옵니다',false);
 }
+window._plannerLoadFromFb = async function(){
+  try{
+    const db=window._fbDb, doc=window._fbDoc, getDoc=window._fbGetDoc;
+    const snap = await getDoc(doc(db,'users',window._fbUser.uid,'settings','plannerDoc'));
+    if(snap.exists() && snap.data().data){
+      const p = JSON.parse(snap.data().data);
+      state = normalizeState({...defaultState(), ...p});
+      // UI 갱신
+      bindStatics();
+      renderTreatment();
+      renderCharacters();
+      updateHeadTitle();
+      applyTheme(state.theme?.accent||'#5856D6', false);
+      applyBg(state.theme?.bg||'#F2F2F5', false);
+      setStatus('자동 저장됨', true);
+    } else {
+      setStatus('새 기획서', true);
+    }
+  }catch(e){ setStatus('불러오기 실패', false); }
+};
 
 /* ───────────────────────── 입력 바인딩 ───────────────────────── */
 function getByPath(p){ return p.split('.').reduce((o,k)=>o?.[k], state); }
@@ -1758,7 +1830,7 @@ function toast(msg){
 
 /* ───────────────────────── 시작 ───────────────────────── */
 (async function init(){
-  await loadState();
+  // 기본 UI 먼저 세팅 (로그인 전에도 보이게)
   bindStatics();
   renderTreatment();
   renderCharacters();
@@ -1769,6 +1841,8 @@ function toast(msg){
   updateFolderUI();
   applyTheme(state.theme?.accent||'#5856D6', false);
   applyBg(state.theme?.bg||'#F2F2F5', false);
+  // 데이터 로드는 onAuthStateChanged → _plannerLoadFromFb 에서
+  setStatus('로그인 후 불러옵니다', false);
 })();
 </script>
 <script>
