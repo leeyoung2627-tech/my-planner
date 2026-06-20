@@ -85,25 +85,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   padding:14px 12px 18px;
 }
 .mt-path-svg{width:100%;overflow:visible;display:block}
-/* 노드 — 통통한 하트 */
+/* 노드 — 통통한 하트 (색상은 JS renderMissionSvg에서 직접 적용) */
 .mt-node{cursor:pointer}
 .mt-node path{
   transition:fill .22s,stroke .22s,filter .22s;
 }
-/* 미완료: 옅은 하늘색 */
-.mt-node:not(.done) path{
-  fill:#ddf0fb;stroke:#a8d8f0;stroke-width:1.6;
-  filter:drop-shadow(0 2px 5px #0000000e);
-}
-/* 완료: 파스텔 하늘색 */
-.mt-node.done path{
-  fill:#7ec8e3;stroke:#4fb3d4;stroke-width:1.6;
-  filter:drop-shadow(0 3px 9px #4fb3d455);
-}
-/* 호버 (미완료) */
-.mt-node:hover:not(.done) path{
-  fill:#c0e6f8;stroke:#7ec8e3;
-  filter:drop-shadow(0 3px 8px #7ec8e340);
+/* 호버 시 밝게 */
+.mt-node:hover path{
+  opacity:0.82;
 }
 /* 색상 설정 버튼 */
 .mt-color-btn{
@@ -3494,24 +3483,23 @@ function renderMissionSvg(){
 
     const drop=document.createElementNS('http://www.w3.org/2000/svg','path');
     drop.setAttribute('d', makeDropShape(pos.x, pos.y));
-    // 색상 직접 적용 (CSS 클래스 대신)
-    if(node.done){
-      drop.setAttribute('fill', doneColor);
-      drop.setAttribute('stroke', strokeColor);
-    } else {
-      drop.setAttribute('fill', lightColor);
-      drop.setAttribute('stroke', strokeColor);
-    }
+    // 색상 직접 적용 (CSS보다 우선순위 높은 attribute로)
+    const fillDone = doneColor;
+    const fillLight = lightColor;
+    const fillHover = lighten(baseColor, 0.40); // 호버시 미완료 색
+    drop.setAttribute('fill', node.done ? fillDone : fillLight);
+    drop.setAttribute('stroke', strokeColor);
     drop.setAttribute('stroke-width','1.6');
     drop.style.filter = node.done
-      ? `drop-shadow(0 3px 9px ${doneColor}66)`
+      ? `drop-shadow(0 3px 9px ${doneColor}55)`
       : 'drop-shadow(0 2px 5px #0000000e)';
-    drop.style.transition='fill .22s,stroke .22s,filter .22s';
+    drop.style.transition='fill .22s,filter .22s';
     g.appendChild(drop);
 
     // 호버 툴팁
     const label=node.label||'미션';
     g.addEventListener('mouseenter',e=>{
+      if(!node.done) drop.setAttribute('fill', fillHover);
       tooltip.textContent=label;
       tooltip.style.display='block';
       const tx=Math.min(e.clientX-60,window.innerWidth-180);
@@ -3525,7 +3513,10 @@ function renderMissionSvg(){
       tooltip.style.left=tx+'px';
       tooltip.style.top=ty+'px';
     });
-    g.addEventListener('mouseleave',()=>{tooltip.style.display='none';});
+    g.addEventListener('mouseleave',()=>{
+      drop.setAttribute('fill', node.done ? fillDone : fillLight);
+      tooltip.style.display='none';
+    });
 
     // 클릭: 완료 토글 / 더블클릭: 편집
     let clickTimer=null;
