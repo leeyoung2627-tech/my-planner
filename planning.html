@@ -769,12 +769,17 @@ function scheduleSave(){
   saveTimer=setTimeout(saveNow,700);
 }
 async function saveNow(){
-  if(!window._fbUser){ setStatus('로그인 필요',false); return; }
+  if(!window._fbUser){ setStatus('로그인 필요',false); return false; }
   try{
     await _saveCurrentProject();
-    setStatus('자동 저장됨',true);
-  }catch(e){ setStatus('저장 실패 — 백업 파일을 받아두세요',false); }
-  if(fsDir) fsSave();
+    setStatus('저장됨 ✓',true);
+    setTimeout(function(){ setStatus('자동 저장됨',true); }, 1400);
+    if(fsDir) fsSave();
+    return true;
+  }catch(e){
+    setStatus('저장 실패 — 다시 시도해 주세요',false);
+    return false;
+  }
 }
 function setStatus(t,on){
   document.getElementById('saveText').textContent=t;
@@ -2006,22 +2011,11 @@ function toast(msg){
 <script>
 // Ctrl+S / Cmd+S — 브라우저 다운로드 방지
 // capture:true : 포커스가 애매한 상황(파일 대화창 직후 등)에서도 가장 먼저 이벤트를 잡음
-// stopPropagation : 다른 핸들러로 이벤트가 새는 것 차단
 window.addEventListener('keydown', function(e){
   if((e.ctrlKey||e.metaKey) && e.key==='s'){
     e.preventDefault();
     e.stopPropagation();
-    if(typeof saveNow==='function'){
-      saveNow().then(function(){
-        var dot=document.getElementById('saveDot');
-        var txt=document.getElementById('saveText');
-        if(dot){dot.classList.add('on');setTimeout(function(){dot.classList.remove('on');},1400);}
-        if(txt){txt.textContent='저장됨 ✓';setTimeout(function(){txt.textContent='자동 저장됨';},1400);}
-      }).catch(function(){
-        var txt=document.getElementById('saveText');
-        if(txt){txt.textContent='저장 실패 — 다시 시도해 주세요';}
-      });
-    }
+    if(typeof saveNow==='function') saveNow();
   }
 }, true); // true = 캡처 단계에서 처리 (핵심)
 </script>
