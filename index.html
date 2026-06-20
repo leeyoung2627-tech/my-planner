@@ -40,6 +40,64 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 
 /* 상단 메모바 */
 .top-memo-bar{width:100%;max-width:1260px;background:#fff;border-radius:12px;border:0.5px solid #ddd;padding:10px 16px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 2px 8px #0001}
+
+/* 일기장 탭 버튼 — 투명, 눈에 잘 안 띄게 */
+.diary-tab-btn{width:34px;height:34px;border-radius:8px;background:transparent;border:none;cursor:pointer;flex-shrink:0;align-self:center;opacity:.12;transition:opacity .2s;display:flex;align-items:center;justify-content:center;font-size:15px}
+.diary-tab-btn:hover{opacity:.55}
+
+/* 일기장 잠금 화면 */
+.diary-lock-screen{position:fixed;inset:0;background:#00000055;display:none;align-items:center;justify-content:center;z-index:500}
+.diary-lock-screen.open{display:flex}
+.diary-lock-box{background:#fff;border-radius:16px;padding:32px;width:280px;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 8px 32px #0003}
+.diary-lock-title{font-size:14px;font-weight:700;color:#333}
+.diary-lock-sub{font-size:11px;color:#aaa;text-align:center;line-height:1.5}
+.diary-lock-input{width:100%;padding:10px;border:0.5px solid #ddd;border-radius:8px;font-size:18px;text-align:center;letter-spacing:6px;outline:none;font-family:inherit}
+.diary-lock-input:focus{border-color:var(--accent)}
+.diary-lock-err{font-size:11px;color:#D85A30;min-height:14px}
+.diary-lock-btns{display:flex;gap:8px;width:100%}
+.diary-lock-btn{flex:1;padding:8px;border-radius:8px;font-size:13px;cursor:pointer;border:none;font-family:inherit}
+.diary-lock-btn.ok{background:var(--accent);color:#fff}
+.diary-lock-btn.cancel{background:#f0f0f0;color:#666}
+
+/* 일기장 메인 화면 */
+.diary-screen{position:fixed;inset:0;background:var(--page-bg,#f5f4ff);z-index:200;display:none;flex-direction:column;align-items:center;padding:16px;overflow-y:auto}
+.diary-screen.open{display:flex}
+.diary-topbar{width:100%;max-width:1260px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.diary-topbar-title{font-size:15px;font-weight:700;color:#333;display:flex;align-items:center;gap:6px}
+.diary-close-btn{padding:6px 14px;border-radius:8px;background:#fff;border:0.5px solid #ddd;cursor:pointer;font-size:12px;color:#666;font-family:inherit}
+.diary-close-btn:hover{background:#f5f5f5}
+.diary-body{width:100%;max-width:1260px;display:grid;grid-template-columns:1fr 460px;gap:0;background:#fff;border-radius:16px;border:0.5px solid #ddd;box-shadow:0 4px 24px #0001;overflow:hidden;min-height:calc(100vh - 90px)}
+.diary-cal-side{padding:1rem;border-right:0.5px solid #eee;display:flex;flex-direction:column}
+.diary-cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.diary-cal-nav .dn-btn{background:none;border:none;cursor:pointer;font-size:17px;color:#666;padding:2px 8px;border-radius:4px}
+.diary-cal-nav .dn-btn:hover{background:#f0f0f0}
+.diary-cal-nav .dn-label{font-size:14px;font-weight:600;color:#222;flex:1;text-align:center}
+.diary-dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+.diary-dow{text-align:center;font-size:11px;color:#aaa;padding:2px 0}
+.diary-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;flex:1}
+.diary-day-cell{min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:5px 3px;border-radius:8px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative}
+.diary-day-cell:hover{background:#f5f4ff}
+.diary-day-cell.other{color:#ccc;cursor:default}
+.diary-day-cell.today .ddn{background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.diary-day-cell.selected{border-color:var(--accent);background:var(--accent-light)}
+.diary-clover{font-size:26px;line-height:1;margin-top:4px}
+.diary-write-side{padding:1.1rem 1.3rem;display:flex;flex-direction:column;gap:14px}
+.diary-write-date{font-size:14px;font-weight:700;color:#222}
+.diary-mood-row{display:flex;gap:10px;justify-content:space-between}
+.diary-mood-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;background:none;border:none;font-family:inherit;padding:8px 2px;border-radius:10px;transition:background .15s}
+.diary-mood-btn:hover{background:#fafafa}
+.diary-mood-circle{width:46px;height:46px;border-radius:50%;background:#ececec;display:flex;align-items:center;justify-content:center;font-size:24px;transition:background .2s,transform .15s}
+.diary-mood-btn.active .diary-mood-circle{transform:scale(1.08)}
+.diary-mood-label{font-size:10px;color:#bbb}
+.diary-mood-btn.active .diary-mood-label{color:#888;font-weight:600}
+.diary-section-label{font-size:11px;font-weight:700;color:#aaa;letter-spacing:.02em}
+.diary-result-input{width:100%;padding:9px 11px;border:0.5px solid #eee;border-radius:8px;font-size:13px;outline:none;font-family:inherit;background:#fafafa}
+.diary-result-input:focus{border-color:var(--accent);background:#fff}
+.diary-text-area{flex:1;width:100%;min-height:320px;padding:12px 14px;border:0.5px solid #eee;border-radius:10px;font-size:13.5px;line-height:1.85;outline:none;resize:none;font-family:inherit;background:#fafafa}
+.diary-text-area:focus{border-color:var(--accent);background:#fff}
+.diary-save-row{display:flex;justify-content:space-between;align-items:center}
+.diary-save-hint{font-size:10.5px;color:#bbb}
+.diary-save-btn{padding:6px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit}
 .top-memo-label{font-size:11px;color:#aaa;white-space:nowrap;padding-top:3px;flex-shrink:0}
 .top-memo-input{flex:1;border:none;outline:none;font-size:13px;color:#222;font-family:inherit;resize:none;line-height:1.6;background:transparent;min-height:24px;max-height:120px;overflow-y:auto}
 
@@ -596,6 +654,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   <span class="top-memo-label">📌 메모</span>
   <textarea class="top-memo-input" id="topMemoInput" placeholder="빠른 메모..." rows="1" spellcheck="false"
     oninput="autoResizeTopMemo(this)" onblur="saveTopMemo()"></textarea>
+  <button class="diary-tab-btn" onclick="openDiaryLock()" title="">📔</button>
 </div>
 
 <div class="app" id="mainApp">
@@ -792,6 +851,59 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
     <button class="mt-ep-btn mt-ep-del" onclick="deleteMissionNode()">삭제</button>
     <button class="mt-ep-btn mt-ep-cancel" onclick="closeMtEditPopup()">취소</button>
     <button class="mt-ep-btn mt-ep-save" onclick="confirmMtEdit()">저장</button>
+  </div>
+</div>
+
+<!-- 일기장 잠금 화면 -->
+<div class="diary-lock-screen" id="diaryLockScreen">
+  <div class="diary-lock-box">
+    <div style="font-size:32px">📔</div>
+    <div class="diary-lock-title" id="diaryLockTitle">비밀번호 입력</div>
+    <div class="diary-lock-sub" id="diaryLockSub">일기장은 두목님만 볼 수 있어요</div>
+    <input type="password" class="diary-lock-input" id="diaryLockInput" maxlength="6" inputmode="numeric" placeholder="••••" autocomplete="off"/>
+    <div class="diary-lock-err" id="diaryLockErr"></div>
+    <div class="diary-lock-btns">
+      <button class="diary-lock-btn cancel" onclick="closeDiaryLock()">취소</button>
+      <button class="diary-lock-btn ok" onclick="confirmDiaryLock()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 일기장 메인 화면 -->
+<div class="diary-screen" id="diaryScreen">
+  <div class="diary-topbar">
+    <div class="diary-topbar-title">📔 일기장</div>
+    <button class="diary-close-btn" onclick="closeDiaryScreen()">✕ 닫기</button>
+  </div>
+  <div class="diary-body">
+    <div class="diary-cal-side">
+      <div class="diary-cal-nav">
+        <button class="dn-btn" onclick="diaryMovePeriod(-1)">‹</button>
+        <span class="dn-label" id="diaryPeriodLabel"></span>
+        <button class="dn-btn" onclick="diaryMovePeriod(1)">›</button>
+      </div>
+      <div class="diary-dow-row">
+        <div class="diary-dow">일</div><div class="diary-dow">월</div><div class="diary-dow">화</div>
+        <div class="diary-dow">수</div><div class="diary-dow">목</div><div class="diary-dow">금</div><div class="diary-dow">토</div>
+      </div>
+      <div class="diary-month-grid" id="diaryMonthGrid"></div>
+    </div>
+    <div class="diary-write-side">
+      <div class="diary-write-date" id="diaryWriteDate"></div>
+      <div class="diary-mood-row" id="diaryMoodRow"></div>
+      <div>
+        <div class="diary-section-label" style="margin-bottom:6px">✨ 오늘의 결과물</div>
+        <input class="diary-result-input" id="diaryResultInput" lang="ko" spellcheck="false" placeholder="오늘 만든 것, 끝낸 일..."/>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div class="diary-section-label" style="margin-bottom:6px">✏️ 오늘의 일기</div>
+        <textarea class="diary-text-area" id="diaryTextArea" lang="ko" spellcheck="false" placeholder="오늘 하루는 어땠나요..."></textarea>
+      </div>
+      <div class="diary-save-row">
+        <span class="diary-save-hint" id="diarySaveHint">Ctrl+S 로도 저장돼요</span>
+        <button class="diary-save-btn" onclick="saveDiaryEntry()">저장</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1171,6 +1283,12 @@ let habitPostitContent='';
 let topMemoContent='';
 let mealSaveTimers={};
 let dragSrcKey=null,dragSrcIdx=null;
+// ── 일기장 상태 ──
+let diaryEntries={}; // {YYYY-M-D: {mood, result, text}}
+let diaryCur=new Date();
+let diarySelDate=new Date();
+let diaryPasswordHash=null;
+let diarySaveTimer=null;
 
 function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function showSaving(){const el=document.getElementById('savingIndicator');el.style.display='block';setTimeout(()=>el.style.display='none',1200);}
@@ -1226,7 +1344,7 @@ async function saveData(type,key,value){
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -1243,6 +1361,8 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts')),
     getDoc(doc(db,'users',currentUser.uid,'settings','customTags')),
     getDoc(doc(db,'users',currentUser.uid,'settings','mission')),
+    getDocs(collection(db,'users',currentUser.uid,'diary')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','diaryLock')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -1280,6 +1400,9 @@ async function loadAllData(){
     const md=msS.data();
     missionData={title:md.title||'',nodes:md.nodes||[],color:md.color||'#7ec8e3'};
   }
+  // 일기장
+  diaryEntries={};dyS.forEach(d=>{diaryEntries[d.id]=d.data();});
+  diaryPasswordHash=dpS.exists()?(dpS.data().hash||null):null;
 }
 
 // ── 상단 메모 ──
@@ -3608,6 +3731,175 @@ document.addEventListener('click',e=>{
   const p=document.getElementById('bgPanel');
   const b=document.querySelector('.bg-setting-btn');
   if(p&&!p.contains(e.target)&&e.target!==b)p.style.display='none';
+});
+
+// ══════════════ 일기장 ══════════════
+const DIARY_MOODS=[
+  {key:'happy',emoji:'😄',label:'기쁨',color:'#FFE066'},
+  {key:'normal',emoji:'😐',label:'평범',color:'#B5E8A8'},
+  {key:'sad',emoji:'😢',label:'슬픔',color:'#D9C5F0'},
+  {key:'angry',emoji:'😠',label:'화남',color:'#FF6B5C'},
+];
+let diaryUnlocked=false;
+let diaryPendingNewPw=null;
+
+async function _sha256(text){
+  const enc=new TextEncoder().encode(text);
+  const buf=await crypto.subtle.digest('SHA-256',enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+window.openDiaryLock=function(){
+  document.getElementById('diaryLockInput').value='';
+  document.getElementById('diaryLockErr').textContent='';
+  diaryPendingNewPw=null;
+  if(diaryPasswordHash){
+    document.getElementById('diaryLockTitle').textContent='비밀번호 입력';
+    document.getElementById('diaryLockSub').textContent='일기장은 두목님만 볼 수 있어요';
+  } else {
+    document.getElementById('diaryLockTitle').textContent='비밀번호 설정';
+    document.getElementById('diaryLockSub').textContent='처음이네요! 일기장 잠금용 4~6자리 비밀번호를 설정해주세요';
+  }
+  document.getElementById('diaryLockScreen').classList.add('open');
+  setTimeout(()=>document.getElementById('diaryLockInput').focus(),80);
+};
+window.closeDiaryLock=function(){
+  document.getElementById('diaryLockScreen').classList.remove('open');
+};
+window.confirmDiaryLock=async function(){
+  const val=document.getElementById('diaryLockInput').value.trim();
+  const errEl=document.getElementById('diaryLockErr');
+  if(!val){errEl.textContent='비밀번호를 입력해주세요';return;}
+  if(!diaryPasswordHash){
+    // 최초 설정 — 2단계(입력→재입력) 확인
+    if(!diaryPendingNewPw){
+      diaryPendingNewPw=val;
+      document.getElementById('diaryLockInput').value='';
+      document.getElementById('diaryLockSub').textContent='다시 한 번 입력해서 확인해주세요';
+      errEl.textContent='';
+      return;
+    }
+    if(val!==diaryPendingNewPw){
+      errEl.textContent='비밀번호가 일치하지 않아요. 처음부터 다시 설정해주세요';
+      diaryPendingNewPw=null;
+      document.getElementById('diaryLockInput').value='';
+      document.getElementById('diaryLockSub').textContent='처음이네요! 일기장 잠금용 4~6자리 비밀번호를 설정해주세요';
+      return;
+    }
+    const hash=await _sha256(val);
+    diaryPasswordHash=hash;
+    await setDoc(doc(db,'users',currentUser.uid,'settings','diaryLock'),{hash});
+    diaryUnlocked=true;
+    closeDiaryLock();
+    openDiaryScreen();
+    return;
+  }
+  // 기존 비밀번호 검증
+  const hash=await _sha256(val);
+  if(hash===diaryPasswordHash){
+    diaryUnlocked=true;
+    closeDiaryLock();
+    openDiaryScreen();
+  } else {
+    errEl.textContent='비밀번호가 틀렸어요';
+    document.getElementById('diaryLockInput').value='';
+  }
+};
+document.getElementById('diaryLockInput')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter')window.confirmDiaryLock();
+});
+
+window.openDiaryScreen=function(){
+  if(!diaryUnlocked)return;
+  diaryCur=new Date(diarySelDate.getFullYear(),diarySelDate.getMonth(),1);
+  document.getElementById('diaryScreen').classList.add('open');
+  renderDiaryCalendar();
+  renderDiaryMoodRow();
+  loadDiaryEntryToForm();
+};
+window.closeDiaryScreen=function(){
+  document.getElementById('diaryScreen').classList.remove('open');
+  diaryUnlocked=false;
+};
+window.diaryMovePeriod=function(dir){
+  diaryCur=new Date(diaryCur.getFullYear(),diaryCur.getMonth()+dir,1);
+  renderDiaryCalendar();
+};
+function renderDiaryCalendar(){
+  document.getElementById('diaryPeriodLabel').textContent=diaryCur.getFullYear()+'년 '+(diaryCur.getMonth()+1)+'월';
+  const start=new Date(diaryCur.getFullYear(),diaryCur.getMonth(),1).getDay();
+  const total=new Date(diaryCur.getFullYear(),diaryCur.getMonth()+1,0).getDate();
+  const today=new Date();
+  let html='';
+  for(let i=0;i<start;i++)html+=`<div class="diary-day-cell other"></div>`;
+  for(let d=1;d<=total;d++){
+    const dt=new Date(diaryCur.getFullYear(),diaryCur.getMonth(),d);
+    const key=fmt(dt);
+    const isToday=fmt(dt)===fmt(today);
+    const isSel=fmt(dt)===fmt(diarySelDate);
+    const hasEntry=diaryEntries[key]&&(diaryEntries[key].text||diaryEntries[key].result||diaryEntries[key].mood);
+    html+=`<div class="diary-day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="diarySelectDay(${d})">
+      <span class="ddn">${d}</span>
+      ${hasEntry?'<span class="diary-clover">🍀</span>':''}
+    </div>`;
+  }
+  document.getElementById('diaryMonthGrid').innerHTML=html;
+}
+window.diarySelectDay=function(d){
+  diarySelDate=new Date(diaryCur.getFullYear(),diaryCur.getMonth(),d);
+  renderDiaryCalendar();
+  renderDiaryMoodRow();
+  loadDiaryEntryToForm();
+};
+function renderDiaryMoodRow(){
+  const row=document.getElementById('diaryMoodRow');
+  const key=fmt(diarySelDate);
+  const entry=diaryEntries[key]||{};
+  row.innerHTML='';
+  DIARY_MOODS.forEach(m=>{
+    const isActive=entry.mood===m.key;
+    const btn=document.createElement('button');
+    btn.className='diary-mood-btn'+(isActive?' active':'');
+    btn.innerHTML=`<span class="diary-mood-circle" style="background:${isActive?m.color:'#ececec'}">${m.emoji}</span><span class="diary-mood-label">${m.label}</span>`;
+    btn.onclick=()=>{
+      const e2=diaryEntries[key]||{};
+      e2.mood=(e2.mood===m.key)?null:m.key;
+      diaryEntries[key]=e2;
+      renderDiaryMoodRow();
+      scheduleDiarySave();
+    };
+    row.appendChild(btn);
+  });
+}
+function loadDiaryEntryToForm(){
+  const key=fmt(diarySelDate);
+  const entry=diaryEntries[key]||{};
+  document.getElementById('diaryWriteDate').textContent=diarySelDate.getFullYear()+'년 '+(diarySelDate.getMonth()+1)+'월 '+diarySelDate.getDate()+'일 '+DAYS[diarySelDate.getDay()]+'요일';
+  document.getElementById('diaryResultInput').value=entry.result||'';
+  document.getElementById('diaryTextArea').value=entry.text||'';
+}
+function scheduleDiarySave(){
+  clearTimeout(diarySaveTimer);
+  diarySaveTimer=setTimeout(()=>{saveDiaryEntry();},800);
+}
+window.saveDiaryEntry=async function(){
+  if(!currentUser||!diaryUnlocked)return;
+  const key=fmt(diarySelDate);
+  const result=document.getElementById('diaryResultInput').value;
+  const text=document.getElementById('diaryTextArea').value;
+  const mood=diaryEntries[key]?.mood||null;
+  diaryEntries[key]={mood,result,text};
+  await saveData('diary',key,{mood,result,text});
+  renderDiaryCalendar();
+};
+document.getElementById('diaryResultInput')?.addEventListener('input',scheduleDiarySave);
+document.getElementById('diaryTextArea')?.addEventListener('input',scheduleDiarySave);
+// 일기장 화면에서 Ctrl+S
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'&&document.getElementById('diaryScreen')?.classList.contains('open')){
+    e.preventDefault();
+    window.saveDiaryEntry();
+  }
 });
 
 window.closeModal=function(id){document.getElementById(id).style.display='none';};
