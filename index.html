@@ -85,36 +85,36 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   padding:14px 12px 18px;
 }
 .mt-path-svg{width:100%;overflow:visible;display:block}
-/* 노드 — 물방울 */
+/* 노드 — 통통한 하트 */
 .mt-node{cursor:pointer}
 .mt-node path{
   transition:fill .22s,stroke .22s,filter .22s;
 }
-/* 미완료: 옅은 핑크 채우기 */
+/* 미완료: 옅은 하늘색 */
 .mt-node:not(.done) path{
-  fill:#fce8ef;stroke:#f2b8ca;stroke-width:1.6;
+  fill:#ddf0fb;stroke:#a8d8f0;stroke-width:1.6;
   filter:drop-shadow(0 2px 5px #0000000e);
 }
-/* 완료: 진한 핑크 */
+/* 완료: 파스텔 하늘색 */
 .mt-node.done path{
-  fill:#e98ca6;stroke:#d4537e;stroke-width:1.6;
-  filter:drop-shadow(0 3px 9px #d4537e50);
+  fill:#7ec8e3;stroke:#4fb3d4;stroke-width:1.6;
+  filter:drop-shadow(0 3px 9px #4fb3d455);
 }
 /* 호버 (미완료) */
 .mt-node:hover:not(.done) path{
-  fill:#f7cad8;stroke:#e98ca6;
-  filter:drop-shadow(0 3px 8px #e98ca640);
+  fill:#c0e6f8;stroke:#7ec8e3;
+  filter:drop-shadow(0 3px 8px #7ec8e340);
 }
 /* start/success 배지 */
 .mt-badge{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-weight:700}
 
-/* 호버 툴팁 (SVG foreignObject 대신 HTML overlay) */
+/* 호버 툴팁 */
 .mt-tooltip{
   position:fixed;z-index:200;
   background:#fff;
-  border:1.5px solid #f0b8cb;
+  border:1.5px solid #a8d8f0;
   border-radius:12px;
-  box-shadow:0 6px 20px #e98ca630;
+  box-shadow:0 6px 20px #7ec8e330;
   padding:8px 12px;
   font-size:12px;color:#333;
   font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
@@ -126,7 +126,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .mt-tooltip::after{
   content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);
   border:7px solid transparent;
-  border-top:7px solid #f0b8cb;
+  border-top:7px solid #a8d8f0;
   border-bottom:none;
 }
 /* 하단 버튼 */
@@ -141,8 +141,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   letter-spacing:0.3px;
 }
 .mt-add-btn:hover{
-  border-color:#e98ca6;color:#d4537e;
-  background:#fdf0f3;
+  border-color:#7ec8e3;color:#4fb3d4;
+  background:#f0faff;
 }
 /* 노드 라벨 편집 팝업 */
 .mt-edit-popup{
@@ -164,7 +164,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   padding-bottom:5px;background:transparent;
   transition:border-color .15s;
 }
-.mt-edit-popup input:focus{border-bottom-color:#e98ca6}
+.mt-edit-popup input:focus{border-bottom-color:#7ec8e3}
 .mt-edit-actions{display:flex;gap:5px;justify-content:flex-end;margin-top:2px}
 .mt-ep-btn{
   border:none;border-radius:8px;
@@ -172,8 +172,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   padding:5px 11px;cursor:pointer;
   font-family:inherit;transition:.15s;
 }
-.mt-ep-save{background:#e98ca6;color:#fff}
-.mt-ep-save:hover{background:#d4537e}
+.mt-ep-save{background:#7ec8e3;color:#fff}
+.mt-ep-save:hover{background:#4fb3d4}
 .mt-ep-del{background:#f5f5f5;color:#c0c0c0}
 .mt-ep-del:hover{background:#ffeded;color:#e09090}
 .mt-ep-cancel{background:#f5f5f5;color:#c0c0c0}
@@ -3260,20 +3260,15 @@ function positionMissionTracker(){
   const rect=app.getBoundingClientRect();
 
   const trackerW=260;
-  const btnW=btns ? btns.offsetWidth : 68;
-  const gap=16; // 각 요소 사이 간격
+  const gap=20;
 
-  // 전체 블록 너비 = 트래커 + gap + 메인창 + gap + 버튼
-  const totalW = trackerW + gap + rect.width + gap + btnW;
-  // 화면 중앙에서 전체 블록 시작 x
-  const blockLeft = (window.innerWidth - totalW) / 2;
-
-  tracker.style.left = Math.max(8, blockLeft) + 'px';
+  // 트래커: 메인창 왼쪽 끝에서 gap만큼 왼쪽
+  tracker.style.left = Math.max(8, rect.left - trackerW - gap) + 'px';
   tracker.style.top = rect.top + 'px';
 
-  // 노트 버튼도 같이 재정렬
+  // 노트 버튼: 메인창 오른쪽 끝에서 gap만큼 오른쪽
   if(btns){
-    btns.style.left = (blockLeft + trackerW + gap + rect.width + gap) + 'px';
+    btns.style.left = (rect.right + gap) + 'px';
     btns.style.top = '50%';
     btns.style.transform = 'translateY(-50%)';
   }
@@ -3315,7 +3310,7 @@ function renderMissionSvg(){
     line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);
     line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
     const bothDone=nodes[i].done&&nodes[i+1].done;
-    line.setAttribute('stroke', bothDone ? '#e98ca6' : '#d8d8d8');
+    line.setAttribute('stroke', bothDone ? '#7ec8e3' : '#d8d8d8');
     line.setAttribute('stroke-width','2.5');
     line.setAttribute('stroke-linecap','round');
     line.setAttribute('stroke-dasharray', bothDone ? 'none' : '5 5');
@@ -3341,16 +3336,19 @@ function renderMissionSvg(){
     `.trim();
   }
 
-  // 더 자연스럽게 — 통합 단일 path (꼬리+몸통 합치기)
+  // 통통한 하트 path (cx, cy = 하트 중심)
   function makeDropShape(cx, cy){
-    const rX=24, rY=17;    // 몸통 가로/세로 반지름 (키움)
-    const tX=cx-rX;        // 몸통 왼쪽 끝
-    const tipX=tX-20;      // 꼬리 끝 (더 길게)
-    const d=`
-      M ${tX} ${cy-1}
-      C ${tX-6} ${cy-rY*0.5}, ${tipX+5} ${cy-3}, ${tipX} ${cy}
-      C ${tipX+5} ${cy+3}, ${tX-6} ${cy+rY*0.5}, ${tX} ${cy+1}
-      A ${rX} ${rY} 0 1 0 ${tX} ${cy-1} Z
+    const s = 22; // 크기 스케일
+    // 클래식 하트: 위쪽 두 볼록 + 아래 뾰족
+    const d = `
+      M ${cx} ${cy + s*0.55}
+      C ${cx - s*1.25} ${cy - s*0.1},
+        ${cx - s*0.5}  ${cy - s*1.05},
+        ${cx}          ${cy - s*0.28}
+      C ${cx + s*0.5}  ${cy - s*1.05},
+        ${cx + s*1.25} ${cy - s*0.1},
+        ${cx}          ${cy + s*0.55}
+      Z
     `;
     return d;
   }
