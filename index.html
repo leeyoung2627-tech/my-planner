@@ -85,23 +85,23 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   padding:14px 12px 18px;
 }
 .mt-path-svg{width:100%;overflow:visible;display:block}
-/* 노드 — 발자국 */
+/* 노드 — 물방울 */
 .mt-node{cursor:pointer}
-.mt-node ellipse{
+.mt-node path{
   transition:fill .22s,stroke .22s,filter .22s;
 }
-/* 미완료: 옅은 핑크로 채우기 */
-.mt-node:not(.done) ellipse{
-  fill:#fce8ef;stroke:#f2b8ca;stroke-width:1.8;
-  filter:drop-shadow(0 2px 4px #0000000d);
+/* 미완료: 옅은 핑크 채우기 */
+.mt-node:not(.done) path{
+  fill:#fce8ef;stroke:#f2b8ca;stroke-width:1.6;
+  filter:drop-shadow(0 2px 5px #0000000e);
 }
 /* 완료: 진한 핑크 */
-.mt-node.done ellipse{
-  fill:#e98ca6;stroke:#d4537e;stroke-width:1.8;
-  filter:drop-shadow(0 3px 8px #d4537e55);
+.mt-node.done path{
+  fill:#e98ca6;stroke:#d4537e;stroke-width:1.6;
+  filter:drop-shadow(0 3px 9px #d4537e50);
 }
 /* 호버 (미완료) */
-.mt-node:hover:not(.done) ellipse{
+.mt-node:hover:not(.done) path{
   fill:#f7cad8;stroke:#e98ca6;
   filter:drop-shadow(0 3px 8px #e98ca640);
 }
@@ -3272,10 +3272,9 @@ function renderMissionSvg(){
   if(!svg)return;
 
   const COL=2;
-  const FW=38, FH=52;   // 발자국 전체 폭/높이
-  const colW=100;        // 열 간격 (넓어진 트래커에 맞게)
+  const colW=100;
   const rowH=80;
-  const padX=38, padY=40;
+  const padX=38, padY=42;
 
   const coords=nodes.map((_,i)=>{
     const row=Math.floor(i/COL);
@@ -3287,13 +3286,13 @@ function renderMissionSvg(){
 
   const totalRows=Math.ceil(nodes.length/COL);
   const svgW=padX*2+(COL-1)*colW;
-  const svgH=padY*2+Math.max(0,totalRows-1)*rowH+FH;
+  const svgH=padY*2+Math.max(0,totalRows-1)*rowH+28;
 
   svg.setAttribute('viewBox',`0 0 ${svgW} ${svgH}`);
   svg.style.height=svgH+'px';
   svg.innerHTML='';
 
-  // 연결선
+  // 연결선 — 연한 회색 점선 (완료 구간은 핑크)
   const lineG=document.createElementNS('http://www.w3.org/2000/svg','g');
   for(let i=0;i<coords.length-1;i++){
     const a=coords[i],b=coords[i+1];
@@ -3301,40 +3300,45 @@ function renderMissionSvg(){
     line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);
     line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
     const bothDone=nodes[i].done&&nodes[i+1].done;
-    line.setAttribute('stroke',bothDone?'#e98ca6':'#f2c8d6');
+    line.setAttribute('stroke', bothDone ? '#e98ca6' : '#d8d8d8');
     line.setAttribute('stroke-width','2.5');
     line.setAttribute('stroke-linecap','round');
-    line.setAttribute('stroke-dasharray',bothDone?'none':'5 4');
+    line.setAttribute('stroke-dasharray', bothDone ? 'none' : '5 5');
     lineG.appendChild(line);
   }
   svg.appendChild(lineG);
 
-  // 발자국 그리기 함수: cx,cy = 발바닥 중심
-  function makePaw(cx,cy,done){
-    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    // 발바닥 (큰 타원)
-    const heel=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
-    heel.setAttribute('cx',cx);
-    heel.setAttribute('cy',cy+4);
-    heel.setAttribute('rx','14');
-    heel.setAttribute('ry','17');
-    g.appendChild(heel);
-    // 발가락 3개 (작은 타원)
-    const toes=[
-      {dx:-11,dy:-18,rx:6,ry:7.5,rot:-18},
-      {dx:0,  dy:-22,rx:6,ry:7.5,rot:0},
-      {dx:11, dy:-18,rx:6,ry:7.5,rot:18},
-    ];
-    toes.forEach(t=>{
-      const toe=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
-      toe.setAttribute('cx',cx+t.dx);
-      toe.setAttribute('cy',cy+t.dy);
-      toe.setAttribute('rx',t.rx);
-      toe.setAttribute('ry',t.ry);
-      toe.setAttribute('transform',`rotate(${t.rot},${cx+t.dx},${cy+t.dy})`);
-      g.appendChild(toe);
-    });
-    return g;
+  // 옆으로 누운 물방울 path 생성
+  // 이미지 참조: 왼쪽에 뾰족한 꼬리, 오른쪽이 통통한 둥근 몸통
+  function makeDropPath(cx, cy){
+    // cx,cy = 물방울 중심 (몸통 중심 기준)
+    const rX=20, rY=14; // 몸통 가로/세로 반지름
+    const tailLen=18;   // 꼬리 길이
+    // cubic bezier로 왼쪽 꼬리 뾰족하게
+    return `
+      M ${cx-rX} ${cy}
+      C ${cx-rX-4} ${cy-rY*0.4}, ${cx-rX-tailLen} ${cy-2}, ${cx-rX-tailLen+2} ${cy}
+      C ${cx-rX-tailLen} ${cy+2}, ${cx-rX-4} ${cy+rY*0.4}, ${cx-rX} ${cy}
+      M ${cx} ${cy}
+      m -${rX} 0
+      a ${rX} ${rY} 0 1 1 ${rX*2} 0
+      a ${rX} ${rY} 0 1 1 -${rX*2} 0
+    `.trim();
+  }
+
+  // 더 자연스럽게 — 통합 단일 path (꼬리+몸통 합치기)
+  function makeDropShape(cx, cy){
+    const rX=19, rY=13;
+    const tX=cx-rX; // 몸통 왼쪽 끝
+    const tipX=tX-16; // 꼬리 끝
+    // 위 곡선: 몸통 top arc → 꼬리 tip → 몸통 bottom arc
+    const d=`
+      M ${tX} ${cy-1}
+      C ${tX-5} ${cy-rY*0.5}, ${tipX+4} ${cy-3}, ${tipX} ${cy}
+      C ${tipX+4} ${cy+3}, ${tX-5} ${cy+rY*0.5}, ${tX} ${cy+1}
+      A ${rX} ${rY} 0 1 0 ${tX} ${cy-1} Z
+    `;
+    return d;
   }
 
   // 툴팁 div (없으면 생성)
@@ -3353,8 +3357,9 @@ function renderMissionSvg(){
     g.setAttribute('class','mt-node'+(node.done?' done':''));
     g.style.cursor='pointer';
 
-    const pawG=makePaw(pos.x,pos.y,node.done);
-    g.appendChild(pawG);
+    const drop=document.createElementNS('http://www.w3.org/2000/svg','path');
+    drop.setAttribute('d', makeDropShape(pos.x, pos.y));
+    g.appendChild(drop);
 
     // 호버 툴팁
     const label=node.label||'미션';
