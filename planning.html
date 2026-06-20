@@ -2,6 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>기획서 메이커 v1.1.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2012,10 +2015,12 @@ function toast(msg){
 // Ctrl+S / Cmd+S — 브라우저 다운로드 방지
 // capture:true : 포커스가 애매한 상황(파일 대화창 직후 등)에서도 가장 먼저 이벤트를 잡음
 window.addEventListener('keydown', function(e){
-  if((e.ctrlKey||e.metaKey) && e.key==='s'){
+  if((e.ctrlKey||e.metaKey) && (e.key==='s'||e.key==='S')){
     e.preventDefault();
     e.stopPropagation();
+    e.returnValue=false; // 구형 브라우저 호환
     if(typeof saveNow==='function') saveNow();
+    return false;
   }
 }, true); // true = 캡처 단계에서 처리 (핵심)
 </script>
