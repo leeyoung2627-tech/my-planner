@@ -91,9 +91,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .diary-mood-label{font-size:10px;color:#bbb}
 .diary-mood-btn.active .diary-mood-label{color:#888;font-weight:600}
 .diary-section-label{font-size:11px;font-weight:700;color:#aaa;letter-spacing:.02em}
-.diary-result-input{width:100%;padding:9px 11px;border:0.5px solid #eee;border-radius:8px;font-size:13px;outline:none;font-family:inherit;background:#fafafa}
+.diary-result-input{width:100%;padding:9px 11px;border:0.5px solid #eee;border-radius:8px;font-size:13px;outline:none;font-family:inherit;background:#fafafa;resize:vertical;min-height:108px;line-height:1.7}
 .diary-result-input:focus{border-color:var(--accent);background:#fff}
-.diary-text-area{flex:1;width:100%;min-height:320px;padding:12px 14px;border:0.5px solid #eee;border-radius:10px;font-size:13.5px;line-height:1.85;outline:none;resize:none;font-family:inherit;background:#fafafa}
+.diary-text-area{flex:1;width:100%;min-height:180px;padding:12px 14px;border:0.5px solid #eee;border-radius:10px;font-size:13.5px;line-height:1.85;outline:none;resize:none;font-family:inherit;background:#fafafa}
 .diary-text-area:focus{border-color:var(--accent);background:#fff}
 .diary-save-row{display:flex;justify-content:space-between;align-items:center}
 .diary-save-hint{font-size:10.5px;color:#bbb}
@@ -654,7 +654,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
   <span class="top-memo-label">📌 메모</span>
   <textarea class="top-memo-input" id="topMemoInput" placeholder="빠른 메모..." rows="1" spellcheck="false"
     oninput="autoResizeTopMemo(this)" onblur="saveTopMemo()"></textarea>
-  <button class="diary-tab-btn" onclick="openDiaryLock()" title="">📔</button>
+  <button class="diary-tab-btn" onclick="openDiaryLock()" title="">🍀</button>
 </div>
 
 <div class="app" id="mainApp">
@@ -893,7 +893,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
       <div class="diary-mood-row" id="diaryMoodRow"></div>
       <div>
         <div class="diary-section-label" style="margin-bottom:6px">✨ 오늘의 결과물</div>
-        <input class="diary-result-input" id="diaryResultInput" lang="ko" spellcheck="false" placeholder="오늘 만든 것, 끝낸 일..."/>
+        <textarea class="diary-result-input" id="diaryResultInput" lang="ko" spellcheck="false" placeholder="오늘 만든 것, 끝낸 일..."></textarea>
       </div>
       <div style="flex:1;display:flex;flex-direction:column;min-height:0">
         <div class="diary-section-label" style="margin-bottom:6px">✏️ 오늘의 일기</div>
