@@ -2004,16 +2004,26 @@ function toast(msg){
 })();
 </script>
 <script>
-document.addEventListener('keydown',function(e){
-  if((e.ctrlKey||e.metaKey)&&e.key==='s'){
+// Ctrl+S / Cmd+S — 브라우저 다운로드 방지
+// capture:true : 포커스가 애매한 상황(파일 대화창 직후 등)에서도 가장 먼저 이벤트를 잡음
+// stopPropagation : 다른 핸들러로 이벤트가 새는 것 차단
+window.addEventListener('keydown', function(e){
+  if((e.ctrlKey||e.metaKey) && e.key==='s'){
     e.preventDefault();
-    if(typeof saveNow==='function')saveNow();
-    var dot=document.getElementById('saveDot');
-    var txt=document.getElementById('saveText');
-    if(dot){dot.classList.add('on');setTimeout(function(){dot.classList.remove('on');},1200);}
-    if(txt){var prev=txt.textContent;txt.textContent='저장됨 ✓';setTimeout(function(){txt.textContent=prev;},1200);}
+    e.stopPropagation();
+    if(typeof saveNow==='function'){
+      saveNow().then(function(){
+        var dot=document.getElementById('saveDot');
+        var txt=document.getElementById('saveText');
+        if(dot){dot.classList.add('on');setTimeout(function(){dot.classList.remove('on');},1400);}
+        if(txt){txt.textContent='저장됨 ✓';setTimeout(function(){txt.textContent='자동 저장됨';},1400);}
+      }).catch(function(){
+        var txt=document.getElementById('saveText');
+        if(txt){txt.textContent='저장 실패 — 다시 시도해 주세요';}
+      });
+    }
   }
-});
+}, true); // true = 캡처 단계에서 처리 (핵심)
 </script>
 </div><!-- /content-wrap -->
 </div><!-- /app-wrap -->
