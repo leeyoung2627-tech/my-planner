@@ -21,7 +21,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 [contenteditable],[spellcheck]{-webkit-spell-check:none;spell-check:none}
-body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);display:flex;flex-direction:column;align-items:center;padding:16px 110px 80px 16px;min-height:100vh;gap:10px}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);display:flex;flex-direction:column;align-items:center;padding:16px 16px 80px 16px;min-height:100vh;gap:10px}
 
 /* 초기 로딩 — 깜빡임 방지 */
 #loginWrap,#topMemoBar,#mainApp,#savingIndicator{display:none}
@@ -3226,10 +3226,9 @@ function positionNoteButtons(){
   const btns=document.querySelector('.note-buttons');
   if(!app||!btns)return;
   const rect=app.getBoundingClientRect();
-  // 메인창 오른쪽 끝 + 16px
   btns.style.left=(rect.right+16)+'px';
-  btns.style.top=rect.top+'px';
-  btns.style.transform='none';
+  btns.style.top='50%';
+  btns.style.transform='translateY(-50%)';
 }
 window.addEventListener('resize',positionNoteButtons);
 
@@ -3256,12 +3255,28 @@ function initMissionTracker(){
 function positionMissionTracker(){
   const app=document.getElementById('mainApp');
   const tracker=document.getElementById('missionTracker');
+  const btns=document.querySelector('.note-buttons');
   if(!app||!tracker)return;
   const rect=app.getBoundingClientRect();
-  // 메인창 왼쪽 끝에서 왼쪽으로 트래커폭+24px
+
   const trackerW=260;
-  tracker.style.left=Math.max(8,(rect.left-trackerW-24))+'px';
-  tracker.style.top=rect.top+'px';
+  const btnW=btns ? btns.offsetWidth : 68;
+  const gap=16; // 각 요소 사이 간격
+
+  // 전체 블록 너비 = 트래커 + gap + 메인창 + gap + 버튼
+  const totalW = trackerW + gap + rect.width + gap + btnW;
+  // 화면 중앙에서 전체 블록 시작 x
+  const blockLeft = (window.innerWidth - totalW) / 2;
+
+  tracker.style.left = Math.max(8, blockLeft) + 'px';
+  tracker.style.top = rect.top + 'px';
+
+  // 노트 버튼도 같이 재정렬
+  if(btns){
+    btns.style.left = (blockLeft + trackerW + gap + rect.width + gap) + 'px';
+    btns.style.top = '50%';
+    btns.style.transform = 'translateY(-50%)';
+  }
 }
 window.addEventListener('resize',positionMissionTracker);
 
@@ -3272,9 +3287,9 @@ function renderMissionSvg(){
   if(!svg)return;
 
   const COL=2;
-  const colW=100;
-  const rowH=80;
-  const padX=38, padY=42;
+  const colW=116;       // 열 간격 확대 (260px 트래커에 맞게)
+  const rowH=96;        // 행 간격 확대 (세로로 더 띄우기)
+  const padX=42, padY=46;
 
   const coords=nodes.map((_,i)=>{
     const row=Math.floor(i/COL);
@@ -3328,14 +3343,13 @@ function renderMissionSvg(){
 
   // 더 자연스럽게 — 통합 단일 path (꼬리+몸통 합치기)
   function makeDropShape(cx, cy){
-    const rX=19, rY=13;
-    const tX=cx-rX; // 몸통 왼쪽 끝
-    const tipX=tX-16; // 꼬리 끝
-    // 위 곡선: 몸통 top arc → 꼬리 tip → 몸통 bottom arc
+    const rX=24, rY=17;    // 몸통 가로/세로 반지름 (키움)
+    const tX=cx-rX;        // 몸통 왼쪽 끝
+    const tipX=tX-20;      // 꼬리 끝 (더 길게)
     const d=`
       M ${tX} ${cy-1}
-      C ${tX-5} ${cy-rY*0.5}, ${tipX+4} ${cy-3}, ${tipX} ${cy}
-      C ${tipX+4} ${cy+3}, ${tX-5} ${cy+rY*0.5}, ${tX} ${cy+1}
+      C ${tX-6} ${cy-rY*0.5}, ${tipX+5} ${cy-3}, ${tipX} ${cy}
+      C ${tipX+5} ${cy+3}, ${tX-6} ${cy+rY*0.5}, ${tX} ${cy+1}
       A ${rX} ${rY} 0 1 0 ${tX} ${cy-1} Z
     `;
     return d;
