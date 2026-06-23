@@ -3175,10 +3175,11 @@ window.saveHabitPostit=async function(){
 // ── 배경 설정 ──
 // ── 테마 시스템 ──
 const THEMES=[
-  // ── ★ 추천 네이비+블루 테마 ──
-  {name:'★ 네이비 블루',accent:'#2B7FFF',accentLight:'#E6F0FF',appbg:'#ffffff',pagebg:'#EEF1F8',text:'#1C2033',navbg:'#1A1F2E',navtext:'#C8CEDD',bordercol:'#D5DCF0'},
-  {name:'★ 딥 오션',accent:'#3B9EFF',accentLight:'#DBEEFF',appbg:'#f8faff',pagebg:'#E8EDF8',text:'#0F1730',navbg:'#0D1424',navtext:'#A8C4E8',bordercol:'#C8D4EC'},
-  {name:'★ 슬레이트 나이트',accent:'#60A5FA',accentLight:'#DBEAFE',appbg:'#f9fafb',pagebg:'#EFF2F8',text:'#1E293B',navbg:'#1E293B',navtext:'#BAC8E0',bordercol:'#CBD5E1'},
+  // ── ★ 추천 — 콘티짭시다 색 조합 ──
+  // 배경 70% 블루그레이 / 네이비 20% / 청색 포인트 10%
+  {name:'★ 네이비+청색',  accent:'#2B7FFF',accentLight:'#E6F0FF',appbg:'#ffffff',pagebg:'#EEF1F8',text:'#1C2033',navbg:'#1A1F2E',navtext:'#C8CEDD',bordercol:'#D5DCF0'},
+  {name:'★ 스틸 블루',    accent:'#1D6FE8',accentLight:'#DBEAFF',appbg:'#F7F9FF',pagebg:'#E8EEF8',text:'#0F1A36',navbg:'#0F1D3A',navtext:'#A8C0E0',bordercol:'#C8D4EC'},
+  {name:'★ 인디고 나이트',accent:'#4A90E2',accentLight:'#E0EEFF',appbg:'#FAFBFF',pagebg:'#ECEFF8',text:'#1A2244',navbg:'#141C30',navtext:'#B0C4DE',bordercol:'#CDD5E8'},
   // ── 라이트 계열 ──
   {name:'기본 보라',accent:'#534AB7',accentLight:'#EEEDFE',appbg:'#ffffff',pagebg:'#f5f4ff',text:'#222222'},
   {name:'로즈',accent:'#e84393',accentLight:'#fce4f0',appbg:'#ffffff',pagebg:'#fff0f6',text:'#2d0a1a'},
@@ -3249,7 +3250,68 @@ function applyTheme(){
   // 앱 배경
   const app=document.getElementById('mainApp');
   if(app){app.style.background=t.appbg;app.style.color=t.text;}
-  // 다크모드 감지 (어두운 텍스트 색이면 다크)
+
+  // ── 네이비 구역 직접 적용 (navbg 있을 때만)
+  const nb=t.navbg||'';
+  const nt=t.navtext||t.text;
+  const bc=t.bordercol||'#ddd';
+
+  // 상단 메모바
+  const memoBar=document.getElementById('topMemoBar');
+  if(memoBar){
+    memoBar.style.background=nb||'#fff';
+    memoBar.style.borderColor=nb?'transparent':bc;
+    memoBar.style.color=nt;
+    const memoInput=document.getElementById('topMemoInput');
+    if(memoInput)memoInput.style.color=nb?nt:t.text;
+    const memoLabel=memoBar.querySelector('.top-memo-label');
+    if(memoLabel)memoLabel.style.color=nb?nt+'99':'';}
+
+  // D-DAY 사이드바
+  const ddaySb=document.querySelector('.dday-sidebar');
+  if(ddaySb){
+    ddaySb.style.background=nb||'#fafafa';
+    ddaySb.style.color=nt;
+    // D-DAY 헤더
+    const ddHead=ddaySb.querySelector('.dday-header');
+    if(ddHead)ddHead.style.color=nb?nt+'99':'';
+    // 추가 버튼
+    const ddAdd=ddaySb.querySelector('.dday-add-btn');
+    if(ddAdd){ddAdd.style.background=nb?'transparent':'';ddAdd.style.borderColor=nb?nt+'44':'';}
+  }
+
+  // 상단 네비 (달력 헤더)
+  const topNav=document.querySelector('.top-nav');
+  if(topNav){
+    topNav.style.background=nb||'';
+    topNav.style.borderBottomColor=nb?'transparent':bc;
+    // 네비 버튼들
+    topNav.querySelectorAll('.nav-btn').forEach(b=>b.style.color=nb?nt:'');
+    topNav.querySelectorAll('.vbtn:not(.active)').forEach(b=>{b.style.color=nb?nt+'99':'';b.style.borderColor=nb?nt+'33':''});
+    const pl=topNav.querySelector('.period-label');
+    if(pl)pl.style.color=nb?nt:t.text;
+    const un=topNav.querySelector('.user-name');
+    if(un)un.style.color=nb?nt+'88':'';
+    const lo=topNav.querySelector('.logout-btn');
+    if(lo){lo.style.color=nb?nt+'77':'';lo.style.borderColor=nb?nt+'33':'';}
+  }
+
+  // 노트 버튼
+  document.querySelectorAll('.note-btn').forEach(b=>{
+    b.style.background=nb||'#fff';
+    b.style.borderColor=nb?'transparent':bc;
+    b.style.color=nb?nt:'#444';
+  });
+
+  // 미션트래커 타이틀 영역
+  const mtTitle=document.querySelector('.mt-title-wrap');
+  if(mtTitle){mtTitle.style.background=nb||'#fafafa';mtTitle.style.borderColor=nb?'transparent':bc;}
+  const mtTitleInput=document.getElementById('mtTitle');
+  if(mtTitleInput)mtTitleInput.style.color=nb?nt:t.text;
+  const mtColorBtn=document.getElementById('mtColorBtn');
+  if(mtColorBtn)mtColorBtn.style.color=nb?nt:'';
+
+  // 다크모드 감지
   const isDark=isColorDark(t.appbg);
   document.documentElement.setAttribute('data-dark',isDark?'1':'0');
   saveTheme();
