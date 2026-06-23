@@ -3853,11 +3853,14 @@ document.addEventListener('click',e=>{
 let dailyData = { slots:{}, stickers:[] };
 
 function loadDailyData(raw){
-  if(!raw){ dailyData={slots:{},stickers:[]}; return; }
-  dailyData={
-    slots: raw.slots||{},
-    stickers: raw.stickers||[]
-  };
+  if(!raw){dailyData={slots:{},stickers:[]};return;}
+  // 구형 형식 변환: { "360~480": "문자열" } → { "360~480": {label:"문자열", color:""} }
+  const slots={};
+  Object.entries(raw.slots||{}).forEach(([k,v])=>{
+    if(typeof v==='string') slots[k]={label:v,color:''};
+    else if(v&&typeof v==='object') slots[k]={label:v.label||'',color:v.color||''};
+  });
+  dailyData={slots,stickers:raw.stickers||[]};
 }
 
 window.saveDailyData = async function(){
@@ -3882,11 +3885,7 @@ function minToAngle(m){ return (m/(24*60))*360 - 90; }
 
 function renderDailyPlanner(){
   const svg=document.getElementById('dpSvg');
-  console.log('[DP] renderDailyPlanner 호출, svg=', svg);
-  if(!svg){console.error('[DP] dpSvg 없음');return;}
-
-  const dv=document.getElementById('dailyView');
-  console.log('[DP] dailyView display=', dv?.style.display, 'offsetHeight=', dv?.offsetHeight);
+  if(!svg)return;
 
   const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
   const SZ=400;
@@ -3907,18 +3906,22 @@ function renderDailyPlanner(){
 
   // 슬롯 호
   Object.entries(dailyData.slots).forEach(([key,slot])=>{
+    if(!slot||!key||!key.includes('~'))return;
     const[sM,eM]=key.split('~').map(Number);
+    if(isNaN(sM)||isNaN(eM)||eM<=sM)return;
     const sa=minToAngle(sM)*Math.PI/180, ea=minToAngle(eM)*Math.PI/180;
     const large=(eM-sM)>720?1:0;
     const c=slot.color||ACCENT;
+    const label=slot.label||'';
     html+=`<path d="M${CX+INNER*Math.cos(sa)},${CY+INNER*Math.sin(sa)} L${CX+R*Math.cos(sa)},${CY+R*Math.sin(sa)} A${R},${R} 0 ${large},1 ${CX+R*Math.cos(ea)},${CY+R*Math.sin(ea)} L${CX+INNER*Math.cos(ea)},${CY+INNER*Math.sin(ea)} A${INNER},${INNER} 0 ${large},0 ${CX+INNER*Math.cos(sa)},${CY+INNER*Math.sin(sa)} Z"
       fill="${c}" fill-opacity="0.85" stroke="#fff" stroke-width="1.5" style="cursor:pointer" onclick="editDpSlot('${key}')"/>`;
-    // 라벨
-    const mid=(sM+eM)/2, mA=minToAngle(mid)*Math.PI/180, TR=(R+INNER)/2;
-    const tx=CX+TR*Math.cos(mA), ty=CY+TR*Math.sin(mA);
-    let rot=minToAngle(mid)+90; if(rot>90&&rot<270)rot+=180;
-    const short=slot.label.length>7?slot.label.slice(0,6)+'…':slot.label;
-    html+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#fff" font-weight="500" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none">${short}</text>`;
+    if(label){
+      const mid=(sM+eM)/2, mA=minToAngle(mid)*Math.PI/180, TR=(R+INNER)/2;
+      const tx=CX+TR*Math.cos(mA), ty=CY+TR*Math.sin(mA);
+      let rot=minToAngle(mid)+90; if(rot>90&&rot<270)rot+=180;
+      const short=label.length>7?label.slice(0,6)+'…':label;
+      html+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#fff" font-weight="500" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none">${short}</text>`;
+    }
   });
 
   // 시각 라벨
