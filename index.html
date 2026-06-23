@@ -3897,7 +3897,7 @@ function renderDailyPlanner(){
 
   // 원형 시간표 중심 및 반지름 — 컨테이너 중앙에 꽉 차게
   const CX=W/2, CY=H/2;
-  const R=Math.min(W,H)*0.44;
+  const R=Math.min(W,H)*0.38;
   const INNER=R*0.13/0.44*0.13;
 
   let html='';
@@ -3951,20 +3951,26 @@ function renderDailyPlanner(){
     const sc=s.scale||1;
     const rot=s.rotate||0;
     const sz=Math.min(W,H)*0.07*sc;
-    const shapeSvg=dpGetShapeSvg(s.id, sx, sy, sz);
-    if(!shapeSvg)return;
     const isSelected=(dpSelectedSticker===i);
-    html+=`<g class="dp-sticker" transform="rotate(${rot},${sx},${sy})" style="cursor:${isSelected?'move':'grab'};user-select:none"
-      onclick="dpSelectSticker(event,${i})">${shapeSvg}</g>`;
+    let shapeSvg='';
+
+    if(s.id&&s.id.startsWith('emoji:')){
+      // 이모지 스티커
+      const em=s.id.slice(6);
+      shapeSvg=`<text x="${sx}" y="${sy}" font-size="${sz*1.1}" text-anchor="middle" dominant-baseline="central" style="user-select:none;pointer-events:all">${em}</text>`;
+    } else {
+      // Y2K 도형 스티커 (shape: 접두어 있거나 없거나 모두 처리)
+      const shapeId=s.id&&s.id.startsWith('shape:')?s.id.slice(6):s.id;
+      shapeSvg=dpGetShapeSvg(shapeId,sx,sy,sz);
+    }
+    if(!shapeSvg)return;
+
+    html+=`<g class="dp-sticker" transform="rotate(${rot},${sx},${sy})" style="cursor:${isSelected?'move':'grab'};user-select:none">${shapeSvg}</g>`;
     if(isSelected){
-      // 선택 박스
       html+=`<rect x="${sx-sz-4}" y="${sy-sz-4}" width="${(sz+4)*2}" height="${(sz+4)*2}" fill="none" stroke="${ACCENT}" stroke-width="1.5" stroke-dasharray="4 3" rx="3" style="pointer-events:none"/>`;
-      // 크기 핸들 (우하단)
       html+=`<circle cx="${sx+sz+4}" cy="${sy+sz+4}" r="7" fill="${ACCENT}" stroke="#fff" stroke-width="1.5" style="cursor:nwse-resize" onmousedown="dpScaleStart(event,${i})"/>`;
-      // 회전 핸들 (상단)
       html+=`<circle cx="${sx}" cy="${sy-sz-16}" r="7" fill="#fff" stroke="${ACCENT}" stroke-width="2" style="cursor:crosshair" onmousedown="dpRotateStart(event,${i})"/>
         <line x1="${sx}" y1="${sy-sz-4}" x2="${sx}" y2="${sy-sz-9}" stroke="${ACCENT}" stroke-width="1.5" style="pointer-events:none"/>`;
-      // 삭제 핸들 (우상단)
       html+=`<circle cx="${sx+sz+4}" cy="${sy-sz-4}" r="7" fill="#E26A5A" stroke="#fff" stroke-width="1.5" style="cursor:pointer" onclick="deleteDpSticker(${i})"/>
         <text x="${sx+sz+4}" y="${sy-sz-4}" text-anchor="middle" dominant-baseline="central" font-size="9" fill="#fff" style="pointer-events:none">✕</text>`;
     }
@@ -4187,18 +4193,35 @@ function dpGetShapeSvg(id, cx, cy, r){
 
 window.openDpEmojiPanel=function(e){
   document.getElementById('dpEmojiPanel')?.remove();
-  const items=DP_SHAPES.map(sh=>{
+  const shapeItems=DP_SHAPES.map(sh=>{
     const previewSvg=dpGetShapeSvg(sh.id,20,20,14);
-    return `<div class="dp-emoji-item" onclick="addDpSticker('${sh.id}')" title="${sh.label}">
+    return `<div class="dp-emoji-item" onclick="addDpSticker('shape:${sh.id}')" title="${sh.label}">
       <svg width="40" height="40" viewBox="0 0 40 40">${previewSvg}</svg>
     </div>`;
   }).join('');
-  const html=`<div id="dpEmojiPanel" class="dp-emoji-panel" style="top:${Math.min(e.clientY-10,window.innerHeight-280)}px;left:${Math.max(10,e.clientX-200)}px;width:280px">
-    <div style="font-size:10px;color:#9199AE;margin-bottom:8px">클릭해서 추가 · 드래그로 이동 · 더블클릭으로 삭제</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">${items}</div>
+  const DP_EMOJIS=['🌙','☀️','⭐','🌟','🔥','💧','🌈','🎯','💪','📚','🎵','☕','🍎','😴','✏️','🏃','🧘','💡','🎨','🌸','🐾','❤️','🎉','⚡','🌿','🍀','🦋','🌺','🍃','✨','🪐','🎪','🫧'];
+  const emojiItems=DP_EMOJIS.map(em=>`<div class="dp-emoji-item" onclick="addDpSticker('emoji:${em}')" style="font-size:22px;line-height:1;padding:6px">${em}</div>`).join('');
+  const top=Math.min(e.clientY-10,window.innerHeight-340);
+  const left=Math.max(10,e.clientX-200);
+  const html=`<div id="dpEmojiPanel" class="dp-emoji-panel" style="top:${top}px;left:${left}px;width:290px">
+    <div style="font-size:10px;color:#9199AE;margin-bottom:8px">클릭해서 추가 · 드래그 이동 · 크기·회전 핸들로 조절</div>
+    <div style="display:flex;gap:0;margin-bottom:8px;border-bottom:0.5px solid #eee">
+      <button onclick="dpPanelTab('shape')" id="dpTabShape" style="flex:1;padding:5px;border:none;background:transparent;font-size:11px;color:#2B7FFF;border-bottom:2px solid #2B7FFF;cursor:pointer;font-family:inherit">도형</button>
+      <button onclick="dpPanelTab('emoji')" id="dpTabEmoji" style="flex:1;padding:5px;border:none;background:transparent;font-size:11px;color:#9199AE;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit">이모지</button>
+    </div>
+    <div id="dpTabContentShape" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">${shapeItems}</div>
+    <div id="dpTabContentEmoji" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;display:none">${emojiItems}</div>
   </div>`;
   document.body.insertAdjacentHTML('beforeend',html);
   setTimeout(()=>document.addEventListener('click',closeDpEmojiPanel,{once:true,capture:true}),50);
+};
+window.dpPanelTab=function(tab){
+  document.getElementById('dpTabContentShape').style.display=tab==='shape'?'grid':'none';
+  document.getElementById('dpTabContentEmoji').style.display=tab==='emoji'?'grid':'none';
+  document.getElementById('dpTabShape').style.color=tab==='shape'?'#2B7FFF':'#9199AE';
+  document.getElementById('dpTabShape').style.borderBottomColor=tab==='shape'?'#2B7FFF':'transparent';
+  document.getElementById('dpTabEmoji').style.color=tab==='emoji'?'#2B7FFF':'#9199AE';
+  document.getElementById('dpTabEmoji').style.borderBottomColor=tab==='emoji'?'#2B7FFF':'transparent';
 };
 function closeDpEmojiPanel(e){
   const p=document.getElementById('dpEmojiPanel');
@@ -4242,32 +4265,51 @@ function dpClearSelect(e){
 function initDpStickerInteract(){
   const svg=document.getElementById('dpSvg');
   if(!svg)return;
-  // 기존 리스너 제거 (재렌더 시 중복 방지)
-  svg.removeEventListener('click',dpClearSelect);
-  svg.addEventListener('click',dpClearSelect);
 
-  let mode=null; // 'move'|'scale'|'rotate'
-  let startX=0,startY=0,startData=null;
+  // 이전 리스너 완전 제거 (clone으로 교체)
+  const newSvg=svg.cloneNode(true);
+  svg.parentNode.replaceChild(newSvg,svg);
+  const s=document.getElementById('dpSvg');
 
-  function getCoords(e){
-    const rect=svg.getBoundingClientRect();
-    return {
-      x:(e.clientX-rect.left)/(rect.width)*svg.viewBox.baseVal.width,
-      y:(e.clientY-rect.top)/(rect.height)*svg.viewBox.baseVal.height
+  let mode=null,startX=0,startY=0,startData=null;
+
+  function getXY(e){
+    const rect=s.getBoundingClientRect();
+    return{
+      x:(e.clientX-rect.left)/rect.width*s.viewBox.baseVal.width,
+      y:(e.clientY-rect.top)/rect.height*s.viewBox.baseVal.height
     };
   }
 
-  // 이동 — 스티커 바디 클릭
-  svg.addEventListener('mousedown',e=>{
+  // 배경 클릭 → 선택 해제
+  s.addEventListener('click',e=>{
+    if(!e.target.closest('.dp-sticker')){
+      if(dpSelectedSticker!==null){dpSelectedSticker=null;renderDailyPlanner();}
+    }
+  });
+
+  // 스티커 클릭 → 선택
+  s.addEventListener('click',e=>{
     const el=e.target.closest('.dp-sticker');
     if(!el)return;
-    // 핸들이면 무시 (핸들은 별도 onmousedown)
-    if(e.target.hasAttribute('onmousedown'))return;
-    const idx=parseInt([...svg.querySelectorAll('.dp-sticker')].indexOf(el));
+    e.stopPropagation();
+    const idx=[...s.querySelectorAll('.dp-sticker')].indexOf(el);
+    if(idx<0)return;
+    if(dpSelectedSticker===idx)return; // 이미 선택 → 무시
+    dpSelectedSticker=idx;
+    renderDailyPlanner();
+  });
+
+  // 스티커 드래그 이동
+  s.addEventListener('mousedown',e=>{
+    const el=e.target.closest('.dp-sticker');
+    if(!el)return;
+    if(e.target.hasAttribute('onmousedown'))return; // 핸들은 별도
+    const idx=[...s.querySelectorAll('.dp-sticker')].indexOf(el);
     if(idx<0)return;
     dpSelectedSticker=idx;
     mode='move';
-    const c=getCoords(e);
+    const c=getXY(e);
     startX=c.x; startY=c.y;
     startData={...dailyData.stickers[idx]};
     e.preventDefault();
@@ -4276,34 +4318,27 @@ function initDpStickerInteract(){
 
   window.addEventListener('mousemove',e=>{
     if(!mode||dpSelectedSticker===null)return;
-    const s=dailyData.stickers[dpSelectedSticker];
-    if(!s)return;
-    const svg2=document.getElementById('dpSvg');
-    if(!svg2)return;
-    const rect=svg2.getBoundingClientRect();
-    const W=svg2.viewBox.baseVal.width, H=svg2.viewBox.baseVal.height;
+    const sv=document.getElementById('dpSvg');
+    if(!sv)return;
+    const rect=sv.getBoundingClientRect();
+    const W=sv.viewBox.baseVal.width,H=sv.viewBox.baseVal.height;
     const cx=(e.clientX-rect.left)/rect.width*W;
     const cy=(e.clientY-rect.top)/rect.height*H;
-
     if(mode==='move'){
-      const dx=cx-startX, dy=cy-startY;
       dailyData.stickers[dpSelectedSticker]={
         ...startData,
-        x:Math.max(0,Math.min(1,startData.x+dx/W)),
-        y:Math.max(0,Math.min(1,startData.y+dy/H))
+        x:Math.max(0,Math.min(1,startData.x+(cx-startX)/W)),
+        y:Math.max(0,Math.min(1,startData.y+(cy-startY)/H))
       };
       renderDailyPlanner();
     } else if(mode==='scale'){
-      const sx=startData.x*W, sy=startData.y*H;
+      const sx=startData.x*W,sy=startData.y*H;
       const dist=Math.sqrt((cx-sx)**2+(cy-sy)**2);
-      const base=Math.min(W,H)*0.07;
-      const newScale=Math.max(0.3,Math.min(4,dist/base));
-      dailyData.stickers[dpSelectedSticker]={...startData,scale:newScale};
+      dailyData.stickers[dpSelectedSticker]={...startData,scale:Math.max(0.3,Math.min(4,dist/(Math.min(W,H)*0.07)))};
       renderDailyPlanner();
     } else if(mode==='rotate'){
-      const sx=startData.x*W, sy=startData.y*H;
-      const angle=Math.atan2(cy-sy,cx-sx)*180/Math.PI+90;
-      dailyData.stickers[dpSelectedSticker]={...startData,rotate:Math.round(angle)};
+      const sx=startData.x*W,sy=startData.y*H;
+      dailyData.stickers[dpSelectedSticker]={...startData,rotate:Math.round(Math.atan2(cy-sy,cx-sx)*180/Math.PI+90)};
       renderDailyPlanner();
     }
   });
