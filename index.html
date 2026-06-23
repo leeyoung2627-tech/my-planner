@@ -4125,7 +4125,7 @@ window.openDpBulkModal=function(keys){
     </div>
   </div>`);
   setTimeout(()=>document.getElementById('dpCellInput')?.focus(),50);
-  document.getElementById('dpCellInput')?.addEventListener('keydown',e=>{
+  document.getElementById('dpCellInput')?.addEventListener('keyup',e=>{
     if(e.key==='Enter'&&!e.isComposing)window.confirmDpBulk();
     if(e.key==='Escape')closeDpModal();
   });
@@ -4191,7 +4191,7 @@ window.openDpCellModal=function(key,timeStr,dayStr){
     </div>
   </div>`);
   setTimeout(()=>document.getElementById('dpCellInput')?.focus(),50);
-  document.getElementById('dpCellInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)window.confirmDpCell();if(e.key==='Escape')closeDpModal();});
+  document.getElementById('dpCellInput')?.addEventListener('keyup',e=>{if(e.key==='Enter'&&!e.isComposing)window.confirmDpCell();if(e.key==='Escape')closeDpModal();});
 };
 window.confirmDpCell=function(){
   const val=(document.getElementById('dpCellInput')?.value||'').trim();
@@ -4245,7 +4245,7 @@ window.openDpCheckModal=function(){
     </div>
   </div>`);
   setTimeout(()=>document.getElementById('dpCheckInput')?.focus(),50);
-  document.getElementById('dpCheckInput')?.addEventListener('keydown',e=>{
+  document.getElementById('dpCheckInput')?.addEventListener('keyup',e=>{
     if(e.key==='Enter'&&!e.isComposing)window.confirmDpCheck();
     if(e.key==='Escape')document.getElementById('dpCheckModalBg')?.remove();
   });
@@ -4286,7 +4286,7 @@ window.editDpCheck=function(i){
     const inp=document.getElementById('dpCheckEditInput');
     inp?.focus(); inp?.select();
   },50);
-  document.getElementById('dpCheckEditInput')?.addEventListener('keydown',e=>{
+  document.getElementById('dpCheckEditInput')?.addEventListener('keyup',e=>{
     if(e.key==='Enter'&&!e.isComposing)window.confirmDpCheckEdit();
     if(e.key==='Escape')document.getElementById('dpCheckModalBg')?.remove();
   });
@@ -4394,7 +4394,7 @@ function openDpModal(key){
     </div>
   </div>`);
   setTimeout(()=>document.getElementById('dpLabelInput')?.focus(),50);
-  document.getElementById('dpLabelInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)window.confirmDpSlot();if(e.key==='Escape')closeDpModal();});
+  document.getElementById('dpLabelInput')?.addEventListener('keyup',e=>{if(e.key==='Enter'&&!e.isComposing)window.confirmDpSlot();if(e.key==='Escape')closeDpModal();});
 }
 window.openDpModal=openDpModal;
 window.editDpSlot=function(key){openDpModal(key);};
