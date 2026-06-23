@@ -719,6 +719,14 @@ body{opacity:0;transition:opacity .25s ease}
         <button class="vbtn active" id="btnMonth" onclick="switchView('month')">월</button>
         <button class="vbtn" id="btnWeek" onclick="switchView('week')">주</button>
         <button class="vbtn" id="btnAnniv" onclick="switchView('anniv')">🎂</button>
+        <button class="vbtn" id="btnDaily" onclick="switchView('daily')" title="하루 계획표">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px">
+            <path d="M8 8 C8 5,5 3,3.5 5 C2 7,4 9,8 8Z" fill="currentColor"/>
+            <path d="M8 8 C11 8,13 5,11 3.5 C9 2,7 4,8 8Z" fill="currentColor"/>
+            <path d="M8 8 C8 11,11 13,12.5 11 C14 9,12 7,8 8Z" fill="currentColor"/>
+            <path d="M8 8 C5 8,3 11,5 12.5 C7 14,9 12,8 8Z" fill="currentColor"/>
+          </svg>
+        </button>
       </div>
       <div class="user-area">
         <span class="user-name" id="userName"></span>
@@ -740,20 +748,15 @@ body{opacity:0;transition:opacity .25s ease}
         <div id="anniv-list-left"></div>
         <button class="add-btn" onclick="openAnnivModal()" style="margin-top:4px">＋ 기념일 추가</button>
       </div>
+      <div id="dailyView" style="display:none;flex:1;align-items:center;justify-content:center;background:#F8FAFF;overflow:auto;padding:20px">
+        <svg id="dpSvg"></svg>
+      </div>
     </div>
   </div>
 
   <div class="right">
     <div class="right-date" id="rightDate"></div>
     <div class="tabs">
-      <div class="tab" onclick="switchTab('daily',this)" id="tabBtnDaily" style="padding:7px 6px">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px">
-          <path d="M8 8 C8 5,5 3,3.5 5 C2 7,4 9,8 8Z" fill="currentColor"/>
-          <path d="M8 8 C11 8,13 5,11 3.5 C9 2,7 4,8 8Z" fill="currentColor"/>
-          <path d="M8 8 C8 11,11 13,12.5 11 C14 9,12 7,8 8Z" fill="currentColor"/>
-          <path d="M8 8 C5 8,3 11,5 12.5 C7 14,9 12,8 8Z" fill="currentColor"/>
-        </svg>
-      </div>
       <div class="tab active" onclick="switchTab('schedule',this)">📅 일정</div>
       <div class="tab" onclick="switchTab('money',this)">💰 가계부</div>
       <div class="tab" onclick="switchTab('meal',this)">🥗 식단</div>
@@ -761,27 +764,18 @@ body{opacity:0;transition:opacity .25s ease}
       <div class="tab" onclick="switchTab('habit-tab',this)">✅ 습관</div>
     </div>
 
-    <div id="tab-daily" class="tab-content tab-daily-content">
-      <div id="dailyView">
-        <div class="dp-circle-col">
-          <svg id="dpSvg"></svg>
-        </div>
-        <div class="dp-side-col">
-          <div class="dp-side-header">DAILY PLAN</div>
-          <div class="dp-side-list" id="dpSlotList">
-            <div class="dp-empty-hint">아직 일정이 없어요</div>
-          </div>
-          <div class="dp-side-footer">
-            <button class="dp-add-btn" onclick="openDpModal(null)">＋ 일정 추가</button>
-            <button class="dp-sticker-btn" onclick="openDpEmojiPanel(event)">🎨 이모지 스티커 붙이기</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div id="tab-schedule" class="tab-content active">
+      <!-- 하루계획표 모드일 때만 보이는 일정 목록 -->
+      <div id="dpScheduleSection" style="display:none;flex-direction:column;gap:6px">
+        <div style="font-size:11px;font-weight:600;color:#6B7A90;letter-spacing:.04em;padding-bottom:4px;border-bottom:0.5px solid #EEF1F8">DAILY PLAN</div>
+        <div id="dpSlotList"><div class="dp-empty-hint">아직 일정이 없어요</div></div>
+        <button class="dp-add-btn" onclick="openDpModal(null)">＋ 일정 추가</button>
+        <button class="dp-sticker-btn" onclick="openDpEmojiPanel(event)">🎨 이모지 스티커</button>
+        <hr style="border:none;border-top:0.5px solid #EEF1F8;margin:4px 0"/>
+      </div>
+      <!-- 기본 일정 목록 -->
       <div id="schedule-list"></div>
-      <button class="add-btn" onclick="openScheduleModal()">＋ 일정 추가</button>
+      <button class="add-btn" id="scheduleAddBtn" onclick="openScheduleModal()">＋ 일정 추가</button>
     </div>
 
     <div id="tab-money" class="tab-content">
@@ -1501,18 +1495,28 @@ window.saveTopMemo=async function(){
 // ── 왼쪽 모드 전환 ──
 function setLeftMode(mode){
   leftMode=mode;
-  const views=['monthView','weekView','moneyCalView','mealCalView','habitView','memoView','annivView'];
-  views.forEach(v=>document.getElementById(v).style.display='none');
+  const views=['monthView','weekView','moneyCalView','mealCalView','habitView','memoView','annivView','dailyView'];
+  views.forEach(v=>{const el=document.getElementById(v);if(el)el.style.display='none';});
   const isCalMode=mode==='cal'||mode==='money-cal'||mode==='meal-cal';
   document.getElementById('navPrev').style.display=isCalMode?'':'none';
   document.getElementById('navNext').style.display=isCalMode?'':'none';
-  document.getElementById('viewToggle').style.display=(mode==='cal'||mode==='anniv')?'':'none';
+  document.getElementById('viewToggle').style.display=(mode==='cal'||mode==='anniv'||mode==='daily')?'':'none';
   document.getElementById('leftBackBtn').style.display=isCalMode?'none':'';
+
+  // daily 모드: 오른쪽 일정탭에 dp섹션 표시 여부
+  const dpSec=document.getElementById('dpScheduleSection');
+  const schList=document.getElementById('schedule-list');
+  const schBtn=document.getElementById('scheduleAddBtn');
+  if(dpSec){dpSec.style.display=mode==='daily'?'flex':'none';}
+  if(schList){schList.style.display=mode==='daily'?'none':'';}
+  if(schBtn){schBtn.style.display=mode==='daily'?'none':'';}
+
   if(mode==='cal'){
     if(curView==='week'){document.getElementById('weekView').style.display='';renderWeek();}
     else{document.getElementById('monthView').style.display='';renderMonth();}
     document.getElementById('periodLabel').textContent=curView==='month'?cur.getFullYear()+'년 '+(cur.getMonth()+1)+'월':'';
     document.getElementById('btnAnniv').classList.remove('active');
+    document.getElementById('btnDaily')?.classList.remove('active');
     if(curView==='month')document.getElementById('btnMonth').classList.add('active');
     else document.getElementById('btnWeek').classList.add('active');
   } else if(mode==='money-cal'){
@@ -1536,7 +1540,22 @@ function setLeftMode(mode){
     document.getElementById('btnAnniv').classList.add('active');
     document.getElementById('btnMonth').classList.remove('active');
     document.getElementById('btnWeek').classList.remove('active');
+    document.getElementById('btnDaily')?.classList.remove('active');
     renderAnniversariesLeft();
+  } else if(mode==='daily'){
+    const dv=document.getElementById('dailyView');
+    dv.style.display='flex';
+    document.getElementById('periodLabel').textContent='하루 계획표';
+    document.getElementById('btnDaily').classList.add('active');
+    document.getElementById('btnMonth').classList.remove('active');
+    document.getElementById('btnWeek').classList.remove('active');
+    document.getElementById('btnAnniv').classList.remove('active');
+    // 오른쪽 탭을 일정 탭으로 강제 전환
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelector('.tab[onclick*="schedule"]')?.classList.add('active');
+    document.getElementById('tab-schedule')?.classList.add('active');
+    renderDailyPlanner();
   }
 }
 window.handleLeftBack=function(){
@@ -1552,21 +1571,13 @@ window.switchTab=function(name,el){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
-  if(name==='daily'){
-    if(leftMode!=='cal')setLeftMode('cal');
-    setTimeout(renderDailyPlanner,0);
-  } else if(name==='money'){
-    setLeftMode('money-cal');
-  } else if(name==='meal'){
-    setLeftMode('meal-cal');
-  } else if(name==='habit-tab'){
-    setLeftMode('habit');
-  } else if(name==='memo'){
-    if(leftMode==='memo'){}
-    else setLeftMode('cal');
-  } else {
-    if(leftMode!=='cal')setLeftMode('cal');
-  }
+  // daily 모드면 해제
+  if(leftMode==='daily'){switchView('month');}
+  if(name==='money'){setLeftMode('money-cal');}
+  else if(name==='meal'){setLeftMode('meal-cal');}
+  else if(name==='habit-tab'){setLeftMode('habit');}
+  else if(name==='memo'){if(leftMode!=='memo')setLeftMode('cal');}
+  else{if(leftMode!=='cal')setLeftMode('cal');}
 };
 
 // ── 한국 공휴일 (고정) ──
@@ -1869,13 +1880,20 @@ window.editWeekEvent=async function(key,idx){
   await saveData('events',key,{items:weekEvents[key]});renderWeek();renderSchedule();
 };
 window.switchView=function(v){
-  if(v==='anniv'){
-    setLeftMode('anniv');
-    return;
-  }
+  if(v==='anniv'){setLeftMode('anniv');return;}
+  if(v==='daily'){setLeftMode('daily');return;}
   curView=v;
   document.getElementById('annivView').style.display='none';
+  document.getElementById('dailyView').style.display='none';
   document.getElementById('btnAnniv').classList.remove('active');
+  document.getElementById('btnDaily')?.classList.remove('active');
+  // daily 모드 해제 시 오른쪽 패널 복원
+  const dpSec=document.getElementById('dpScheduleSection');
+  const schList=document.getElementById('schedule-list');
+  const schBtn=document.getElementById('scheduleAddBtn');
+  if(dpSec)dpSec.style.display='none';
+  if(schList)schList.style.display='';
+  if(schBtn)schBtn.style.display='';
   document.getElementById('monthView').style.display=v==='month'?'':'none';
   document.getElementById('weekView').style.display=v==='week'?'':'none';
   document.getElementById('btnMonth').classList.toggle('active',v==='month');
