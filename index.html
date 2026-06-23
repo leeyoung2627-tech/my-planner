@@ -681,9 +681,9 @@ body{opacity:0;transition:opacity .25s ease}
 .dp-mbtn.ok{background:var(--accent);color:#fff}
 .dp-mbtn.cancel{background:#f0f0f0;color:#666}
 .dp-mbtn.del{background:#FAECE7;color:#993C1D}
-.dp-emoji-panel{position:fixed;z-index:310;background:#fff;border:0.5px solid #ddd;border-radius:14px;box-shadow:0 6px 24px #0002;padding:12px;width:260px}
+.dp-emoji-panel{position:fixed;z-index:310;background:#fff;border:0.5px solid #ddd;border-radius:14px;box-shadow:0 6px 24px #0002;padding:12px;width:280px}
 .dp-emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:200px;overflow-y:auto;margin-top:6px}
-.dp-emoji-item{font-size:20px;text-align:center;cursor:pointer;padding:4px;border-radius:6px;line-height:1.3}
+.dp-emoji-item{display:flex;align-items:center;justify-content:center;cursor:pointer;padding:4px;border-radius:8px;transition:background .12s}
 .dp-emoji-item:hover{background:#EDF4FF}
 </style>
 </head>
@@ -748,8 +748,8 @@ body{opacity:0;transition:opacity .25s ease}
         <div id="anniv-list-left"></div>
         <button class="add-btn" onclick="openAnnivModal()" style="margin-top:4px">＋ 기념일 추가</button>
       </div>
-      <div id="dailyView" style="display:none;flex:1;flex-direction:row;align-items:center;justify-content:center;background:#F8FAFF;overflow:auto;padding:20px;min-height:400px">
-        <svg id="dpSvg"></svg>
+      <div id="dailyView" style="display:none;flex:1;position:relative;background:#F8FAFF;overflow:hidden;min-height:400px">
+        <svg id="dpSvg" style="position:absolute;top:0;left:0;width:100%;height:100%"></svg>
       </div>
     </div>
   </div>
@@ -3888,15 +3888,25 @@ function renderDailyPlanner(){
   if(!svg)return;
 
   const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
-  const SZ=400;
-  const CX=SZ/2, CY=SZ/2, R=SZ*0.42, INNER=SZ*0.13;
+  const wrap=document.getElementById('dailyView');
+  const W=wrap?wrap.clientWidth:600;
+  const H=wrap?wrap.clientHeight:500;
+  if(!W||!H)return;
 
-  svg.setAttribute('width',SZ);
-  svg.setAttribute('height',SZ);
-  svg.setAttribute('viewBox',`0 0 ${SZ} ${SZ}`);
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
 
-  // 30분 눈금선
-  let html=`<circle cx="${CX}" cy="${CY}" r="${R}" fill="#EEF1F8" stroke="#D8E0EE" stroke-width="1"/>`;
+  // 원형 시간표 중심 및 반지름 — 컨테이너 중앙에 꽉 차게
+  const CX=W/2, CY=H/2;
+  const R=Math.min(W,H)*0.44;
+  const INNER=R*0.13/0.44*0.13;
+
+  let html='';
+
+  // 배경색
+  html+=`<rect width="${W}" height="${H}" fill="#F8FAFF"/>`;
+
+  // 원형 시간표
+  html+=`<circle cx="${CX}" cy="${CY}" r="${R}" fill="#EEF1F8" stroke="#D8E0EE" stroke-width="1"/>`;
   for(let m=0;m<1440;m+=30){
     const a=minToAngle(m)*Math.PI/180;
     const isHour=m%60===0;
@@ -3913,42 +3923,56 @@ function renderDailyPlanner(){
     const large=(eM-sM)>720?1:0;
     const c=slot.color||ACCENT;
     const label=slot.label||'';
-    html+=`<path d="M${CX+INNER*Math.cos(sa)},${CY+INNER*Math.sin(sa)} L${CX+R*Math.cos(sa)},${CY+R*Math.sin(sa)} A${R},${R} 0 ${large},1 ${CX+R*Math.cos(ea)},${CY+R*Math.sin(ea)} L${CX+INNER*Math.cos(ea)},${CY+INNER*Math.sin(ea)} A${INNER},${INNER} 0 ${large},0 ${CX+INNER*Math.cos(sa)},${CY+INNER*Math.sin(sa)} Z"
+    const ir=R*0.3;
+    html+=`<path d="M${CX+ir*Math.cos(sa)},${CY+ir*Math.sin(sa)} L${CX+R*Math.cos(sa)},${CY+R*Math.sin(sa)} A${R},${R} 0 ${large},1 ${CX+R*Math.cos(ea)},${CY+R*Math.sin(ea)} L${CX+ir*Math.cos(ea)},${CY+ir*Math.sin(ea)} A${ir},${ir} 0 ${large},0 ${CX+ir*Math.cos(sa)},${CY+ir*Math.sin(sa)} Z"
       fill="${c}" fill-opacity="0.85" stroke="#fff" stroke-width="1.5" style="cursor:pointer" onclick="editDpSlot('${key}')"/>`;
     if(label){
-      const mid=(sM+eM)/2, mA=minToAngle(mid)*Math.PI/180, TR=(R+INNER)/2;
+      const mid=(sM+eM)/2, mA=minToAngle(mid)*Math.PI/180, TR=(R+ir)/2;
       const tx=CX+TR*Math.cos(mA), ty=CY+TR*Math.sin(mA);
       let rot=minToAngle(mid)+90; if(rot>90&&rot<270)rot+=180;
       const short=label.length>7?label.slice(0,6)+'…':label;
-      html+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#fff" font-weight="500" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none">${short}</text>`;
+      html+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="${R*0.07}" fill="#fff" font-weight="500" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none">${short}</text>`;
     }
   });
 
   // 시각 라벨
   [0,2,4,6,8,10,12,14,16,18,20,22].forEach(h=>{
-    const a=minToAngle(h*60)*Math.PI/180, LR=R+18;
-    html+=`<text x="${CX+LR*Math.cos(a)}" y="${CY+LR*Math.sin(a)}" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#6B7A90" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif">${h}</text>`;
+    const a=minToAngle(h*60)*Math.PI/180, LR=R+R*0.1;
+    html+=`<text x="${CX+LR*Math.cos(a)}" y="${CY+LR*Math.sin(a)}" text-anchor="middle" dominant-baseline="central" font-size="${R*0.065}" fill="#6B7A90" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif">${h}</text>`;
   });
 
-  // 현재 시각 바늘
-  const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
-  const nA=minToAngle(nowM)*Math.PI/180;
-  html+=`<line x1="${CX}" y1="${CY}" x2="${CX+(R-4)*Math.cos(nA)}" y2="${CY+(R-4)*Math.sin(nA)}" stroke="${ACCENT}" stroke-width="2.5" stroke-linecap="round"/>`;
+  // 내부 빈 원
+  const ir2=R*0.3;
+  html+=`<circle cx="${CX}" cy="${CY}" r="${ir2}" fill="#fff" stroke="#E2E8F0" stroke-width="1.5"/>`;
 
-  // 내부 흰 원
-  html+=`<circle cx="${CX}" cy="${CY}" r="${INNER}" fill="#fff" stroke="#E2E8F0" stroke-width="1.5"/>
-    <circle cx="${CX}" cy="${CY}" r="5" fill="${ACCENT}"/>
-    <text x="${CX}" y="${CY-9}" text-anchor="middle" font-size="12" font-weight="600" fill="#1C2033" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif">${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}</text>
-    <text x="${CX}" y="${CY+9}" text-anchor="middle" font-size="9" fill="#9199AE" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif">NOW</text>`;
-
-  // 이모지 스티커
+  // Y2K 스티커 — 좌표는 W,H 비율 기반
   (dailyData.stickers||[]).forEach((s,i)=>{
-    html+=`<text x="${s.x*SZ}" y="${s.y*SZ}" font-size="22" text-anchor="middle" dominant-baseline="central" class="dp-sticker" style="cursor:grab;user-select:none" onmousedown="dpStickerDragStart(event,${i})" ondblclick="deleteDpSticker(${i})">${s.emoji}</text>`;
+    const sx=s.x*W, sy=s.y*H;
+    const sc=s.scale||1;
+    const rot=s.rotate||0;
+    const sz=Math.min(W,H)*0.07*sc;
+    const shapeSvg=dpGetShapeSvg(s.id, sx, sy, sz);
+    if(!shapeSvg)return;
+    const isSelected=(dpSelectedSticker===i);
+    html+=`<g class="dp-sticker" transform="rotate(${rot},${sx},${sy})" style="cursor:${isSelected?'move':'grab'};user-select:none"
+      onclick="dpSelectSticker(event,${i})">${shapeSvg}</g>`;
+    if(isSelected){
+      // 선택 박스
+      html+=`<rect x="${sx-sz-4}" y="${sy-sz-4}" width="${(sz+4)*2}" height="${(sz+4)*2}" fill="none" stroke="${ACCENT}" stroke-width="1.5" stroke-dasharray="4 3" rx="3" style="pointer-events:none"/>`;
+      // 크기 핸들 (우하단)
+      html+=`<circle cx="${sx+sz+4}" cy="${sy+sz+4}" r="7" fill="${ACCENT}" stroke="#fff" stroke-width="1.5" style="cursor:nwse-resize" onmousedown="dpScaleStart(event,${i})"/>`;
+      // 회전 핸들 (상단)
+      html+=`<circle cx="${sx}" cy="${sy-sz-16}" r="7" fill="#fff" stroke="${ACCENT}" stroke-width="2" style="cursor:crosshair" onmousedown="dpRotateStart(event,${i})"/>
+        <line x1="${sx}" y1="${sy-sz-4}" x2="${sx}" y2="${sy-sz-9}" stroke="${ACCENT}" stroke-width="1.5" style="pointer-events:none"/>`;
+      // 삭제 핸들 (우상단)
+      html+=`<circle cx="${sx+sz+4}" cy="${sy-sz-4}" r="7" fill="#E26A5A" stroke="#fff" stroke-width="1.5" style="cursor:pointer" onclick="deleteDpSticker(${i})"/>
+        <text x="${sx+sz+4}" y="${sy-sz-4}" text-anchor="middle" dominant-baseline="central" font-size="9" fill="#fff" style="pointer-events:none">✕</text>`;
+    }
   });
 
   svg.innerHTML=html;
   renderDpList();
-  initDpStickerDrag();
+  initDpStickerInteract();
 }
 
 function renderDpList(){
@@ -4089,14 +4113,89 @@ window.deleteDpSlot=function(key){
   renderDailyPlanner();
 };
 
-// ── 이모지 스티커
-const DP_EMOJIS=['🌙','☀️','⭐','🌟','🔥','💧','🌈','🎯','💪','📚','🎵','☕','🍎','😴','✏️','🏃','🧘','💡','🎨','🌸','🐾','❤️','🎉','⚡','🌿','🍀'];
+// ── Y2K 도형 정의
+const DP_SHAPES=[
+  {id:'spark4',   label:'✦ 스파크'},
+  {id:'spark6',   label:'✶ 별'},
+  {id:'spark8',   label:'❊ 큰별'},
+  {id:'star5',    label:'★ 오각별'},
+  {id:'cross',    label:'✚ 크로스'},
+  {id:'asterisk', label:'✳ 아스테리스크'},
+  {id:'flower',   label:'✿ 꽃'},
+  {id:'moon',     label:'☾ 초승달'},
+  {id:'rings',    label:'◎ 동심원'},
+  {id:'oval',     label:'⬭ 타원링'},
+  {id:'saturn',   label:'♄ 토성'},
+  {id:'atom',     label:'⚛ 아톰'},
+  {id:'dot3',     label:'⋯ 점3'},
+  {id:'diamond',  label:'◆ 다이아'},
+  {id:'target',   label:'⊕ 타겟'},
+  {id:'swirl',    label:'🌀 소용돌이'},
+];
+
+// cx, cy = 중심, r = 반지름(크기)
+function dpGetShapeSvg(id, cx, cy, r){
+  const s=r, st=`stroke="#1C2033" stroke-width="${r*0.12}" fill="none"`, sf=`fill="#1C2033"`;
+  switch(id){
+    case 'spark4': // 4꼭지 스파크
+      return `<path d="M${cx},${cy-s} C${cx-s*0.1},${cy-s*0.1} ${cx-s*0.1},${cy-s*0.1} ${cx-s},${cy} C${cx-s*0.1},${cy+s*0.1} ${cx-s*0.1},${cy+s*0.1} ${cx},${cy+s} C${cx+s*0.1},${cy+s*0.1} ${cx+s*0.1},${cy+s*0.1} ${cx+s},${cy} C${cx+s*0.1},${cy-s*0.1} ${cx+s*0.1},${cy-s*0.1} ${cx},${cy-s} Z" ${sf}/>`;
+    case 'spark6': // 6꼭지 별
+      return [0,60,120,180,240,300].map(a=>{
+        const r1=a*Math.PI/180, r2=(a+30)*Math.PI/180;
+        return `${cx+s*Math.cos(r1-Math.PI/2)},${cy+s*Math.sin(r1-Math.PI/2)} ${cx+s*0.4*Math.cos(r2-Math.PI/2)},${cy+s*0.4*Math.sin(r2-Math.PI/2)}`;
+      }).reduce((acc,pt,i,arr)=>{
+        if(i===0)return `<polygon points="${pt} ${arr.map(p=>p).join(' ')}" ${sf}/>`;
+        return acc;
+      },`<polygon points="${[0,60,120,180,240,300].map(a=>{const r1=a*Math.PI/180,r2=(a+30)*Math.PI/180;return `${cx+s*Math.cos(r1-Math.PI/2)},${cy+s*Math.sin(r1-Math.PI/2)} ${cx+s*0.38*Math.cos(r2-Math.PI/2)},${cy+s*0.38*Math.sin(r2-Math.PI/2)}`;}).join(' ')}" ${sf}/>`);
+    case 'spark8': // 8꼭지 별
+      return `<polygon points="${Array.from({length:8},(_,i)=>{const a=i*45*Math.PI/180,ri=i%2===0?s:s*0.4;return `${cx+ri*Math.cos(a-Math.PI/2)},${cy+ri*Math.sin(a-Math.PI/2)}`;}).join(' ')}" ${sf}/>`;
+    case 'star5': // 오각별
+      return `<polygon points="${Array.from({length:10},(_,i)=>{const a=i*36*Math.PI/180,ri=i%2===0?s:s*0.42;return `${cx+ri*Math.cos(a-Math.PI/2)},${cy+ri*Math.sin(a-Math.PI/2)}`;}).join(' ')}" ${sf}/>`;
+    case 'cross': // 두꺼운 크로스
+      return `<path d="M${cx-s*0.22},${cy-s} L${cx+s*0.22},${cy-s} L${cx+s*0.22},${cy-s*0.22} L${cx+s},${cy-s*0.22} L${cx+s},${cy+s*0.22} L${cx+s*0.22},${cy+s*0.22} L${cx+s*0.22},${cy+s} L${cx-s*0.22},${cy+s} L${cx-s*0.22},${cy+s*0.22} L${cx-s},${cy+s*0.22} L${cx-s},${cy-s*0.22} L${cx-s*0.22},${cy-s*0.22} Z" ${sf}/>`;
+    case 'asterisk': // 아스테리스크 (6선)
+      return Array.from({length:6},(_,i)=>{const a=i*30*Math.PI/180;return `<line x1="${cx}" y1="${cy}" x2="${cx+s*Math.cos(a-Math.PI/2)}" y2="${cy+s*Math.sin(a-Math.PI/2)}" stroke="#1C2033" stroke-width="${s*0.18}" stroke-linecap="round"/>`;}).join('');
+    case 'flower': // 꽃 (6꽃잎)
+      return Array.from({length:6},(_,i)=>{const a=i*60*Math.PI/180,ox=cx+s*0.45*Math.cos(a),oy=cy+s*0.45*Math.sin(a);return `<circle cx="${ox}" cy="${oy}" r="${s*0.35}" ${sf}/>`;}).join('')+`<circle cx="${cx}" cy="${cy}" r="${s*0.28}" fill="#fff"/>`;
+    case 'moon': // 초승달
+      return `<path d="M${cx+s*0.15},${cy-s} A${s},${s} 0 1,0 ${cx+s*0.15},${cy+s} A${s*0.65},${s*0.65} 0 1,1 ${cx+s*0.15},${cy-s} Z" ${sf}/>`;
+    case 'rings': // 동심원 3겹
+      return [1,0.65,0.35].map(r2=>`<circle cx="${cx}" cy="${cy}" r="${s*r2}" ${st}/>`).join('');
+    case 'oval': // 타원 링
+      return `<ellipse cx="${cx}" cy="${cy}" rx="${s}" ry="${s*0.35}" ${st}/>
+        <ellipse cx="${cx}" cy="${cy}" rx="${s*0.7}" ry="${s*0.22}" ${st}/>`;
+    case 'saturn': // 토성
+      return `<circle cx="${cx}" cy="${cy}" r="${s*0.45}" ${st}/>
+        <ellipse cx="${cx}" cy="${cy}" rx="${s}" ry="${s*0.3}" ${st}/>`;
+    case 'atom': // 아톰 (3타원)
+      return [0,60,120].map(a=>`<ellipse cx="${cx}" cy="${cy}" rx="${s}" ry="${s*0.3}" transform="rotate(${a},${cx},${cy})" ${st}/>`).join('')+`<circle cx="${cx}" cy="${cy}" r="${s*0.12}" ${sf}/>`;
+    case 'dot3': // 점 3개
+      return [-1,0,1].map(i=>`<circle cx="${cx+i*s*0.55}" cy="${cy}" r="${s*0.18}" ${sf}/>`).join('');
+    case 'diamond': // 다이아몬드
+      return `<polygon points="${cx},${cy-s} ${cx+s*0.65},${cy} ${cx},${cy+s} ${cx-s*0.65},${cy}" ${sf}/>`;
+    case 'target': // 타겟 (크로스+원)
+      return `<circle cx="${cx}" cy="${cy}" r="${s}" ${st}/>
+        <circle cx="${cx}" cy="${cy}" r="${s*0.55}" ${st}/>
+        <line x1="${cx-s}" y1="${cy}" x2="${cx+s}" y2="${cy}" stroke="#1C2033" stroke-width="${s*0.1}"/>
+        <line x1="${cx}" y1="${cy-s}" x2="${cx}" y2="${cy+s}" stroke="#1C2033" stroke-width="${s*0.1}"/>`;
+    case 'swirl': // 소용돌이 (아르키메데스 나선)
+      {let d='';for(let t=0;t<Math.PI*4;t+=0.15){const rs=s*(t/(Math.PI*4));const px=cx+rs*Math.cos(t),py=cy+rs*Math.sin(t);d+=t===0?`M${px},${py}`:`L${px},${py}`;}
+      return `<path d="${d}" stroke="#1C2033" stroke-width="${s*0.1}" fill="none" stroke-linecap="round"/>`;}
+    default: return '';
+  }
+}
 
 window.openDpEmojiPanel=function(e){
   document.getElementById('dpEmojiPanel')?.remove();
-  const html=`<div id="dpEmojiPanel" class="dp-emoji-panel" style="top:${e.clientY-10}px;left:${e.clientX-130}px">
-    <div style="font-size:11px;color:#9199AE;margin-bottom:8px">클릭하면 원 중앙에 추가 · 더블클릭으로 삭제</div>
-    <div class="dp-emoji-grid">${DP_EMOJIS.map(em=>`<div class="dp-emoji-item" onclick="addDpSticker('${em}')">${em}</div>`).join('')}</div>
+  const items=DP_SHAPES.map(sh=>{
+    const previewSvg=dpGetShapeSvg(sh.id,20,20,14);
+    return `<div class="dp-emoji-item" onclick="addDpSticker('${sh.id}')" title="${sh.label}">
+      <svg width="40" height="40" viewBox="0 0 40 40">${previewSvg}</svg>
+    </div>`;
+  }).join('');
+  const html=`<div id="dpEmojiPanel" class="dp-emoji-panel" style="top:${Math.min(e.clientY-10,window.innerHeight-280)}px;left:${Math.max(10,e.clientX-200)}px;width:280px">
+    <div style="font-size:10px;color:#9199AE;margin-bottom:8px">클릭해서 추가 · 드래그로 이동 · 더블클릭으로 삭제</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">${items}</div>
   </div>`;
   document.body.insertAdjacentHTML('beforeend',html);
   setTimeout(()=>document.addEventListener('click',closeDpEmojiPanel,{once:true,capture:true}),50);
@@ -4106,53 +4205,165 @@ function closeDpEmojiPanel(e){
   if(p&&!p.contains(e.target))p.remove();
   else if(p)setTimeout(()=>document.addEventListener('click',closeDpEmojiPanel,{once:true,capture:true}),50);
 }
-window.addDpSticker=function(emoji){
+window.addDpSticker=function(id){
   document.getElementById('dpEmojiPanel')?.remove();
-  // 원 안에 랜덤 위치
-  const cx=0.5, cy=0.5;
   const angle=Math.random()*Math.PI*2;
-  const dist=0.12+Math.random()*0.22;
-  const x=cx+Math.cos(angle)*dist*0.9;
-  const y=cy+Math.sin(angle)*dist;
-  dailyData.stickers.push({emoji,x,y});
+  const dist=0.15+Math.random()*0.2;
+  const x=0.5+Math.cos(angle)*dist*0.85;
+  const y=0.5+Math.sin(angle)*dist*0.85;
+  dailyData.stickers.push({id,x,y,scale:1,rotate:0});
+  dpSelectedSticker=dailyData.stickers.length-1;
   window.saveDailyData();
   renderDailyPlanner();
 };
 window.deleteDpSticker=function(i){
   dailyData.stickers.splice(i,1);
+  dpSelectedSticker=null;
   window.saveDailyData();
   renderDailyPlanner();
 };
 
-// ── 스티커 드래그
-function initDpStickerDrag(){
+// ── 스티커 선택 상태
+let dpSelectedSticker=null;
+
+window.dpSelectSticker=function(e,i){
+  e.stopPropagation();
+  if(dpSelectedSticker===i){return;} // 이미 선택됨 → 드래그 시작은 별도 처리
+  dpSelectedSticker=i;
+  renderDailyPlanner();
+};
+
+// SVG 배경 클릭 시 선택 해제
+function dpClearSelect(e){
+  if(e.target.closest('.dp-sticker'))return;
+  if(dpSelectedSticker!==null){dpSelectedSticker=null;renderDailyPlanner();}
+}
+
+function initDpStickerInteract(){
   const svg=document.getElementById('dpSvg');
   if(!svg)return;
-  let dragging=null, ox=0, oy=0;
+  // 기존 리스너 제거 (재렌더 시 중복 방지)
+  svg.removeEventListener('click',dpClearSelect);
+  svg.addEventListener('click',dpClearSelect);
+
+  let mode=null; // 'move'|'scale'|'rotate'
+  let startX=0,startY=0,startData=null;
+
+  function getCoords(e){
+    const rect=svg.getBoundingClientRect();
+    return {
+      x:(e.clientX-rect.left)/(rect.width)*svg.viewBox.baseVal.width,
+      y:(e.clientY-rect.top)/(rect.height)*svg.viewBox.baseVal.height
+    };
+  }
+
+  // 이동 — 스티커 바디 클릭
   svg.addEventListener('mousedown',e=>{
     const el=e.target.closest('.dp-sticker');
     if(!el)return;
-    dragging=parseInt(el.getAttribute('onmousedown').match(/\d+/)[0]);
-    const rect=svg.getBoundingClientRect();
-    const SZ=svg.viewBox.baseVal.width;
-    ox=e.clientX-rect.left; oy=e.clientY-rect.top;
+    // 핸들이면 무시 (핸들은 별도 onmousedown)
+    if(e.target.hasAttribute('onmousedown'))return;
+    const idx=parseInt([...svg.querySelectorAll('.dp-sticker')].indexOf(el));
+    if(idx<0)return;
+    dpSelectedSticker=idx;
+    mode='move';
+    const c=getCoords(e);
+    startX=c.x; startY=c.y;
+    startData={...dailyData.stickers[idx]};
     e.preventDefault();
+    renderDailyPlanner();
   });
+
   window.addEventListener('mousemove',e=>{
-    if(dragging===null)return;
-    const rect=svg.getBoundingClientRect();
-    const SZ=svg.viewBox.baseVal.width;
-    const nx=(e.clientX-rect.left)/rect.width;
-    const ny=(e.clientY-rect.top)/rect.height;
-    dailyData.stickers[dragging]={...dailyData.stickers[dragging],x:Math.max(0,Math.min(1,nx)),y:Math.max(0,Math.min(1,ny))};
-    // 실시간 이동
-    const stickerEl=svg.querySelectorAll('.dp-sticker')[dragging];
-    if(stickerEl){stickerEl.setAttribute('x',nx*SZ);stickerEl.setAttribute('y',ny*SZ);}
+    if(!mode||dpSelectedSticker===null)return;
+    const s=dailyData.stickers[dpSelectedSticker];
+    if(!s)return;
+    const svg2=document.getElementById('dpSvg');
+    if(!svg2)return;
+    const rect=svg2.getBoundingClientRect();
+    const W=svg2.viewBox.baseVal.width, H=svg2.viewBox.baseVal.height;
+    const cx=(e.clientX-rect.left)/rect.width*W;
+    const cy=(e.clientY-rect.top)/rect.height*H;
+
+    if(mode==='move'){
+      const dx=cx-startX, dy=cy-startY;
+      dailyData.stickers[dpSelectedSticker]={
+        ...startData,
+        x:Math.max(0,Math.min(1,startData.x+dx/W)),
+        y:Math.max(0,Math.min(1,startData.y+dy/H))
+      };
+      renderDailyPlanner();
+    } else if(mode==='scale'){
+      const sx=startData.x*W, sy=startData.y*H;
+      const dist=Math.sqrt((cx-sx)**2+(cy-sy)**2);
+      const base=Math.min(W,H)*0.07;
+      const newScale=Math.max(0.3,Math.min(4,dist/base));
+      dailyData.stickers[dpSelectedSticker]={...startData,scale:newScale};
+      renderDailyPlanner();
+    } else if(mode==='rotate'){
+      const sx=startData.x*W, sy=startData.y*H;
+      const angle=Math.atan2(cy-sy,cx-sx)*180/Math.PI+90;
+      dailyData.stickers[dpSelectedSticker]={...startData,rotate:Math.round(angle)};
+      renderDailyPlanner();
+    }
   });
+
   window.addEventListener('mouseup',()=>{
-    if(dragging!==null){window.saveDailyData();dragging=null;}
+    if(mode){window.saveDailyData();mode=null;startData=null;}
   });
 }
+
+// 크기 조절 시작
+window.dpScaleStart=function(e,i){
+  e.stopPropagation();e.preventDefault();
+  dpSelectedSticker=i;
+  const svg=document.getElementById('dpSvg');
+  const rect=svg.getBoundingClientRect();
+  const W=svg.viewBox.baseVal.width,H=svg.viewBox.baseVal.height;
+  const startData={...dailyData.stickers[i]};
+  const sx=startData.x*W, sy=startData.y*H;
+  const base=Math.min(W,H)*0.07;
+  function onMove(ev){
+    const cx=(ev.clientX-rect.left)/rect.width*W;
+    const cy=(ev.clientY-rect.top)/rect.height*H;
+    const dist=Math.sqrt((cx-sx)**2+(cy-sy)**2);
+    dailyData.stickers[i]={...startData,scale:Math.max(0.3,Math.min(4,dist/base))};
+    renderDailyPlanner();
+  }
+  function onUp(){
+    window.saveDailyData();
+    window.removeEventListener('mousemove',onMove);
+    window.removeEventListener('mouseup',onUp);
+  }
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('mouseup',onUp);
+};
+
+// 회전 시작
+window.dpRotateStart=function(e,i){
+  e.stopPropagation();e.preventDefault();
+  dpSelectedSticker=i;
+  const svg=document.getElementById('dpSvg');
+  const rect=svg.getBoundingClientRect();
+  const W=svg.viewBox.baseVal.width,H=svg.viewBox.baseVal.height;
+  const startData={...dailyData.stickers[i]};
+  const sx=startData.x*W, sy=startData.y*H;
+  function onMove(ev){
+    const cx=(ev.clientX-rect.left)/rect.width*W;
+    const cy=(ev.clientY-rect.top)/rect.height*H;
+    const angle=Math.atan2(cy-sy,cx-sx)*180/Math.PI+90;
+    dailyData.stickers[i]={...startData,rotate:Math.round(angle)};
+    renderDailyPlanner();
+  }
+  function onUp(){
+    window.saveDailyData();
+    window.removeEventListener('mousemove',onMove);
+    window.removeEventListener('mouseup',onUp);
+  }
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('mouseup',onUp);
+};
+
 window.dpStickerDragStart=function(e,i){e.preventDefault();};
 
 window.saveMission=async function(){
