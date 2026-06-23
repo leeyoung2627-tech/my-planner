@@ -4126,7 +4126,7 @@ window.openDpBulkModal=function(keys){
   </div>`);
   setTimeout(()=>document.getElementById('dpCellInput')?.focus(),50);
   document.getElementById('dpCellInput')?.addEventListener('keydown',e=>{
-    if(e.key==='Enter')window.confirmDpBulk();
+    if(e.key==='Enter'&&!e.isComposing)window.confirmDpBulk();
     if(e.key==='Escape')closeDpModal();
   });
 };
@@ -4181,7 +4181,7 @@ window.openDpCellModal=function(key,timeStr,dayStr){
   <div class="dp-modal-bg" id="dpModalBg" onclick="if(event.target===this)closeDpModal()">
     <div class="dp-modal">
       <div class="dp-modal-title">${dayStr} ${timeStr}</div>
-      <input class="dp-label-input" id="dpCellInput" placeholder="내용 입력" value="${cell?.label||''}" maxlength="20"/>
+      <input class="dp-label-input" id="dpCellInput" placeholder="내용 입력" value="${cell?.label||''}" maxlength="20" lang="ko" autocomplete="off"/>
       ${dpColorPickerHtml(cell?.color||ACCENT)}
       <div class="dp-modal-btns">
         ${cell?`<button class="dp-mbtn del" onclick="deleteDpCell('${key}')">삭제</button>`:''}
@@ -4191,7 +4191,7 @@ window.openDpCellModal=function(key,timeStr,dayStr){
     </div>
   </div>`);
   setTimeout(()=>document.getElementById('dpCellInput')?.focus(),50);
-  document.getElementById('dpCellInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')window.confirmDpCell();if(e.key==='Escape')closeDpModal();});
+  document.getElementById('dpCellInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)window.confirmDpCell();if(e.key==='Escape')closeDpModal();});
 };
 window.confirmDpCell=function(){
   const val=(document.getElementById('dpCellInput')?.value||'').trim();
@@ -4246,7 +4246,7 @@ window.openDpCheckModal=function(){
   </div>`);
   setTimeout(()=>document.getElementById('dpCheckInput')?.focus(),50);
   document.getElementById('dpCheckInput')?.addEventListener('keydown',e=>{
-    if(e.key==='Enter')window.confirmDpCheck();
+    if(e.key==='Enter'&&!e.isComposing)window.confirmDpCheck();
     if(e.key==='Escape')document.getElementById('dpCheckModalBg')?.remove();
   });
 };
@@ -4287,7 +4287,7 @@ window.editDpCheck=function(i){
     inp?.focus(); inp?.select();
   },50);
   document.getElementById('dpCheckEditInput')?.addEventListener('keydown',e=>{
-    if(e.key==='Enter')window.confirmDpCheckEdit();
+    if(e.key==='Enter'&&!e.isComposing)window.confirmDpCheckEdit();
     if(e.key==='Escape')document.getElementById('dpCheckModalBg')?.remove();
   });
 };
@@ -4394,7 +4394,7 @@ function openDpModal(key){
     </div>
   </div>`);
   setTimeout(()=>document.getElementById('dpLabelInput')?.focus(),50);
-  document.getElementById('dpLabelInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')window.confirmDpSlot();if(e.key==='Escape')closeDpModal();});
+  document.getElementById('dpLabelInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)window.confirmDpSlot();if(e.key==='Escape')closeDpModal();});
 }
 window.openDpModal=openDpModal;
 window.editDpSlot=function(key){openDpModal(key);};
