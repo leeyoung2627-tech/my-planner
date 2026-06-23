@@ -3996,26 +3996,35 @@ function initDpDrag(wrap){
 
   // 드래그 중 선택 범위 업데이트
   function updateSelection(startKey, endKey){
-    // 모든 셀의 selecting 클래스 제거
     wrap.querySelectorAll('.dp-selecting').forEach(el=>el.classList.remove('dp-selecting'));
     _dpDragKeys.clear();
     if(!startKey||!endKey)return;
 
-    // 모든 셀을 순서대로 배열
     const allCells=[...wrap.querySelectorAll('td.dp-cell')];
     const si=allCells.findIndex(c=>c.dataset.key===startKey);
     const ei=allCells.findIndex(c=>c.dataset.key===endKey);
     if(si<0||ei<0)return;
 
-    // 같은 열(요일)끼리만 선택 — 시작 열 기준
-    const startCol=startKey.split('-')[0]; // day key (sun/mon/...)
-    const from=Math.min(si,ei), to=Math.max(si,ei);
-    for(let i=from;i<=to;i++){
-      const cell=allCells[i];
-      if(cell.dataset.key?.startsWith(startCol)){
-        cell.classList.add('dp-selecting');
-        _dpDragKeys.add(cell.dataset.key);
-      }
+    // 시작/끝 셀의 행/열 인덱스 파악
+    const startTr=allCells[si].closest('tr');
+    const endTr=allCells[ei].closest('tr');
+    const allRows=[...wrap.querySelectorAll('tbody tr')];
+    const rowSi=allRows.indexOf(startTr), rowEi=allRows.indexOf(endTr);
+    const colSi=allCells[si].cellIndex, colEi=allCells[ei].cellIndex;
+    const rowFrom=Math.min(rowSi,rowEi), rowTo=Math.max(rowSi,rowEi);
+    const colFrom=Math.min(colSi,colEi), colTo=Math.max(colSi,colEi);
+
+    // 사각형 범위 내 모든 셀 선택
+    for(let r=rowFrom;r<=rowTo;r++){
+      const row=allRows[r];
+      if(!row)continue;
+      const cells=[...row.querySelectorAll('td.dp-cell')];
+      cells.forEach(cell=>{
+        if(cell.cellIndex>=colFrom&&cell.cellIndex<=colTo){
+          cell.classList.add('dp-selecting');
+          _dpDragKeys.add(cell.dataset.key);
+        }
+      });
     }
   }
 
