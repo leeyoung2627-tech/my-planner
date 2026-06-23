@@ -3777,9 +3777,17 @@ document.addEventListener('click',e=>{
 // ══════════════════════════════════════════
 //  원형 하루 계획표 (Daily Planner)
 // ══════════════════════════════════════════
-let dailyData = { slots: {} }; // { "6": "기상 및 아침식사", ... }
+// slots: { "360~480": {label:"아침식사", color:"#2B7FFF"}, ... }  (분 단위 키)
+// stickers: [ {emoji:"🌙", x:0.5, y:0.3}, ... ]  (SVG 비율 좌표)
+let dailyData = { slots:{}, stickers:[] };
 
-function loadDailyData(raw){ dailyData = raw && raw.slots ? raw : {slots:{}}; }
+function loadDailyData(raw){
+  if(!raw){ dailyData={slots:{},stickers:[]}; return; }
+  dailyData={
+    slots: raw.slots||{},
+    stickers: raw.stickers||[]
+  };
+}
 
 window.saveDailyData = async function(){
   if(!currentUser)return;
@@ -3787,177 +3795,385 @@ window.saveDailyData = async function(){
   showSaving();
 };
 
+// 분 → "오전/오후 H:MM" 표시
+function minToLabel(m){
+  const h=Math.floor(m/60)%24, mm=m%60;
+  const ampm=h<12?'오전':'오후';
+  const hh=h===0?12:h>12?h-12:h;
+  return `${ampm} ${hh}:${String(mm).padStart(2,'0')}`;
+}
+function minToHHMM(m){
+  return `${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+}
+
+// 분 → 각도 (12시=0분=top, 시계방향)
+function minToAngle(m){ return (m/(24*60))*360 - 90; }
+
 function renderDailyPlanner(){
   const wrap = document.getElementById('dailyView');
   if(!wrap) return;
 
   const ACCENT = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#2B7FFF';
 
-  // 시간 슬롯 0~23
-  const hours = Array.from({length:24},(_,i)=>i);
-  const CX=160, CY=160, R=130, INNER=54;
+  // SVG 크기 — left-view 전체 채우기
+  const SZ = 480;
+  const CX=SZ/2, CY=SZ/2, R=SZ*0.44, INNER=SZ*0.15;
 
-  // SVG 생성
-  let sliceSvg = '';
-  hours.forEach(h=>{
-    const startAngle = (h/24)*360 - 90;
-    const endAngle   = ((h+1)/24)*360 - 90;
-    const s1 = startAngle*Math.PI/180, e1 = endAngle*Math.PI/180;
-    const x1=CX+R*Math.cos(s1), y1=CY+R*Math.sin(s1);
-    const x2=CX+R*Math.cos(e1), y2=CY+R*Math.sin(e1);
-    const xi1=CX+INNER*Math.cos(s1), yi1=CY+INNER*Math.sin(s1);
-    const xi2=CX+INNER*Math.cos(e1), yi2=CY+INNER*Math.sin(e1);
-    const hasPlan = !!dailyData.slots[h];
-    const fillColor = hasPlan ? ACCENT : '#F0F3FA';
-    const strokeColor = '#FFFFFF';
-    sliceSvg += `<path d="M${xi1},${yi1} L${x1},${y1} A${R},${R} 0 0,1 ${x2},${y2} L${xi2},${yi2} A${INNER},${INNER} 0 0,0 ${xi1},${yi1} Z"
-      fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"
-      style="cursor:pointer;transition:fill .15s"
-      onmouseenter="this.style.fill='${hasPlan?ACCENT+'cc':'#D8E4F8'}'"
-      onmouseleave="this.style.fill='${fillColor}'"
-      onclick="openDailySlot(${h})"
-      data-h="${h}"/>`;
-  });
-
-  // 시각 라벨 (0,2,4,...22)
-  let labelSvg = '';
-  [0,2,4,6,8,10,12,14,16,18,20,22].forEach(h=>{
-    const angle = (h/24)*360 - 90;
-    const rad = angle*Math.PI/180;
-    const LR = R+16;
-    const lx = CX+LR*Math.cos(rad), ly = CY+LR*Math.sin(rad);
-    labelSvg += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central"
-      font-size="9" fill="#6B7A90" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif">${h}</text>`;
-  });
-
-  // 계획 텍스트 라벨 (슬롯 중앙)
-  let planLabelSvg = '';
-  hours.forEach(h=>{
-    const text = dailyData.slots[h];
-    if(!text) return;
-    const midAngle = ((h+0.5)/24)*360 - 90;
-    const rad = midAngle*Math.PI/180;
-    const TR = (R+INNER)/2;
-    const tx = CX+TR*Math.cos(rad), ty = CY+TR*Math.sin(rad);
-    const rot = midAngle + (midAngle>90&&midAngle<270?180:0);
-    const short = text.length>6 ? text.slice(0,5)+'…' : text;
-    planLabelSvg += `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central"
-      font-size="8" fill="#fff" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif"
-      transform="rotate(${rot+90},${tx},${ty})"
+  // ── 슬롯 호 그리기
+  let arcSvg='';
+  Object.entries(dailyData.slots).forEach(([key,slot])=>{
+    const [sM, eM] = key.split('~').map(Number);
+    const sa = minToAngle(sM)*Math.PI/180;
+    const ea = minToAngle(eM)*Math.PI/180;
+    const x1=CX+R*Math.cos(sa), y1=CY+R*Math.sin(sa);
+    const x2=CX+R*Math.cos(ea), y2=CY+R*Math.sin(ea);
+    const xi1=CX+INNER*Math.cos(sa), yi1=CY+INNER*Math.sin(sa);
+    const xi2=CX+INNER*Math.cos(ea), yi2=CY+INNER*Math.sin(ea);
+    const large = (eM-sM)>720?1:0;
+    const c = slot.color||ACCENT;
+    arcSvg += `<path d="M${xi1},${yi1} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${xi2},${yi2} A${INNER},${INNER} 0 ${large},0 ${xi1},${yi1} Z"
+      fill="${c}" fill-opacity="0.85" stroke="#fff" stroke-width="1.5" style="cursor:pointer"
+      onclick="editDpSlot('${key}')" title="${minToLabel(sM)} ~ ${minToLabel(eM)}"/>`;
+    // 라벨 텍스트
+    const midM=(sM+eM)/2;
+    const midA=minToAngle(midM)*Math.PI/180;
+    const TR=(R+INNER)/2;
+    const tx=CX+TR*Math.cos(midA), ty=CY+TR*Math.sin(midA);
+    let rot=minToAngle(midM)+90;
+    if(rot>90&&rot<270) rot+=180;
+    const short=slot.label.length>7?slot.label.slice(0,6)+'…':slot.label;
+    arcSvg+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central"
+      font-size="11" fill="#fff" font-weight="500"
+      font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif"
+      transform="rotate(${rot},${tx},${ty})"
       style="pointer-events:none">${short}</text>`;
   });
 
-  // 중앙 원
-  const nowH = new Date().getHours();
-  const nowAngle = ((nowH + new Date().getMinutes()/60)/24)*360 - 90;
-  const nRad = nowAngle*Math.PI/180;
-  const handX = CX+(INNER-8)*Math.cos(nRad), handY = CY+(INNER-8)*Math.sin(nRad);
+  // ── 30분 눈금선
+  let tickSvg='';
+  for(let m=0;m<1440;m+=30){
+    const a=minToAngle(m)*Math.PI/180;
+    const isHour=m%60===0;
+    const r1=isHour?INNER:R*0.97, r2=isHour?R:R*0.995;
+    // 짧은 30분 선
+    const tx1=CX+(R-(isHour?0:R*0.025))*Math.cos(a), ty1=CY+(R-(isHour?0:R*0.025))*Math.sin(a);
+    const tx2=CX+R*Math.cos(a), ty2=CY+R*Math.sin(a);
+    if(!isHour) tickSvg+=`<line x1="${tx1}" y1="${ty1}" x2="${tx2}" y2="${ty2}" stroke="#D0D8E8" stroke-width="0.8"/>`;
+    else tickSvg+=`<line x1="${CX+INNER*Math.cos(a)}" y1="${CY+INNER*Math.sin(a)}" x2="${CX+R*Math.cos(a)}" y2="${CY+R*Math.sin(a)}" stroke="#C0CAD8" stroke-width="0.5"/>`;
+  }
 
-  wrap.innerHTML = `
+  // ── 시각 라벨 (짝수 시간만)
+  let labelSvg='';
+  [0,2,4,6,8,10,12,14,16,18,20,22].forEach(h=>{
+    const a=minToAngle(h*60)*Math.PI/180;
+    const LR=R+18;
+    const lx=CX+LR*Math.cos(a), ly=CY+LR*Math.sin(a);
+    labelSvg+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central"
+      font-size="11" fill="#6B7A90" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif">${h}</text>`;
+  });
+
+  // ── 현재 시각 바늘
+  const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
+  const nA=minToAngle(nowM)*Math.PI/180;
+  const hx=CX+(R-6)*Math.cos(nA), hy=CY+(R-6)*Math.sin(nA);
+
+  // ── 이모지 스티커
+  let stickerSvg='';
+  (dailyData.stickers||[]).forEach((s,i)=>{
+    const sx=s.x*SZ, sy=s.y*SZ;
+    stickerSvg+=`<text x="${sx}" y="${sy}" font-size="22" text-anchor="middle" dominant-baseline="central"
+      style="cursor:grab;user-select:none" class="dp-sticker"
+      onmousedown="dpStickerDragStart(event,${i})"
+      ondblclick="deleteDpSticker(${i})">${s.emoji}</text>`;
+  });
+
+  wrap.style.padding='0';
+  wrap.style.overflow='hidden';
+  wrap.innerHTML=`
 <style>
-.dp-wrap{display:flex;gap:16px;align-items:flex-start;padding:4px 0}
-.dp-svg-col{flex-shrink:0}
-.dp-list-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
-.dp-list-title{font-size:11px;font-weight:600;color:#6B7A90;letter-spacing:.04em;margin-bottom:2px}
-.dp-slot-row{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:7px;background:#F5F7FB;border:0.5px solid #E2E8F0;cursor:pointer;transition:background .12s}
-.dp-slot-row:hover{background:#E6F0FF;border-color:${ACCENT}}
-.dp-slot-hour{font-size:11px;color:#9199AE;min-width:28px;font-weight:500}
-.dp-slot-text{font-size:12px;color:#1C2033;flex:1}
-.dp-slot-text.empty{color:#C5CDD8}
-.dp-slot-del{font-size:11px;color:#C5CDD8;background:none;border:none;cursor:pointer;padding:0 2px;font-family:inherit}
+.dp-outer{display:flex;height:100%;min-height:0}
+.dp-circle-col{flex:1;display:flex;align-items:center;justify-content:center;background:#F8FAFF;position:relative;overflow:hidden}
+.dp-side-col{width:220px;flex-shrink:0;border-left:0.5px solid #E2E8F0;display:flex;flex-direction:column;background:#fff;overflow:hidden}
+.dp-side-header{padding:12px 14px 8px;font-size:11px;font-weight:600;color:#6B7A90;letter-spacing:.04em;border-bottom:0.5px solid #EEF1F8;flex-shrink:0}
+.dp-side-list{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+.dp-slot-row{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;border:0.5px solid #E8EDF5;cursor:pointer;transition:background .12s}
+.dp-slot-row:hover{background:#EDF4FF}
+.dp-slot-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dp-slot-info{flex:1;min-width:0}
+.dp-slot-time{font-size:10px;color:#9199AE}
+.dp-slot-label{font-size:12px;color:#1C2033;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dp-slot-del{font-size:11px;color:#D0D5E0;background:none;border:none;cursor:pointer;padding:0 2px;flex-shrink:0}
 .dp-slot-del:hover{color:#E26A5A}
-.dp-center-time{font-size:13px;font-weight:700;fill:#1C2033}
-.dp-modal-bg{position:fixed;inset:0;background:#00000040;display:flex;align-items:center;justify-content:center;z-index:200}
-.dp-modal{background:#fff;border-radius:14px;padding:20px;width:280px;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 32px #0002;border:0.5px solid #eee}
-.dp-modal h4{font-size:13px;font-weight:600;color:#1C2033;margin:0}
-.dp-modal input{width:100%;padding:7px 10px;border-radius:7px;border:0.5px solid #ddd;font-size:13px;outline:none;font-family:inherit}
-.dp-modal input:focus{border-color:${ACCENT}}
-.dp-modal-btns{display:flex;gap:6px;justify-content:flex-end}
+.dp-side-footer{padding:10px;border-top:0.5px solid #EEF1F8;flex-shrink:0}
+.dp-add-btn{width:100%;padding:8px;border-radius:8px;border:1px dashed #C8D4E8;background:transparent;font-size:12px;color:#9199AE;cursor:pointer;font-family:inherit;transition:.15s}
+.dp-add-btn:hover{border-color:${ACCENT};color:${ACCENT};background:#EDF4FF}
+.dp-sticker-btn{width:100%;padding:6px;border-radius:8px;border:0.5px solid #E2E8F0;background:transparent;font-size:11px;color:#9199AE;cursor:pointer;font-family:inherit;margin-top:5px;transition:.15s}
+.dp-sticker-btn:hover{background:#F5F7FB}
+
+/* 모달 */
+.dp-modal-bg{position:fixed;inset:0;background:#00000040;display:flex;align-items:center;justify-content:center;z-index:300}
+.dp-modal{background:#fff;border-radius:14px;padding:20px;width:310px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 32px #0002;border:0.5px solid #eee}
+.dp-modal-title{font-size:13px;font-weight:600;color:#1C2033}
+.dp-time-row{display:flex;align-items:center;gap:8px}
+.dp-ampm{padding:6px 10px;border-radius:7px;border:0.5px solid #ddd;font-size:12px;background:#fafafa;cursor:pointer;font-family:inherit;color:#444}
+.dp-ampm.active{background:${ACCENT};color:#fff;border-color:${ACCENT}}
+.dp-time-input{width:60px;padding:6px 8px;border-radius:7px;border:0.5px solid #ddd;font-size:14px;text-align:center;outline:none;font-family:inherit}
+.dp-time-input:focus{border-color:${ACCENT}}
+.dp-tilde{font-size:14px;color:#9199AE}
+.dp-label-input{width:100%;padding:8px 10px;border-radius:7px;border:0.5px solid #ddd;font-size:13px;outline:none;font-family:inherit}
+.dp-label-input:focus{border-color:${ACCENT}}
+.dp-color-row{display:flex;gap:6px;flex-wrap:wrap}
+.dp-color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:.12s}
+.dp-color-dot:hover{transform:scale(1.1)}
+.dp-color-dot.active{border-color:#333}
+.dp-modal-btns{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}
 .dp-mbtn{padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:none;font-family:inherit}
 .dp-mbtn.ok{background:${ACCENT};color:#fff}
 .dp-mbtn.cancel{background:#f0f0f0;color:#666}
+.dp-mbtn.del{background:#FAECE7;color:#993C1D}
+
+/* 이모지 패널 */
+.dp-emoji-panel{position:fixed;z-index:301;background:#fff;border:0.5px solid #ddd;border-radius:14px;box-shadow:0 6px 24px #0002;padding:12px;width:260px}
+.dp-emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:200px;overflow-y:auto}
+.dp-emoji-item{font-size:20px;text-align:center;cursor:pointer;padding:4px;border-radius:6px;line-height:1.3}
+.dp-emoji-item:hover{background:#EDF4FF}
 </style>
-<div class="dp-wrap">
-  <div class="dp-svg-col">
-    <svg width="320" height="320" viewBox="0 0 320 320">
-      ${sliceSvg}
+
+<div class="dp-outer">
+  <div class="dp-circle-col" id="dpCircleCol">
+    <svg id="dpSvg" width="${SZ}" height="${SZ}" viewBox="0 0 ${SZ} ${SZ}" style="overflow:visible">
+      <!-- 배경 링 -->
+      <circle cx="${CX}" cy="${CY}" r="${R}" fill="#EEF1F8" stroke="#D8E0EE" stroke-width="1"/>
+      ${tickSvg}
+      ${arcSvg}
       ${labelSvg}
-      ${planLabelSvg}
+      <!-- 현재 시각 바늘 -->
+      <line x1="${CX}" y1="${CY}" x2="${hx}" y2="${hy}" stroke="${ACCENT}" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- 내부 흰 원 -->
       <circle cx="${CX}" cy="${CY}" r="${INNER}" fill="#fff" stroke="#E2E8F0" stroke-width="1.5"/>
-      <line x1="${CX}" y1="${CY}" x2="${handX}" y2="${handY}" stroke="${ACCENT}" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="${CX}" cy="${CY}" r="4" fill="${ACCENT}"/>
-      <text x="${CX}" y="${CY-7}" text-anchor="middle" class="dp-center-time" font-size="11" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif" fill="#1C2033">${String(nowH).padStart(2,'0')}시</text>
-      <text x="${CX}" y="${CY+8}" text-anchor="middle" font-size="9" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif" fill="#9199AE">현재</text>
+      <circle cx="${CX}" cy="${CY}" r="5" fill="${ACCENT}"/>
+      <text x="${CX}" y="${CY-10}" text-anchor="middle" font-size="13" font-weight="600" fill="#1C2033" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif">${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}</text>
+      <text x="${CX}" y="${CY+8}" text-anchor="middle" font-size="10" fill="#9199AE" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif">NOW</text>
+      ${stickerSvg}
     </svg>
   </div>
-  <div class="dp-list-col">
-    <div class="dp-list-title">DAILY PLAN</div>
-    <div id="dpSlotList"></div>
-    <button class="add-btn" onclick="openDailySlot(null)" style="margin-top:2px">＋ 시간 추가</button>
+  <div class="dp-side-col">
+    <div class="dp-side-header">DAILY PLAN</div>
+    <div class="dp-side-list" id="dpSlotList"></div>
+    <div class="dp-side-footer">
+      <button class="dp-add-btn" onclick="openDpModal(null)">＋ 일정 추가</button>
+      <button class="dp-sticker-btn" onclick="openDpEmojiPanel(event)">🎨 이모지 스티커 붙이기</button>
+    </div>
   </div>
 </div>`;
 
   renderDpList();
+  initDpStickerDrag();
 }
 
 function renderDpList(){
-  const list = document.getElementById('dpSlotList');
-  if(!list) return;
-  const filled = Object.keys(dailyData.slots).map(Number).sort((a,b)=>a-b);
-  if(filled.length===0){
-    list.innerHTML='<div style="font-size:11px;color:#C5CDD8;padding:6px 2px">아직 계획이 없어요</div>';
+  const list=document.getElementById('dpSlotList');
+  if(!list)return;
+  const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
+  const keys=Object.keys(dailyData.slots).sort((a,b)=>parseInt(a)-parseInt(b));
+  if(!keys.length){
+    list.innerHTML='<div style="font-size:11px;color:#C5CDD8;padding:6px 2px;text-align:center">아직 일정이 없어요</div>';
     return;
   }
-  list.innerHTML = filled.map(h=>`
-    <div class="dp-slot-row" onclick="openDailySlot(${h})">
-      <span class="dp-slot-hour">${String(h).padStart(2,'0')}:00</span>
-      <span class="dp-slot-text">${dailyData.slots[h]}</span>
-      <button class="dp-slot-del" onclick="event.stopPropagation();deleteDailySlot(${h})">✕</button>
-    </div>`).join('');
+  list.innerHTML=keys.map(key=>{
+    const slot=dailyData.slots[key];
+    const [sM,eM]=key.split('~').map(Number);
+    const c=slot.color||ACCENT;
+    return `<div class="dp-slot-row" onclick="editDpSlot('${key}')">
+      <div class="dp-slot-dot" style="background:${c}"></div>
+      <div class="dp-slot-info">
+        <div class="dp-slot-time">${minToLabel(sM)} ~ ${minToLabel(eM)}</div>
+        <div class="dp-slot-label">${slot.label}</div>
+      </div>
+      <button class="dp-slot-del" onclick="event.stopPropagation();deleteDpSlot('${key}')">✕</button>
+    </div>`;
+  }).join('');
 }
 
-let _dpEditingHour = null;
-window.openDailySlot = function(h){
-  _dpEditingHour = h;
-  const existing = h!==null ? (dailyData.slots[h]||'') : '';
-  const hourOpts = Array.from({length:24},(_,i)=>`<option value="${i}"${i===h?' selected':''}>${String(i).padStart(2,'0')}:00</option>`).join('');
-  const modalHtml = `
+// ── 색상 프리셋
+const DP_COLORS=['#2B7FFF','#5BA4FF','#34B89A','#F59E0B','#EF4444','#A855F7','#EC4899','#64748B'];
+let _dpEditKey=null, _dpSelColor='#2B7FFF';
+
+function openDpModal(key){
+  _dpEditKey=key;
+  const slot=key?dailyData.slots[key]:null;
+  const sM=slot?parseInt(key.split('~')[0]):8*60;
+  const eM=slot?parseInt(key.split('~')[1]):9*60;
+  _dpSelColor=slot?.color||getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
+  const ACCENT=_dpSelColor;
+
+  // 오전/오후 + 시:분 분해
+  function mToAmpm(m){return m<720?'오전':'오후';}
+  function mToH(m){const h=Math.floor(m/60)%12||12;return h;}
+  function mToMin(m){return m%60;}
+
+  const sAp=mToAmpm(sM), eAp=mToAmpm(eM);
+  const sH=mToH(sM), sMm=mToMin(sM), eH=mToH(eM), eMm=mToMin(eM);
+
+  const colorDots=DP_COLORS.map(c=>`<div class="dp-color-dot${c===_dpSelColor?' active':''}"
+    style="background:${c}" onclick="dpSelColor('${c}')" title="${c}"></div>`).join('');
+
+  document.body.insertAdjacentHTML('beforeend',`
   <div class="dp-modal-bg" id="dpModalBg" onclick="if(event.target===this)closeDpModal()">
     <div class="dp-modal">
-      <h4>${h!==null?String(h).padStart(2,'0')+':00 계획':'시간 선택'}</h4>
-      ${h===null?`<select id="dpHourSel" style="width:100%;padding:7px 10px;border-radius:7px;border:0.5px solid #ddd;font-size:13px;outline:none;font-family:inherit">${hourOpts}</select>`:''}
-      <input id="dpPlanInput" placeholder="예: 기상 및 아침식사" value="${existing}" maxlength="20"/>
+      <div class="dp-modal-title">${key?'일정 수정':'일정 추가'}</div>
+      <div>
+        <div style="font-size:11px;color:#9199AE;margin-bottom:5px">시작 시간</div>
+        <div class="dp-time-row">
+          <button class="dp-ampm${sAp==='오전'?' active':''}" id="dpSAp" onclick="dpToggleAmpm('dpSAp')">오전</button>
+          <button class="dp-ampm${sAp==='오후'?' active':''}" id="dpSAp2" onclick="dpToggleAmpm('dpSAp2')">오후</button>
+          <input class="dp-time-input" id="dpSH" type="number" min="1" max="12" value="${sH}"/>
+          <span style="font-size:14px;color:#9199AE">:</span>
+          <input class="dp-time-input" id="dpSMm" type="number" min="0" max="59" step="30" value="${sMm}"/>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#9199AE;margin-bottom:5px">종료 시간</div>
+        <div class="dp-time-row">
+          <button class="dp-ampm${eAp==='오전'?' active':''}" id="dpEAp" onclick="dpToggleAmpm('dpEAp')">오전</button>
+          <button class="dp-ampm${eAp==='오후'?' active':''}" id="dpEAp2" onclick="dpToggleAmpm('dpEAp2')">오후</button>
+          <input class="dp-time-input" id="dpEH" type="number" min="1" max="12" value="${eH}"/>
+          <span style="font-size:14px;color:#9199AE">:</span>
+          <input class="dp-time-input" id="dpEMm" type="number" min="0" max="59" step="30" value="${eMm}"/>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#9199AE;margin-bottom:5px">내용</div>
+        <input class="dp-label-input" id="dpLabelInput" placeholder="예: 기상 및 아침식사" value="${slot?.label||''}" maxlength="20"/>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#9199AE;margin-bottom:6px">색상</div>
+        <div class="dp-color-row" id="dpColorRow">${colorDots}</div>
+      </div>
       <div class="dp-modal-btns">
+        ${key?`<button class="dp-mbtn del" onclick="deleteDpSlot('${key}');closeDpModal()">삭제</button>`:''}
         <button class="dp-mbtn cancel" onclick="closeDpModal()">취소</button>
         <button class="dp-mbtn ok" onclick="confirmDpSlot()">저장</button>
       </div>
     </div>
-  </div>`;
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-  setTimeout(()=>document.getElementById('dpPlanInput')?.focus(), 50);
-  document.getElementById('dpPlanInput')?.addEventListener('keydown', e=>{
-    if(e.key==='Enter') window.confirmDpSlot();
-    if(e.key==='Escape') closeDpModal();
-  });
+  </div>`);
+  setTimeout(()=>document.getElementById('dpLabelInput')?.focus(),50);
+  document.getElementById('dpLabelInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')window.confirmDpSlot();if(e.key==='Escape')closeDpModal();});
+}
+window.openDpModal=openDpModal;
+window.editDpSlot=function(key){openDpModal(key);};
+
+window.dpToggleAmpm=function(id){
+  const isOjeon=id==='dpSAp'||id==='dpEAp';
+  const base=id==='dpSAp'||id==='dpSAp2'?'dpSAp':'dpEAp';
+  document.getElementById(base).classList.toggle('active',isOjeon&&id===base||!isOjeon&&id!==base);
+  document.getElementById(base+'2').classList.toggle('active',!isOjeon&&id===base||isOjeon&&id!==base);
+  // 클릭한 버튼 active
+  document.getElementById(id).classList.add('active');
+  const other=id.endsWith('2')?id.slice(0,-1):id+'2';
+  document.getElementById(other)?.classList.remove('active');
 };
-window.closeDpModal = function(){
-  document.getElementById('dpModalBg')?.remove();
+
+window.dpSelColor=function(c){
+  _dpSelColor=c;
+  document.querySelectorAll('.dp-color-dot').forEach(d=>d.classList.toggle('active',d.title===c));
 };
-window.confirmDpSlot = function(){
-  const selEl = document.getElementById('dpHourSel');
-  const h = selEl ? Number(selEl.value) : _dpEditingHour;
-  const val = (document.getElementById('dpPlanInput')?.value||'').trim();
-  if(val) dailyData.slots[h] = val;
-  else delete dailyData.slots[h];
+
+function dpReadTime(apId, apId2, hId, mId){
+  const isOjeon=document.getElementById(apId)?.classList.contains('active');
+  let h=parseInt(document.getElementById(hId)?.value||'12');
+  const m=parseInt(document.getElementById(mId)?.value||'0');
+  if(isOjeon){h=h===12?0:h;}
+  else{h=h===12?12:h+12;}
+  return h*60+m;
+}
+
+window.confirmDpSlot=function(){
+  const sM=dpReadTime('dpSAp','dpSAp2','dpSH','dpSMm');
+  const eM=dpReadTime('dpEAp','dpEAp2','dpEH','dpEMm');
+  const label=(document.getElementById('dpLabelInput')?.value||'').trim();
+  if(!label){alert('내용을 입력해주세요');return;}
+  if(eM<=sM){alert('종료 시간이 시작 시간보다 늦어야 해요');return;}
+  if(_dpEditKey&&_dpEditKey!==`${sM}~${eM}`) delete dailyData.slots[_dpEditKey];
+  dailyData.slots[`${sM}~${eM}`]={label,color:_dpSelColor};
   closeDpModal();
   window.saveDailyData();
   renderDailyPlanner();
 };
-window.deleteDailySlot = function(h){
-  delete dailyData.slots[h];
+
+window.closeDpModal=function(){document.getElementById('dpModalBg')?.remove();};
+
+window.deleteDpSlot=function(key){
+  delete dailyData.slots[key];
   window.saveDailyData();
   renderDailyPlanner();
 };
+
+// ── 이모지 스티커
+const DP_EMOJIS=['🌙','☀️','⭐','🌟','🔥','💧','🌈','🎯','💪','📚','🎵','☕','🍎','😴','✏️','🏃','🧘','💡','🎨','🌸','🐾','❤️','🎉','⚡','🌿','🍀'];
+
+window.openDpEmojiPanel=function(e){
+  document.getElementById('dpEmojiPanel')?.remove();
+  const html=`<div id="dpEmojiPanel" class="dp-emoji-panel" style="top:${e.clientY-10}px;left:${e.clientX-130}px">
+    <div style="font-size:11px;color:#9199AE;margin-bottom:8px">클릭하면 원 중앙에 추가 · 더블클릭으로 삭제</div>
+    <div class="dp-emoji-grid">${DP_EMOJIS.map(em=>`<div class="dp-emoji-item" onclick="addDpSticker('${em}')">${em}</div>`).join('')}</div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+  setTimeout(()=>document.addEventListener('click',closeDpEmojiPanel,{once:true,capture:true}),50);
+};
+function closeDpEmojiPanel(e){
+  const p=document.getElementById('dpEmojiPanel');
+  if(p&&!p.contains(e.target))p.remove();
+  else if(p)setTimeout(()=>document.addEventListener('click',closeDpEmojiPanel,{once:true,capture:true}),50);
+}
+window.addDpSticker=function(emoji){
+  document.getElementById('dpEmojiPanel')?.remove();
+  // 원 안에 랜덤 위치
+  const cx=0.5, cy=0.5;
+  const angle=Math.random()*Math.PI*2;
+  const dist=0.12+Math.random()*0.22;
+  const x=cx+Math.cos(angle)*dist*0.9;
+  const y=cy+Math.sin(angle)*dist;
+  dailyData.stickers.push({emoji,x,y});
+  window.saveDailyData();
+  renderDailyPlanner();
+};
+window.deleteDpSticker=function(i){
+  dailyData.stickers.splice(i,1);
+  window.saveDailyData();
+  renderDailyPlanner();
+};
+
+// ── 스티커 드래그
+function initDpStickerDrag(){
+  const svg=document.getElementById('dpSvg');
+  if(!svg)return;
+  let dragging=null, ox=0, oy=0;
+  svg.addEventListener('mousedown',e=>{
+    const el=e.target.closest('.dp-sticker');
+    if(!el)return;
+    dragging=parseInt(el.getAttribute('onmousedown').match(/\d+/)[0]);
+    const rect=svg.getBoundingClientRect();
+    const SZ=svg.viewBox.baseVal.width;
+    ox=e.clientX-rect.left; oy=e.clientY-rect.top;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove',e=>{
+    if(dragging===null)return;
+    const rect=svg.getBoundingClientRect();
+    const SZ=svg.viewBox.baseVal.width;
+    const nx=(e.clientX-rect.left)/rect.width;
+    const ny=(e.clientY-rect.top)/rect.height;
+    dailyData.stickers[dragging]={...dailyData.stickers[dragging],x:Math.max(0,Math.min(1,nx)),y:Math.max(0,Math.min(1,ny))};
+    // 실시간 이동
+    const stickerEl=svg.querySelectorAll('.dp-sticker')[dragging];
+    if(stickerEl){stickerEl.setAttribute('x',nx*SZ);stickerEl.setAttribute('y',ny*SZ);}
+  });
+  window.addEventListener('mouseup',()=>{
+    if(dragging!==null){window.saveDailyData();dragging=null;}
+  });
+}
+window.dpStickerDragStart=function(e,i){e.preventDefault();};
 
 window.saveMission=async function(){
   if(!currentUser)return;
