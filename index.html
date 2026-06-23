@@ -3256,11 +3256,11 @@ function applyTheme(){
   const nt=t.navtext||t.text;
   const bc=t.bordercol||'#ddd';
 
-  // 상단 메모바 — 항상 연한 회색
+  // 상단 메모바 — 앱 배경과 동일한 흰색
   const memoBar=document.getElementById('topMemoBar');
   if(memoBar){
-    memoBar.style.background='#F2F3F5';
-    memoBar.style.borderColor='#E0E2E8';
+    memoBar.style.background=t.appbg;
+    memoBar.style.borderColor=bc;
     memoBar.style.color=t.text;
     const memoInput=document.getElementById('topMemoInput');
     if(memoInput)memoInput.style.color=t.text;
