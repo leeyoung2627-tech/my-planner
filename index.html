@@ -3924,32 +3924,56 @@ function renderDailyPlanner(){
     ${DAYS.map((d,i)=>`<th class="${i===0?'sun':i===6?'sat':''}">${d}요일</th>`).join('')}
   </tr></thead><tbody>`;
 
-  // 시간 순서: 8~23시 → 0~2시 순으로 표시
+  // 시간 순서: 8~23시 → 0~2시
   const hourOrder=[];
   for(let h=8;h<24;h++) hourOrder.push(h);
   for(let h=0;h<3;h++) hourOrder.push(h);
 
-  for(const h of hourOrder){
-    for(let m=0;m<60;m+=30){
-      const isHour=m===0;
-      const nextH=m===30?h+1:h, nextM=m===30?0:30;
-      const timeLabel=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-      const nextLabel=`${String(nextH%24).padStart(2,'0')}:${String(nextM).padStart(2,'0')}`;
-      html+=`<tr class="${isHour?'dp-hour-border':''}">
-        <td class="dp-time-col">${timeLabel}<br><span style="color:#C5CDD8;font-size:9px">${nextLabel}</span></td>`;
-      DAYS_KEY.forEach((day,di)=>{
-        const key=`${day}-${h}-${m}`;
-        const cell=dailyData.cells&&dailyData.cells[key];
-        const bg=cell?cell.color||ACCENT:'';
-        html+=`<td class="dp-cell${cell?' filled':''}"
-          data-key="${key}"
-          style="${bg?`background:${bg};color:#fff`:''}">
-          ${cell?`<span class="dp-cell-text">${cell.label}</span>`:''}
-        </td>`;
-      });
-      html+='</tr>';
+  // 각 요일별 연속 병합 계산
+  // skip[di] = 남은 rowspan 스킵 카운트
+  const skip=DAYS_KEY.map(()=>0);
+
+  // rowspan 계산: 같은 key 내용이 아래로 몇 칸 연속인지
+  function calcRowspan(day, startH, startHIdx){
+    const startCell=dailyData.cells&&dailyData.cells[`${day}-${startH}-0`];
+    if(!startCell)return 1;
+    let span=1;
+    for(let i=startHIdx+1;i<hourOrder.length;i++){
+      const nh=hourOrder[i];
+      const nc=dailyData.cells&&dailyData.cells[`${day}-${nh}-0`];
+      if(nc&&nc.label===startCell.label&&nc.color===startCell.color) span++;
+      else break;
     }
+    return span;
   }
+
+  let html=`<table class="dp-table"><thead><tr>
+    <th style="width:58px">시간</th>
+    ${DAYS.map((d,i)=>`<th class="${i===0?'sun':i===6?'sat':''}">${d}요일</th>`).join('')}
+  </tr></thead><tbody>`;
+
+  hourOrder.forEach((h, hIdx)=>{
+    const timeLabel=`${String(h).padStart(2,'0')}:00`;
+    html+=`<tr class="dp-hour-border">
+      <td class="dp-time-col">${timeLabel}</td>`;
+
+    DAYS_KEY.forEach((day,di)=>{
+      if(skip[di]>0){ skip[di]--; return; }
+      const key=`${day}-${h}-0`;
+      const cell=dailyData.cells&&dailyData.cells[key];
+      const bg=cell?cell.color||ACCENT:'';
+      const span=cell?calcRowspan(day,h,hIdx):1;
+      if(span>1) skip[di]=span-1;
+      html+=`<td class="dp-cell${cell?' filled':''}"
+        data-key="${key}"
+        ${span>1?`rowspan="${span}"`:''}
+        style="${bg?`background:${bg};color:#fff`:''}">
+        ${cell?`<span class="dp-cell-text">${cell.label}</span>`:''}
+      </td>`;
+    });
+    html+='</tr>';
+  });
+
   html+='</tbody></table>';
   wrap.innerHTML=html;
   initDpDrag(wrap);
@@ -4063,11 +4087,13 @@ function initDpDrag(wrap){
     });
     if(keys.length===0)return;
     if(keys.length===1){
-      // 단일 셀 클릭 → 기존 모달
       const key=keys[0];
-      const existCell=dailyData.cells&&dailyData.cells[key];
-      // 이미 채워진 셀은 편집 모달
-      openDpCellModal(key,'','');
+      // key 형식: "mon-9-0" → 요일/시간 파싱
+      const [dayKey,hStr]=key.split('-');
+      const di=(['sun','mon','tue','wed','thu','fri','sat']).indexOf(dayKey);
+      const dayName=['일','월','화','수','목','금','토'][di]||'';
+      const hh=String(parseInt(hStr)).padStart(2,'0');
+      openDpCellModal(key,`${hh}:00`,`${dayName}요일`);
     } else {
       // 다중 선택 → 일괄 입력 모달
       openDpBulkModal(keys);
