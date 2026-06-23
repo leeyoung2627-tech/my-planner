@@ -3924,8 +3924,12 @@ function renderDailyPlanner(){
     ${DAYS.map((d,i)=>`<th class="${i===0?'sun':i===6?'sat':''}">${d}요일</th>`).join('')}
   </tr></thead><tbody>`;
 
-  for(let h=0;h<24;h++){
-    if(h>=3&&h<8)continue; // 새벽 3시~8시 제외
+  // 시간 순서: 8~23시 → 0~2시 순으로 표시
+  const hourOrder=[];
+  for(let h=8;h<24;h++) hourOrder.push(h);
+  for(let h=0;h<3;h++) hourOrder.push(h);
+
+  for(const h of hourOrder){
     for(let m=0;m<60;m+=30){
       const isHour=m===0;
       const nextH=m===30?h+1:h, nextM=m===30?0:30;
