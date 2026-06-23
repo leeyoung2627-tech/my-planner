@@ -3965,18 +3965,19 @@ function renderDailyPlanner(){
     }
     if(!shapeSvg)return;
 
-    html+=`<g class="dp-sticker" transform="rotate(${rot},${sx},${sy})" style="cursor:${isSelected?'move':'grab'};user-select:none">${shapeSvg}</g>`;
+    html+=`<g class="dp-sticker" data-si="${i}" transform="rotate(${rot},${sx},${sy})" style="cursor:${isSelected?'move':'grab'};user-select:none">${shapeSvg}</g>`;
     if(isSelected){
       html+=`<rect x="${sx-sz-4}" y="${sy-sz-4}" width="${(sz+4)*2}" height="${(sz+4)*2}" fill="none" stroke="${ACCENT}" stroke-width="1.5" stroke-dasharray="4 3" rx="3" style="pointer-events:none"/>`;
-      html+=`<circle cx="${sx+sz+4}" cy="${sy+sz+4}" r="7" fill="${ACCENT}" stroke="#fff" stroke-width="1.5" style="cursor:nwse-resize" onmousedown="dpScaleStart(event,${i})"/>`;
-      html+=`<circle cx="${sx}" cy="${sy-sz-16}" r="7" fill="#fff" stroke="${ACCENT}" stroke-width="2" style="cursor:crosshair" onmousedown="dpRotateStart(event,${i})"/>
+      html+=`<circle cx="${sx+sz+4}" cy="${sy+sz+4}" r="7" fill="${ACCENT}" stroke="#fff" stroke-width="1.5" data-handle="scale" style="cursor:nwse-resize" onmousedown="dpScaleStart(event,${i})"/>`;
+      html+=`<circle cx="${sx}" cy="${sy-sz-16}" r="7" fill="#fff" stroke="${ACCENT}" stroke-width="2" data-handle="rotate" style="cursor:crosshair" onmousedown="dpRotateStart(event,${i})"/>
         <line x1="${sx}" y1="${sy-sz-4}" x2="${sx}" y2="${sy-sz-9}" stroke="${ACCENT}" stroke-width="1.5" style="pointer-events:none"/>`;
-      html+=`<circle cx="${sx+sz+4}" cy="${sy-sz-4}" r="7" fill="#E26A5A" stroke="#fff" stroke-width="1.5" style="cursor:pointer" onclick="deleteDpSticker(${i})"/>
+      html+=`<circle cx="${sx+sz+4}" cy="${sy-sz-4}" r="7" fill="#E26A5A" stroke="#fff" stroke-width="1.5" data-handle="del" style="cursor:pointer" onclick="deleteDpSticker(${i})"/>
         <text x="${sx+sz+4}" y="${sy-sz-4}" text-anchor="middle" dominant-baseline="central" font-size="9" fill="#fff" style="pointer-events:none">✕</text>`;
     }
   });
 
   svg.innerHTML=html;
+  svg._dpBound=false; // innerHTML 교체 시 리스너 사라지므로 재등록 허용
   renderDpList();
   initDpStickerInteract();
 }
@@ -4246,159 +4247,106 @@ window.deleteDpSticker=function(i){
   renderDailyPlanner();
 };
 
-// ── 스티커 선택 상태
+// ── 스티커 인터랙션 (전역 단일 등록)
 let dpSelectedSticker=null;
+let _dpInteractMode=null, _dpInteractStart=null, _dpInteractData=null;
 
-window.dpSelectSticker=function(e,i){
-  e.stopPropagation();
-  if(dpSelectedSticker===i){return;} // 이미 선택됨 → 드래그 시작은 별도 처리
-  dpSelectedSticker=i;
-  renderDailyPlanner();
-};
-
-// SVG 배경 클릭 시 선택 해제
-function dpClearSelect(e){
-  if(e.target.closest('.dp-sticker'))return;
-  if(dpSelectedSticker!==null){dpSelectedSticker=null;renderDailyPlanner();}
+function dpGetSvgXY(e){
+  const svg=document.getElementById('dpSvg');
+  if(!svg)return{x:0,y:0};
+  const rect=svg.getBoundingClientRect();
+  return{
+    x:(e.clientX-rect.left)/rect.width*svg.viewBox.baseVal.width,
+    y:(e.clientY-rect.top)/rect.height*svg.viewBox.baseVal.height
+  };
 }
 
-function initDpStickerInteract(){
+// window 레벨 mousemove/mouseup — 딱 한 번만 등록
+window.addEventListener('mousemove',e=>{
+  if(!_dpInteractMode||dpSelectedSticker===null)return;
   const svg=document.getElementById('dpSvg');
   if(!svg)return;
+  const W=svg.viewBox.baseVal.width, H=svg.viewBox.baseVal.height;
+  const p=dpGetSvgXY(e);
+  const sd=_dpInteractData;
 
-  // 이전 리스너 완전 제거 (clone으로 교체)
-  const newSvg=svg.cloneNode(true);
-  svg.parentNode.replaceChild(newSvg,svg);
-  const s=document.getElementById('dpSvg');
-
-  let mode=null,startX=0,startY=0,startData=null;
-
-  function getXY(e){
-    const rect=s.getBoundingClientRect();
-    return{
-      x:(e.clientX-rect.left)/rect.width*s.viewBox.baseVal.width,
-      y:(e.clientY-rect.top)/rect.height*s.viewBox.baseVal.height
+  if(_dpInteractMode==='move'){
+    dailyData.stickers[dpSelectedSticker]={
+      ...sd,
+      x:Math.max(0,Math.min(1,sd.x+(p.x-_dpInteractStart.x)/W)),
+      y:Math.max(0,Math.min(1,sd.y+(p.y-_dpInteractStart.y)/H))
     };
+  } else if(_dpInteractMode==='scale'){
+    const sx=sd.x*W, sy=sd.y*H;
+    const dist=Math.sqrt((p.x-sx)**2+(p.y-sy)**2);
+    dailyData.stickers[dpSelectedSticker]={...sd,scale:Math.max(0.3,Math.min(5,dist/(Math.min(W,H)*0.07)))};
+  } else if(_dpInteractMode==='rotate'){
+    const sx=sd.x*W, sy=sd.y*H;
+    dailyData.stickers[dpSelectedSticker]={...sd,rotate:Math.round(Math.atan2(p.y-sy,p.x-sx)*180/Math.PI+90)};
   }
+  renderDailyPlanner();
+});
+
+window.addEventListener('mouseup',()=>{
+  if(_dpInteractMode){
+    window.saveDailyData();
+    _dpInteractMode=null;
+    _dpInteractStart=null;
+    _dpInteractData=null;
+  }
+});
+
+function initDpStickerInteract(){
+  const s=document.getElementById('dpSvg');
+  if(!s||s._dpBound)return; // 이미 등록됨
+  s._dpBound=true;
 
   // 배경 클릭 → 선택 해제
   s.addEventListener('click',e=>{
-    if(!e.target.closest('.dp-sticker')){
-      if(dpSelectedSticker!==null){dpSelectedSticker=null;renderDailyPlanner();}
-    }
+    if(e.target.closest('[data-si]'))return;
+    if(dpSelectedSticker!==null){dpSelectedSticker=null;renderDailyPlanner();}
   });
 
   // 스티커 클릭 → 선택
   s.addEventListener('click',e=>{
-    const el=e.target.closest('.dp-sticker');
+    const el=e.target.closest('[data-si]');
     if(!el)return;
     e.stopPropagation();
-    const idx=[...s.querySelectorAll('.dp-sticker')].indexOf(el);
-    if(idx<0)return;
-    if(dpSelectedSticker===idx)return; // 이미 선택 → 무시
+    const idx=parseInt(el.dataset.si);
+    if(dpSelectedSticker===idx)return;
     dpSelectedSticker=idx;
     renderDailyPlanner();
   });
 
-  // 스티커 드래그 이동
+  // 스티커 드래그 → 이동
   s.addEventListener('mousedown',e=>{
-    const el=e.target.closest('.dp-sticker');
+    const el=e.target.closest('[data-si]');
     if(!el)return;
-    if(e.target.hasAttribute('onmousedown'))return; // 핸들은 별도
-    const idx=[...s.querySelectorAll('.dp-sticker')].indexOf(el);
-    if(idx<0)return;
+    if(e.target.closest('[data-handle]'))return;
+    e.preventDefault();e.stopPropagation();
+    const idx=parseInt(el.dataset.si);
     dpSelectedSticker=idx;
-    mode='move';
-    const c=getXY(e);
-    startX=c.x; startY=c.y;
-    startData={...dailyData.stickers[idx]};
-    e.preventDefault();
+    _dpInteractMode='move';
+    _dpInteractStart=dpGetSvgXY(e);
+    _dpInteractData={...dailyData.stickers[idx]};
     renderDailyPlanner();
-  });
-
-  window.addEventListener('mousemove',e=>{
-    if(!mode||dpSelectedSticker===null)return;
-    const sv=document.getElementById('dpSvg');
-    if(!sv)return;
-    const rect=sv.getBoundingClientRect();
-    const W=sv.viewBox.baseVal.width,H=sv.viewBox.baseVal.height;
-    const cx=(e.clientX-rect.left)/rect.width*W;
-    const cy=(e.clientY-rect.top)/rect.height*H;
-    if(mode==='move'){
-      dailyData.stickers[dpSelectedSticker]={
-        ...startData,
-        x:Math.max(0,Math.min(1,startData.x+(cx-startX)/W)),
-        y:Math.max(0,Math.min(1,startData.y+(cy-startY)/H))
-      };
-      renderDailyPlanner();
-    } else if(mode==='scale'){
-      const sx=startData.x*W,sy=startData.y*H;
-      const dist=Math.sqrt((cx-sx)**2+(cy-sy)**2);
-      dailyData.stickers[dpSelectedSticker]={...startData,scale:Math.max(0.3,Math.min(4,dist/(Math.min(W,H)*0.07)))};
-      renderDailyPlanner();
-    } else if(mode==='rotate'){
-      const sx=startData.x*W,sy=startData.y*H;
-      dailyData.stickers[dpSelectedSticker]={...startData,rotate:Math.round(Math.atan2(cy-sy,cx-sx)*180/Math.PI+90)};
-      renderDailyPlanner();
-    }
-  });
-
-  window.addEventListener('mouseup',()=>{
-    if(mode){window.saveDailyData();mode=null;startData=null;}
   });
 }
 
-// 크기 조절 시작
 window.dpScaleStart=function(e,i){
   e.stopPropagation();e.preventDefault();
   dpSelectedSticker=i;
-  const svg=document.getElementById('dpSvg');
-  const rect=svg.getBoundingClientRect();
-  const W=svg.viewBox.baseVal.width,H=svg.viewBox.baseVal.height;
-  const startData={...dailyData.stickers[i]};
-  const sx=startData.x*W, sy=startData.y*H;
-  const base=Math.min(W,H)*0.07;
-  function onMove(ev){
-    const cx=(ev.clientX-rect.left)/rect.width*W;
-    const cy=(ev.clientY-rect.top)/rect.height*H;
-    const dist=Math.sqrt((cx-sx)**2+(cy-sy)**2);
-    dailyData.stickers[i]={...startData,scale:Math.max(0.3,Math.min(4,dist/base))};
-    renderDailyPlanner();
-  }
-  function onUp(){
-    window.saveDailyData();
-    window.removeEventListener('mousemove',onMove);
-    window.removeEventListener('mouseup',onUp);
-  }
-  window.addEventListener('mousemove',onMove);
-  window.addEventListener('mouseup',onUp);
+  _dpInteractMode='scale';
+  _dpInteractStart=dpGetSvgXY(e);
+  _dpInteractData={...dailyData.stickers[i]};
 };
-
-// 회전 시작
 window.dpRotateStart=function(e,i){
   e.stopPropagation();e.preventDefault();
   dpSelectedSticker=i;
-  const svg=document.getElementById('dpSvg');
-  const rect=svg.getBoundingClientRect();
-  const W=svg.viewBox.baseVal.width,H=svg.viewBox.baseVal.height;
-  const startData={...dailyData.stickers[i]};
-  const sx=startData.x*W, sy=startData.y*H;
-  function onMove(ev){
-    const cx=(ev.clientX-rect.left)/rect.width*W;
-    const cy=(ev.clientY-rect.top)/rect.height*H;
-    const angle=Math.atan2(cy-sy,cx-sx)*180/Math.PI+90;
-    dailyData.stickers[i]={...startData,rotate:Math.round(angle)};
-    renderDailyPlanner();
-  }
-  function onUp(){
-    window.saveDailyData();
-    window.removeEventListener('mousemove',onMove);
-    window.removeEventListener('mouseup',onUp);
-  }
-  window.addEventListener('mousemove',onMove);
-  window.addEventListener('mouseup',onUp);
+  _dpInteractMode='rotate';
+  _dpInteractStart=dpGetSvgXY(e);
+  _dpInteractData={...dailyData.stickers[i]};
 };
-
 window.dpStickerDragStart=function(e,i){e.preventDefault();};
 
 window.saveMission=async function(){
