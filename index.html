@@ -658,7 +658,8 @@ body{opacity:0;transition:opacity .25s ease}
 .dp-table td.dp-cell:hover{background:#EDF4FF}
 .dp-table td.dp-cell.filled{color:#fff;font-weight:500}
 .dp-table tr.dp-hour-border td{border-top:1px solid #C8D4E8}
-.dp-table td.dp-cell .dp-cell-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+.dp-table td.dp-cell.dp-selecting{background:#D6E8FF!important;outline:1.5px solid var(--accent)}
+.dp-table td.dp-cell.dp-selected{background:#D6E8FF!important;outline:1.5px solid var(--accent)}
 .dp-side-col{width:220px;flex-shrink:0;border-left:0.5px solid #E2E8F0;display:flex;flex-direction:column;background:#fff}
 .dp-side-header{padding:12px 14px 8px;font-size:11px;font-weight:600;color:#6B7A90;letter-spacing:.04em;border-bottom:0.5px solid #EEF1F8;flex-shrink:0}
 .dp-side-list{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
@@ -3937,8 +3938,8 @@ function renderDailyPlanner(){
         const cell=dailyData.cells&&dailyData.cells[key];
         const bg=cell?cell.color||ACCENT:'';
         html+=`<td class="dp-cell${cell?' filled':''}"
-          style="${bg?`background:${bg};color:#fff`:''}"
-          onclick="openDpCellModal('${key}','${timeLabel}~${nextLabel}','${DAYS[di]}요일')">
+          data-key="${key}"
+          style="${bg?`background:${bg};color:#fff`:''}">
           ${cell?`<span class="dp-cell-text">${cell.label}</span>`:''}
         </td>`;
       });
@@ -3947,6 +3948,7 @@ function renderDailyPlanner(){
   }
   html+='</tbody></table>';
   wrap.innerHTML=html;
+  initDpDrag(wrap);
 
   // 스티커 SVG 레이어
   if(svg){
@@ -3982,6 +3984,134 @@ function renderDailyPlanner(){
   }
   renderDpList();
 }
+
+// ── 테이블 드래그 선택
+let _dpDragStart=null, _dpDragKeys=new Set(), _dpIsDragging=false;
+
+function initDpDrag(wrap){
+  if(!wrap)return;
+
+  // 셀의 data-key 추출 헬퍼
+  function keyOf(el){return el?.dataset?.key||null;}
+
+  // 드래그 중 선택 범위 업데이트
+  function updateSelection(startKey, endKey){
+    // 모든 셀의 selecting 클래스 제거
+    wrap.querySelectorAll('.dp-selecting').forEach(el=>el.classList.remove('dp-selecting'));
+    _dpDragKeys.clear();
+    if(!startKey||!endKey)return;
+
+    // 모든 셀을 순서대로 배열
+    const allCells=[...wrap.querySelectorAll('td.dp-cell')];
+    const si=allCells.findIndex(c=>c.dataset.key===startKey);
+    const ei=allCells.findIndex(c=>c.dataset.key===endKey);
+    if(si<0||ei<0)return;
+
+    // 같은 열(요일)끼리만 선택 — 시작 열 기준
+    const startCol=startKey.split('-')[0]; // day key (sun/mon/...)
+    const from=Math.min(si,ei), to=Math.max(si,ei);
+    for(let i=from;i<=to;i++){
+      const cell=allCells[i];
+      if(cell.dataset.key?.startsWith(startCol)){
+        cell.classList.add('dp-selecting');
+        _dpDragKeys.add(cell.dataset.key);
+      }
+    }
+  }
+
+  wrap.addEventListener('mousedown',e=>{
+    const td=e.target.closest('td.dp-cell');
+    if(!td)return;
+    e.preventDefault();
+    _dpIsDragging=true;
+    _dpDragStart=keyOf(td);
+    _dpDragKeys.clear();
+    wrap.querySelectorAll('.dp-selecting,.dp-selected').forEach(el=>{
+      el.classList.remove('dp-selecting','dp-selected');
+    });
+    td.classList.add('dp-selecting');
+    _dpDragKeys.add(_dpDragStart);
+  });
+
+  wrap.addEventListener('mousemove',e=>{
+    if(!_dpIsDragging||!_dpDragStart)return;
+    const td=e.target.closest('td.dp-cell');
+    if(!td)return;
+    updateSelection(_dpDragStart, keyOf(td));
+  });
+
+  wrap.addEventListener('mouseup',e=>{
+    if(!_dpIsDragging)return;
+    _dpIsDragging=false;
+    const keys=[..._dpDragKeys];
+    wrap.querySelectorAll('.dp-selecting').forEach(el=>{
+      el.classList.remove('dp-selecting');
+      el.classList.add('dp-selected');
+    });
+    if(keys.length===0)return;
+    if(keys.length===1){
+      // 단일 셀 클릭 → 기존 모달
+      const key=keys[0];
+      const existCell=dailyData.cells&&dailyData.cells[key];
+      // 이미 채워진 셀은 편집 모달
+      openDpCellModal(key,'','');
+    } else {
+      // 다중 선택 → 일괄 입력 모달
+      openDpBulkModal(keys);
+    }
+  });
+
+  // 선택 해제 (테이블 바깥 클릭)
+  document.addEventListener('mousedown',e=>{
+    if(!wrap.contains(e.target)){
+      wrap.querySelectorAll('.dp-selected,.dp-selecting').forEach(el=>el.classList.remove('dp-selected','dp-selecting'));
+      _dpDragKeys.clear();
+    }
+  },{capture:true});
+}
+
+// 다중 선택 일괄 입력 모달
+let _dpBulkKeys=[];
+window.openDpBulkModal=function(keys){
+  _dpBulkKeys=keys;
+  const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
+  const colorDots=DP_COLORS.map(c=>`<div class="dp-color-dot${c===ACCENT?' active':''}" style="background:${c}" onclick="dpSelColor('${c}')" title="${c}"></div>`).join('');
+  document.getElementById('dpModalBg')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`
+  <div class="dp-modal-bg" id="dpModalBg" onclick="if(event.target===this)closeDpModal()">
+    <div class="dp-modal">
+      <div class="dp-modal-title">선택한 ${keys.length}칸에 일정 입력</div>
+      <input class="dp-label-input" id="dpCellInput" placeholder="내용 입력" maxlength="20"/>
+      <div><div style="font-size:11px;color:#9199AE;margin-bottom:6px">색상</div>
+        <div class="dp-color-row" id="dpColorRow">${colorDots}</div></div>
+      <div class="dp-modal-btns">
+        <button class="dp-mbtn del" onclick="deleteDpBulk()">비우기</button>
+        <button class="dp-mbtn cancel" onclick="closeDpModal()">취소</button>
+        <button class="dp-mbtn ok" onclick="confirmDpBulk()">저장</button>
+      </div>
+    </div>
+  </div>`);
+  setTimeout(()=>document.getElementById('dpCellInput')?.focus(),50);
+  document.getElementById('dpCellInput')?.addEventListener('keydown',e=>{
+    if(e.key==='Enter')window.confirmDpBulk();
+    if(e.key==='Escape')closeDpModal();
+  });
+};
+window.deleteDpBulk=function(){
+  if(!dailyData.cells)dailyData.cells={};
+  _dpBulkKeys.forEach(k=>delete dailyData.cells[k]);
+  closeDpModal();window.saveDailyData();renderDailyPlanner();
+};
+window.confirmDpBulk=function(){
+  const val=(document.getElementById('dpCellInput')?.value||'').trim();
+  const color=document.querySelector('#dpColorRow .dp-color-dot.active')?.title||
+    getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
+  if(!dailyData.cells)dailyData.cells={};
+  if(val)_dpBulkKeys.forEach(k=>{dailyData.cells[k]={label:val,color};});
+  closeDpModal();
+  window.saveDailyData();
+  renderDailyPlanner();
+};
 
 // 셀 클릭 모달
 let _dpCellKey=null;
