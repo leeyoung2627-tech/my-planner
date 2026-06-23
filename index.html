@@ -116,7 +116,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 #missionTracker{
   position:fixed;z-index:40;
   display:none;flex-direction:column;gap:0;
-  width:260px;
+  width:240px;
   filter:drop-shadow(0 4px 18px #0000001a);
 }
 #missionTracker.visible{display:flex}
@@ -3486,7 +3486,7 @@ function positionMissionTracker(){
   if(!app||!tracker)return;
   const rect=app.getBoundingClientRect();
 
-  const trackerW=260;
+  const trackerW=240;
   const gap=20;
 
   // 트래커: 메인창 왼쪽 끝에서 gap만큼 왼쪽
@@ -3502,96 +3502,56 @@ function positionMissionTracker(){
 }
 window.addEventListener('resize',positionMissionTracker);
 
-// SVG 경로 렌더링 — 지그재그 스네이크 레이아웃
+// SVG 렌더링 — 3열 그리드, 점선 없음, 파란 빈 하트
 function renderMissionSvg(){
   const nodes=missionData.nodes;
   const svg=document.getElementById('mtSvg');
   if(!svg)return;
 
-  const COL=2;
-  const colW=116;       // 열 간격 확대 (260px 트래커에 맞게)
-  const rowH=96;        // 행 간격 확대 (세로로 더 띄우기)
-  const padX=42, padY=46;
+  // ── 레이아웃 상수 (3열, 간격 넉넉히)
+  const COL=3;
+  const cellW=76;   // 열 간격
+  const cellH=72;   // 행 간격
+  const padX=38;    // 좌우 여백
+  const padY=36;    // 상하 여백
 
   const coords=nodes.map((_,i)=>{
     const row=Math.floor(i/COL);
     const col=i%COL;
-    const x=padX+(row%2===0?col:COL-1-col)*colW;
-    const y=padY+row*rowH;
+    const x=padX+col*cellW;
+    const y=padY+row*cellH;
     return{x,y};
   });
 
-  const totalRows=Math.ceil(nodes.length/COL);
-  const svgW=padX*2+(COL-1)*colW;
-  const svgH=padY*2+Math.max(0,totalRows-1)*rowH+28;
+  const totalRows=Math.ceil(Math.max(nodes.length,1)/COL);
+  const svgW=padX*2+(COL-1)*cellW;
+  const svgH=padY*2+(totalRows-1)*cellH+32;
 
   svg.setAttribute('viewBox',`0 0 ${svgW} ${svgH}`);
   svg.style.height=svgH+'px';
   svg.innerHTML='';
 
-  // 연결선 — 연한 회색 점선 (완료 구간은 선택 색상)
-  const baseColor = missionData.color || '#7ec8e3';
-  // 완료색: 선택 색 그대로 / 미완료: 매우 연하게
-  function lighten(hex, amount=0.55){
+  // ── 색상 계산
+  const baseColor=missionData.color||'#7ec8e3';
+  function lighten(hex,amount){
     const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-    const lr=Math.round(r+(255-r)*amount), lg=Math.round(g+(255-g)*amount), lb=Math.round(b+(255-b)*amount);
-    return `rgb(${lr},${lg},${lb})`;
+    return `rgb(${Math.round(r+(255-r)*amount)},${Math.round(g+(255-g)*amount)},${Math.round(b+(255-b)*amount)})`;
   }
-  const doneColor = baseColor;
-  const lightColor = lighten(baseColor, 0.60);   // 미완료 노드 채우기
-  const strokeColor = lighten(baseColor, 0.25);  // 미완료 테두리
+  // 완료: 채워진 하트(선택 색) / 미완료: 빈 하트(흰 배경 + 파란 테두리)
+  const doneColor=baseColor;
+  const emptyStroke=baseColor;      // 빈 하트 테두리 색 = 선택 색
+  const emptyFill='#ffffff';        // 빈 하트 내부 = 흰색
+  const hoverFill=lighten(baseColor,0.82); // 호버시 빈 하트 내부
 
-  const lineG=document.createElementNS('http://www.w3.org/2000/svg','g');
-  for(let i=0;i<coords.length-1;i++){
-    const a=coords[i],b=coords[i+1];
-    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-    line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);
-    line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
-    const bothDone=nodes[i].done&&nodes[i+1].done;
-    line.setAttribute('stroke', bothDone ? doneColor : '#d8d8d8');
-    line.setAttribute('stroke-width','2.5');
-    line.setAttribute('stroke-linecap','round');
-    line.setAttribute('stroke-dasharray', bothDone ? 'none' : '5 5');
-    lineG.appendChild(line);
-  }
-  svg.appendChild(lineG);
-
-  // 옆으로 누운 물방울 path 생성
-  // 이미지 참조: 왼쪽에 뾰족한 꼬리, 오른쪽이 통통한 둥근 몸통
-  function makeDropPath(cx, cy){
-    // cx,cy = 물방울 중심 (몸통 중심 기준)
-    const rX=20, rY=14; // 몸통 가로/세로 반지름
-    const tailLen=18;   // 꼬리 길이
-    // cubic bezier로 왼쪽 꼬리 뾰족하게
-    return `
-      M ${cx-rX} ${cy}
-      C ${cx-rX-4} ${cy-rY*0.4}, ${cx-rX-tailLen} ${cy-2}, ${cx-rX-tailLen+2} ${cy}
-      C ${cx-rX-tailLen} ${cy+2}, ${cx-rX-4} ${cy+rY*0.4}, ${cx-rX} ${cy}
-      M ${cx} ${cy}
-      m -${rX} 0
-      a ${rX} ${rY} 0 1 1 ${rX*2} 0
-      a ${rX} ${rY} 0 1 1 -${rX*2} 0
-    `.trim();
+  // ── 하트 path (cx, cy = 하트 중심)
+  function makeHeart(cx, cy){
+    const s=18; // 크기
+    return `M ${cx} ${cy+s*0.52}
+      C ${cx-s*1.18} ${cy-s*0.08}, ${cx-s*0.48} ${cy-s*1.0}, ${cx} ${cy-s*0.26}
+      C ${cx+s*0.48} ${cy-s*1.0}, ${cx+s*1.18} ${cy-s*0.08}, ${cx} ${cy+s*0.52} Z`;
   }
 
-  // 통통한 하트 path (cx, cy = 하트 중심)
-  function makeDropShape(cx, cy){
-    const s = 22; // 크기 스케일
-    // 클래식 하트: 위쪽 두 볼록 + 아래 뾰족
-    const d = `
-      M ${cx} ${cy + s*0.55}
-      C ${cx - s*1.25} ${cy - s*0.1},
-        ${cx - s*0.5}  ${cy - s*1.05},
-        ${cx}          ${cy - s*0.28}
-      C ${cx + s*0.5}  ${cy - s*1.05},
-        ${cx + s*1.25} ${cy - s*0.1},
-        ${cx}          ${cy + s*0.55}
-      Z
-    `;
-    return d;
-  }
-
-  // 툴팁 div (없으면 생성)
+  // ── 툴팁
   let tooltip=document.getElementById('mtTooltip');
   if(!tooltip){
     tooltip=document.createElement('div');
@@ -3600,32 +3560,35 @@ function renderMissionSvg(){
     document.body.appendChild(tooltip);
   }
 
-  // 노드
+  // ── 노드 렌더
   coords.forEach((pos,i)=>{
     const node=nodes[i];
     const g=document.createElementNS('http://www.w3.org/2000/svg','g');
     g.setAttribute('class','mt-node'+(node.done?' done':''));
     g.style.cursor='pointer';
 
-    const drop=document.createElementNS('http://www.w3.org/2000/svg','path');
-    drop.setAttribute('d', makeDropShape(pos.x, pos.y));
-    // 색상 직접 적용 (CSS보다 우선순위 높은 attribute로)
-    const fillDone = doneColor;
-    const fillLight = lightColor;
-    const fillHover = lighten(baseColor, 0.40); // 호버시 미완료 색
-    drop.setAttribute('fill', node.done ? fillDone : fillLight);
-    drop.setAttribute('stroke', strokeColor);
-    drop.setAttribute('stroke-width','1.6');
-    drop.style.filter = node.done
-      ? `drop-shadow(0 3px 9px ${doneColor}55)`
-      : 'drop-shadow(0 2px 5px #0000000e)';
-    drop.style.transition='fill .22s,filter .22s';
-    g.appendChild(drop);
+    const heart=document.createElementNS('http://www.w3.org/2000/svg','path');
+    heart.setAttribute('d', makeHeart(pos.x, pos.y));
 
-    // 호버 툴팁
+    if(node.done){
+      // 완료: 속이 꽉 찬 하트
+      heart.setAttribute('fill', doneColor);
+      heart.setAttribute('stroke', doneColor);
+      heart.setAttribute('stroke-width','1.2');
+      heart.style.filter=`drop-shadow(0 2px 6px ${doneColor}66)`;
+    } else {
+      // 미완료: 빈 하트 (흰 배경, 파란 테두리)
+      heart.setAttribute('fill', emptyFill);
+      heart.setAttribute('stroke', emptyStroke);
+      heart.setAttribute('stroke-width','2');
+    }
+    heart.style.transition='fill .18s,filter .18s';
+    g.appendChild(heart);
+
+    // 호버 효과
     const label=node.label||'미션';
     g.addEventListener('mouseenter',e=>{
-      if(!node.done) drop.setAttribute('fill', fillHover);
+      if(!node.done) heart.setAttribute('fill', hoverFill);
       tooltip.textContent=label;
       tooltip.style.display='block';
       const tx=Math.min(e.clientX-60,window.innerWidth-180);
@@ -3640,7 +3603,7 @@ function renderMissionSvg(){
       tooltip.style.top=ty+'px';
     });
     g.addEventListener('mouseleave',()=>{
-      drop.setAttribute('fill', node.done ? fillDone : fillLight);
+      heart.setAttribute('fill', node.done ? doneColor : emptyFill);
       tooltip.style.display='none';
     });
 
@@ -3654,7 +3617,6 @@ function renderMissionSvg(){
 
     svg.appendChild(g);
   });
-
 }
 
 function toggleMissionNode(idx){
