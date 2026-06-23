@@ -197,9 +197,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .mt-tooltip{
   position:fixed;z-index:200;
   background:#fff;
-  border:1.5px solid #a8d8f0;
+  border:1.5px solid #ddd;
   border-radius:12px;
-  box-shadow:0 6px 20px #7ec8e330;
+  box-shadow:0 6px 20px #00000012;
   padding:8px 12px;
   font-size:12px;color:#333;
   font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
@@ -211,7 +211,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .mt-tooltip::after{
   content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);
   border:7px solid transparent;
-  border-top:7px solid #a8d8f0;
+  border-top:7px solid #ddd;
   border-bottom:none;
 }
 /* 하단 버튼 */
@@ -3511,9 +3511,9 @@ function renderMissionSvg(){
   // ── 레이아웃 상수 (3열, 간격 넉넉히)
   const COL=3;
   const cellW=76;   // 열 간격
-  const cellH=72;   // 행 간격
+  const cellH=80;   // 행 간격
   const padX=38;    // 좌우 여백
-  const padY=36;    // 상하 여백
+  const padY=40;    // 상하 여백
 
   const coords=nodes.map((_,i)=>{
     const row=Math.floor(i/COL);
@@ -3545,7 +3545,7 @@ function renderMissionSvg(){
 
   // ── 하트 path (cx, cy = 하트 중심)
   function makeHeart(cx, cy){
-    const s=18; // 크기
+    const s=26; // 크기
     return `M ${cx} ${cy+s*0.52}
       C ${cx-s*1.18} ${cy-s*0.08}, ${cx-s*0.48} ${cy-s*1.0}, ${cx} ${cy-s*0.26}
       C ${cx+s*0.48} ${cy-s*1.0}, ${cx+s*1.18} ${cy-s*0.08}, ${cx} ${cy+s*0.52} Z`;
