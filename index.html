@@ -643,7 +643,15 @@ body{opacity:0;transition:opacity .25s ease}
 #dpTableWrap{position:relative;z-index:1}
 .dp-table{border-collapse:collapse;width:100%;min-width:500px;table-layout:fixed}
 .dp-table th{background:#fff;font-size:11px;font-weight:600;color:#4B5470;padding:6px 4px;text-align:center;border:0.5px solid #E2E8F0;position:sticky;top:0;z-index:2}
-.dp-table th.sun{color:#E26A5A}
+.dp-check-item{display:flex;align-items:flex-start;gap:7px;padding:5px 4px;border-bottom:0.5px solid #F0F3FA}
+.dp-check-item:last-child{border-bottom:none}
+.dp-check-box{width:16px;height:16px;border-radius:4px;border:1.5px solid #C8D4E8;flex-shrink:0;cursor:pointer;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.12s}
+.dp-check-box.checked{background:var(--accent);border-color:var(--accent)}
+.dp-check-box.checked::after{content:'✓';font-size:10px;color:#fff;font-weight:700}
+.dp-check-text{flex:1;font-size:12px;color:#1C2033;line-height:1.4;cursor:pointer;word-break:break-all}
+.dp-check-text.checked{color:#B0B8CC;text-decoration:line-through}
+.dp-check-del{font-size:11px;color:#D0D5E0;background:none;border:none;cursor:pointer;padding:0 2px;flex-shrink:0}
+.dp-check-del:hover{color:#E26A5A}
 .dp-table th.sat{color:#2B7FFF}
 .dp-table td.dp-time-col{font-size:10px;color:#9199AE;text-align:center;padding:0 4px;background:#FAFBFF;border:0.5px solid #E2E8F0;white-space:nowrap;position:sticky;left:0;z-index:1}
 .dp-table td.dp-cell{border:0.5px solid #E8EDF5;padding:2px 4px;cursor:pointer;transition:background .1s;vertical-align:top;height:28px;font-size:10px;color:#1C2033;position:relative}
@@ -774,13 +782,16 @@ body{opacity:0;transition:opacity .25s ease}
     </div>
 
     <div id="tab-schedule" class="tab-content active">
-      <!-- 하루계획표 모드일 때만 보이는 일정 목록 -->
-      <div id="dpScheduleSection" style="display:none;flex-direction:column;gap:6px">
-        <div style="font-size:11px;font-weight:600;color:#6B7A90;letter-spacing:.04em;padding-bottom:4px;border-bottom:0.5px solid #EEF1F8">DAILY PLAN</div>
-        <div id="dpSlotList"><div class="dp-empty-hint">아직 일정이 없어요</div></div>
-        <button class="dp-add-btn" onclick="openDpModal(null)">＋ 일정 추가</button>
-        <button class="dp-sticker-btn" onclick="openDpEmojiPanel(event)">🎨 이모지 스티커</button>
-        <hr style="border:none;border-top:0.5px solid #EEF1F8;margin:4px 0"/>
+      <!-- 하루계획표 모드일 때만 보이는 먼슬리 체크리스트 -->
+      <div id="dpScheduleSection" style="display:none;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:4px;border-bottom:0.5px solid #EEF1F8">
+          <span style="font-size:11px;font-weight:600;color:#6B7A90;letter-spacing:.04em">MONTHLY CHECKLIST</span>
+          <button class="dp-add-btn" onclick="openDpCheckModal()" style="width:auto;padding:3px 10px;font-size:10px;border-style:solid">＋ 추가</button>
+        </div>
+        <div id="dpCheckList"></div>
+        <div style="border-top:0.5px solid #EEF1F8;padding-top:6px">
+          <button class="dp-sticker-btn" onclick="openDpEmojiPanel(event)">🎨 이모지 스티커</button>
+        </div>
       </div>
       <!-- 기본 일정 목록 -->
       <div id="schedule-list"></div>
@@ -1565,6 +1576,7 @@ function setLeftMode(mode){
     document.querySelector('.tab[onclick*="schedule"]')?.classList.add('active');
     document.getElementById('tab-schedule')?.classList.add('active');
     renderDailyPlanner();
+    renderDpCheckList();
   }
 }
 window.handleLeftBack=function(){
@@ -3868,7 +3880,7 @@ function loadDailyData(raw){
     if(typeof v==='string') slots[k]={label:v,color:''};
     else if(v&&typeof v==='object') slots[k]={label:v.label||'',color:v.color||''};
   });
-  dailyData={slots,stickers:raw.stickers||[],cells:raw.cells||{}};
+  dailyData={slots,stickers:raw.stickers||[],cells:raw.cells||{},checks:raw.checks||[]};
 }
 
 window.saveDailyData = async function(){
@@ -3876,7 +3888,8 @@ window.saveDailyData = async function(){
   await setDoc(doc(db,'users',currentUser.uid,'settings','dailyPlanner'),{
     slots:dailyData.slots||{},
     stickers:dailyData.stickers||[],
-    cells:dailyData.cells||{}
+    cells:dailyData.cells||{},
+    checks:dailyData.checks||[]
   });
   showSaving();
 };
@@ -3911,6 +3924,7 @@ function renderDailyPlanner(){
   </tr></thead><tbody>`;
 
   for(let h=0;h<24;h++){
+    if(h>=3&&h<8)continue; // 새벽 3시~8시 제외
     for(let m=0;m<60;m+=30){
       const isHour=m===0;
       const nextH=m===30?h+1:h, nextM=m===30?0:30;
@@ -4012,6 +4026,81 @@ window.deleteDpCell=function(key){
   renderDailyPlanner();
 };
 
+
+// ── 먼슬리 체크리스트
+function renderDpCheckList(){
+  const list=document.getElementById('dpCheckList');
+  if(!list)return;
+  const checks=dailyData.checks||[];
+  if(!checks.length){
+    list.innerHTML='<div class="dp-empty-hint">체크리스트를 추가해보세요</div>';
+    return;
+  }
+  list.innerHTML=checks.map((item,i)=>`
+    <div class="dp-check-item">
+      <div class="dp-check-box${item.done?' checked':''}" onclick="toggleDpCheck(${i})"></div>
+      <span class="dp-check-text${item.done?' checked':''}" ondblclick="editDpCheck(${i})">${item.label}</span>
+      <button class="dp-check-del" onclick="deleteDpCheck(${i})">✕</button>
+    </div>`).join('');
+}
+window.openDpCheckModal=function(){
+  document.getElementById('dpCheckModalBg')?.remove();
+  const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
+  document.body.insertAdjacentHTML('beforeend',`
+  <div class="dp-modal-bg" id="dpCheckModalBg" onclick="if(event.target===this)this.remove()">
+    <div class="dp-modal">
+      <div class="dp-modal-title">체크리스트 추가</div>
+      <input class="dp-label-input" id="dpCheckInput" placeholder="할 일 입력" maxlength="30"/>
+      <div class="dp-modal-btns">
+        <button class="dp-mbtn cancel" onclick="document.getElementById('dpCheckModalBg').remove()">취소</button>
+        <button class="dp-mbtn ok" onclick="confirmDpCheck()">추가</button>
+      </div>
+    </div>
+  </div>`);
+  setTimeout(()=>document.getElementById('dpCheckInput')?.focus(),50);
+  document.getElementById('dpCheckInput')?.addEventListener('keydown',e=>{
+    if(e.key==='Enter')window.confirmDpCheck();
+    if(e.key==='Escape')document.getElementById('dpCheckModalBg')?.remove();
+  });
+};
+window.confirmDpCheck=function(){
+  const val=(document.getElementById('dpCheckInput')?.value||'').trim();
+  if(!val)return;
+  if(!dailyData.checks)dailyData.checks=[];
+  dailyData.checks.push({label:val,done:false});
+  document.getElementById('dpCheckModalBg')?.remove();
+  window.saveDailyData();
+  renderDpCheckList();
+};
+window.toggleDpCheck=function(i){
+  if(!dailyData.checks||!dailyData.checks[i])return;
+  dailyData.checks[i].done=!dailyData.checks[i].done;
+  window.saveDailyData();
+  renderDpCheckList();
+};
+window.editDpCheck=function(i){
+  const item=dailyData.checks&&dailyData.checks[i];
+  if(!item)return;
+  document.getElementById('dpCheckModalBg')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`
+  <div class="dp-modal-bg" id="dpCheckModalBg" onclick="if(event.target===this)this.remove()">
+    <div class="dp-modal">
+      <div class="dp-modal-title">수정</div>
+      <input class="dp-label-input" id="dpCheckInput" value="${item.label}" maxlength="30"/>
+      <div class="dp-modal-btns">
+        <button class="dp-mbtn cancel" onclick="document.getElementById('dpCheckModalBg').remove()">취소</button>
+        <button class="dp-mbtn ok" onclick="(function(){const v=document.getElementById('dpCheckInput').value.trim();if(v){dailyData.checks[${i}].label=v;window.saveDailyData();renderDpCheckList();}document.getElementById('dpCheckModalBg').remove();})()">저장</button>
+      </div>
+    </div>
+  </div>`);
+  setTimeout(()=>document.getElementById('dpCheckInput')?.focus(),50);
+};
+window.deleteDpCheck=function(i){
+  if(!dailyData.checks)return;
+  dailyData.checks.splice(i,1);
+  window.saveDailyData();
+  renderDpCheckList();
+};
 
 function renderDpList(){
   const list=document.getElementById('dpSlotList');
