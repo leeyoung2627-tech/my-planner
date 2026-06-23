@@ -654,7 +654,7 @@ body{opacity:0;transition:opacity .25s ease}
 .dp-check-del:hover{color:#E26A5A}
 .dp-table th.sat{color:#2B7FFF}
 .dp-table td.dp-time-col{font-size:10px;color:#9199AE;text-align:center;padding:0 4px;background:#FAFBFF;border:0.5px solid #E2E8F0;white-space:nowrap;position:sticky;left:0;z-index:1}
-.dp-table td.dp-cell{border:0.5px solid #E8EDF5;padding:2px 4px;cursor:pointer;transition:background .1s;vertical-align:top;height:28px;font-size:10px;color:#1C2033;position:relative}
+.dp-table td.dp-cell{border:0.5px solid #E8EDF5;padding:2px 4px;cursor:pointer;transition:background .1s;vertical-align:middle;height:32px;font-size:10px;color:#1C2033;position:relative;text-align:center}
 .dp-table td.dp-cell:hover{background:#EDF4FF}
 .dp-table td.dp-cell.filled{color:#fff;font-weight:500}
 .dp-table tr.dp-hour-border td{border-top:1px solid #C8D4E8}
@@ -4111,15 +4111,13 @@ let _dpBulkKeys=[];
 window.openDpBulkModal=function(keys){
   _dpBulkKeys=keys;
   const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
-  const colorDots=DP_COLORS.map(c=>`<div class="dp-color-dot${c===ACCENT?' active':''}" style="background:${c}" onclick="dpSelColor('${c}')" title="${c}"></div>`).join('');
   document.getElementById('dpModalBg')?.remove();
   document.body.insertAdjacentHTML('beforeend',`
   <div class="dp-modal-bg" id="dpModalBg" onclick="if(event.target===this)closeDpModal()">
     <div class="dp-modal">
       <div class="dp-modal-title">선택한 ${keys.length}칸에 일정 입력</div>
       <input class="dp-label-input" id="dpCellInput" placeholder="내용 입력" maxlength="20"/>
-      <div><div style="font-size:11px;color:#9199AE;margin-bottom:6px">색상</div>
-        <div class="dp-color-row" id="dpColorRow">${colorDots}</div></div>
+      ${dpColorPickerHtml(ACCENT)}
       <div class="dp-modal-btns">
         <button class="dp-mbtn del" onclick="deleteDpBulk()">비우기</button>
         <button class="dp-mbtn cancel" onclick="closeDpModal()">취소</button>
@@ -4140,8 +4138,9 @@ window.deleteDpBulk=function(){
 };
 window.confirmDpBulk=function(){
   const val=(document.getElementById('dpCellInput')?.value||'').trim();
-  const color=document.querySelector('#dpColorRow .dp-color-dot.active')?.title||
-    getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
+  const activeDot=document.querySelector('#dpColorRow .dp-color-dot.active');
+  const color=activeDot?activeDot.title:(document.getElementById('dpColorCustom')?.value||
+    getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF');
   if(!dailyData.cells)dailyData.cells={};
   if(val)_dpBulkKeys.forEach(k=>{dailyData.cells[k]={label:val,color};});
   closeDpModal();
@@ -4151,19 +4150,40 @@ window.confirmDpBulk=function(){
 
 // 셀 클릭 모달
 let _dpCellKey=null;
+// 색상 선택 UI 공통 생성 함수
+function dpColorPickerHtml(currentColor){
+  const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
+  const cur=currentColor||ACCENT;
+  const dots=DP_COLORS.map(c=>`<div class="dp-color-dot${cur===c?' active':''}" style="background:${c}" onclick="dpSelColor('${c}')" title="${c}"></div>`).join('');
+  return `<div>
+    <div style="font-size:11px;color:#9199AE;margin-bottom:6px">색상</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="dp-color-row" id="dpColorRow">${dots}</div>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:#9199AE" title="직접 선택">
+        <div id="dpColorCustomPreview" style="width:22px;height:22px;border-radius:50%;background:${cur};border:2px solid #ddd;flex-shrink:0"></div>
+        <input type="color" id="dpColorCustom" value="${cur}" style="width:0;height:0;opacity:0;padding:0;border:none;position:absolute"
+          oninput="dpSelCustomColor(this.value)"/>
+        자유
+      </label>
+    </div>
+  </div>`;
+}
+window.dpSelCustomColor=function(c){
+  document.getElementById('dpColorCustomPreview').style.background=c;
+  document.querySelectorAll('.dp-color-dot').forEach(d=>d.classList.remove('active'));
+};
+
 window.openDpCellModal=function(key,timeStr,dayStr){
   _dpCellKey=key;
   const cell=dailyData.cells&&dailyData.cells[key];
   const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
-  const colorDots=DP_COLORS.map(c=>`<div class="dp-color-dot${(cell?.color||ACCENT)===c?' active':''}" style="background:${c}" onclick="dpSelColor('${c}')" title="${c}"></div>`).join('');
   document.getElementById('dpModalBg')?.remove();
   document.body.insertAdjacentHTML('beforeend',`
   <div class="dp-modal-bg" id="dpModalBg" onclick="if(event.target===this)closeDpModal()">
     <div class="dp-modal">
       <div class="dp-modal-title">${dayStr} ${timeStr}</div>
       <input class="dp-label-input" id="dpCellInput" placeholder="내용 입력" value="${cell?.label||''}" maxlength="20"/>
-      <div><div style="font-size:11px;color:#9199AE;margin-bottom:6px">색상</div>
-        <div class="dp-color-row" id="dpColorRow">${colorDots}</div></div>
+      ${dpColorPickerHtml(cell?.color||ACCENT)}
       <div class="dp-modal-btns">
         ${cell?`<button class="dp-mbtn del" onclick="deleteDpCell('${key}')">삭제</button>`:''}
         <button class="dp-mbtn cancel" onclick="closeDpModal()">취소</button>
@@ -4177,7 +4197,8 @@ window.openDpCellModal=function(key,timeStr,dayStr){
 window.confirmDpCell=function(){
   const val=(document.getElementById('dpCellInput')?.value||'').trim();
   const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
-  const color=document.querySelector('.dp-color-dot.active')?.title||ACCENT;
+  const activeDot=document.querySelector('#dpColorRow .dp-color-dot.active');
+  const color=activeDot?activeDot.title:(document.getElementById('dpColorCustom')?.value||ACCENT);
   if(!dailyData.cells)dailyData.cells={};
   if(val)dailyData.cells[_dpCellKey]={label:val,color};
   else delete dailyData.cells[_dpCellKey];
@@ -4205,8 +4226,9 @@ function renderDpCheckList(){
   list.innerHTML=checks.map((item,i)=>`
     <div class="dp-check-item">
       <div class="dp-check-box${item.done?' checked':''}" onclick="toggleDpCheck(${i})"></div>
-      <span class="dp-check-text${item.done?' checked':''}" ondblclick="editDpCheck(${i})">${item.label}</span>
-      <button class="dp-check-del" onclick="deleteDpCheck(${i})">✕</button>
+      <span class="dp-check-text${item.done?' checked':''}">${item.label}</span>
+      <button class="dp-check-del" onclick="editDpCheck(${i})" title="수정" style="color:#9199AE;font-size:12px">✎</button>
+      <button class="dp-check-del" onclick="deleteDpCheck(${i})" title="삭제">✕</button>
     </div>`).join('');
 }
 window.openDpCheckModal=function(){
@@ -4244,22 +4266,40 @@ window.toggleDpCheck=function(i){
   window.saveDailyData();
   renderDpCheckList();
 };
+let _dpCheckEditIdx=null;
 window.editDpCheck=function(i){
+  _dpCheckEditIdx=i;
   const item=dailyData.checks&&dailyData.checks[i];
   if(!item)return;
   document.getElementById('dpCheckModalBg')?.remove();
   document.body.insertAdjacentHTML('beforeend',`
   <div class="dp-modal-bg" id="dpCheckModalBg" onclick="if(event.target===this)this.remove()">
     <div class="dp-modal">
-      <div class="dp-modal-title">수정</div>
-      <input class="dp-label-input" id="dpCheckInput" value="${item.label}" maxlength="30"/>
+      <div class="dp-modal-title">항목 수정</div>
+      <input class="dp-label-input" id="dpCheckEditInput" value="${item.label}" maxlength="30"/>
       <div class="dp-modal-btns">
         <button class="dp-mbtn cancel" onclick="document.getElementById('dpCheckModalBg').remove()">취소</button>
-        <button class="dp-mbtn ok" onclick="(function(){const v=document.getElementById('dpCheckInput').value.trim();if(v){dailyData.checks[${i}].label=v;window.saveDailyData();renderDpCheckList();}document.getElementById('dpCheckModalBg').remove();})()">저장</button>
+        <button class="dp-mbtn ok" onclick="confirmDpCheckEdit()">저장</button>
       </div>
     </div>
   </div>`);
-  setTimeout(()=>document.getElementById('dpCheckInput')?.focus(),50);
+  setTimeout(()=>{
+    const inp=document.getElementById('dpCheckEditInput');
+    inp?.focus(); inp?.select();
+  },50);
+  document.getElementById('dpCheckEditInput')?.addEventListener('keydown',e=>{
+    if(e.key==='Enter')window.confirmDpCheckEdit();
+    if(e.key==='Escape')document.getElementById('dpCheckModalBg')?.remove();
+  });
+};
+window.confirmDpCheckEdit=function(){
+  const val=(document.getElementById('dpCheckEditInput')?.value||'').trim();
+  if(val&&dailyData.checks&&dailyData.checks[_dpCheckEditIdx]){
+    dailyData.checks[_dpCheckEditIdx].label=val;
+    window.saveDailyData();
+    renderDpCheckList();
+  }
+  document.getElementById('dpCheckModalBg')?.remove();
 };
 window.deleteDpCheck=function(i){
   if(!dailyData.checks)return;
