@@ -639,10 +639,18 @@ body{opacity:0;transition:opacity .25s ease}
 .mbtn.cancel{background:#f0f0f0;color:#666}
 .mbtn.ok{background:var(--accent);color:#fff}
 
-/* ── Daily Planner ── */
-.tab-daily-content{padding:0!important;overflow:hidden!important}
-.tab-daily-content #dailyView{display:flex;flex-direction:row;width:100%;height:100%;min-height:400px;overflow:hidden}
-.dp-circle-col{flex:1;display:flex;align-items:center;justify-content:center;background:#F8FAFF;overflow:auto;padding:20px}
+/* ── Daily Planner 사각 시간표 */
+#dpTableWrap{position:relative;z-index:1}
+.dp-table{border-collapse:collapse;width:100%;min-width:500px;table-layout:fixed}
+.dp-table th{background:#fff;font-size:11px;font-weight:600;color:#4B5470;padding:6px 4px;text-align:center;border:0.5px solid #E2E8F0;position:sticky;top:0;z-index:2}
+.dp-table th.sun{color:#E26A5A}
+.dp-table th.sat{color:#2B7FFF}
+.dp-table td.dp-time-col{font-size:10px;color:#9199AE;text-align:center;padding:0 4px;background:#FAFBFF;border:0.5px solid #E2E8F0;white-space:nowrap;position:sticky;left:0;z-index:1}
+.dp-table td.dp-cell{border:0.5px solid #E8EDF5;padding:2px 4px;cursor:pointer;transition:background .1s;vertical-align:top;height:28px;font-size:10px;color:#1C2033;position:relative}
+.dp-table td.dp-cell:hover{background:#EDF4FF}
+.dp-table td.dp-cell.filled{color:#fff;font-weight:500}
+.dp-table tr.dp-hour-border td{border-top:1px solid #C8D4E8}
+.dp-table td.dp-cell .dp-cell-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
 .dp-side-col{width:220px;flex-shrink:0;border-left:0.5px solid #E2E8F0;display:flex;flex-direction:column;background:#fff}
 .dp-side-header{padding:12px 14px 8px;font-size:11px;font-weight:600;color:#6B7A90;letter-spacing:.04em;border-bottom:0.5px solid #EEF1F8;flex-shrink:0}
 .dp-side-list{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
@@ -749,7 +757,8 @@ body{opacity:0;transition:opacity .25s ease}
         <button class="add-btn" onclick="openAnnivModal()" style="margin-top:4px">＋ 기념일 추가</button>
       </div>
       <div id="dailyView" style="display:none;flex:1;position:relative;background:#F8FAFF;overflow:hidden;min-height:400px">
-        <svg id="dpSvg" style="position:absolute;top:0;left:0;width:100%;height:100%"></svg>
+        <div id="dpTableWrap" style="width:100%;height:100%;overflow:auto"></div>
+        <svg id="dpSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></svg>
       </div>
     </div>
   </div>
@@ -3853,19 +3862,22 @@ document.addEventListener('click',e=>{
 let dailyData = { slots:{}, stickers:[] };
 
 function loadDailyData(raw){
-  if(!raw){dailyData={slots:{},stickers:[]};return;}
-  // 구형 형식 변환: { "360~480": "문자열" } → { "360~480": {label:"문자열", color:""} }
+  if(!raw){dailyData={slots:{},stickers:[],cells:{}};return;}
   const slots={};
   Object.entries(raw.slots||{}).forEach(([k,v])=>{
     if(typeof v==='string') slots[k]={label:v,color:''};
     else if(v&&typeof v==='object') slots[k]={label:v.label||'',color:v.color||''};
   });
-  dailyData={slots,stickers:raw.stickers||[]};
+  dailyData={slots,stickers:raw.stickers||[],cells:raw.cells||{}};
 }
 
 window.saveDailyData = async function(){
   if(!currentUser)return;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','dailyPlanner'), dailyData);
+  await setDoc(doc(db,'users',currentUser.uid,'settings','dailyPlanner'),{
+    slots:dailyData.slots||{},
+    stickers:dailyData.stickers||[],
+    cells:dailyData.cells||{}
+  });
   showSaving();
 };
 
@@ -3884,120 +3896,123 @@ function minToHHMM(m){
 function minToAngle(m){ return (m/(24*60))*360 - 90; }
 
 function renderDailyPlanner(){
+  const wrap=document.getElementById('dpTableWrap');
   const svg=document.getElementById('dpSvg');
-  if(!svg)return;
+  if(!wrap)return;
 
   const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
-  const wrap=document.getElementById('dailyView');
-  const W=wrap?wrap.clientWidth:600;
-  const H=wrap?wrap.clientHeight:500;
-  if(!W||!H)return;
+  const DAYS=['일','월','화','수','목','금','토'];
+  const DAYS_KEY=['sun','mon','tue','wed','thu','fri','sat'];
 
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  // 시간 행: 0:00~23:30 (30분 단위)
+  let html=`<table class="dp-table"><thead><tr>
+    <th style="width:68px">시간</th>
+    ${DAYS.map((d,i)=>`<th class="${i===0?'sun':i===6?'sat':''}">${d}요일</th>`).join('')}
+  </tr></thead><tbody>`;
 
-  // 원형 시간표 중심 및 반지름 — 컨테이너 중앙에 꽉 차게
-  const CX=W/2, CY=H/2;
-  const R=Math.min(W,H)*0.38;
-  const INNER=R*0.13/0.44*0.13;
-
-  let html='';
-
-  // 배경색
-  html+=`<rect width="${W}" height="${H}" fill="#F8FAFF"/>`;
-
-  // 원형 시간표
-  html+=`<circle cx="${CX}" cy="${CY}" r="${R}" fill="#EEF1F8" stroke="#D8E0EE" stroke-width="1"/>`;
-  for(let m=0;m<1440;m+=30){
-    const a=minToAngle(m)*Math.PI/180;
-    const isHour=m%60===0;
-    const r1=isHour?R*0.96:R*0.975;
-    html+=`<line x1="${CX+r1*Math.cos(a)}" y1="${CY+r1*Math.sin(a)}" x2="${CX+R*Math.cos(a)}" y2="${CY+R*Math.sin(a)}" stroke="${isHour?'#B8C4D8':'#D0D8E8'}" stroke-width="${isHour?1:0.7}"/>`;
+  for(let h=0;h<24;h++){
+    for(let m=0;m<60;m+=30){
+      const isHour=m===0;
+      const nextH=m===30?h+1:h, nextM=m===30?0:30;
+      const timeLabel=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      const nextLabel=`${String(nextH%24).padStart(2,'0')}:${String(nextM).padStart(2,'0')}`;
+      html+=`<tr class="${isHour?'dp-hour-border':''}">
+        <td class="dp-time-col">${timeLabel}<br><span style="color:#C5CDD8;font-size:9px">${nextLabel}</span></td>`;
+      DAYS_KEY.forEach((day,di)=>{
+        const key=`${day}-${h}-${m}`;
+        const cell=dailyData.cells&&dailyData.cells[key];
+        const bg=cell?cell.color||ACCENT:'';
+        html+=`<td class="dp-cell${cell?' filled':''}"
+          style="${bg?`background:${bg};color:#fff`:''}"
+          onclick="openDpCellModal('${key}','${timeLabel}~${nextLabel}','${DAYS[di]}요일')">
+          ${cell?`<span class="dp-cell-text">${cell.label}</span>`:''}
+        </td>`;
+      });
+      html+='</tr>';
+    }
   }
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
 
-  // 슬롯 호
-  Object.entries(dailyData.slots).forEach(([key,slot])=>{
-    if(!slot||!key||!key.includes('~'))return;
-    const[sM,eM]=key.split('~').map(Number);
-    if(isNaN(sM)||isNaN(eM)||eM<=sM)return;
-    const sa=minToAngle(sM)*Math.PI/180, ea=minToAngle(eM)*Math.PI/180;
-    const large=(eM-sM)>720?1:0;
-    const c=slot.color||ACCENT;
-    const label=slot.label||'';
-    const ir=R*0.3;
-    html+=`<path d="M${CX+ir*Math.cos(sa)},${CY+ir*Math.sin(sa)} L${CX+R*Math.cos(sa)},${CY+R*Math.sin(sa)} A${R},${R} 0 ${large},1 ${CX+R*Math.cos(ea)},${CY+R*Math.sin(ea)} L${CX+ir*Math.cos(ea)},${CY+ir*Math.sin(ea)} A${ir},${ir} 0 ${large},0 ${CX+ir*Math.cos(sa)},${CY+ir*Math.sin(sa)} Z"
-      fill="${c}" fill-opacity="0.85" stroke="#fff" stroke-width="1.5" style="cursor:pointer" onclick="editDpSlot('${key}')"/>`;
-    if(label){
-      const mid=(sM+eM)/2, mA=minToAngle(mid)*Math.PI/180, TR=(R+ir)/2;
-      const tx=CX+TR*Math.cos(mA), ty=CY+TR*Math.sin(mA);
-      let rot=minToAngle(mid)+90; if(rot>90&&rot<270)rot+=180;
-
-      // 칸 크기에 맞는 글씨 크기 계산
-      // 호 길이(분) 기반 세로 여유공간, 반지름 차이 기반 가로 여유공간
-      const durationMin=eM-sM;
-      const arcLen=TR*(durationMin/1440)*2*Math.PI; // 중간 반지름 기준 호 길이(px)
-      const radialH=(R-ir)*0.72;                    // 반지름 방향 여유 높이
-      // 글자 1개당 약 0.6em 너비 기준으로 맞춤
-      const maxW=Math.min(arcLen*0.85, radialH);
-      const charCount=label.length;
-      // 글씨가 칸에 맞도록 크기 결정 (최소 7, 최대 R*0.08)
-      const fontSize=Math.max(7, Math.min(R*0.08, maxW/charCount*1.4, arcLen*0.28));
-
-      // 글자 수가 칸에 안 맞으면 줄임
-      const maxChars=Math.max(1,Math.floor(arcLen/(fontSize*0.65)));
-      const displayLabel=label.length>maxChars?label.slice(0,maxChars-1)+'…':label;
-
-      html+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="${fontSize.toFixed(1)}" fill="#fff" font-weight="500" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none">${displayLabel}</text>`;
-    }
-  });
-
-  // 시각 라벨
-  [0,2,4,6,8,10,12,14,16,18,20,22].forEach(h=>{
-    const a=minToAngle(h*60)*Math.PI/180, LR=R+R*0.1;
-    html+=`<text x="${CX+LR*Math.cos(a)}" y="${CY+LR*Math.sin(a)}" text-anchor="middle" dominant-baseline="central" font-size="${R*0.065}" fill="#6B7A90" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif">${h}</text>`;
-  });
-
-  // 내부 빈 원
-  const ir2=R*0.3;
-  html+=`<circle cx="${CX}" cy="${CY}" r="${ir2}" fill="#fff" stroke="#E2E8F0" stroke-width="1.5"/>`;
-
-  // Y2K 스티커 — 좌표는 W,H 비율 기반
-  (dailyData.stickers||[]).forEach((s,i)=>{
-    const sx=s.x*W, sy=s.y*H;
-    const sc=s.scale||1;
-    const rot=s.rotate||0;
-    const sz=Math.min(W,H)*0.07*sc;
-    const isSelected=(dpSelectedSticker===i);
-    let shapeSvg='';
-
-    if(s.id&&s.id.startsWith('emoji:')){
-      // 이모지 스티커
-      const em=s.id.slice(6);
-      shapeSvg=`<text x="${sx}" y="${sy}" font-size="${sz*1.1}" text-anchor="middle" dominant-baseline="central" style="user-select:none;pointer-events:all">${em}</text>`;
-    } else {
-      // Y2K 도형 스티커 (shape: 접두어 있거나 없거나 모두 처리)
-      const shapeId=s.id&&s.id.startsWith('shape:')?s.id.slice(6):s.id;
-      shapeSvg=dpGetShapeSvg(shapeId,sx,sy,sz);
-    }
-    if(!shapeSvg)return;
-
-    html+=`<g class="dp-sticker" data-si="${i}" transform="rotate(${rot},${sx},${sy})" style="cursor:${isSelected?'move':'grab'};user-select:none">${shapeSvg}</g>`;
-    if(isSelected){
-      html+=`<rect x="${sx-sz-4}" y="${sy-sz-4}" width="${(sz+4)*2}" height="${(sz+4)*2}" fill="none" stroke="${ACCENT}" stroke-width="1.5" stroke-dasharray="4 3" rx="3" style="pointer-events:none"/>`;
-      html+=`<circle cx="${sx+sz+4}" cy="${sy+sz+4}" r="7" fill="${ACCENT}" stroke="#fff" stroke-width="1.5" data-handle="scale" style="cursor:nwse-resize" onmousedown="dpScaleStart(event,${i})"/>`;
-      html+=`<circle cx="${sx}" cy="${sy-sz-16}" r="7" fill="#fff" stroke="${ACCENT}" stroke-width="2" data-handle="rotate" style="cursor:crosshair" onmousedown="dpRotateStart(event,${i})"/>
-        <line x1="${sx}" y1="${sy-sz-4}" x2="${sx}" y2="${sy-sz-9}" stroke="${ACCENT}" stroke-width="1.5" style="pointer-events:none"/>`;
-      html+=`<circle cx="${sx+sz+4}" cy="${sy-sz-4}" r="7" fill="#E26A5A" stroke="#fff" stroke-width="1.5" data-handle="del" style="cursor:pointer" onclick="deleteDpSticker(${i})"/>
-        <text x="${sx+sz+4}" y="${sy-sz-4}" text-anchor="middle" dominant-baseline="central" font-size="9" fill="#fff" style="pointer-events:none">✕</text>`;
-    }
-  });
-
-  svg.innerHTML=html;
-  svg._dpBound=false; // innerHTML 교체 시 리스너 사라지므로 재등록 허용
+  // 스티커 SVG 레이어
+  if(svg){
+    const dv=document.getElementById('dailyView');
+    const W=dv?dv.clientWidth:600, H=dv?dv.clientHeight:500;
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    let sHtml='';
+    (dailyData.stickers||[]).forEach((s,i)=>{
+      const sx=s.x*W, sy=s.y*H, sc=s.scale||1, rot=s.rotate||0;
+      const sz=Math.min(W,H)*0.07*sc;
+      const isSelected=(dpSelectedSticker===i);
+      let shapeSvg='';
+      if(s.id&&s.id.startsWith('emoji:')){
+        shapeSvg=`<text x="${sx}" y="${sy}" font-size="${sz*1.1}" text-anchor="middle" dominant-baseline="central">${s.id.slice(6)}</text>`;
+      } else {
+        const shapeId=s.id&&s.id.startsWith('shape:')?s.id.slice(6):s.id;
+        shapeSvg=dpGetShapeSvg(shapeId,sx,sy,sz);
+      }
+      if(!shapeSvg)return;
+      sHtml+=`<g class="dp-sticker" data-si="${i}" transform="rotate(${rot},${sx},${sy})" style="cursor:${isSelected?'move':'grab'};user-select:none;pointer-events:all">${shapeSvg}</g>`;
+      if(isSelected){
+        sHtml+=`<rect x="${sx-sz-4}" y="${sy-sz-4}" width="${(sz+4)*2}" height="${(sz+4)*2}" fill="none" stroke="${ACCENT}" stroke-width="1.5" stroke-dasharray="4 3" rx="3" style="pointer-events:none"/>`;
+        sHtml+=`<circle cx="${sx+sz+4}" cy="${sy+sz+4}" r="7" fill="${ACCENT}" stroke="#fff" stroke-width="1.5" data-handle="scale" style="cursor:nwse-resize;pointer-events:all" onmousedown="dpScaleStart(event,${i})"/>`;
+        sHtml+=`<circle cx="${sx}" cy="${sy-sz-16}" r="7" fill="#fff" stroke="${ACCENT}" stroke-width="2" data-handle="rotate" style="cursor:crosshair;pointer-events:all" onmousedown="dpRotateStart(event,${i})"/>
+          <line x1="${sx}" y1="${sy-sz-4}" x2="${sx}" y2="${sy-sz-9}" stroke="${ACCENT}" stroke-width="1.5" style="pointer-events:none"/>`;
+        sHtml+=`<circle cx="${sx+sz+4}" cy="${sy-sz-4}" r="7" fill="#E26A5A" stroke="#fff" stroke-width="1.5" data-handle="del" style="cursor:pointer;pointer-events:all" onclick="deleteDpSticker(${i})"/>
+          <text x="${sx+sz+4}" y="${sy-sz-4}" text-anchor="middle" dominant-baseline="central" font-size="9" fill="#fff" style="pointer-events:none">✕</text>`;
+      }
+    });
+    svg.innerHTML=sHtml;
+    svg._dpBound=false;
+    initDpStickerInteract();
+  }
   renderDpList();
-  initDpStickerInteract();
 }
 
-function renderDpList(){
+// 셀 클릭 모달
+let _dpCellKey=null;
+window.openDpCellModal=function(key,timeStr,dayStr){
+  _dpCellKey=key;
+  const cell=dailyData.cells&&dailyData.cells[key];
+  const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
+  const colorDots=DP_COLORS.map(c=>`<div class="dp-color-dot${(cell?.color||ACCENT)===c?' active':''}" style="background:${c}" onclick="dpSelColor('${c}')" title="${c}"></div>`).join('');
+  document.getElementById('dpModalBg')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`
+  <div class="dp-modal-bg" id="dpModalBg" onclick="if(event.target===this)closeDpModal()">
+    <div class="dp-modal">
+      <div class="dp-modal-title">${dayStr} ${timeStr}</div>
+      <input class="dp-label-input" id="dpCellInput" placeholder="내용 입력" value="${cell?.label||''}" maxlength="20"/>
+      <div><div style="font-size:11px;color:#9199AE;margin-bottom:6px">색상</div>
+        <div class="dp-color-row" id="dpColorRow">${colorDots}</div></div>
+      <div class="dp-modal-btns">
+        ${cell?`<button class="dp-mbtn del" onclick="deleteDpCell('${key}')">삭제</button>`:''}
+        <button class="dp-mbtn cancel" onclick="closeDpModal()">취소</button>
+        <button class="dp-mbtn ok" onclick="confirmDpCell()">저장</button>
+      </div>
+    </div>
+  </div>`);
+  setTimeout(()=>document.getElementById('dpCellInput')?.focus(),50);
+  document.getElementById('dpCellInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')window.confirmDpCell();if(e.key==='Escape')closeDpModal();});
+};
+window.confirmDpCell=function(){
+  const val=(document.getElementById('dpCellInput')?.value||'').trim();
+  const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
+  const color=document.querySelector('.dp-color-dot.active')?.title||ACCENT;
+  if(!dailyData.cells)dailyData.cells={};
+  if(val)dailyData.cells[_dpCellKey]={label:val,color};
+  else delete dailyData.cells[_dpCellKey];
+  closeDpModal();
+  window.saveDailyData();
+  renderDailyPlanner();
+};
+window.deleteDpCell=function(key){
+  if(dailyData.cells)delete dailyData.cells[key];
+  closeDpModal();
+  window.saveDailyData();
+  renderDailyPlanner();
+};
+
+
   const list=document.getElementById('dpSlotList');
   if(!list)return;
   const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
