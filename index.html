@@ -4627,13 +4627,15 @@ function initDpStickerInteract(){
   if(!s||s._dpBound)return;
   s._dpBound=true;
 
-  // 배경 클릭 → 선택 해제
-  s.addEventListener('click',e=>{
-    if(e.target.closest('[data-si]'))return;
-    if(dpSelectedSticker!==null){dpSelectedSticker=null;renderDailyPlanner();}
+  // document 클릭 → 스티커 외부면 선택 해제
+  document.addEventListener('click',e=>{
+    if(dpSelectedSticker===null)return;
+    if(e.target.closest('[data-si]')||e.target.closest('[data-handle]'))return;
+    dpSelectedSticker=null;
+    renderDailyPlanner();
   });
 
-  // 스티커 클릭 → 선택 (버블링으로 위에 등록한 배경클릭과 구분)
+  // 스티커 클릭 → 선택
   s.addEventListener('click',e=>{
     const el=e.target.closest('[data-si]');
     if(!el)return;
