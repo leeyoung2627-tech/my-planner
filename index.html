@@ -3930,8 +3930,23 @@ function renderDailyPlanner(){
       const mid=(sM+eM)/2, mA=minToAngle(mid)*Math.PI/180, TR=(R+ir)/2;
       const tx=CX+TR*Math.cos(mA), ty=CY+TR*Math.sin(mA);
       let rot=minToAngle(mid)+90; if(rot>90&&rot<270)rot+=180;
-      const short=label.length>7?label.slice(0,6)+'…':label;
-      html+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="${R*0.07}" fill="#fff" font-weight="500" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none">${short}</text>`;
+
+      // 칸 크기에 맞는 글씨 크기 계산
+      // 호 길이(분) 기반 세로 여유공간, 반지름 차이 기반 가로 여유공간
+      const durationMin=eM-sM;
+      const arcLen=TR*(durationMin/1440)*2*Math.PI; // 중간 반지름 기준 호 길이(px)
+      const radialH=(R-ir)*0.72;                    // 반지름 방향 여유 높이
+      // 글자 1개당 약 0.6em 너비 기준으로 맞춤
+      const maxW=Math.min(arcLen*0.85, radialH);
+      const charCount=label.length;
+      // 글씨가 칸에 맞도록 크기 결정 (최소 7, 최대 R*0.08)
+      const fontSize=Math.max(7, Math.min(R*0.08, maxW/charCount*1.4, arcLen*0.28));
+
+      // 글자 수가 칸에 안 맞으면 줄임
+      const maxChars=Math.max(1,Math.floor(arcLen/(fontSize*0.65)));
+      const displayLabel=label.length>maxChars?label.slice(0,maxChars-1)+'…':label;
+
+      html+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="${fontSize.toFixed(1)}" fill="#fff" font-weight="500" font-family="Apple SD Gothic Neo,Malgun Gothic,sans-serif" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none">${displayLabel}</text>`;
     }
   });
 
