@@ -3724,22 +3724,22 @@ function renderMissionSvg(){
 
   // ── 색상 계산
   const baseColor=missionData.color||'#7ec8e3';
-  function lighten(hex,amount){
+  const lighten=(hex,amount)=>{
     const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
     return `rgb(${Math.round(r+(255-r)*amount)},${Math.round(g+(255-g)*amount)},${Math.round(b+(255-b)*amount)})`;
-  }
+  };
   const doneShadow='#A0AEBB33';
   const emptyStroke=baseColor;
   const emptyFill='#ffffff';
   const hoverFill=lighten(baseColor,0.82);
 
   // ── 하트 path (cx, cy = 하트 중심)
-  function makeHeart(cx, cy){
+  const makeHeart=(cx, cy)=>{
     const s=26; // 크기
     return `M ${cx} ${cy+s*0.52}
       C ${cx-s*1.18} ${cy-s*0.08}, ${cx-s*0.48} ${cy-s*1.0}, ${cx} ${cy-s*0.26}
       C ${cx+s*0.48} ${cy-s*1.0}, ${cx+s*1.18} ${cy-s*0.08}, ${cx} ${cy+s*0.52} Z`;
-  }
+  };
 
   // ── 툴팁
   let tooltip=document.getElementById('mtTooltip');
@@ -3918,34 +3918,27 @@ function renderDailyPlanner(){
   const DAYS=['일','월','화','수','목','금','토'];
   const DAYS_KEY=['sun','mon','tue','wed','thu','fri','sat'];
 
-  // 시간 행: 0:00~23:30 (30분 단위)
-  let html=`<table class="dp-table"><thead><tr>
-    <th style="width:68px">시간</th>
-    ${DAYS.map((d,i)=>`<th class="${i===0?'sun':i===6?'sat':''}">${d}요일</th>`).join('')}
-  </tr></thead><tbody>`;
-
   // 시간 순서: 8~23시 → 0~2시
   const hourOrder=[];
   for(let h=8;h<24;h++) hourOrder.push(h);
   for(let h=0;h<3;h++) hourOrder.push(h);
 
-  // 각 요일별 연속 병합 계산
-  // skip[di] = 남은 rowspan 스킵 카운트
-  const skip=DAYS_KEY.map(()=>0);
-
-  // rowspan 계산: 같은 key 내용이 아래로 몇 칸 연속인지
-  function calcRowspan(day, startH, startHIdx){
-    const startCell=dailyData.cells&&dailyData.cells[`${day}-${startH}-0`];
-    if(!startCell)return 1;
+  // 각 요일별 rowspan 계산 미리 수행
+  const calcRowspan=(day, hIdx)=>{
+    const h=hourOrder[hIdx];
+    const cell=dailyData.cells&&dailyData.cells[`${day}-${h}-0`];
+    if(!cell)return 1;
     let span=1;
-    for(let i=startHIdx+1;i<hourOrder.length;i++){
-      const nh=hourOrder[i];
-      const nc=dailyData.cells&&dailyData.cells[`${day}-${nh}-0`];
-      if(nc&&nc.label===startCell.label&&nc.color===startCell.color) span++;
+    for(let i=hIdx+1;i<hourOrder.length;i++){
+      const nc=dailyData.cells&&dailyData.cells[`${day}-${hourOrder[i]}-0`];
+      if(nc&&nc.label===cell.label&&nc.color===cell.color) span++;
       else break;
     }
     return span;
-  }
+  };
+
+  // skip[di] = 병합으로 건너뛸 남은 행 수
+  const skip=DAYS_KEY.map(()=>0);
 
   let html=`<table class="dp-table"><thead><tr>
     <th style="width:58px">시간</th>
@@ -3954,24 +3947,28 @@ function renderDailyPlanner(){
 
   hourOrder.forEach((h, hIdx)=>{
     const timeLabel=`${String(h).padStart(2,'0')}:00`;
-    html+=`<tr class="dp-hour-border">
-      <td class="dp-time-col">${timeLabel}</td>`;
+    let rowHtml=`<tr class="dp-hour-border"><td class="dp-time-col">${timeLabel}</td>`;
 
     DAYS_KEY.forEach((day,di)=>{
-      if(skip[di]>0){ skip[di]--; return; }
+      if(skip[di]>0){
+        skip[di]--;
+        return; // td 자체를 안 넣음 (rowspan이 위 행에서 커버)
+      }
       const key=`${day}-${h}-0`;
       const cell=dailyData.cells&&dailyData.cells[key];
       const bg=cell?cell.color||ACCENT:'';
-      const span=cell?calcRowspan(day,h,hIdx):1;
+      const span=cell?calcRowspan(day,hIdx):1;
       if(span>1) skip[di]=span-1;
-      html+=`<td class="dp-cell${cell?' filled':''}"
+      rowHtml+=`<td class="dp-cell${cell?' filled':''}"
         data-key="${key}"
         ${span>1?`rowspan="${span}"`:''}
         style="${bg?`background:${bg};color:#fff`:''}">
         ${cell?`<span class="dp-cell-text">${cell.label}</span>`:''}
       </td>`;
     });
-    html+='</tr>';
+
+    rowHtml+='</tr>';
+    html+=rowHtml;
   });
 
   html+='</tbody></table>';
@@ -4020,10 +4017,10 @@ function initDpDrag(wrap){
   if(!wrap)return;
 
   // 셀의 data-key 추출 헬퍼
-  function keyOf(el){return el?.dataset?.key||null;}
+  const keyOf=el=>el?.dataset?.key||null;
 
   // 드래그 중 선택 범위 업데이트
-  function updateSelection(startKey, endKey){
+  const updateSelection=(startKey, endKey)=>{
     wrap.querySelectorAll('.dp-selecting').forEach(el=>el.classList.remove('dp-selecting'));
     _dpDragKeys.clear();
     if(!startKey||!endKey)return;
@@ -4308,9 +4305,9 @@ function openDpModal(key){
   const ACCENT=_dpSelColor;
 
   // 오전/오후 + 시:분 분해
-  function mToAmpm(m){return m<720?'오전':'오후';}
-  function mToH(m){const h=Math.floor(m/60)%12||12;return h;}
-  function mToMin(m){return m%60;}
+  const mToAmpm=m=>m<720?'오전':'오후';
+  const mToH=m=>{const h=Math.floor(m/60)%12||12;return h;};
+  const mToMin=m=>m%60;
 
   const sAp=mToAmpm(sM), eAp=mToAmpm(eM);
   const sH=mToH(sM), sMm=mToMin(sM), eH=mToH(eM), eMm=mToMin(eM);
