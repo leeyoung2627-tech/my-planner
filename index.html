@@ -3256,16 +3256,16 @@ function applyTheme(){
   const nt=t.navtext||t.text;
   const bc=t.bordercol||'#ddd';
 
-  // 상단 메모바
+  // 상단 메모바 — 항상 연한 회색
   const memoBar=document.getElementById('topMemoBar');
   if(memoBar){
-    memoBar.style.background=nb||'#fff';
-    memoBar.style.borderColor=nb?'transparent':bc;
-    memoBar.style.color=nt;
+    memoBar.style.background='#F2F3F5';
+    memoBar.style.borderColor='#E0E2E8';
+    memoBar.style.color=t.text;
     const memoInput=document.getElementById('topMemoInput');
-    if(memoInput)memoInput.style.color=nb?nt:t.text;
+    if(memoInput)memoInput.style.color=t.text;
     const memoLabel=memoBar.querySelector('.top-memo-label');
-    if(memoLabel)memoLabel.style.color=nb?nt+'99':'';}
+    if(memoLabel)memoLabel.style.color='#999';}
 
   // D-DAY 사이드바
   const ddaySb=document.querySelector('.dday-sidebar');
