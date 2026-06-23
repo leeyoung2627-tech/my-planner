@@ -640,7 +640,8 @@ body{opacity:0;transition:opacity .25s ease}
 .mbtn.ok{background:var(--accent);color:#fff}
 
 /* ── Daily Planner ── */
-#dailyView{display:none;flex-direction:row;overflow:hidden}
+.tab-daily-content{padding:0!important;overflow:hidden!important}
+.tab-daily-content #dailyView{display:flex;flex-direction:row;width:100%;height:100%;min-height:400px;overflow:hidden}
 .dp-circle-col{flex:1;display:flex;align-items:center;justify-content:center;background:#F8FAFF;overflow:auto;padding:20px}
 .dp-side-col{width:220px;flex-shrink:0;border-left:0.5px solid #E2E8F0;display:flex;flex-direction:column;background:#fff}
 .dp-side-header{padding:12px 14px 8px;font-size:11px;font-weight:600;color:#6B7A90;letter-spacing:.04em;border-bottom:0.5px solid #EEF1F8;flex-shrink:0}
@@ -760,8 +761,8 @@ body{opacity:0;transition:opacity .25s ease}
       <div class="tab" onclick="switchTab('habit-tab',this)">✅ 습관</div>
     </div>
 
-    <div id="tab-daily" class="tab-content" style="padding:0;overflow:hidden;flex:1;display:none;flex-direction:column">
-      <div id="dailyView" style="display:flex;flex:1;min-height:0;overflow:hidden">
+    <div id="tab-daily" class="tab-content tab-daily-content">
+      <div id="dailyView">
         <div class="dp-circle-col">
           <svg id="dpSvg"></svg>
         </div>
@@ -3866,12 +3867,7 @@ function renderDailyPlanner(){
   if(!svg)return;
 
   const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
-
-  // 컨테이너 크기 기반으로 SVG 크기 결정
-  const col=svg.closest('.dp-circle-col');
-  const availW=col?(col.clientWidth-40):400;
-  const availH=col?(col.clientHeight-40):400;
-  const SZ=Math.max(280,Math.min(availW,availH,500));
+  const SZ=400;
   const CX=SZ/2, CY=SZ/2, R=SZ*0.42, INNER=SZ*0.13;
 
   svg.setAttribute('width',SZ);
