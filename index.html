@@ -4201,9 +4201,14 @@ function dpColorPickerHtml(currentColor){
   const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#2B7FFF';
   const cur=currentColor||ACCENT;
   const dots=DP_COLORS.map(c=>`<div class="dp-color-dot${cur===c?' active':''}" style="background:${c}" onclick="dpSelColor('${c}')" title="${c}"></div>`).join('');
+  const eyedropperBtn=window.EyeDropper?`
+    <div onclick="dpEyeDrop()" title="화면에서 색상 추출"
+      style="width:22px;height:22px;border-radius:50%;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;background:#fff">
+      💧
+    </div>`:'';
   return `<div>
     <div style="font-size:11px;color:#9199AE;margin-bottom:6px">색상</div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
       <div class="dp-color-row" id="dpColorRow">${dots}</div>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:#9199AE" title="직접 선택">
         <div id="dpColorCustomPreview" style="width:22px;height:22px;border-radius:50%;background:${cur};border:2px solid #ddd;flex-shrink:0"></div>
@@ -4211,12 +4216,35 @@ function dpColorPickerHtml(currentColor){
           oninput="dpSelCustomColor(this.value)"/>
         자유
       </label>
+      ${eyedropperBtn}
     </div>
   </div>`;
 }
 window.dpSelCustomColor=function(c){
   document.getElementById('dpColorCustomPreview').style.background=c;
+  document.getElementById('dpColorCustom').value=c;
   document.querySelectorAll('.dp-color-dot').forEach(d=>d.classList.remove('active'));
+};
+
+// 스포이드 — 모달을 투명하게 숨긴 뒤 원본 화면에서 색상 추출
+window.dpEyeDrop=async function(){
+  if(!window.EyeDropper)return;
+  // 모달 일시적으로 투명하게
+  const modalBg=document.getElementById('dpModalBg');
+  const modal=modalBg?.querySelector('.dp-modal');
+  if(modalBg) modalBg.style.background='transparent';
+  if(modal) modal.style.opacity='0';
+  try{
+    const dropper=new EyeDropper();
+    const result=await dropper.open();
+    const c=result.sRGBHex;
+    dpSelCustomColor(c);
+  } catch(e){
+    // 취소됨
+  } finally {
+    if(modalBg) modalBg.style.background='';
+    if(modal) modal.style.opacity='';
+  }
 };
 
 window.openDpCellModal=function(key,timeStr,dayStr){
