@@ -2390,7 +2390,7 @@ function renderMoneyStats(){
         const t=i.tag||'(미분류)';
         tagMap[t]=(tagMap[t]||0)+i.amount;
         if(!tagItems[t])tagItems[t]=[];
-        tagItems[t].push({day,memo:i.memo||'',amount:i.amount});
+        tagItems[t].push({day,memo:i.name||'',amount:i.amount});
         totalOut+=i.amount;
       });
     }
