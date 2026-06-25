@@ -451,19 +451,42 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* 습관 뷰 */
 .habit-view{padding:.85rem}
+/* 습관 서브탭 */
+.habit-subtabs{display:flex;gap:0;border-bottom:1.5px solid #eee;margin-bottom:12px}
+.habit-subtab{flex:1;text-align:center;padding:7px 0;font-size:12px;font-weight:600;color:#aaa;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .15s}
+.habit-subtab.active{color:#1558CC;border-bottom-color:#1558CC}
+/* 오늘 뷰 */
+.habit-today-list{display:flex;flex-direction:column;gap:6px}
+.habit-today-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:#fff;border:1px solid #eee;cursor:pointer;transition:all .15s;user-select:none}
+.habit-today-row:hover{border-color:#1558CC22;background:#f4f7ff}
+.habit-today-row.done-row{background:#f0faf6;border-color:#b2e8d0}
+.habit-today-check{width:22px;height:22px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .15s}
+.habit-today-row.done-row .habit-today-check{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.habit-today-emoji{font-size:16px;flex-shrink:0}
+.habit-today-name{flex:1;font-size:13px;font-weight:500;color:#222}
+.habit-today-row.done-row .habit-today-name{color:#aaa;text-decoration:line-through}
+.habit-today-count{font-size:11px;color:#bbb;flex-shrink:0}
+.habit-today-row.done-row .habit-today-count{color:#1D9E75;font-weight:600}
+/* 월간 히트맵 뷰 */
+.habit-month-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.habit-month-nav{background:none;border:none;font-size:16px;cursor:pointer;color:#888;padding:2px 6px}
+.habit-month-label{font-size:13px;font-weight:600;color:#222}
+.habit-heatmap-block{background:#fff;border:0.5px solid #eee;border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.habit-heatmap-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.habit-heatmap-name{font-size:12px;font-weight:600;color:#333}
+.habit-heatmap-stat{font-size:11px;color:#aaa}
+.habit-heatmap-stat b{color:#1558CC}
+.habit-heatmap-dots{display:flex;flex-wrap:wrap;gap:4px}
+.hmap-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid #eee;display:flex;align-items:center;justify-content:center;font-size:9px;color:#ccc;cursor:pointer;transition:all .12s;flex-shrink:0}
+.hmap-dot.filled{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
+.hmap-dot.today-dot{border-color:#1558CC;border-width:2px;color:#1558CC}
+.hmap-dot.future{opacity:.3;cursor:default}
+/* 기존 호환 */
 .habit-view-header{font-size:13px;font-weight:600;color:#222;margin-bottom:10px}
-.habit-card{background:#fff;border:0.5px solid #eee;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
-.habit-top{display:flex;align-items:center;justify-content:space-between}
-.habit-name{font-size:13px;color:#222}
 .habit-badge{font-size:11px;padding:2px 7px;border-radius:999px}
 .habit-badge.done{background:#E1F5EE;color:#0F6E56}
 .habit-badge.fail{background:#f5f5f5;color:#aaa}
 .habit-badge.prog{background:var(--accent-light);color:var(--accent)}
-.habit-dots{display:flex;gap:5px;flex-wrap:wrap}
-.hdot{width:22px;height:22px;border-radius:50%;border:1.5px solid #ddd;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#bbb;transition:all .15s}
-.hdot.filled{background:#1D9E75;border-color:#1D9E75;color:#fff}
-.hdot.target{border-color:var(--accent);border-style:dashed;color:var(--accent)}
-.habit-goal{font-size:11px;color:#aaa}
 .habit-actions{display:flex;gap:6px}
 .habit-mini-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:inherit}
 .habit-mini-btn:hover{background:#f5f5f5}
@@ -762,9 +785,13 @@ body{opacity:0;transition:opacity .25s ease}
       <div id="moneyCalView" class="money-cal-wrap" style="display:none"></div>
       <div id="mealCalView" class="meal-cal-wrap" style="display:none"></div>
       <div id="habitView" class="habit-view" style="display:none">
-        <div class="habit-view-header">습관 트래커</div>
-        <div id="habitViewList"></div>
-        <button class="add-btn" onclick="openHabitModal()" style="margin-top:4px">＋ 습관 추가</button>
+        <div class="habit-subtabs">
+          <div class="habit-subtab active" id="hsubtab-today" onclick="switchHabitSubtab('today')">오늘 체크</div>
+          <div class="habit-subtab" id="hsubtab-month" onclick="switchHabitSubtab('month')">월간 기록</div>
+        </div>
+        <div id="habitTodayView"></div>
+        <div id="habitMonthView" style="display:none"></div>
+        <button class="add-btn" onclick="openHabitModal()" style="margin-top:8px">＋ 습관 추가</button>
       </div>
       <div id="memoView" class="memo-view" style="display:none"></div>
       <div id="annivView" class="habit-view" style="display:none">
@@ -2065,86 +2092,143 @@ window.confirmBudget=async function(){
 };
 
 // ── 습관 ──
-function buildHabitCards(containerId){
-  const list=document.getElementById(containerId);list.innerHTML='';
-  let tt=0,td2=0;
-  habits.forEach((h,idx)=>{
-    tt+=h.target;
-    const checked=h.checked||[];
-    const actualDone=checked.length;
-    td2+=Math.min(actualDone,h.target);
-    const pct=Math.round(Math.min(actualDone/h.target,1)*100);
-    const isDone=actualDone>=h.target;
-    const bC=isDone?'done':actualDone>0?'prog':'fail';
-    const bT=isDone?'✓ 달성':actualDone+'/'+h.target;
-    const pl=h.period==='week'?'주':'월';
-    let dots='<div class="habit-dots">';
-    for(let i=0;i<h.target;i++){
-      const f=checked.includes(i);
-      dots+=`<div class="hdot${f?' filled':''}${!f?' target':''}" onclick="toggleHabitDot('${h.id}',${i})">${i+1}</div>`;
-    }
-    dots+='</div>';
-    const card=document.createElement('div');
-    card.className='habit-card';
-    card.draggable=true;
-    card.dataset.idx=idx;
-    card.innerHTML=`
-      <div class="habit-top">
-        <span style="font-size:14px;color:#ccc;cursor:grab;padding-right:6px;user-select:none">⠿</span>
-        <span class="habit-name editable-title" onclick="openHabitNameEditModal('${h.id}')">${h.emoji||'⭐'} ${h.name}</span>
-        <span class="habit-badge ${bC}">${bT}</span>
-      </div>
-      ${dots}
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="habit-goal">${pl} ${h.target}회 목표 · ${pct}%</span>
-        <div class="habit-actions">
-          <button class="habit-mini-btn" onclick="openHabitNameEditModal('${h.id}')">수정</button>
-          <button class="habit-mini-btn" onclick="deleteHabit('${h.id}')">삭제</button>
-        </div>
-      </div>`;
-    // 드래그 이벤트
-    card.addEventListener('dragstart',e=>{
-      e.dataTransfer.effectAllowed='move';
-      e.dataTransfer.setData('habit-idx',String(idx));
-      card.style.opacity='.4';
-    });
-    card.addEventListener('dragend',()=>{card.style.opacity='1';});
-    card.addEventListener('dragover',e=>{e.preventDefault();card.style.outline='1.5px solid var(--accent)';});
-    card.addEventListener('dragleave',()=>{card.style.outline='';});
-    card.addEventListener('drop',async e=>{
-      e.preventDefault();card.style.outline='';
-      const from=parseInt(e.dataTransfer.getData('habit-idx'));
-      const to=idx;
-      if(from===to||isNaN(from))return;
-      const [moved]=habits.splice(from,1);
-      habits.splice(to,0,moved);
-      // order 필드로 순서 저장
-      await Promise.all(habits.map((h,order)=>saveData('habits',h.id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done||0,order})));
-      renderHabits();
-    });
-    list.appendChild(card);
-  });
-  return{tt,td2};
+// ── 습관 서브탭 상태 ──
+let habitSubtab='today';
+let habitMonthCur=new Date();
+
+window.switchHabitSubtab=function(tab){
+  habitSubtab=tab;
+  document.getElementById('hsubtab-today').classList.toggle('active',tab==='today');
+  document.getElementById('hsubtab-month').classList.toggle('active',tab==='month');
+  document.getElementById('habitTodayView').style.display=tab==='today'?'':'none';
+  document.getElementById('habitMonthView').style.display=tab==='month'?'':'none';
+  if(tab==='today')renderHabitToday();
+  else renderHabitMonth();
+};
+
+// checked 마이그레이션: 구버전 인덱스 배열 → 날짜 문자열 배열
+function migrateHabitChecked(h){
+  if(!h.checked||h.checked.length===0)return [];
+  if(typeof h.checked[0]==='string'&&h.checked[0].includes('-'))return [...h.checked];
+  return []; // 인덱스 배열은 날짜 정보 없으므로 초기화
 }
+
+function todayKey(){const n=new Date();return n.getFullYear()+'-'+(n.getMonth()+1)+'-'+n.getDate();}
+
+function renderHabitToday(){
+  const el=document.getElementById('habitTodayView');
+  if(!el)return;
+  if(habits.length===0){el.innerHTML='<div style="text-align:center;color:#ccc;font-size:12px;padding:20px 0">습관을 추가해보세요</div>';return;}
+  const today=todayKey();
+  const now=new Date();
+  const mPre=now.getFullYear()+'-'+(now.getMonth()+1)+'-';
+  el.innerHTML='<div class="habit-today-list">'+
+    habits.map(h=>{
+      const checked=migrateHabitChecked(h);
+      const isDone=checked.includes(today);
+      const monthDone=checked.filter(d=>d.startsWith(mPre)).length;
+      return `<div class="habit-today-row${isDone?' done-row':''}" onclick="toggleHabitToday('${h.id}')">
+        <div class="habit-today-check">${isDone?'✓':''}</div>
+        <div class="habit-today-emoji">${h.emoji||'⭐'}</div>
+        <div class="habit-today-name">${h.name}</div>
+        <div class="habit-today-count">${monthDone}/${h.target}</div>
+      </div>`;
+    }).join('')+
+  '</div>'+
+  '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">'+
+    habits.map(h=>`<button class="habit-mini-btn" onclick="event.stopPropagation();openHabitNameEditModal('${h.id}')" style="font-size:10px">${h.emoji||'⭐'} 수정</button><button class="habit-mini-btn" onclick="event.stopPropagation();deleteHabit('${h.id}')" style="font-size:10px;color:#e88">삭제</button>`).join('')+
+  '</div>';
+}
+
+function renderHabitMonth(){
+  const el=document.getElementById('habitMonthView');
+  if(!el)return;
+  const y=habitMonthCur.getFullYear(),m=habitMonthCur.getMonth()+1;
+  const daysInMonth=new Date(y,m,0).getDate();
+  const today=new Date();
+  const todayStr=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+
+  let html=`<div class="habit-month-header">
+    <button class="habit-month-nav" onclick="habitMonthMove(-1)">‹</button>
+    <span class="habit-month-label">${y}년 ${m}월</span>
+    <button class="habit-month-nav" onclick="habitMonthMove(1)">›</button>
+  </div>`;
+
+  if(habits.length===0){
+    html+='<div style="text-align:center;color:#ccc;font-size:12px;padding:20px 0">습관을 추가해보세요</div>';
+  } else {
+    html+=habits.map(h=>{
+      const checked=migrateHabitChecked(h);
+      const mPre=y+'-'+m+'-';
+      const monthDone=checked.filter(d=>d.startsWith(mPre)).length;
+      const pct=h.target>0?Math.round(Math.min(monthDone/h.target,1)*100):0;
+      let dots='';
+      for(let d=1;d<=daysInMonth;d++){
+        const key=y+'-'+m+'-'+d;
+        const filled=checked.includes(key);
+        const isToday=key===todayStr;
+        const isFuture=new Date(y,m-1,d)>today;
+        dots+=`<div class="hmap-dot${filled?' filled':''}${isToday&&!filled?' today-dot':''}${isFuture?' future':''}" onclick="${isFuture?'':("toggleHabitDate('"+h.id+"','"+key+"')")}">${d}</div>`;
+      }
+      return `<div class="habit-heatmap-block">
+        <div class="habit-heatmap-top">
+          <span class="habit-heatmap-name">${h.emoji||'⭐'} ${h.name}</span>
+          <span class="habit-heatmap-stat"><b>${monthDone}</b>/${h.target}회 · <b>${pct}%</b></span>
+        </div>
+        <div class="habit-heatmap-dots">${dots}</div>
+      </div>`;
+    }).join('');
+  }
+  el.innerHTML=html;
+}
+
+window.habitMonthMove=function(dir){
+  habitMonthCur=new Date(habitMonthCur.getFullYear(),habitMonthCur.getMonth()+dir,1);
+  renderHabitMonth();
+};
+
+window.toggleHabitToday=async function(id){
+  const h=habits.find(x=>x.id===id);if(!h)return;
+  const checked=migrateHabitChecked(h);
+  const today=todayKey();
+  const ci=checked.indexOf(today);
+  if(ci>=0)checked.splice(ci,1);else checked.push(today);
+  h.checked=checked;h.done=checked.length;
+  await saveData('habits',id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done,checked:h.checked,order:h.order??0});
+  renderHabits();
+};
+
+window.toggleHabitDate=async function(id,dateKey){
+  const h=habits.find(x=>x.id===id);if(!h)return;
+  const checked=migrateHabitChecked(h);
+  const ci=checked.indexOf(dateKey);
+  if(ci>=0)checked.splice(ci,1);else checked.push(dateKey);
+  h.checked=checked;h.done=checked.length;
+  await saveData('habits',id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done,checked:h.checked,order:h.order??0});
+  renderHabitMonth();
+};
+
+function buildHabitCards(){return{tt:0,td2:0};} // 구버전 호환 stub
+
 function renderHabits(){
-  // habit-list-right는 제거됨 — 왼쪽 뷰에만 표시
+  const now=new Date();
+  const mPre=now.getFullYear()+'-'+(now.getMonth()+1)+'-';
   let tt=0,td2=0;
-  habits.forEach(h=>{tt+=h.target;td2+=Math.min(h.done||0,h.target);});
+  habits.forEach(h=>{
+    tt+=h.target;
+    const checked=migrateHabitChecked(h);
+    const monthDone=checked.filter(d=>d.startsWith(mPre)).length;
+    td2+=Math.min(monthDone,h.target);
+  });
   const pct=tt>0?Math.round(td2/tt*100):0;
   document.getElementById('sum-h').textContent='습관 '+pct+'%';
   if(leftMode==='habit')renderHabitsLeft();
 }
-function renderHabitsLeft(){buildHabitCards('habitViewList');}
-window.toggleHabitDot=async function(id,idx){
-  const h=habits.find(x=>x.id===id);if(!h)return;
-  if(!h.checked)h.checked=[];
-  const ci=h.checked.indexOf(idx);
-  if(ci>=0)h.checked.splice(ci,1);
-  else h.checked.push(idx);
-  h.done=h.checked.length;
-  await saveData('habits',id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done,checked:h.checked});
-  renderHabits();
-};
+
+function renderHabitsLeft(){
+  if(habitSubtab==='today')renderHabitToday();
+  else renderHabitMonth();
+}
 window.openHabitNameEditModal=function(id){
   editingHabitNameId=id;const h=habits.find(x=>x.id===id);if(!h)return;
   document.getElementById('hne-name').value=h.name;
@@ -2159,7 +2243,7 @@ window.confirmHabitNameEdit=async function(){
   h.emoji=document.getElementById('hne-emoji').value.trim()||h.emoji;
   h.period=document.getElementById('hne-period').value;
   h.target=parseInt(document.getElementById('hne-target').value)||h.target;
-  await saveData('habits',h.id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done||0});
+  await saveData('habits',h.id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done||0,checked:h.checked||[],order:h.order??0});
   renderHabits();closeModal('habitNameEditModal');
 };
 window.openHabitModal=function(){
@@ -2187,7 +2271,7 @@ window.openHabitEdit=function(id){
 window.confirmHabitEdit=async function(){
   const h=habits.find(x=>x.id===editingHabitId);if(!h)return;
   h.period=document.getElementById('he-period').value;h.target=parseInt(document.getElementById('he-target').value)||1;
-  await saveData('habits',h.id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done||0});
+  await saveData('habits',h.id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done||0,checked:h.checked||[],order:h.order??0});
   renderHabits();closeModal('habitEditModal');
 };
 window.deleteHabit=async function(id){
