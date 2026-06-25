@@ -474,13 +474,14 @@ body{opacity:0;transition:opacity .25s ease}
 .habit-month-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .habit-month-nav{background:none;border:none;font-size:16px;cursor:pointer;color:#888;padding:2px 6px}
 .habit-month-label{font-size:13px;font-weight:600;color:#222}
-.habit-heatmap-block{background:#fff;border:0.5px solid #eee;border-radius:10px;padding:10px 12px;margin-bottom:8px}
-.habit-heatmap-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.habit-heatmap-name{font-size:12px;font-weight:600;color:#333}
-.habit-heatmap-stat{font-size:11px;color:#aaa}
+.habit-heatmap-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.habit-heatmap-block{background:#fff;border:1.5px solid #eee;border-radius:10px;padding:10px 10px 12px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:90px;box-sizing:border-box;position:relative}
+.habit-heatmap-top{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;flex:0 0 auto}
+.habit-heatmap-name{font-size:11px;font-weight:600;color:#333;text-align:center;word-break:keep-all;overflow-wrap:break-word;line-height:1.4;width:100%}
+.habit-heatmap-stat{font-size:9px;color:#bbb;margin-top:2px}
 .habit-heatmap-stat b{color:#1558CC}
-.habit-heatmap-dots{display:flex;flex-wrap:wrap;gap:4px}
-.hmap-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid #eee;display:flex;align-items:center;justify-content:center;font-size:9px;color:#ccc;cursor:pointer;transition:all .12s;flex-shrink:0}
+.habit-heatmap-dots{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:8px}
+.hmap-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid #eee;display:flex;align-items:center;justify-content:center;font-size:8px;color:#ccc;cursor:pointer;transition:all .12s;flex-shrink:0}
 .hmap-dot.filled{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
 .hmap-dot.today-dot{border-color:#1558CC;border-width:2px;color:#1558CC}
 .hmap-dot.future{opacity:.3;cursor:default}
@@ -2163,7 +2164,7 @@ function renderHabitMonth(){
   if(habits.length===0){
     html+='<div style="text-align:center;color:#ccc;font-size:12px;padding:20px 0">습관을 추가해보세요</div>';
   } else {
-    html+=habits.map(h=>{
+    html+=`<div class="habit-heatmap-grid">`+habits.map(h=>{
       const checked=migrateHabitChecked(h);
       const mPre=y+'-'+m+'-';
       const monthDone=checked.filter(d=>d.startsWith(mPre)).length;
@@ -2178,12 +2179,13 @@ function renderHabitMonth(){
       }
       return `<div class="habit-heatmap-block">
         <div class="habit-heatmap-top">
-          <span class="habit-heatmap-name">${h.emoji||'⭐'} ${h.name}</span>
-          <span class="habit-heatmap-stat"><b>${monthDone}</b>/${h.target}회 · <b>${pct}%</b></span>
+          <div class="habit-today-emoji">${h.emoji||'⭐'}</div>
+          <div class="habit-heatmap-name">${h.name}</div>
+          <div class="habit-heatmap-stat"><b>${monthDone}</b>/${h.target}회 · <b>${pct}%</b></div>
         </div>
         <div class="habit-heatmap-dots">${dots}</div>
       </div>`;
-    }).join('');
+    }).join('')+`</div>`;
   }
   el.innerHTML=html;
 }
