@@ -349,10 +349,16 @@ body{opacity:0;transition:opacity .25s ease}
 .stats-month-nav span{font-size:13px;font-weight:600}
 .pie-wrap{position:relative;width:150px;height:150px;margin:0 auto 12px}
 .pie-svg{width:150px;height:150px;transform:rotate(-90deg)}
-.pie-legend{display:flex;flex-direction:column;gap:5px;margin-top:4px}
-.pie-legend-row{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.pie-legend{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.pie-legend-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;cursor:pointer;border-radius:8px;padding:3px 5px;transition:background .12s}
+.pie-legend-row:hover{background:var(--accent-light,#EEEDFE)}
 .pie-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-right:6px}
 .pie-total{text-align:center;font-size:12px;color:#888;margin-bottom:6px}
+.tag-detail-panel{display:none;background:#f4f7ff;border-left:3px solid #1558CC;border-radius:0 6px 6px 0;padding:6px 10px;margin:0 0 4px 22px;font-size:11px;color:#444;line-height:1.9}
+.tag-detail-panel.open{display:block}
+.tag-detail-item{display:flex;justify-content:space-between;gap:8px}
+.tag-detail-item span:first-child{color:#888;flex-shrink:0}
+.tag-detail-item span:last-child{font-weight:500;color:#1558CC}
 /* 고정비 */
 .fixed-section-title{font-size:12px;font-weight:700;color:#555;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid #eee}
 .fixed-table{width:100%;border-collapse:collapse;font-size:12px}
@@ -2375,13 +2381,16 @@ function renderMoneyStats(){
   const y=statsCur.getFullYear(),m=statsCur.getMonth()+1;
   const mKey=`${y}-${m}`;
   // 해당 월 데이터 집계
-  const tagMap={};let totalOut=0;
-  Object.keys(moneyData).forEach(k=>{
+  const tagMap={};const tagItems={};let totalOut=0;
+  Object.keys(moneyData).sort().forEach(k=>{
     if(k.startsWith(mKey+'-')){
+      const day=k.split('-')[2];
       moneyData[k].forEach(i=>{
         if(i.type!=='out')return;
         const t=i.tag||'(미분류)';
         tagMap[t]=(tagMap[t]||0)+i.amount;
+        if(!tagItems[t])tagItems[t]=[];
+        tagItems[t].push({day,memo:i.memo||'',amount:i.amount});
         totalOut+=i.amount;
       });
     }
@@ -2410,22 +2419,37 @@ function renderMoneyStats(){
     <div class="pie-total">총 지출 ${totalOut.toLocaleString()}원</div>
     <div class="pie-legend">
       ${entries.length===0?'<div style="text-align:center;color:#ccc;font-size:12px;padding:16px 0">이달 지출 내역이 없어요</div>':
-        entries.map(([tag,amt])=>`
-          <div class="pie-legend-row">
+        entries.map(([tag,amt],idx)=>{
+          const items=tagItems[tag]||[];
+          const detailRows=items.map(it=>`<div class="tag-detail-item"><span>${m}월 ${it.day}일${it.memo?' · '+it.memo:''}</span><span>${it.amount.toLocaleString()}원</span></div>`).join('');
+          return `
+          <div class="pie-legend-row" onclick="toggleTagDetail('td-${idx}',this)">
             <div style="display:flex;align-items:center">
               <div class="pie-legend-dot" style="background:${getTagColor(tag)}"></div>
               <span>${tag}</span>
             </div>
-            <div style="display:flex;gap:8px;color:#666">
+            <div style="display:flex;gap:8px;color:#666;align-items:center">
               <span>${totalOut>0?Math.round(amt/totalOut*100):0}%</span>
               <span style="font-weight:500">${amt.toLocaleString()}원</span>
+              <span style="font-size:10px;color:#bbb" id="td-arr-${idx}">▾</span>
             </div>
-          </div>`).join('')}
+          </div>
+          <div class="tag-detail-panel" id="td-${idx}">${detailRows}</div>`;
+        }).join('')}
     </div>`;
 }
 window.statsMove=function(dir){
   statsCur=new Date(statsCur.getFullYear(),statsCur.getMonth()+dir,1);
   renderMoneyStats();
+};
+window.toggleTagDetail=function(id,row){
+  const panel=document.getElementById(id);
+  const idx=id.replace('td-','');
+  const arr=document.getElementById('td-arr-'+idx);
+  if(!panel)return;
+  const open=panel.classList.toggle('open');
+  if(arr)arr.textContent=open?'▴':'▾';
+  if(row)row.style.background=open?'var(--accent-light,#EEEDFE)':'';
 };
 
 // ── 고정비 ──
