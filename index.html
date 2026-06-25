@@ -456,16 +456,19 @@ body{opacity:0;transition:opacity .25s ease}
 .habit-subtab{flex:1;text-align:center;padding:7px 0;font-size:12px;font-weight:600;color:#aaa;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .15s}
 .habit-subtab.active{color:#1558CC;border-bottom-color:#1558CC}
 /* 오늘 뷰 */
-.habit-today-list{display:flex;flex-direction:column;gap:6px}
-.habit-today-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:#fff;border:1px solid #eee;cursor:pointer;transition:all .15s;user-select:none}
-.habit-today-row:hover{border-color:#1558CC22;background:#f4f7ff}
+.habit-today-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.habit-today-row{display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px 10px 12px;border-radius:10px;background:#fff;border:1.5px solid #eee;cursor:pointer;transition:all .15s;user-select:none;position:relative;min-height:90px;box-sizing:border-box}
+.habit-today-row:hover{border-color:#1558CC44;background:#f4f7ff}
 .habit-today-row.done-row{background:#f0faf6;border-color:#b2e8d0}
-.habit-today-check{width:22px;height:22px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .15s}
-.habit-today-row.done-row .habit-today-check{background:#1D9E75;border-color:#1D9E75;color:#fff}
-.habit-today-emoji{font-size:16px;flex-shrink:0}
-.habit-today-name{flex:1;font-size:13px;font-weight:500;color:#222}
+.habit-today-actions{display:none;position:absolute;top:5px;right:6px;gap:3px}
+.habit-today-row:hover .habit-today-actions{display:flex}
+.habit-today-top{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.habit-today-emoji{font-size:14px;line-height:1}
+.habit-today-name{font-size:11px;font-weight:600;color:#333;text-align:center;word-break:keep-all;overflow-wrap:break-word;line-height:1.4;width:100%}
 .habit-today-row.done-row .habit-today-name{color:#aaa;text-decoration:line-through}
-.habit-today-count{font-size:11px;color:#bbb;flex-shrink:0}
+.habit-today-check{width:28px;height:28px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .15s;margin-top:8px}
+.habit-today-row.done-row .habit-today-check{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.habit-today-count{font-size:9px;color:#bbb;margin-top:2px}
 .habit-today-row.done-row .habit-today-count{color:#1D9E75;font-weight:600}
 /* 월간 히트맵 뷰 */
 .habit-month-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -2128,15 +2131,18 @@ function renderHabitToday(){
       const isDone=checked.includes(today);
       const monthDone=checked.filter(d=>d.startsWith(mPre)).length;
       return `<div class="habit-today-row${isDone?' done-row':''}" onclick="toggleHabitToday('${h.id}')">
+        <div class="habit-today-actions">
+          <button class="habit-mini-btn" onclick="event.stopPropagation();openHabitNameEditModal('${h.id}')" style="font-size:9px;padding:1px 5px">수정</button>
+          <button class="habit-mini-btn" onclick="event.stopPropagation();deleteHabit('${h.id}')" style="font-size:9px;padding:1px 5px;color:#e88;border-color:#fcc">삭제</button>
+        </div>
+        <div class="habit-today-top">
+          <div class="habit-today-emoji">${h.emoji||'⭐'}</div>
+          <div class="habit-today-name">${h.name}</div>
+        </div>
         <div class="habit-today-check">${isDone?'✓':''}</div>
-        <div class="habit-today-emoji">${h.emoji||'⭐'}</div>
-        <div class="habit-today-name">${h.name}</div>
         <div class="habit-today-count">${monthDone}/${h.target}</div>
       </div>`;
     }).join('')+
-  '</div>'+
-  '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">'+
-    habits.map(h=>`<button class="habit-mini-btn" onclick="event.stopPropagation();openHabitNameEditModal('${h.id}')" style="font-size:10px">${h.emoji||'⭐'} 수정</button><button class="habit-mini-btn" onclick="event.stopPropagation();deleteHabit('${h.id}')" style="font-size:10px;color:#e88">삭제</button>`).join('')+
   '</div>';
 }
 
