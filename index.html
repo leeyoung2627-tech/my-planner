@@ -3926,6 +3926,7 @@ window.applyBubbleColor=function(hex){
   if(input)input.value=hex;
   saveMission();
 };
+window.applyMtColor=function(hex){
   missionData.color=hex;
   // 프리셋 점 active 갱신
   document.querySelectorAll('.mt-color-dot').forEach(d=>{
