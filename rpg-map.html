@@ -75,9 +75,11 @@ body {
 
 /* ── 날짜 종이 팝업 ── */
 .day-popup {
-  position: absolute;
-  z-index: 50;
-  width: 200px;
+  position: fixed;
+  z-index: 500;
+  width: 220px;
+  max-height: 80vh;
+  overflow-y: auto;
   background: #fdf6e3;
   border-radius: 8px;
   box-shadow: 2px 4px 20px rgba(0,0,0,0.5), 0 0 0 2px #c8a96e;
@@ -85,7 +87,6 @@ body {
   transform-origin: top center;
   animation: unfold 0.25s ease forwards;
   pointer-events: all;
-  /* 양피지 느낌 */
   background: linear-gradient(160deg, #fef9ee 0%, #f5e8c0 100%);
 }
 @keyframes unfold {
@@ -792,17 +793,27 @@ function openDayPopup(dayIdx, tileEl, tx, ty) {
   const popup=document.createElement('div');
   popup.className='day-popup';
 
-  // 팝업 위치: 타일 아래 or 위
+  // 타일의 화면상 절대 위치 계산 (fixed 기준)
   const overlay=document.getElementById('tileOverlay');
-  const ow=overlay.getBoundingClientRect().width;
-  const oh=overlay.getBoundingClientRect().height;
-  let left=tx-100; // 팝업 중앙 정렬
-  let top=ty+32;
-  if(left<4) left=4;
-  if(left+200>ow-4) left=ow-204;
-  if(top+220>oh) top=ty-240;
-  popup.style.left=left+'px';
-  popup.style.top=top+'px';
+  const overlayRect=overlay.getBoundingClientRect();
+  // tx, ty는 overlay 내부 좌표이므로 overlayRect 더해서 viewport 좌표로
+  let screenX = overlayRect.left + tx;
+  let screenY = overlayRect.top  + ty;
+
+  const popupW = 220;
+  const popupH = Math.min(window.innerHeight * 0.8, 400); // 예상 높이
+
+  let left = screenX - popupW/2;
+  let top  = screenY + 32;
+
+  // 화면 밖으로 나가지 않게 보정
+  if(left < 8) left = 8;
+  if(left + popupW > window.innerWidth - 8) left = window.innerWidth - popupW - 8;
+  if(top + popupH > window.innerHeight - 8) top = screenY - popupH - 8;
+  if(top < 8) top = 8;
+
+  popup.style.left = left+'px';
+  popup.style.top  = top+'px';
 
   // 헤더
   const header=document.createElement('div');
@@ -871,8 +882,7 @@ function openDayPopup(dayIdx, tileEl, tx, ty) {
   }
   popup.appendChild(missionWrap);
   popup.addEventListener('click', e=>e.stopPropagation());
-
-  overlay.appendChild(popup);
+  document.body.appendChild(popup);
   activePopup=popup;
 }
 
