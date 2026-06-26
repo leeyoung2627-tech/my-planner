@@ -2242,6 +2242,8 @@ function renderHabitToday(){
   '</div>';
   bindHabitDrag('habitTodayView');
 }
+
+function renderHabitMonth(){
   const el=document.getElementById('habitMonthView');
   if(!el)return;
   const y=habitMonthCur.getFullYear(),m=habitMonthCur.getMonth()+1;
