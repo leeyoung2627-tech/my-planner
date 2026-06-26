@@ -606,15 +606,49 @@ function spDefault() {
 }
 function loadMap() { try{return JSON.parse(localStorage.getItem(MAP_KEY))||mapDefault();}catch{return mapDefault();} }
 function loadSP()  { try{return JSON.parse(localStorage.getItem(SP_KEY))||spDefault();}catch{return spDefault();} }
-function saveMap() { localStorage.setItem(MAP_KEY, JSON.stringify(mapState)); }
-function saveSP()  { localStorage.setItem(SP_KEY,  JSON.stringify(spState)); }
+function saveMap() {
+  localStorage.setItem(MAP_KEY, JSON.stringify(mapState));
+  if(currentUser) setDoc(doc(db,'rpgMap',currentUser.uid), mapState).catch(()=>{});
+}
+function saveSP() {
+  localStorage.setItem(SP_KEY, JSON.stringify(spState));
+  if(currentUser) setDoc(doc(db,'rpgStatus',currentUser.uid), spState).catch(()=>{});
+}
+async function saveHistory(list) {
+  localStorage.setItem('rpgHistory_v1', JSON.stringify(list));
+  if(currentUser) await setDoc(doc(db,'rpgHistory',currentUser.uid),{list}).catch(()=>{});
+}
+async function loadFromFirebase() {
+  if(!currentUser) return;
+  try {
+    const mapSnap = await getDoc(doc(db,'rpgMap',currentUser.uid));
+    if(mapSnap.exists()) { mapState={...mapDefault(),...mapSnap.data()}; localStorage.setItem(MAP_KEY,JSON.stringify(mapState)); }
+    const spSnap = await getDoc(doc(db,'rpgStatus',currentUser.uid));
+    if(spSnap.exists()) { spState={...spDefault(),...spSnap.data()}; localStorage.setItem(SP_KEY,JSON.stringify(spState)); }
+    const histSnap = await getDoc(doc(db,'rpgHistory',currentUser.uid));
+    if(histSnap.exists()) { localStorage.setItem('rpgHistory_v1',JSON.stringify(histSnap.data().list||[])); }
+  } catch(e){ console.log('Firebase load err',e); }
+  // 맵 이미지 로드 완료 여부 확인 후 렌더
+  const img = document.getElementById('mapImg');
+  if(img.complete && img.naturalWidth > 0) {
+    mapLoaded=true;
+    requestAnimationFrame(()=>render());
+  } else {
+    // 이미지 아직 로드 중이면 onMapLoad에서 처리됨
+    mapLoaded=true;
+  }
+}
 
 let mapState=loadMap(), spState=loadSP(), mapLoaded=false;
 let activePopup=null; // 현재 열린 팝업 DOM
 
 function getScaled() {
-  const img=document.getElementById('mapImg'), rect=img.getBoundingClientRect();
-  return PATH_COORDS_ORIG.map(([ox,oy])=>[ox*(rect.width/IMG_W), oy*(rect.height/IMG_H)]);
+  const img=document.getElementById('mapImg');
+  const rect=img.getBoundingClientRect();
+  // getBoundingClientRect가 0이면 offsetWidth로 폴백
+  const rw = rect.width  || img.offsetWidth  || img.naturalWidth  || IMG_W;
+  const rh = rect.height || img.offsetHeight || img.naturalHeight || IMG_H;
+  return PATH_COORDS_ORIG.map(([ox,oy])=>[ox*(rw/IMG_W), oy*(rh/IMG_H)]);
 }
 
 // ══════════════════════════════
@@ -1081,11 +1115,8 @@ function showLevelAnim(up,from,to){
 // 초기화
 // ══════════════════════════════
 function onMapLoad(){
-  if(currentUser) {
-    // Firebase에서 로드 (이미 auth에서 처리)
-  } else {
-    mapLoaded=true; render();
-  }
+  mapLoaded=true;
+  requestAnimationFrame(()=>{ render(); });
 }
 window.addEventListener('resize', render);
 
@@ -1111,11 +1142,17 @@ onAuthStateChanged(auth, async (user) => {
   if(user) {
     await loadFromFirebase();
   } else {
-    mapLoaded=true; render();
+    mapLoaded=true;
+    requestAnimationFrame(()=>render());
   }
 });
 
-if(document.getElementById('mapImg').complete && !currentUser){ mapLoaded=true; render(); }
+// 이미지가 이미 캐시돼서 로드된 경우 대비
+const mapImg = document.getElementById('mapImg');
+if(mapImg.complete && mapImg.naturalWidth > 0) {
+  mapLoaded=true;
+  requestAnimationFrame(()=>render());
+}
 </script>
 </body>
 </html>
