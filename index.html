@@ -131,21 +131,20 @@ body{opacity:0;transition:opacity .25s ease}
 }
 .mt-char-img{
   width:100%;height:auto;display:block;
-  border-radius:14px 14px 0 0;
+  border-radius:0 0 0 0;
 }
 /* 말풍선 */
 .mt-speech-bubble{
-  position:absolute;
-  top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  width:calc(100% - 32px);
+  position:relative;
+  width:calc(100% - 20px);
   background:#fff;
   border:2px solid var(--mt-bubble-color,#333);
   border-radius:14px;
   padding:8px 12px;
   box-shadow:2px 3px 0 #33333322;
-  min-height:36px;
-  z-index:2;
+  min-height:52px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:6px;
 }
 .mt-speech-bubble::after{
   content:'';
@@ -168,6 +167,8 @@ body{opacity:0;transition:opacity .25s ease}
   font-family:inherit;background:transparent;
   line-height:1.5;resize:none;overflow:hidden;
   text-align:center;
+  display:block;
+  margin:auto 0;
 }
 .mt-title-input::placeholder{color:#ccc;font-weight:500;text-align:center;}
 /* 팔레트 하단 hover 영역 */
