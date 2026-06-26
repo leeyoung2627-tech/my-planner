@@ -177,12 +177,13 @@ body{opacity:0;transition:opacity .25s ease}
   z-index:1;
 }
 .mt-title-input{
-  width:100%;border:none;outline:none;
+  width:100%;height:100%;border:none;outline:none;
   font-size:15px;font-weight:700;color:#222;
   font-family:inherit;background:transparent;
   line-height:1.5;resize:none;overflow:hidden;
   text-align:center;
-  align-self:center;
+  display:flex;align-items:center;justify-content:center;
+  padding:0;
 }
 .mt-title-input::placeholder{color:#ccc;font-weight:600;text-align:center;font-size:15px;}
 /* 팔레트 하단 hover 영역 */
@@ -1034,6 +1035,16 @@ body{opacity:0;transition:opacity .25s ease}
           <input type="color" id="mtColorInput" oninput="applyMtColor(this.value)" onchange="saveMission()"/>
         </div>
       </div>
+      <div style="border-top:1px solid #eee;margin:6px 0"></div>
+      <div class="mt-color-panel-title">말풍선 테두리</div>
+      <div class="mt-color-presets" id="mtBubblePresets"></div>
+      <div class="mt-color-custom-row">
+        <span class="mt-color-custom-label">직접 선택</span>
+        <div class="mt-color-custom-wrap">
+          <div class="mt-color-custom-preview" id="mtBubblePreview" onclick="document.getElementById('mtBubbleInput').click()"></div>
+          <input type="color" id="mtBubbleInput" oninput="applyBubbleColor(this.value)" onchange="saveMission()"/>
+        </div>
+      </div>
     </div>
   </div>
   <button class="mt-add-btn" onclick="addMissionNode()">＋ 미션 추가</button>
@@ -1200,12 +1211,12 @@ body{opacity:0;transition:opacity .25s ease}
     <div class="modal-label">이달 목표 횟수</div>
     <div class="modal-row">
       <select id="hb-period" onchange="updateHabitPreview()">
-        <option value="month">월 단위</option>
-        <option value="custom">직접 선택</option>
+        <option value="month">월 단위 (이달 전체)</option>
+        <option value="custom">날짜 수 직접 입력</option>
       </select>
-      <input id="hb-target" type="number" min="1" max="31" value="20" id="hb-target" style="display:none" oninput="updateHabitPreview()"/>
+      <input id="hb-target" type="number" min="1" max="31" value="10" style="display:none" placeholder="예: 10" oninput="updateHabitPreview()"/>
     </div>
-    <div class="modal-label" style="color:#aaa;font-size:11px" id="hb-preview">이달 20회 목표</div>
+    <div class="modal-label" style="color:#aaa;font-size:11px" id="hb-preview">이달 전체 날짜 목표</div>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('habitModal')">취소</button>
       <button class="mbtn ok" onclick="confirmHabit()">추가</button>
@@ -1219,12 +1230,12 @@ body{opacity:0;transition:opacity .25s ease}
     <h3>목표 수정</h3>
     <div class="modal-row">
       <select id="he-period" onchange="updateHePreview()">
-        <option value="month">월 단위</option>
-        <option value="custom">직접 선택</option>
+        <option value="month">월 단위 (이달 전체)</option>
+        <option value="custom">날짜 수 직접 입력</option>
       </select>
-      <input id="he-target" type="number" min="1" max="31" value="20" style="display:none" oninput="updateHePreview()"/>
+      <input id="he-target" type="number" min="1" max="31" value="10" style="display:none" placeholder="예: 10" oninput="updateHePreview()"/>
     </div>
-    <div class="modal-label" style="color:#aaa;font-size:11px" id="he-preview">이달 20회 목표</div>
+    <div class="modal-label" style="color:#aaa;font-size:11px" id="he-preview">이달 전체 날짜 목표</div>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('habitEditModal')">취소</button>
       <button class="mbtn ok" onclick="confirmHabitEdit()">저장</button>
@@ -1375,12 +1386,12 @@ body{opacity:0;transition:opacity .25s ease}
     <div class="modal-label">이달 목표 횟수</div>
     <div class="modal-row">
       <select id="hne-period" onchange="updateHnePreview()">
-        <option value="month">월 단위</option>
-        <option value="custom">직접 선택</option>
+        <option value="month">월 단위 (이달 전체)</option>
+        <option value="custom">날짜 수 직접 입력</option>
       </select>
-      <input id="hne-target" type="number" min="1" max="31" value="20" style="display:none" oninput="updateHnePreview()"/>
+      <input id="hne-target" type="number" min="1" max="31" value="10" style="display:none" placeholder="예: 10" oninput="updateHnePreview()"/>
     </div>
-    <div class="modal-label" style="color:#aaa;font-size:11px" id="hne-preview">이달 20회 목표</div>
+    <div class="modal-label" style="color:#aaa;font-size:11px" id="hne-preview">이달 전체 날짜 목표</div>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('habitNameEditModal')">취소</button>
       <button class="mbtn ok" onclick="confirmHabitNameEdit()">저장</button>
@@ -1609,7 +1620,8 @@ async function loadAllData(){
   // 미션 트래커
   if(msS.exists()){
     const md=msS.data();
-    missionData={title:md.title||'',nodes:md.nodes||[],color:md.color||'#7ec8e3'};
+    missionData={title:md.title||'',nodes:md.nodes||[],color:md.color||'#7ec8e3',bubbleColor:md.bubbleColor||'#333'};
+    document.documentElement.style.setProperty('--mt-bubble-color', missionData.bubbleColor);
   }
   // 일기장
   diaryEntries={};dyS.forEach(d=>{diaryEntries[d.id]=d.data();});
@@ -2206,8 +2218,11 @@ function renderHabitToday(){
   el.innerHTML='<div class="habit-today-list">'+
     habits.map(h=>{
       const checked=migrateHabitChecked(h);
-      const isDone=checked.includes(today);
-      const monthDone=checked.filter(d=>d.startsWith(mPre)).length;
+      const isCustom=h.period==='custom';
+      const monthDone=isCustom
+        ? checked.filter(d=>d.startsWith(`custom-${h.id}-`)).length
+        : checked.filter(d=>d.startsWith(mPre)).length;
+      const isDone=isCustom ? monthDone>=h.target : checked.includes(today);
       return `<div class="habit-today-row${isDone?' done-row':''}" onclick="toggleHabitToday('${h.id}')">
         <div class="habit-today-actions">
           <button class="habit-mini-btn" onclick="event.stopPropagation();openHabitNameEditModal('${h.id}')" style="font-size:9px;padding:1px 5px">수정</button>
@@ -2243,16 +2258,20 @@ function renderHabitMonth(){
   } else {
     html+=`<div class="habit-heatmap-grid">`+habits.map(h=>{
       const checked=migrateHabitChecked(h);
-      const mPre=y+'-'+m+'-';
-      const monthDone=checked.filter(d=>d.startsWith(mPre)).length;
+      const isCustom=h.period==='custom';
+      const monthDone=isCustom
+        ? checked.filter(d=>d.startsWith(`custom-${h.id}-`)).length
+        : checked.filter(d=>d.startsWith(mPre)).length;
       const pct=h.target>0?Math.round(Math.min(monthDone/h.target,1)*100):0;
+      const isCustom=h.period==='custom';
+      const totalDots=isCustom?h.target:daysInMonth;
       let dots='';
-      for(let d=1;d<=daysInMonth;d++){
-        const key=y+'-'+m+'-'+d;
-        const filled=checked.includes(key);
-        const isToday=key===todayStr;
-        const isFuture=new Date(y,m-1,d)>today;
-        dots+=`<div class="hmap-dot${filled?' filled':''}${isToday&&!filled?' today-dot':''}${isFuture?' future':''}" onclick="${isFuture?'':("toggleHabitDate('"+h.id+"','"+key+"')")}">${d}</div>`;
+      for(let d=1;d<=totalDots;d++){
+        const key=isCustom?`custom-${h.id}-${d}`:(y+'-'+m+'-'+d);
+        const filled=checked.includes(key)||(!isCustom&&checked.includes(y+'-'+m+'-'+d));
+        const isToday=!isCustom&&(y+'-'+m+'-'+d)===todayStr;
+        const isFuture=!isCustom&&new Date(y,m-1,d)>today;
+        dots+=`<div class="hmap-dot${filled?' filled':''}${isToday&&!filled?' today-dot':''}${isFuture?' future':''}" onclick="${isFuture?'':(`toggleHabitDate('${h.id}','${key}')`)}">${d}</div>`;
       }
       return `<div class="habit-heatmap-block">
         <div class="habit-heatmap-actions">
@@ -2279,9 +2298,23 @@ window.habitMonthMove=function(dir){
 window.toggleHabitToday=async function(id){
   const h=habits.find(x=>x.id===id);if(!h)return;
   const checked=migrateHabitChecked(h);
-  const today=todayKey();
-  const ci=checked.indexOf(today);
-  if(ci>=0)checked.splice(ci,1);else checked.push(today);
+  if(h.period==='custom'){
+    // custom: 순서대로 채우기/마지막 취소
+    const prefix=`custom-${id}-`;
+    const filled=checked.filter(d=>d.startsWith(prefix));
+    if(filled.length>0&&filled.length>=h.target){
+      // 다 찼으면 마지막 하나 취소
+      const last=filled.sort().pop();
+      checked.splice(checked.indexOf(last),1);
+    } else {
+      const next=filled.length+1;
+      if(next<=h.target) checked.push(`custom-${id}-${next}`);
+    }
+  } else {
+    const today=todayKey();
+    const ci=checked.indexOf(today);
+    if(ci>=0)checked.splice(ci,1);else checked.push(today);
+  }
   h.checked=checked;h.done=checked.length;
   await saveData('habits',id,{name:h.name,emoji:h.emoji,period:h.period,target:h.target,done:h.done,checked:h.checked,order:h.order??0});
   renderHabits();
@@ -2355,10 +2388,11 @@ function updateHabitPreview(){
   const targetEl=document.getElementById('hb-target');
   if(period==='month'){
     targetEl.style.display='none';
-    document.getElementById('hb-preview').textContent='이달 '+daysInCurrentMonth()+'일 전체 목표';
+    document.getElementById('hb-preview').textContent='이달 '+daysInCurrentMonth()+'일 전체 목표 (월간 뷰에 동그라미 '+daysInCurrentMonth()+'개)';
   } else {
     targetEl.style.display='';
-    document.getElementById('hb-preview').textContent='이달 '+( targetEl.value||1)+'회 목표';
+    const n=parseInt(targetEl.value)||10;
+    document.getElementById('hb-preview').textContent='체크 칸 '+n+'개 (월간 뷰에 동그라미 '+n+'개)';
   }
 }
 window.updateHePreview=function(){
@@ -2369,7 +2403,8 @@ window.updateHePreview=function(){
     document.getElementById('he-preview').textContent='이달 '+daysInCurrentMonth()+'일 전체 목표';
   } else {
     targetEl.style.display='';
-    document.getElementById('he-preview').textContent='이달 '+(targetEl.value||1)+'회 목표';
+    const n=parseInt(targetEl.value)||10;
+    document.getElementById('he-preview').textContent='체크 칸 '+n+'개';
   }
 };
 window.updateHnePreview=function(){
@@ -2380,7 +2415,8 @@ window.updateHnePreview=function(){
     document.getElementById('hne-preview').textContent='이달 '+daysInCurrentMonth()+'일 전체 목표';
   } else {
     targetEl.style.display='';
-    document.getElementById('hne-preview').textContent='이달 '+(targetEl.value||1)+'회 목표';
+    const n=parseInt(targetEl.value)||10;
+    document.getElementById('hne-preview').textContent='체크 칸 '+n+'개';
   }
 };
 window.confirmHabit=async function(){
@@ -3833,7 +3869,7 @@ window.addEventListener('resize',positionNoteButtons);
 // ══════════════════════════════════════════
 //  미션 트래커
 // ══════════════════════════════════════════
-let missionData={title:'',nodes:[],color:'#7ec8e3'};
+let missionData={title:'',nodes:[],color:'#7ec8e3',bubbleColor:'#333'};
 let _mtEditingIdx=null;
 
 // ── 트래커 색상 프리셋
@@ -3849,18 +3885,47 @@ function initMtColorPanel(){
   MT_COLOR_PRESETS.forEach(c=>{
     const dot=document.createElement('div');
     dot.className='mt-color-dot'+(missionData.color===c?' active':'');
-    dot.style.background=c;
-    dot.title=c;
+    dot.style.background=c;dot.title=c;
     dot.onclick=()=>{applyMtColor(c);saveMission();closeMtColorPanel();};
     grid.appendChild(dot);
   });
   const preview=document.getElementById('mtColorPreview');
   const input=document.getElementById('mtColorInput');
-  if(preview) preview.style.background=missionData.color||'#7ec8e3';
-  if(input) input.value=missionData.color||'#7ec8e3';
+  if(preview)preview.style.background=missionData.color||'#7ec8e3';
+  if(input)input.value=missionData.color||'#7ec8e3';
+  // 버블 프리셋
+  const BUBBLE_PRESETS=['#333333','#1558CC','#E53935','#43A047','#FB8C00','#8E24AA','#ffffff','#aaaaaa'];
+  const bgrid=document.getElementById('mtBubblePresets');
+  if(bgrid){
+    bgrid.innerHTML='';
+    BUBBLE_PRESETS.forEach(c=>{
+      const dot=document.createElement('div');
+      dot.className='mt-color-dot mt-bubble-dot'+(missionData.bubbleColor===c?' active':'');
+      dot.style.background=c;
+      dot.style.border=c==='#ffffff'?'1.5px solid #ddd':'';
+      dot.title=c;
+      dot.onclick=()=>{applyBubbleColor(c);closeMtColorPanel();};
+      bgrid.appendChild(dot);
+    });
+  }
+  const bpreview=document.getElementById('mtBubblePreview');
+  const binput=document.getElementById('mtBubbleInput');
+  if(bpreview)bpreview.style.background=missionData.bubbleColor||'#333';
+  if(binput)binput.value=missionData.bubbleColor||'#333333';
 }
 
-window.applyMtColor=function(hex){
+window.applyBubbleColor=function(hex){
+  missionData.bubbleColor=hex;
+  document.documentElement.style.setProperty('--mt-bubble-color',hex);
+  document.querySelectorAll('.mt-bubble-dot').forEach(d=>{
+    d.classList.toggle('active', d.title===hex);
+  });
+  const preview=document.getElementById('mtBubblePreview');
+  if(preview)preview.style.background=hex;
+  const input=document.getElementById('mtBubbleInput');
+  if(input)input.value=hex;
+  saveMission();
+};
   missionData.color=hex;
   // 프리셋 점 active 갱신
   document.querySelectorAll('.mt-color-dot').forEach(d=>{
@@ -5001,7 +5066,8 @@ window.saveMission=async function(){
   await setDoc(doc(db,'users',currentUser.uid,'settings','mission'),{
     title:missionData.title,
     nodes:missionData.nodes,
-    color:missionData.color||'#7ec8e3'
+    color:missionData.color||'#7ec8e3',
+    bubbleColor:missionData.bubbleColor||'#333'
   });
   showSaving();
 };
