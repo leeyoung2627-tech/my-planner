@@ -2259,11 +2259,11 @@ function renderHabitMonth(){
     html+=`<div class="habit-heatmap-grid">`+habits.map(h=>{
       const checked=migrateHabitChecked(h);
       const isCustom=h.period==='custom';
+      const mPre=y+'-'+m+'-';
       const monthDone=isCustom
         ? checked.filter(d=>d.startsWith(`custom-${h.id}-`)).length
         : checked.filter(d=>d.startsWith(mPre)).length;
       const pct=h.target>0?Math.round(Math.min(monthDone/h.target,1)*100):0;
-      const isCustom=h.period==='custom';
       const totalDots=isCustom?h.target:daysInMonth;
       let dots='';
       for(let d=1;d<=totalDots;d++){
