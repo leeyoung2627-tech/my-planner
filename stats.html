@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>월별 통계</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a1a2e; font-family: 'Noto Sans KR', sans-serif;
+  color: #fff; padding: 24px; min-height: 100vh;
+}
+h1 { font-size: 20px; font-weight: 700; color: #f0c060; margin-bottom: 6px; }
+.subtitle { font-size: 12px; color: #8888aa; margin-bottom: 24px; }
+.auth-notice {
+  background: #0d0d1a; border: 1px solid #3a3a5c; border-radius: 10px;
+  padding: 14px 18px; margin-bottom: 20px; font-size: 13px; color: #8888aa;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.auth-notice-btn {
+  background: #5a4fcf; border: none; border-radius: 7px;
+  padding: 7px 16px; color: #fff; font-size: 12px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; font-family: 'Noto Sans KR', sans-serif;
+}
+.empty { text-align: center; color: #555; font-size: 14px; padding: 60px 0; }
+.month-card {
+  background: #0d0d1a; border: 2px solid #2a2a44;
+  border-radius: 14px; padding: 18px 20px; margin-bottom: 14px;
+}
+.month-card.up   { border-left: 4px solid #f0c060; }
+.month-card.down { border-left: 4px solid #dc3c3c; }
+.month-card.keep { border-left: 4px solid #3a3a5c; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.card-title { font-size: 16px; font-weight: 700; color: #fff; }
+.card-badge { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+.card-badge.up   { background: rgba(240,192,96,0.2); color: #f0c060; }
+.card-badge.down { background: rgba(220,60,60,0.2);  color: #dc3c3c; }
+.card-badge.keep { background: rgba(100,100,160,0.2); color: #8888cc; }
+.card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.stat-box { background: #13132a; border-radius: 8px; padding: 10px 12px; }
+.stat-box-label { font-size: 10px; color: #8888aa; margin-bottom: 4px; }
+.stat-box-val { font-size: 16px; font-weight: 700; font-family: monospace; }
+.stat-box-val.green { color: #50c864; }
+.stat-box-val.red   { color: #dc3c3c; }
+.stat-box-val.gold  { color: #f0c060; }
+.stat-box-val.blue  { color: #60c0f0; }
+.stat-box-val.white { color: #fff; }
+.bar-wrap { margin-top: 12px; }
+.bar-label-row { display: flex; justify-content: space-between; font-size: 10px; color: #8888aa; margin-bottom: 4px; }
+.bar-bg { height: 8px; background: #0d0d1a; border-radius: 4px; border: 1px solid #2a2a44; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; }
+.bar-fill.pct  { background: linear-gradient(90deg, #5a4fcf, #60c0f0); }
+.bar-fill.days { background: linear-gradient(90deg, #c0392b, #ff6b6b); }
+.level-change {
+  display: flex; align-items: center; gap: 6px; font-size: 13px;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e1e36; color: #aaa;
+}
+</style>
+</head>
+<body>
+
+<h1>📊 월별 통계</h1>
+<div class="subtitle">결산 완료된 달의 기록이 여기 쌓여요</div>
+<div class="auth-notice" id="authNotice" style="display:none">
+  <span>☁️ 로그인하면 클라우드에서 통계를 불러와요</span>
+  <button class="auth-notice-btn" id="authNoticeBtn">Google 로그인</button>
+</div>
+<div id="content"><div class="empty">불러오는 중...</div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "179812397978",
+  appId: "1:179812397978:web:3525714542291e818e0023"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+function getLocalHistory() {
+  try { return JSON.parse(localStorage.getItem('rpgHistory_v1')) || []; } catch { return []; }
+}
+
+async function loadHistory(user) {
+  if(!user) return getLocalHistory();
+  try {
+    const snap = await getDoc(doc(db, 'rpgHistory', user.uid));
+    if(snap.exists()) return snap.data().list || [];
+  } catch(e) {}
+  return getLocalHistory();
+}
+
+function renderHistory(history) {
+  const content = document.getElementById('content');
+  if(!history.length) {
+    content.innerHTML = '<div class="empty">아직 결산한 달이 없어요.<br>첫 달을 완주해보세요! 🗺️</div>';
+    return;
+  }
+  const sorted = [...history].reverse();
+  content.innerHTML = sorted.map(h => {
+    const successRate = h.success+h.fail > 0 ? Math.round(h.success/(h.success+h.fail)*100) : 0;
+    const pctRatio  = Math.min(100, Math.round(h.totalPct/h.reqPct*100));
+    const daysRatio = Math.min(100, Math.round(h.qualifiedDays/h.reqDays*100));
+    const badgeText = h.result==='up'?'⬆️ 레벨업':h.result==='down'?'⬇️ 레벨다운':'➡️ 유지';
+    const lvColor   = h.result==='up'?'#f0c060':h.result==='down'?'#dc3c3c':'#8888cc';
+    return `
+    <div class="month-card ${h.result}">
+      <div class="card-header">
+        <div class="card-title">${h.year}년 ${h.month}월</div>
+        <div class="card-badge ${h.result}">${badgeText}</div>
+      </div>
+      <div class="card-grid">
+        <div class="stat-box"><div class="stat-box-label">⭕ 성공한 날</div><div class="stat-box-val green">${h.success}일</div></div>
+        <div class="stat-box"><div class="stat-box-label">❌ 실패한 날</div><div class="stat-box-val red">${h.fail}일</div></div>
+        <div class="stat-box"><div class="stat-box-label">📊 맵 성공률</div><div class="stat-box-val blue">${successRate}%</div></div>
+        <div class="stat-box"><div class="stat-box-label">📈 미션 달성률</div><div class="stat-box-val ${h.totalPct>=h.reqPct?'green':'red'}">${h.totalPct}%</div></div>
+        <div class="stat-box"><div class="stat-box-label">📅 30%이상 달성일</div><div class="stat-box-val ${h.qualifiedDays>=h.reqDays?'green':'red'}">${h.qualifiedDays}일</div></div>
+        <div class="stat-box"><div class="stat-box-label">🎯 레벨업 조건</div><div class="stat-box-val white">${h.reqPct}% + ${h.reqDays}일</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-label-row"><span>미션 누적 달성률</span><span>${h.totalPct}% / ${h.reqPct}%</span></div>
+        <div class="bar-bg"><div class="bar-fill pct" style="width:${pctRatio}%"></div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-label-row"><span>30% 이상 달성한 날</span><span>${h.qualifiedDays}일 / ${h.reqDays}일</span></div>
+        <div class="bar-bg"><div class="bar-fill days" style="width:${daysRatio}%"></div></div>
+      </div>
+      <div class="level-change">
+        <span>레벨 변동</span>
+        <span style="color:#aaa;font-family:monospace;font-weight:700">Lv.${h.levelBefore}</span>
+        <span>→</span>
+        <span style="color:${lvColor};font-family:monospace;font-weight:700">Lv.${h.levelAfter}</span>
+        ${h.result==='up'?'<span style="color:#f0c060;font-size:11px">✨ 레벨업!</span>':h.result==='down'?'<span style="color:#dc3c3c;font-size:11px">💀 레벨다운</span>':'<span style="color:#8888cc;font-size:11px">유지</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+onAuthStateChanged(auth, async (user) => {
+  const notice = document.getElementById('authNotice');
+  const noticeBtn = document.getElementById('authNoticeBtn');
+  if(!user) {
+    notice.style.display = 'flex';
+    noticeBtn.onclick = () => signInWithPopup(auth, provider);
+  } else {
+    notice.style.display = 'none';
+  }
+  const history = await loadHistory(user);
+  renderHistory(history);
+});
+</script>
+</body>
+</html>

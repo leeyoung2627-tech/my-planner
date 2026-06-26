@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>캐릭터 상태창</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: transparent;
+  font-family: 'Noto Sans KR', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+/* 전체 패널 */
+.status-panel {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: rgba(13,13,26,0.85);
+  border: 2px solid #3a3a5c;
+  border-radius: 16px;
+  padding: 16px 14px 20px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+/* 액자 영역 */
+.frame-wrap {
+  position: relative;
+  width: 180px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.frame-img {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.frame-inner {
+  position: absolute;
+  top: 13%;
+  left: 13%;
+  width: 74%;
+  height: 74%;
+  border-radius: 50%;
+  overflow: hidden;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #4a5060;
+}
+
+.char-img {
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+/* 레벨 표시 */
+.level-area {
+  text-align: center;
+  line-height: 1.3;
+}
+
+.level-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+
+.level-num {
+  font-size: 22px;
+  font-weight: 900;
+  color: #f0c060;
+  font-family: monospace;
+  text-shadow: 0 0 10px rgba(240,192,96,0.5);
+}
+
+.level-name {
+  font-size: 11px;
+  color: #aabbcc;
+  margin-top: 3px;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+}
+
+/* 구분선 */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #3a3a5c, transparent);
+}
+
+/* HP/MP 영역 */
+.stat-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-label.hp { color: #ff6b6b; }
+.stat-label.mp { color: #60c0f0; }
+
+.stat-label .icon { font-size: 14px; }
+
+.stat-count {
+  font-size: 11px;
+  color: #8888aa;
+  font-family: monospace;
+}
+
+.bar-bg {
+  height: 14px;
+  background: #0d0d1a;
+  border-radius: 7px;
+  border: 1px solid #2a2a44;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.4s ease;
+  position: relative;
+}
+
+.bar-fill.hp {
+  background: linear-gradient(90deg, #c0392b, #ff6b6b);
+  box-shadow: 0 0 8px rgba(255,107,107,0.4);
+}
+
+.bar-fill.mp {
+  background: linear-gradient(90deg, #1a6699, #60c0f0);
+  box-shadow: 0 0 8px rgba(96,192,240,0.4);
+}
+
+.bar-pct {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.8);
+  font-family: monospace;
+  pointer-events: none;
+}
+
+/* 미션 목록 토글 */
+.mission-toggle {
+  width: 100%;
+  background: none;
+  border: 1px solid #3a3a5c;
+  border-radius: 6px;
+  color: #8888aa;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s, color 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.mission-toggle:hover { border-color: #5a4fcf; color: #ccc; }
+
+/* 미션 패널 */
+.mission-panel {
+  display: none;
+  width: 100%;
+}
+.mission-panel.open { display: block; }
+
+.mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.mission-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: #0d0d1a;
+  border-radius: 6px;
+  border: 1px solid #2a2a44;
+}
+
+.mission-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid #4a4a6c;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  transition: background 0.15s;
+}
+.mission-check.checked.hp { background: #ff6b6b; border-color: #ff6b6b; }
+.mission-check.checked.mp { background: #60c0f0; border-color: #60c0f0; }
+
+.mission-text {
+  font-size: 11px;
+  color: #ccc;
+  flex: 1;
+  line-height: 1.3;
+}
+.mission-text.done { color: #555; text-decoration: line-through; }
+
+.mission-del {
+  background: none;
+  border: none;
+  color: #444;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 2px;
+  line-height: 1;
+}
+.mission-del:hover { color: #dc3c3c; }
+
+/* 미션 추가 */
+.mission-add-row {
+  display: flex;
+  gap: 4px;
+}
+
+.mission-add-input {
+  flex: 1;
+  background: #0d0d1a;
+  border: 1px solid #3a3a5c;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 11px;
+  padding: 5px 8px;
+  outline: none;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.mission-add-input:focus { border-color: #5a4fcf; }
+.mission-add-input::placeholder { color: #444; }
+
+.mission-add-btn {
+  background: #5a4fcf;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  width: 26px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.mission-add-btn:hover { background: #7060ef; }
+
+/* 목표 설정 */
+.goal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.goal-label { font-size: 10px; color: #666; }
+.goal-input {
+  width: 52px;
+  background: #0d0d1a;
+  border: 1px solid #2a2a44;
+  border-radius: 4px;
+  color: #f0c060;
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 700;
+  padding: 3px 6px;
+  text-align: center;
+  outline: none;
+}
+.goal-input:focus { border-color: #f0c060; }
+
+/* 레벨업 알림 */
+.levelup-notice {
+  display: none;
+  width: 100%;
+  background: rgba(240,192,96,0.15);
+  border: 1px solid #f0c060;
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #f0c060;
+  font-weight: 700;
+  animation: glow 1.5s infinite;
+}
+.levelup-notice.show { display: block; }
+
+@keyframes glow {
+  0%,100% { box-shadow: 0 0 6px rgba(240,192,96,0.3); }
+  50% { box-shadow: 0 0 16px rgba(240,192,96,0.7); }
+}
+
+/* 스크롤바 */
+.mission-list::-webkit-scrollbar { width: 4px; }
+.mission-list::-webkit-scrollbar-track { background: transparent; }
+.mission-list::-webkit-scrollbar-thumb { background: #3a3a5c; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="status-panel">
+
+  <!-- 액자 + 캐릭터 -->
+  <div class="frame-wrap">
+    <div class="frame-inner">
+      <img class="char-img" src="캐릭터.png" alt="캐릭터" id="charImg">
+    </div>
+    <img class="frame-img" src="액자.png" alt="액자">
+  </div>
+
+  <!-- 레벨 -->
+  <div class="level-area">
+    <div class="level-row">
+      <div class="level-num" id="levelNum">LV.1</div>
+    </div>
+    <div class="level-name" id="levelName">의지박약</div>
+  </div>
+
+  <!-- 레벨업 알림 -->
+  <div class="levelup-notice" id="levelupNotice">
+    ✨ 레벨업 가능! 목표 맵에서 결산하세요
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- HP / MP -->
+  <div class="stat-section">
+
+    <!-- HP -->
+    <div class="stat-row">
+      <div class="stat-header">
+        <div class="stat-label hp"><span class="icon">❤️</span> HP (운동)</div>
+        <div class="stat-count" id="hpCount">0 / 0</div>
+      </div>
+      <div class="bar-bg">
+        <div class="bar-fill hp" id="hpBar" style="width:0%"></div>
+        <div class="bar-pct" id="hpPct">0%</div>
+      </div>
+      <div class="goal-row">
+        <span class="goal-label">목표 미션 수</span>
+        <input class="goal-input" type="number" id="hpGoal" min="1" max="99" placeholder="10" onchange="saveAndRender()">
+      </div>
+      <button class="mission-toggle" onclick="toggleMission('hp')">▾ HP 미션 관리</button>
+      <div class="mission-panel" id="hpPanel">
+        <div class="mission-list" id="hpList"></div>
+        <div class="mission-add-row">
+          <input class="mission-add-input" id="hpInput" placeholder="미션 입력..." onkeydown="if(event.key==='Enter') addMission('hp')">
+          <button class="mission-add-btn" onclick="addMission('hp')">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- MP -->
+    <div class="stat-row">
+      <div class="stat-header">
+        <div class="stat-label mp"><span class="icon">💙</span> MP (정신/공부)</div>
+        <div class="stat-count" id="mpCount">0 / 0</div>
+      </div>
+      <div class="bar-bg">
+        <div class="bar-fill mp" id="mpBar" style="width:0%"></div>
+        <div class="bar-pct" id="mpPct">0%</div>
+      </div>
+      <div class="goal-row">
+        <span class="goal-label">목표 미션 수</span>
+        <input class="goal-input" type="number" id="mpGoal" min="1" max="99" placeholder="10" onchange="saveAndRender()">
+      </div>
+      <button class="mission-toggle" onclick="toggleMission('mp')">▾ MP 미션 관리</button>
+      <div class="mission-panel" id="mpPanel">
+        <div class="mission-list" id="mpList"></div>
+        <div class="mission-add-row">
+          <input class="mission-add-input" id="mpInput" placeholder="미션 입력..." onkeydown="if(event.key==='Enter') addMission('mp')">
+          <button class="mission-add-btn" onclick="addMission('mp')">+</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const LEVEL_NAMES = {
+  1: '의지박약',
+  2: '뭔가 하는 것 같기도...?',
+  3: '일단 실천은 하고 있다네',
+  4: '습관이 되어가는 중',
+  5: '루틴 마스터',
+};
+
+const SK = 'statusPanel_v1';
+
+function defaultData() {
+  return {
+    level: 1,
+    hpGoal: 10,
+    mpGoal: 10,
+    hpMissions: [],  // {text, done}
+    mpMissions: [],
+    hpLaps: 0,  // 완주 횟수
+    mpLaps: 0,
+    levelupReady: false,
+  };
+}
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(SK)) || defaultData(); }
+  catch { return defaultData(); }
+}
+function save() { localStorage.setItem(SK, JSON.stringify(state)); }
+function saveAndRender() {
+  state.hpGoal = parseInt(document.getElementById('hpGoal').value) || 10;
+  state.mpGoal = parseInt(document.getElementById('mpGoal').value) || 10;
+  save();
+  render();
+}
+
+let state = load();
+
+function toggleMission(type) {
+  const panel = document.getElementById(type + 'Panel');
+  panel.classList.toggle('open');
+  const btn = panel.previousElementSibling.previousElementSibling;
+  btn.textContent = panel.classList.contains('open')
+    ? `▴ ${type.toUpperCase()} 미션 관리`
+    : `▾ ${type.toUpperCase()} 미션 관리`;
+}
+
+function addMission(type) {
+  const input = document.getElementById(type + 'Input');
+  const text = input.value.trim();
+  if (!text) return;
+  state[type + 'Missions'].push({ text, done: false });
+  input.value = '';
+  save();
+  render();
+}
+
+function toggleCheck(type, idx) {
+  const missions = state[type + 'Missions'];
+  missions[idx].done = !missions[idx].done;
+
+  // 완주 체크
+  const goal = state[type + 'Goal'];
+  const doneCount = missions.filter(m => m.done).length;
+
+  if (doneCount >= goal) {
+    // 한 바퀴 완주 - 체크 초기화 & 랩 카운트
+    state[type + 'Laps']++;
+    missions.forEach(m => m.done = false);
+    checkLevelup();
+  }
+
+  save();
+  render();
+}
+
+function deleteMission(type, idx) {
+  state[type + 'Missions'].splice(idx, 1);
+  save();
+  render();
+}
+
+function checkLevelup() {
+  if (state.hpLaps > 0 && state.mpLaps > 0) {
+    state.hpLaps--;
+    state.mpLaps--;
+    state.levelupReady = true;
+  }
+}
+
+function render() {
+  // 레벨
+  const lv = state.level;
+  document.getElementById('levelNum').textContent = `LV.${lv}`;
+  document.getElementById('levelName').textContent = LEVEL_NAMES[lv] || `Lv.${lv}`;
+
+  // 목표 입력값
+  document.getElementById('hpGoal').value = state.hpGoal;
+  document.getElementById('mpGoal').value = state.mpGoal;
+
+  // 레벨업 알림
+  document.getElementById('levelupNotice').classList.toggle('show', state.levelupReady);
+
+  renderStat('hp');
+  renderStat('mp');
+}
+
+function renderStat(type) {
+  const missions = state[type + 'Missions'];
+  const goal = state[type + 'Goal'];
+  const doneCount = missions.filter(m => m.done).length;
+  const pct = goal > 0 ? Math.min(100, Math.round(doneCount / goal * 100)) : 0;
+  const laps = state[type + 'Laps'];
+
+  document.getElementById(type + 'Bar').style.width = pct + '%';
+  document.getElementById(type + 'Pct').textContent = pct + '%';
+  document.getElementById(type + 'Count').textContent =
+    `${doneCount} / ${goal}${laps > 0 ? ` (완주 ${laps}회)` : ''}`;
+
+  // 미션 목록
+  const list = document.getElementById(type + 'List');
+  list.innerHTML = '';
+  missions.forEach((m, i) => {
+    const item = document.createElement('div');
+    item.className = 'mission-item';
+
+    const check = document.createElement('div');
+    check.className = `mission-check ${m.done ? 'checked ' + type : ''}`;
+    check.textContent = m.done ? '✓' : '';
+    check.onclick = () => toggleCheck(type, i);
+
+    const txt = document.createElement('div');
+    txt.className = `mission-text ${m.done ? 'done' : ''}`;
+    txt.textContent = m.text;
+
+    const del = document.createElement('button');
+    del.className = 'mission-del';
+    del.textContent = '×';
+    del.onclick = () => deleteMission(type, i);
+
+    item.appendChild(check);
+    item.appendChild(txt);
+    item.appendChild(del);
+    list.appendChild(item);
+  });
+}
+
+// 외부에서 레벨업 확정 시 호출 (목표맵과 연동 시 사용)
+window.confirmLevelup = function() {
+  if (state.levelupReady) {
+    state.level = Math.min(state.level + 1, 99);
+    state.levelupReady = false;
+    save();
+    render();
+  }
+};
+
+render();
+</script>
+</body>
+</html>

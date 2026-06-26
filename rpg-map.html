@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>목표 맵 RPG</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #1a1a2e;
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 40px;
+}
+
+/* ── 헤더 ── */
+.header {
+  width: 100%; max-width: 1400px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; gap: 16px; flex-wrap: wrap;
+}
+.month-info { text-align: center; }
+.month-title { font-size: 20px; font-weight: 700; color: #fff; }
+.month-sub { font-size: 13px; color: #8888aa; margin-top: 2px; }
+
+
+/* ── 진행바 ── */
+.progress-bar-wrap { width: 100%; max-width: 1400px; padding: 0 24px 12px; }
+.progress-info { display: flex; justify-content: space-between; font-size: 12px; color: #8888aa; margin-bottom: 6px; }
+.progress-bar-bg { height: 10px; background: #0d0d1a; border-radius: 5px; border: 1px solid #3a3a5c; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, #5a4fcf, #60c0f0); border-radius: 5px; transition: width 0.4s ease; }
+
+/* ── 맵 + 상태창 ── */
+.map-section {
+  width: 100%; max-width: 1400px;
+  padding: 0 24px 20px;
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.map-container { flex: 1; min-width: 0; }
+.map-wrapper {
+  position: relative; width: 100%;
+  border-radius: 16px; overflow: hidden;
+  border: 3px solid #3a3a5c;
+  box-shadow: 0 0 40px rgba(90,79,207,0.3);
+}
+.map-img { width: 100%; display: block; border-radius: 13px; }
+.tile-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* ── 타일 ── */
+.tile {
+  position: absolute; width: 52px; height: 52px;
+  transform: translate(-50%, -50%);
+  cursor: pointer; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: all; transition: transform 0.15s; user-select: none;
+}
+.tile:hover { transform: translate(-50%, -50%) scale(1.1); }
+.tile.future { opacity: 0.3; cursor: default; pointer-events: none; }
+.tile.today { animation: tilePulse 1.5s infinite; }
+.tile img { width: 100%; height: 100%; object-fit: contain; }
+.tile .day-num {
+  position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; color: rgba(255,255,255,0.7); font-family: monospace;
+  font-weight: 700; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+  pointer-events: none;
+}
+@keyframes tilePulse {
+  0%,100% { filter: drop-shadow(0 0 6px rgba(240,192,96,0.6)); }
+  50% { filter: drop-shadow(0 0 16px rgba(240,192,96,1)); }
+}
+
+/* ── 날짜 종이 팝업 ── */
+.day-popup {
+  position: absolute;
+  z-index: 50;
+  width: 200px;
+  background: #fdf6e3;
+  border-radius: 8px;
+  box-shadow: 2px 4px 20px rgba(0,0,0,0.5), 0 0 0 2px #c8a96e;
+  padding: 10px 12px 12px;
+  transform-origin: top center;
+  animation: unfold 0.25s ease forwards;
+  pointer-events: all;
+  /* 양피지 느낌 */
+  background: linear-gradient(160deg, #fef9ee 0%, #f5e8c0 100%);
+}
+@keyframes unfold {
+  0%   { transform: scaleY(0.1) translateY(-10px); opacity: 0; }
+  60%  { transform: scaleY(1.04); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+.day-popup.closing {
+  animation: fold 0.2s ease forwards;
+}
+@keyframes fold {
+  0%   { transform: scaleY(1); opacity: 1; }
+  100% { transform: scaleY(0.1) translateY(-10px); opacity: 0; }
+}
+.popup-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; border-bottom: 1px solid #d4b97a; padding-bottom: 6px;
+}
+.popup-date { font-size: 13px; font-weight: 700; color: #5a3e1b; }
+.popup-status-btns { display: flex; gap: 4px; }
+.popup-status-btn {
+  font-size: 16px; background: none; border: none; cursor: pointer;
+  padding: 2px 4px; border-radius: 4px; transition: background 0.15s; line-height: 1;
+}
+.popup-status-btn:hover { background: rgba(0,0,0,0.08); }
+.popup-status-btn.active-success { background: rgba(80,200,100,0.3); }
+.popup-status-btn.active-fail    { background: rgba(220,60,60,0.25); }
+
+.popup-missions { display: flex; flex-direction: column; gap: 5px; }
+.popup-mission-item {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 3px 2px; border-radius: 4px; transition: background 0.1s;
+}
+.popup-mission-item:hover { background: rgba(0,0,0,0.05); }
+.popup-check {
+  width: 15px; height: 15px; border-radius: 3px; border: 1.5px solid #a08040;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; transition: all 0.15s;
+}
+.popup-check.hp-checked { background: #ff6b6b; border-color: #ff6b6b; color: #fff; }
+.popup-check.mp-checked { background: #60c0f0; border-color: #60c0f0; color: #fff; }
+.popup-mission-label { font-size: 11px; color: #5a3e1b; line-height: 1.3; flex: 1; }
+.popup-mission-label.done { text-decoration: line-through; color: #a08040; }
+.popup-type-tag {
+  font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px;
+  flex-shrink: 0;
+}
+.popup-type-tag.hp { background: rgba(255,107,107,0.2); color: #c0392b; }
+.popup-type-tag.mp { background: rgba(96,192,240,0.2); color: #1a6699; }
+.popup-empty { font-size: 11px; color: #a08040; text-align: center; padding: 6px 0; }
+
+/* ── 캐릭터 ── */
+.character {
+  position: absolute; width: 90px; height: 110px;
+  transform: translate(-50%, -100%);
+  pointer-events: none; z-index: 20;
+  transition: left 0.6s cubic-bezier(0.4,0,0.2,1), top 0.6s cubic-bezier(0.4,0,0.2,1);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.7));
+  visibility: hidden;
+}
+.character img { width: 100%; height: 100%; object-fit: contain; }
+
+/* ── 상태창 ── */
+.status-panel {
+  width: 220px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  background: rgba(13,13,26,0.92); border: 2px solid #3a3a5c;
+  border-radius: 16px; padding: 14px 12px 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.frame-wrap {
+  position: relative; width: 170px; height: 238px;
+  display: flex; align-items: center; justify-content: center;
+}
+.frame-img {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: contain; z-index: 2; pointer-events: none;
+}
+.frame-inner {
+  position: absolute;
+  top: 8%; left: 10%; width: 80%; height: 84%;
+  border-radius: 50%; overflow: hidden; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  background: #3a4050;
+}
+.char-img { width: 70%; height: 70%; object-fit: contain; object-position: center center; }
+
+.level-area { text-align: center; }
+.level-num { font-size: 20px; font-weight: 900; color: #f0c060; font-family: monospace; text-shadow: 0 0 10px rgba(240,192,96,0.5); }
+.level-name { font-size: 10px; color: #aabbcc; margin-top: 3px; line-height: 1.4; }
+
+.sp-divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, #3a3a5c, transparent); }
+
+.levelup-notice {
+  display: none; width: 100%;
+  background: rgba(240,192,96,0.15); border: 1px solid #f0c060;
+  border-radius: 8px; padding: 6px 10px; text-align: center;
+  font-size: 11px; color: #f0c060; font-weight: 700;
+  animation: spGlow 1.5s infinite;
+}
+.levelup-notice.show { display: block; }
+@keyframes spGlow {
+  0%,100% { box-shadow: 0 0 6px rgba(240,192,96,0.3); }
+  50% { box-shadow: 0 0 16px rgba(240,192,96,0.7); }
+}
+
+/* HP/MP 바 */
+.stat-section { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.stat-row { display: flex; flex-direction: column; gap: 3px; }
+.stat-header { display: flex; align-items: center; justify-content: space-between; }
+.stat-label { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.stat-label.hp { color: #ff6b6b; }
+.stat-label.mp { color: #60c0f0; }
+.stat-count { font-size: 10px; color: #8888aa; font-family: monospace; }
+.bar-bg {
+  height: 13px; background: #0d0d1a;
+  border-radius: 7px; border: 1px solid #2a2a44; overflow: hidden; position: relative;
+}
+.bar-fill { height: 100%; border-radius: 7px; transition: width 0.4s ease; }
+.bar-fill.hp { background: linear-gradient(90deg, #c0392b, #ff6b6b); box-shadow: 0 0 6px rgba(255,107,107,0.4); }
+.bar-fill.mp { background: linear-gradient(90deg, #1a6699, #60c0f0); box-shadow: 0 0 6px rgba(96,192,240,0.4); }
+.bar-pct {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.85);
+  font-family: monospace; pointer-events: none;
+}
+
+/* 미션 관리 버튼 */
+.mission-mgr-btn {
+  width: 100%; padding: 9px;
+  background: linear-gradient(135deg, #2a2a44, #3a3460);
+  border: 1px solid #5a4fcf; border-radius: 10px;
+  color: #c0b0ff; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+  letter-spacing: 0.5px;
+}
+.mission-mgr-btn:hover { background: linear-gradient(135deg, #3a3460, #4a44a0); border-color: #8070ef; color: #fff; }
+
+/* ── 하단 ── */
+.bottom-panel {
+  width: 100%; max-width: 1400px; padding: 0 24px 0;
+  display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;
+}
+.stats-card {
+  background: #0d0d1a; border: 2px solid #3a3a5c;
+  border-radius: 12px; padding: 16px 20px; flex: 1; min-width: 200px;
+}
+.stats-title { font-size: 11px; color: #8888aa; letter-spacing: 1px; margin-bottom: 10px; }
+.stats-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #1e1e36; }
+.stats-row:last-child { border-bottom: none; }
+.stats-key { font-size: 13px; color: #aaa; }
+.stats-val { font-size: 15px; font-weight: 700; color: #fff; font-family: monospace; }
+.stats-val.green { color: #50c864; }
+.stats-val.red   { color: #dc3c3c; }
+.stats-val.gold  { color: #f0c060; }
+.end-month-btn {
+  background: #5a4fcf; border: none; border-radius: 10px;
+  padding: 14px 28px; color: #fff; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: background 0.2s, transform 0.1s; white-space: nowrap; align-self: center;
+}
+.end-month-btn:hover { background: #7060ef; transform: translateY(-2px); }
+
+.stats-btn {
+  background: #0d0d1a; border: 2px solid #3a3a5c;
+  border-radius: 10px; padding: 10px 20px;
+  color: #8888aa; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap; align-self: center;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.stats-btn:hover { border-color: #60c0f0; color: #60c0f0; }
+
+.auth-area {
+  display: flex; align-items: center; gap: 10px;
+}
+.auth-btn {
+  background: #0d0d1a; border: 2px solid #5a4fcf;
+  border-radius: 8px; padding: 7px 14px;
+  color: #c0b0ff; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+  white-space: nowrap;
+}
+.auth-btn:hover { background: #5a4fcf; color: #fff; }
+
+/* ── 모달 공통 ── */
+.modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: #1a1a2e; border: 2px solid #5a4fcf;
+  border-radius: 16px; padding: 28px;
+  min-width: 300px; max-width: 460px; width: 90%;
+  max-height: 80vh; overflow-y: auto;
+}
+.modal h2 { font-size: 17px; color: #fff; margin-bottom: 16px; }
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btn { flex: 1; padding: 11px; border-radius: 8px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
+.modal-btn.primary   { background: #5a4fcf; color: #fff; }
+.modal-btn.secondary { background: #2a2a44; color: #aaa; }
+
+/* 목표일 모달 */
+.modal-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.modal-input-row input {
+  flex: 1; background: #0d0d1a; border: 2px solid #3a3a5c; border-radius: 8px;
+  color: #fff; font-size: 20px; font-weight: 700; padding: 10px 14px;
+  text-align: center; font-family: monospace; outline: none;
+}
+.modal-input-row input:focus { border-color: #5a4fcf; }
+.modal-input-row span { color: #8888aa; font-size: 14px; }
+.modal-sub { font-size: 12px; color: #8888aa; margin-bottom: 16px; }
+
+/* ── 미션 관리 모달 ── */
+.mgr-section { margin-bottom: 20px; }
+.mgr-section-title {
+  font-size: 13px; font-weight: 700; margin-bottom: 10px;
+  padding-bottom: 6px; border-bottom: 1px solid #2a2a44;
+  display: flex; align-items: center; gap: 6px;
+}
+.mgr-section-title.hp { color: #ff6b6b; }
+.mgr-section-title.mp { color: #60c0f0; }
+
+.mgr-goal-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.mgr-goal-label { font-size: 12px; color: #8888aa; }
+.mgr-goal-input {
+  width: 60px; background: #0d0d1a; border: 1px solid #3a3a5c;
+  border-radius: 6px; color: #f0c060; font-size: 14px; font-weight: 700;
+  padding: 4px 8px; text-align: center; font-family: monospace; outline: none;
+}
+.mgr-goal-input:focus { border-color: #f0c060; }
+.mgr-goal-unit { font-size: 12px; color: #8888aa; }
+
+.mgr-mission-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.mgr-mission-item {
+  display: flex; align-items: center; gap: 8px;
+  background: #0d0d1a; border-radius: 7px; padding: 7px 10px;
+  border: 1px solid #2a2a44;
+}
+.mgr-mission-text { font-size: 12px; color: #ccc; flex: 1; }
+.mgr-del-btn {
+  background: none; border: none; color: #444; cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 0 2px;
+}
+.mgr-del-btn:hover { color: #dc3c3c; }
+
+.mgr-add-row { display: flex; gap: 6px; }
+.mgr-add-input {
+  flex: 1; background: #0d0d1a; border: 1px solid #3a3a5c; border-radius: 7px;
+  color: #fff; font-size: 12px; padding: 7px 10px; outline: none;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.mgr-add-input:focus { border-color: #5a4fcf; }
+.mgr-add-input::placeholder { color: #444; }
+.mgr-add-btn {
+  background: #5a4fcf; border: none; border-radius: 7px;
+  color: #fff; font-size: 16px; width: 32px; cursor: pointer; flex-shrink: 0;
+}
+.mgr-add-btn:hover { background: #7060ef; }
+
+/* ── 레벨 연출 ── */
+.level-anim {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  align-items: center; justify-content: center; background: rgba(0,0,0,0.5);
+}
+.level-anim.show { display: flex; }
+.level-anim-inner { text-align: center; animation: levelPop 2.2s ease forwards; }
+.level-anim-text { font-size: 64px; font-weight: 900; line-height: 1.2; text-shadow: 0 0 40px currentColor; }
+.level-anim-text.up   { color: #f0c060; }
+.level-anim-text.down { color: #dc3c3c; }
+@keyframes levelPop {
+  0%   { transform: scale(0.3); opacity: 0; }
+  20%  { transform: scale(1.15); opacity: 1; }
+  70%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div class="header">
+  <div class="month-info">
+    <div class="month-title" id="monthTitle">2026년 6월</div>
+    <div class="month-sub" id="monthSub">목표를 향해 나아가는 중</div>
+  </div>
+  <div class="auth-area">
+    <span id="authInfo" style="font-size:12px;color:#8888aa;"></span>
+    <button id="authBtn" class="auth-btn">Google 로그인</button>
+  </div>
+
+</div>
+
+<!-- 진행바 -->
+<div class="progress-bar-wrap">
+  <div class="progress-info">
+    <span id="progressText">0 / 31일 체크</span>
+    <span id="successRate">성공률 0%</span>
+  </div>
+  <div class="progress-bar-bg">
+    <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- 맵 + 상태창 -->
+<div class="map-section">
+
+  <div class="map-container">
+    <div class="map-wrapper" id="mapWrapper">
+      <img class="map-img" src="map.png" alt="목표 맵" id="mapImg" onload="onMapLoad()">
+      <div class="tile-overlay" id="tileOverlay">
+        <div class="character" id="character">
+          <img src="character.png" alt="캐릭터" onerror="this.style.display='none'; document.getElementById('charFallback').style.display='flex';">
+          <div id="charFallback" style="display:none;width:100%;height:100%;background:#5a4fcf;border-radius:50%;border:3px solid #f0c060;align-items:center;justify-content:center;font-size:28px;">🧝</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상태창 -->
+  <div class="status-panel">
+    <div class="frame-wrap">
+      <div class="frame-inner">
+        <img class="char-img" src="character.png" alt="캐릭터" onerror="this.style.display='none';">
+      </div>
+      <img class="frame-img" src="frame.png" alt="액자">
+    </div>
+
+    <div class="level-area">
+      <div class="level-num" id="spLevelNum">LV.1</div>
+      <div class="level-name" id="spLevelName">의지박약</div>
+    </div>
+
+    <div class="levelup-notice" id="levelupNotice">✨ HP·MP 완주! 결산 시 레벨업</div>
+
+    <div class="sp-divider"></div>
+
+    <div class="stat-section">
+      <div class="stat-row">
+        <div class="stat-header">
+          <div class="stat-label hp">❤️ HP (운동)</div>
+          <div class="stat-count" id="hpCount">0/0</div>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill hp" id="hpBar" style="width:0%"></div>
+          <div class="bar-pct" id="hpPct">0%</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-header">
+          <div class="stat-label mp">💙 MP (정신/공부)</div>
+          <div class="stat-count" id="mpCount">0/0</div>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill mp" id="mpBar" style="width:0%"></div>
+          <div class="bar-pct" id="mpPct">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sp-divider"></div>
+
+    <!-- 미션 관리 버튼 -->
+    <button class="mission-mgr-btn" onclick="openMissionMgr()">📋 미션 관리</button>
+  </div>
+</div>
+
+<!-- 하단 통계 -->
+<div class="bottom-panel">
+  <div class="stats-card">
+    <div class="stats-title">이번 달 현황</div>
+    <div class="stats-row"><span class="stats-key">⭕ 성공한 날</span><span class="stats-val green" id="statSuccess">0일</span></div>
+    <div class="stats-row"><span class="stats-key">❌ 실패한 날</span><span class="stats-val red" id="statFail">0일</span></div>
+    <div class="stats-row"><span class="stats-key">📅 남은 날</span><span class="stats-val" id="statRemain">—</span></div>
+
+  </div>
+  <div class="stats-card">
+    <div class="stats-title">레벨 정보</div>
+    <div class="stats-row"><span class="stats-key">현재 레벨</span><span class="stats-val gold" id="statLevel">Lv.1</span></div>
+    <div class="stats-row"><span class="stats-key">레벨업 조건</span><span class="stats-val green" id="statReq">—</span></div>
+    <div class="stats-row"><span class="stats-key">누적 달성률</span><span class="stats-val" id="statTotalPct">0%</span></div>
+    <div class="stats-row"><span class="stats-key">30%이상 달성일</span><span class="stats-val" id="statQdays">0일</span></div>
+  </div>
+  <button class="end-month-btn" onclick="endMonth()">🏁 이번 달 결산</button>
+  <button class="stats-btn" onclick="openStats()">📊 통계 보기</button>
+</div>
+
+<!-- 미션 관리 모달 -->
+<div class="modal-bg" id="missionMgrModal">
+  <div class="modal">
+    <h2>📋 미션 관리</h2>
+
+    <!-- HP 섹션 -->
+    <div class="mgr-section">
+      <div class="mgr-section-title hp">❤️ HP 미션 (운동)</div>
+      <div class="mgr-goal-row">
+        <span class="mgr-goal-label">목표 미션 수</span>
+        <input class="mgr-goal-input" type="number" id="hpGoalInput" min="1" max="99" placeholder="5" onchange="onGoalChange('hp')">
+        <span class="mgr-goal-unit">개 달성 시 HP 완주</span>
+      </div>
+      <div class="mgr-mission-list" id="mgrHpList"></div>
+      <div class="mgr-add-row">
+        <input class="mgr-add-input" id="hpMgrInput" placeholder="HP 미션 추가..." onkeydown="if(event.key==='Enter')addMission('hp')">
+        <button class="mgr-add-btn" onclick="addMission('hp')">+</button>
+      </div>
+    </div>
+
+    <!-- MP 섹션 -->
+    <div class="mgr-section">
+      <div class="mgr-section-title mp">💙 MP 미션 (정신/공부)</div>
+      <div class="mgr-goal-row">
+        <span class="mgr-goal-label">목표 미션 수</span>
+        <input class="mgr-goal-input" type="number" id="mpGoalInput" min="1" max="99" placeholder="5" onchange="onGoalChange('mp')">
+        <span class="mgr-goal-unit">개 달성 시 MP 완주</span>
+      </div>
+      <div class="mgr-mission-list" id="mgrMpList"></div>
+      <div class="mgr-add-row">
+        <input class="mgr-add-input" id="mpMgrInput" placeholder="MP 미션 추가..." onkeydown="if(event.key==='Enter')addMission('mp')">
+        <button class="mgr-add-btn" onclick="addMission('mp')">+</button>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-btn primary" onclick="closeMissionMgr()">완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- 결산 모달 -->
+<div class="modal-bg" id="endModal">
+  <div class="modal">
+    <h2 id="endTitle">이번 달 결산</h2>
+    <p id="endDesc" style="font-size:14px;color:#ccc;line-height:2;"></p>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closeEndModal()">닫기</button>
+      <button class="modal-btn primary" onclick="confirmEndMonth()">✅ 확정 & 다음 달로</button>
+    </div>
+  </div>
+</div>
+
+<!-- 레벨 연출 -->
+<div class="level-anim" id="levelAnim">
+  <div class="level-anim-inner">
+    <div class="level-anim-text" id="levelAnimText"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "179812397978",
+  appId: "1:179812397978:web:3525714542291e818e0023"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+let currentUser = null;
+// ══════════════════════════════
+// 설정
+// ══════════════════════════════
+const LEVEL_NAMES = {
+  1:'의지박약', 2:'뭔가 하는 것 같기도...?', 3:'일단 실천은 하고 있다네',
+  4:'습관이 되어가는 중', 5:'루틴 마스터', 6:'제법 하는데?',
+  7:'꽤 진지한 편', 8:'거의 다 왔어', 9:'한계를 넘는 중', 10:'전설의 시작',
+};
+
+// 레벨업 조건 테이블
+// { pct: 누적달성률(%), days: 최소달성일 }
+const LEVEL_UP_REQUIREMENTS = {
+  1:  { pct: 30, days: 15 },
+  2:  { pct: 40, days: 17 },
+  3:  { pct: 50, days: 19 },
+  4:  { pct: 60, days: 21 },
+  5:  { pct: 70, days: 23 },
+  6:  { pct: 80, days: 25 },
+  7:  { pct: 90, days: 25 },
+  8:  { pct: 95, days: 28 },
+  9:  { pct:100, days: 30 },
+};
+const PATH_COORDS_ORIG = [
+  [260,125],[359,120],[478,117],[614,122],[735,127],
+  [840,126],[941,133],[1034,133],[1128,134],[1217,141],
+  [1234,211],[1240,276],[1230,347],[1130,358],[1005,355],
+  [875,354],[741,366],[621,378],[508,386],[407,393],
+  [271,393],[150,396],[139,478],[134,555],[139,632],
+  [249,634],[364,630],[473,623],[612,620],[785,618],[897,617],
+];
+const IMG_W=1376, IMG_H=768, TOTAL_DAYS=31;
+const MAP_KEY='rpgMapData_v4', SP_KEY='rpgStatusData_v2';
+
+// ══════════════════════════════
+// 상태
+// ══════════════════════════════
+function mapDefault() {
+  const n=new Date();
+  return { level:1, year:n.getFullYear(), month:n.getMonth()+1, goal:null,
+    days: Array(TOTAL_DAYS).fill(null),
+    // 날짜별 미션 체크: { '1': {hp:[true,false,...], mp:[...]} }
+    dayMissions: {}
+  };
+}
+function spDefault() {
+  return { hpGoal:5, mpGoal:5,
+    hpMissions:[], // [{text}] - 미션 목록 (체크는 dayMissions에)
+    mpMissions:[],
+    hpLaps:0, mpLaps:0
+  };
+}
+function loadMap() { try{return JSON.parse(localStorage.getItem(MAP_KEY))||mapDefault();}catch{return mapDefault();} }
+function loadSP()  { try{return JSON.parse(localStorage.getItem(SP_KEY))||spDefault();}catch{return spDefault();} }
+function saveMap() { localStorage.setItem(MAP_KEY, JSON.stringify(mapState)); }
+function saveSP()  { localStorage.setItem(SP_KEY,  JSON.stringify(spState)); }
+
+let mapState=loadMap(), spState=loadSP(), mapLoaded=false;
+let activePopup=null; // 현재 열린 팝업 DOM
+
+function getScaled() {
+  const img=document.getElementById('mapImg'), rect=img.getBoundingClientRect();
+  return PATH_COORDS_ORIG.map(([ox,oy])=>[ox*(rect.width/IMG_W), oy*(rect.height/IMG_H)]);
+}
+
+// ══════════════════════════════
+// 렌더
+// ══════════════════════════════
+function render() {
+  if(!mapLoaded) return;
+  renderMap(); renderStatus();
+}
+
+function renderMap() {
+  const now=new Date();
+  const isCurrentMonth=(mapState.year===now.getFullYear()&&mapState.month===now.getMonth()+1);
+  const todayIdx=isCurrentMonth?now.getDate()-1:-1;
+  const success=mapState.days.filter(d=>d===true).length;
+  const fail=mapState.days.filter(d=>d===false).length;
+  const checked=success+fail;
+  const rate=checked>0?Math.round(success/checked*100):0;
+
+  document.getElementById('monthTitle').textContent=`${mapState.year}년 ${mapState.month}월`;
+
+  document.getElementById('statLevel').textContent=`Lv.${mapState.level}`;
+  document.getElementById('statSuccess').textContent=`${success}일`;
+  document.getElementById('statFail').textContent=`${fail}일`;
+  document.getElementById('statRemain').textContent=`${Math.max(0,TOTAL_DAYS-checked)}일`;
+
+
+  document.getElementById('progressText').textContent=`${checked}/${TOTAL_DAYS}일 체크`;
+  document.getElementById('successRate').textContent=`성공률 ${rate}%`;
+  document.getElementById('progressFill').style.width=`${(checked/TOTAL_DAYS)*100}%`;
+  document.getElementById('monthSub').textContent=`HP·MP 완주하면 레벨업!`;
+  renderTiles(todayIdx, isCurrentMonth);
+  renderCharacter(todayIdx);
+}
+
+function renderTiles(todayIdx, isCurrentMonth) {
+  const overlay=document.getElementById('tileOverlay');
+  overlay.querySelectorAll('.tile').forEach(t=>t.remove());
+  const coords=getScaled();
+
+  coords.forEach(([x,y],i)=>{
+    const div=document.createElement('div');
+    div.className='tile';
+    div.style.left=x+'px'; div.style.top=y+'px';
+    const status=mapState.days[i];
+    const isFuture=isCurrentMonth&&i>todayIdx;
+    const isToday=i===todayIdx;
+
+    if(status===true){
+      const img=document.createElement('img'); img.src='success.png'; div.appendChild(img);
+    } else if(status===false){
+      const img=document.createElement('img'); img.src='fail.png'; div.appendChild(img);
+    } else {
+      div.style.background=isToday?'rgba(240,192,96,0.25)':'rgba(255,255,255,0.06)';
+      div.style.border=isToday?'2px solid rgba(240,192,96,0.8)':'2px solid rgba(255,255,255,0.15)';
+      div.style.borderRadius='50%';
+    }
+    if(isToday&&status===null) div.classList.add('today');
+    if(isFuture) div.classList.add('future');
+
+    const dayNum=document.createElement('div');
+    dayNum.className='day-num'; dayNum.textContent=i+1;
+    div.appendChild(dayNum);
+
+    if(!isFuture) div.addEventListener('click',(e)=>{ e.stopPropagation(); openDayPopup(i, div, x, y); });
+    overlay.appendChild(div);
+  });
+}
+
+function renderCharacter(todayIdx) {
+  const coords=getScaled();
+  const char=document.getElementById('character');
+  let pos=Math.max(0, todayIdx>=0?todayIdx:0);
+  pos=Math.min(pos, coords.length-1);
+  const [x,y]=coords[pos];
+  char.style.left=x+'px'; char.style.top=y+'px';
+  char.style.visibility='visible';
+}
+
+function renderStatus() {
+  const lv=mapState.level;
+  document.getElementById('spLevelNum').textContent=`LV.${lv}`;
+  document.getElementById('spLevelName').textContent=LEVEL_NAMES[lv]||`Lv.${lv}`;
+  const { levelUp: lvupReady } = calcLevelProgress();
+  document.getElementById('levelupNotice').classList.toggle('show', lvupReady);
+  renderStatBar('hp'); renderStatBar('mp');
+
+  // 레벨업 진행 현황
+  const { req, totalPct, qualifiedDays } = calcLevelProgress();
+  const pctEl = document.getElementById('statTotalPct');
+  const dEl   = document.getElementById('statQdays');
+  const reqEl = document.getElementById('statReq');
+  if(pctEl) pctEl.textContent = `${totalPct}% / ${req.pct}%`;
+  if(dEl)   dEl.textContent   = `${qualifiedDays}일 / ${req.days}일`;
+  if(reqEl) reqEl.textContent = `누적${req.pct}% + ${req.days}일`;
+  if(pctEl) pctEl.style.color = totalPct>=req.pct?'#50c864':'#ff6b6b';
+  if(dEl)   dEl.style.color   = qualifiedDays>=req.days?'#50c864':'#ff6b6b';
+}
+
+function renderStatBar(type) {
+  // 이번 달 전체 체크 합산
+  let totalDone=0;
+  const goal=spState[type+'Goal'];
+  const missions=spState[type+'Missions'];
+  Object.values(mapState.dayMissions).forEach(day=>{
+    if(day[type]) totalDone+=day[type].filter(Boolean).length;
+  });
+  const laps=spState[type+'Laps'];
+  // 현재 진행 (laps 완주 이후 남은 것)
+  const lapSize=goal*missions.length||1;
+  // 심플하게: 오늘 기준 체크 합산 / 목표
+  const todayKey=String(new Date().getDate());
+  const todayChecks=(mapState.dayMissions[todayKey]&&mapState.dayMissions[todayKey][type])||[];
+  const todayDone=todayChecks.filter(Boolean).length;
+  const pct=goal>0&&missions.length>0?Math.min(100,Math.round(todayDone/Math.min(goal,missions.length)*100)):0;
+
+  document.getElementById(type+'Bar').style.width=pct+'%';
+  document.getElementById(type+'Pct').textContent=pct+'%';
+  document.getElementById(type+'Count').textContent=`${todayDone}/${Math.min(goal,missions.length)}${laps>0?' (완주'+laps+'회)':''}`;
+}
+
+// ══════════════════════════════
+// 날짜 종이 팝업
+// ══════════════════════════════
+function openDayPopup(dayIdx, tileEl, tx, ty) {
+  closePopup();
+
+  const dayNum=dayIdx+1;
+  const key=String(dayNum);
+  const allMissions=[
+    ...spState.hpMissions.map(m=>({...m,type:'hp'})),
+    ...spState.mpMissions.map(m=>({...m,type:'mp'})),
+  ];
+
+  // dayMissions 초기화
+  if(!mapState.dayMissions[key]) mapState.dayMissions[key]={hp:[],mp:[]};
+  const dm=mapState.dayMissions[key];
+  if(dm.hp.length!==spState.hpMissions.length) dm.hp=Array(spState.hpMissions.length).fill(false);
+  if(dm.mp.length!==spState.mpMissions.length) dm.mp=Array(spState.mpMissions.length).fill(false);
+
+  const popup=document.createElement('div');
+  popup.className='day-popup';
+
+  // 팝업 위치: 타일 아래 or 위
+  const overlay=document.getElementById('tileOverlay');
+  const ow=overlay.getBoundingClientRect().width;
+  const oh=overlay.getBoundingClientRect().height;
+  let left=tx-100; // 팝업 중앙 정렬
+  let top=ty+32;
+  if(left<4) left=4;
+  if(left+200>ow-4) left=ow-204;
+  if(top+220>oh) top=ty-240;
+  popup.style.left=left+'px';
+  popup.style.top=top+'px';
+
+  // 헤더
+  const header=document.createElement('div');
+  header.className='popup-header';
+  const dateLabel=document.createElement('div');
+  dateLabel.className='popup-date';
+  dateLabel.textContent=`${mapState.month}월 ${dayNum}일`;
+  const statusBtns=document.createElement('div');
+  statusBtns.className='popup-status-btns';
+
+  const btnO=document.createElement('button');
+  btnO.className='popup-status-btn'+(mapState.days[dayIdx]===true?' active-success':'');
+  btnO.textContent='⭕'; btnO.title='성공';
+  btnO.onclick=(e)=>{ e.stopPropagation(); setDayStatus(dayIdx, true); };
+
+  const btnX=document.createElement('button');
+  btnX.className='popup-status-btn'+(mapState.days[dayIdx]===false?' active-fail':'');
+  btnX.textContent='❌'; btnX.title='실패';
+  btnX.onclick=(e)=>{ e.stopPropagation(); setDayStatus(dayIdx, false); };
+
+  const btnClear=document.createElement('button');
+  btnClear.className='popup-status-btn';
+  btnClear.textContent='↺'; btnClear.title='초기화';
+  btnClear.onclick=(e)=>{ e.stopPropagation(); setDayStatus(dayIdx, null); };
+
+  statusBtns.append(btnO, btnX, btnClear);
+  header.append(dateLabel, statusBtns);
+  popup.appendChild(header);
+
+  // 미션 목록
+  const missionWrap=document.createElement('div');
+  missionWrap.className='popup-missions';
+
+  if(allMissions.length===0){
+    const empty=document.createElement('div');
+    empty.className='popup-empty';
+    empty.textContent='미션을 추가해주세요';
+    missionWrap.appendChild(empty);
+  } else {
+    allMissions.forEach((m, globalIdx)=>{
+      const type=m.type;
+      const typeIdx=type==='hp'
+        ? globalIdx
+        : globalIdx-spState.hpMissions.length;
+      const checked=dm[type][typeIdx]||false;
+
+      const item=document.createElement('div');
+      item.className='popup-mission-item';
+      item.onclick=(e)=>{ e.stopPropagation(); toggleDayMission(dayIdx, type, typeIdx, popup); };
+
+      const chk=document.createElement('div');
+      chk.className=`popup-check ${checked?(type+'-checked'):''}`;
+      chk.textContent=checked?'✓':'';
+
+      const lbl=document.createElement('div');
+      lbl.className=`popup-mission-label ${checked?'done':''}`;
+      lbl.textContent=m.text;
+
+      const tag=document.createElement('div');
+      tag.className=`popup-type-tag ${type}`;
+      tag.textContent=type.toUpperCase();
+
+      item.append(chk,lbl,tag);
+      missionWrap.appendChild(item);
+    });
+  }
+  popup.appendChild(missionWrap);
+  popup.addEventListener('click', e=>e.stopPropagation());
+
+  overlay.appendChild(popup);
+  activePopup=popup;
+}
+
+function setDayStatus(dayIdx, val) {
+  mapState.days[dayIdx]=val;
+  saveMap(); render();
+  // 팝업 상태 버튼 갱신
+  if(activePopup){
+    activePopup.querySelectorAll('.popup-status-btn').forEach(b=>b.classList.remove('active-success','active-fail'));
+    if(val===true)  activePopup.querySelectorAll('.popup-status-btn')[0].classList.add('active-success');
+    if(val===false) activePopup.querySelectorAll('.popup-status-btn')[1].classList.add('active-fail');
+  }
+}
+
+function toggleDayMission(dayIdx, type, typeIdx, popup) {
+  const key=String(dayIdx+1);
+  if(!mapState.dayMissions[key]) mapState.dayMissions[key]={hp:[],mp:[]};
+  const dm=mapState.dayMissions[key];
+  if(dm[type].length!==spState[type+'Missions'].length)
+    dm[type]=Array(spState[type+'Missions'].length).fill(false);
+
+  dm[type][typeIdx]=!dm[type][typeIdx];
+
+  // 완주 체크: 하루 목표 달성 시 랩 카운트
+  const goal=spState[type+'Goal'];
+  const mCount=spState[type+'Missions'].length;
+  const target=Math.min(goal, mCount);
+  const todayDone=dm[type].filter(Boolean).length;
+  if(todayDone>=target && target>0){
+    // 이 날 처음 완주한 건지 체크 (중복 방지)
+    const lapKey=type+'Lap_'+key;
+    if(!mapState.dayMissions[lapKey]){
+      mapState.dayMissions[lapKey]=true;
+      spState[type+'Laps']++;
+      saveSP();
+    }
+  } else {
+    const lapKey=type+'Lap_'+key;
+    if(mapState.dayMissions[lapKey]){
+      delete mapState.dayMissions[lapKey];
+      spState[type+'Laps']=Math.max(0,spState[type+'Laps']-1);
+      saveSP();
+    }
+  }
+
+  saveMap();
+
+  // 팝업 내 해당 아이템 갱신
+  const items=popup.querySelectorAll('.popup-mission-item');
+  let gIdx=type==='hp'?typeIdx:spState.hpMissions.length+typeIdx;
+  const item=items[gIdx];
+  if(item){
+    const chk=item.querySelector('.popup-check');
+    const lbl=item.querySelector('.popup-mission-label');
+    const isNowChecked=dm[type][typeIdx];
+    chk.className=`popup-check ${isNowChecked?(type+'-checked'):''}`;
+    chk.textContent=isNowChecked?'✓':'';
+    lbl.className=`popup-mission-label ${isNowChecked?'done':''}`;
+  }
+  renderStatus();
+}
+
+function closePopup() {
+  if(activePopup){
+    activePopup.classList.add('closing');
+    setTimeout(()=>{ if(activePopup){activePopup.remove();activePopup=null;} },200);
+  }
+}
+
+// 바깥 클릭 시 팝업 닫기
+document.addEventListener('click', ()=>closePopup());
+
+// ══════════════════════════════
+// 미션 관리 모달
+// ══════════════════════════════
+function openMissionMgr() {
+  renderMgrList('hp'); renderMgrList('mp');
+  document.getElementById('hpGoalInput').value=spState.hpGoal;
+  document.getElementById('mpGoalInput').value=spState.mpGoal;
+  document.getElementById('missionMgrModal').classList.add('open');
+}
+function closeMissionMgr() {
+  document.getElementById('missionMgrModal').classList.remove('open');
+  render();
+}
+
+function renderMgrList(type) {
+  const list=document.getElementById('mgr'+type.charAt(0).toUpperCase()+type.slice(1)+'List');
+  list.innerHTML='';
+  spState[type+'Missions'].forEach((m,i)=>{
+    const item=document.createElement('div'); item.className='mgr-mission-item';
+    const txt=document.createElement('div'); txt.className='mgr-mission-text'; txt.textContent=m.text;
+    const del=document.createElement('button'); del.className='mgr-del-btn'; del.textContent='×';
+    del.onclick=()=>deleteMission(type,i);
+    item.append(txt,del); list.appendChild(item);
+  });
+}
+
+function addMission(type) {
+  const input=document.getElementById(type+'MgrInput');
+  const text=input.value.trim(); if(!text) return;
+  spState[type+'Missions'].push({text});
+  input.value=''; saveSP();
+  renderMgrList(type);
+}
+
+function deleteMission(type,idx) {
+  spState[type+'Missions'].splice(idx,1);
+  // dayMissions 내 해당 인덱스 제거
+  Object.keys(mapState.dayMissions).forEach(k=>{
+    if(mapState.dayMissions[k][type]) mapState.dayMissions[k][type].splice(idx,1);
+  });
+  saveSP(); saveMap(); renderMgrList(type);
+}
+
+function onGoalChange(type) {
+  const val=parseInt(document.getElementById(type+'GoalInput').value)||5;
+  spState[type+'Goal']=val; saveSP();
+}
+
+
+// ══════════════════════════════
+// 레벨업 조건 계산
+// ══════════════════════════════
+function calcLevelProgress() {
+  const req = LEVEL_UP_REQUIREMENTS[mapState.level] || { pct:100, days:30 };
+  const hpM = spState.hpMissions.length;
+  const mpM = spState.mpMissions.length;
+  const totalMissionsPerDay = hpM + mpM;
+
+  if(totalMissionsPerDay === 0) return { req, totalPct:0, qualifiedDays:0, levelUp:false };
+
+  // 날짜별 달성률 계산
+  let totalChecked = 0;
+  let totalPossible = 0;
+  let qualifiedDays = 0;  // 30% 이상(해당 레벨 기준 pct의 최소단위) 달성한 날
+
+  for(let d=1; d<=TOTAL_DAYS; d++) {
+    const key = String(d);
+    const dm = mapState.dayMissions[key];
+    if(!dm) continue;
+    const hpChecked = (dm.hp||[]).filter(Boolean).length;
+    const mpChecked = (dm.mp||[]).filter(Boolean).length;
+    const dayChecked = hpChecked + mpChecked;
+    const dayPct = Math.round(dayChecked / totalMissionsPerDay * 100);
+
+    totalChecked += dayChecked;
+    totalPossible += totalMissionsPerDay;
+
+    // 하루 기준: 전체 미션의 30% 이상이면 "달성한 날"로 카운트
+    if(dayPct >= 30) qualifiedDays++;
+  }
+
+  const totalPct = totalPossible > 0 ? Math.round(totalChecked / totalPossible * 100) : 0;
+  const levelUp = totalPct >= req.pct && qualifiedDays >= req.days;
+
+  return { req, totalPct, qualifiedDays, levelUp };
+}
+
+// ══════════════════════════════
+// 결산
+// ══════════════════════════════
+function endMonth() {
+  const success=mapState.days.filter(d=>d===true).length;
+  const fail=mapState.days.filter(d=>d===false).length;
+  const { req, totalPct, qualifiedDays, levelUp } = calcLevelProgress();
+  const pctOk = totalPct >= req.pct;
+  const daysOk = qualifiedDays >= req.days;
+
+  document.getElementById('endTitle').textContent=`${mapState.year}년 ${mapState.month}월 결산`;
+  document.getElementById('endDesc').innerHTML=`
+    ⭕ 맵 성공: <strong style="color:#50c864">${success}일</strong> / ❌ 실패: <strong style="color:#dc3c3c">${fail}일</strong><br><br>
+    📊 미션 누적 달성률: <strong style="color:${pctOk?'#50c864':'#dc3c3c'}">${totalPct}%</strong>
+      <span style="color:#555;font-size:12px"> (목표 ${req.pct}% ${pctOk?'✓':'✗'})</span><br>
+    📅 30% 이상 달성한 날: <strong style="color:${daysOk?'#50c864':'#dc3c3c'}">${qualifiedDays}일</strong>
+      <span style="color:#555;font-size:12px"> (목표 ${req.days}일 ${daysOk?'✓':'✗'})</span><br><br>
+    ${levelUp
+      ?`🌟 <strong style="color:#f0c060">두 조건 모두 달성! Lv.${mapState.level} → Lv.${mapState.level+1} ⬆️</strong>`
+      :!pctOk&&!daysOk
+        ?`💀 <strong style="color:#dc3c3c">두 조건 모두 미달 — Lv.${mapState.level} → Lv.${Math.max(1,mapState.level-1)} ⬇️</strong>`
+        :`⚠️ <strong style="color:#f0c060">${!pctOk?'누적 달성률':'달성일 수'} 미달 — 레벨 유지</strong>`
+    }
+  `;
+  document.getElementById('endModal').classList.add('open');
+}
+function closeEndModal() { document.getElementById('endModal').classList.remove('open'); }
+
+async function confirmEndMonth() {
+  const { totalPct, qualifiedDays, req, levelUp } = calcLevelProgress();
+  const pctOk = totalPct >= req.pct;
+  const daysOk = qualifiedDays >= req.days;
+  const levelDown = !pctOk && !daysOk;
+  closeEndModal();
+
+  const prev=mapState.level;
+  if(levelUp) mapState.level++;
+  else if(levelDown) mapState.level=Math.max(1,mapState.level-1);
+  if(levelUp||levelDown) showLevelAnim(levelUp,prev,mapState.level);
+
+  // 히스토리 저장
+  const successCount = mapState.days.filter(d=>d===true).length;
+  const failCount    = mapState.days.filter(d=>d===false).length;
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem('rpgHistory_v1')) || []; } catch {}
+  history.push({
+    year: mapState.year,
+    month: mapState.month,
+    success: successCount,
+    fail: failCount,
+    totalPct,
+    qualifiedDays,
+    reqPct: req.pct,
+    reqDays: req.days,
+    levelBefore: prev,
+    levelAfter: mapState.level,
+    result: levelUp ? 'up' : levelDown ? 'down' : 'keep',
+  });
+  await saveHistory(history);
+
+  const next=new Date(mapState.year,mapState.month,1);
+  mapState.year=next.getFullYear(); mapState.month=next.getMonth()+1;
+  mapState.goal=null; mapState.days=Array(TOTAL_DAYS).fill(null); mapState.dayMissions={};
+  saveMap(); saveSP();
+  setTimeout(render,(levelUp||levelDown)?2400:100);
+}
+
+function openStats() {
+  window.open('stats.html', '_blank', 'width=800,height=700,scrollbars=yes');
+}
+
+function showLevelAnim(up,from,to){
+  const el=document.getElementById('levelAnim'), txt=document.getElementById('levelAnimText');
+  txt.className=`level-anim-text ${up?'up':'down'}`;
+  txt.innerHTML=up?`⬆️ LEVEL UP!<br>Lv.${from} → Lv.${to}`:`⬇️ LEVEL DOWN<br>Lv.${from} → Lv.${to}`;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2300);
+}
+
+// ══════════════════════════════
+// 초기화
+// ══════════════════════════════
+function onMapLoad(){
+  if(currentUser) {
+    // Firebase에서 로드 (이미 auth에서 처리)
+  } else {
+    mapLoaded=true; render();
+  }
+}
+window.addEventListener('resize', render);
+
+// ── 로그인 UI ──
+function renderAuthUI(user) {
+  const btn = document.getElementById('authBtn');
+  const info = document.getElementById('authInfo');
+  if(user) {
+    info.textContent = user.displayName || user.email;
+    btn.textContent = '로그아웃';
+    btn.onclick = () => signOut(auth);
+  } else {
+    info.textContent = '비로그인 (로컬 저장)';
+    btn.textContent = 'Google 로그인';
+    btn.onclick = () => signInWithPopup(auth, provider);
+  }
+}
+
+// ── 인증 상태 감지 ──
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  renderAuthUI(user);
+  if(user) {
+    await loadFromFirebase();
+  } else {
+    mapLoaded=true; render();
+  }
+});
+
+if(document.getElementById('mapImg').complete && !currentUser){ mapLoaded=true; render(); }
+</script>
+</body>
+</html>
