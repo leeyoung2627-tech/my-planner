@@ -397,7 +397,7 @@ body {
 
   <div class="map-container">
     <div class="map-wrapper" id="mapWrapper">
-      <img class="map-img" src="map.png" alt="목표 맵" id="mapImg" onload="onMapLoad()">
+      <img class="map-img" src="map.png" alt="목표 맵" id="mapImg">
       <div class="tile-overlay" id="tileOverlay">
         <div class="character" id="character">
           <img src="character.png" alt="캐릭터" onerror="this.style.display='none'; document.getElementById('charFallback').style.display='flex';">
@@ -451,7 +451,7 @@ body {
     <div class="sp-divider"></div>
 
     <!-- 미션 관리 버튼 -->
-    <button class="mission-mgr-btn" onclick="openMissionMgr()">📋 미션 관리</button>
+    <button class="mission-mgr-btn" id="btnMissionMgr">📋 미션 관리</button>
   </div>
 </div>
 
@@ -471,8 +471,8 @@ body {
     <div class="stats-row"><span class="stats-key">누적 달성률</span><span class="stats-val" id="statTotalPct">0%</span></div>
     <div class="stats-row"><span class="stats-key">30%이상 달성일</span><span class="stats-val" id="statQdays">0일</span></div>
   </div>
-  <button class="end-month-btn" onclick="endMonth()">🏁 이번 달 결산</button>
-  <button class="stats-btn" onclick="openStats()">📊 통계 보기</button>
+  <button class="end-month-btn" id="btnEndMonth">🏁 이번 달 결산</button>
+  <button class="stats-btn" id="btnOpenStats">📊 통계 보기</button>
 </div>
 
 <!-- 미션 관리 모달 -->
@@ -485,13 +485,13 @@ body {
       <div class="mgr-section-title hp">❤️ HP 미션 (운동)</div>
       <div class="mgr-goal-row">
         <span class="mgr-goal-label">목표 미션 수</span>
-        <input class="mgr-goal-input" type="number" id="hpGoalInput" min="1" max="99" placeholder="5" onchange="onGoalChange('hp')">
+        <input class="mgr-goal-input" type="number" id="hpGoalInput" min="1" max="99" placeholder="5" >
         <span class="mgr-goal-unit">개 달성 시 HP 완주</span>
       </div>
       <div class="mgr-mission-list" id="mgrHpList"></div>
       <div class="mgr-add-row">
-        <input class="mgr-add-input" id="hpMgrInput" placeholder="HP 미션 추가..." onkeydown="if(event.key==='Enter')addMission('hp')">
-        <button class="mgr-add-btn" onclick="addMission('hp')">+</button>
+        <input class="mgr-add-input" id="hpMgrInput" placeholder="HP 미션 추가..." id="hpMgrInputField">
+        <button class="mgr-add-btn" id="btnAddHp">+</button>
       </div>
     </div>
 
@@ -500,18 +500,18 @@ body {
       <div class="mgr-section-title mp">💙 MP 미션 (정신/공부)</div>
       <div class="mgr-goal-row">
         <span class="mgr-goal-label">목표 미션 수</span>
-        <input class="mgr-goal-input" type="number" id="mpGoalInput" min="1" max="99" placeholder="5" onchange="onGoalChange('mp')">
+        <input class="mgr-goal-input" type="number" id="mpGoalInput" min="1" max="99" placeholder="5" >
         <span class="mgr-goal-unit">개 달성 시 MP 완주</span>
       </div>
       <div class="mgr-mission-list" id="mgrMpList"></div>
       <div class="mgr-add-row">
-        <input class="mgr-add-input" id="mpMgrInput" placeholder="MP 미션 추가..." onkeydown="if(event.key==='Enter')addMission('mp')">
-        <button class="mgr-add-btn" onclick="addMission('mp')">+</button>
+        <input class="mgr-add-input" id="mpMgrInput" placeholder="MP 미션 추가..." id="mpMgrInputField">
+        <button class="mgr-add-btn" id="btnAddMp">+</button>
       </div>
     </div>
 
     <div class="modal-btns">
-      <button class="modal-btn primary" onclick="closeMissionMgr()">완료</button>
+      <button class="modal-btn primary" id="btnCloseMissionMgr">완료</button>
     </div>
   </div>
 </div>
@@ -522,8 +522,8 @@ body {
     <h2 id="endTitle">이번 달 결산</h2>
     <p id="endDesc" style="font-size:14px;color:#ccc;line-height:2;"></p>
     <div class="modal-btns">
-      <button class="modal-btn secondary" onclick="closeEndModal()">닫기</button>
-      <button class="modal-btn primary" onclick="confirmEndMonth()">✅ 확정 & 다음 달로</button>
+      <button class="modal-btn secondary" id="btnCloseEndModal">닫기</button>
+      <button class="modal-btn primary" id="btnConfirmEnd">✅ 확정 & 다음 달로</button>
     </div>
   </div>
 </div>
@@ -1154,21 +1154,37 @@ if(mapImg.complete && mapImg.naturalWidth > 0) {
   requestAnimationFrame(()=>render());
 }
 
-// onclick에서 접근 가능하도록 window에 등록
-window.openMissionMgr = openMissionMgr;
-window.closeMissionMgr = closeMissionMgr;
-window.addMission = addMission;
-window.deleteMission = deleteMission;
-window.onGoalChange = onGoalChange;
-window.toggleMission = toggleMission;
-window.endMonth = endMonth;
-window.closeEndModal = closeEndModal;
-window.confirmEndMonth = confirmEndMonth;
-window.openStats = openStats;
-window.onMapLoad = onMapLoad;
-window.setDayStatus = setDayStatus;
-window.toggleDayMission = toggleDayMission;
-window.renderAuthUI = renderAuthUI;
+// ── 이벤트 리스너 (module 스크립트 전역 함수 문제 해결) ──
+function bindEvents() {
+  const mapImg = document.getElementById('mapImg');
+  if(mapImg) {
+    if(mapImg.complete && mapImg.naturalWidth > 0) {
+      mapLoaded=true; requestAnimationFrame(()=>render());
+    } else {
+      mapImg.addEventListener('load', ()=>{ mapLoaded=true; requestAnimationFrame(()=>render()); });
+    }
+  }
+
+  const b = (id, fn) => { const el=document.getElementById(id); if(el) el.addEventListener('click', fn); };
+  b('btnMissionMgr',    ()=>openMissionMgr());
+  b('btnEndMonth',      ()=>endMonth());
+  b('btnOpenStats',     ()=>openStats());
+  b('btnOpenStats2',    ()=>openStats());
+  b('btnCloseMissionMgr', ()=>closeMissionMgr());
+  b('btnCloseEndModal', ()=>closeEndModal());
+  b('btnConfirmEnd',    ()=>confirmEndMonth());
+  b('btnAddHp',         ()=>addMission('hp'));
+  b('btnAddMp',         ()=>addMission('mp'));
+
+  const hpIn = document.getElementById('hpMgrInput') || document.getElementById('hpMgrInputField');
+  const mpIn = document.getElementById('mpMgrInput') || document.getElementById('mpMgrInputField');
+  if(hpIn) hpIn.addEventListener('keydown', e=>{ if(e.key==='Enter') addMission('hp'); });
+  if(mpIn) mpIn.addEventListener('keydown', e=>{ if(e.key==='Enter') addMission('mp'); });
+
+  document.getElementById('hpGoalInput')?.addEventListener('change', ()=>onGoalChange('hp'));
+  document.getElementById('mpGoalInput')?.addEventListener('change', ()=>onGoalChange('mp'));
+}
+bindEvents();
 
 </script>
 </body>
