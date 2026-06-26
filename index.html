@@ -854,13 +854,28 @@ body{opacity:0;transition:opacity .25s ease}
       <div id="moneyCalView" class="money-cal-wrap" style="display:none"></div>
       <div id="mealCalView" class="meal-cal-wrap" style="display:none"></div>
       <div id="habitView" class="habit-view" style="display:none">
-        <div class="habit-subtabs">
-          <div class="habit-subtab active" id="hsubtab-today" onclick="switchHabitSubtab('today')">오늘 체크</div>
-          <div class="habit-subtab" id="hsubtab-month" onclick="switchHabitSubtab('month')">월간 기록</div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:320px;gap:24px;padding:20px">
+          <a href="rpg-map.html" target="_blank" style="text-decoration:none">
+            <div id="rpgMapBtn" style="
+              width:200px;height:200px;
+              background:#1a1a2e;
+              border:3px solid #5a4fcf;
+              border-radius:16px;
+              display:flex;flex-direction:column;
+              align-items:center;justify-content:center;
+              gap:12px;cursor:pointer;
+              transition:all 0.2s;
+              box-shadow:0 0 24px rgba(90,79,207,0.3);
+            "
+            onmouseover="this.style.borderColor='#f0c060';this.style.boxShadow='0 0 32px rgba(240,192,96,0.4)'"
+            onmouseout="this.style.borderColor='#5a4fcf';this.style.boxShadow='0 0 24px rgba(90,79,207,0.3)'"
+            >
+              <div style="font-size:48px">🚪</div>
+              <div style="font-size:15px;font-weight:700;color:#c0b0ff;letter-spacing:1px">임시문</div>
+              <div style="font-size:10px;color:#8888aa">RPG 목표 맵으로 이동</div>
+            </div>
+          </a>
         </div>
-        <div id="habitTodayView"></div>
-        <div id="habitMonthView" style="display:none"></div>
-        <button class="add-btn" onclick="openHabitModal()" style="margin-top:8px">＋ 습관 추가</button>
       </div>
       <div id="memoView" class="memo-view" style="display:none"></div>
       <div id="annivView" class="habit-view" style="display:none">
