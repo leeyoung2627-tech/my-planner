@@ -135,8 +135,8 @@ body{opacity:0;transition:opacity .25s ease}
 }
 /* 말풍선 */
 .mt-speech-bubble{
-  position:relative;
-  width:calc(100% - 20px);
+  position:absolute;
+  top:8px;left:8px;right:8px;
   background:#fff;
   border:2px solid var(--mt-bubble-color,#333);
   border-radius:14px;
@@ -144,7 +144,7 @@ body{opacity:0;transition:opacity .25s ease}
   box-shadow:2px 3px 0 #33333322;
   min-height:52px;
   display:flex;align-items:center;justify-content:center;
-  margin-bottom:6px;
+  z-index:2;
 }
 .mt-speech-bubble::after{
   content:'';
