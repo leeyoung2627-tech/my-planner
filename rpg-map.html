@@ -1153,6 +1153,23 @@ if(mapImg.complete && mapImg.naturalWidth > 0) {
   mapLoaded=true;
   requestAnimationFrame(()=>render());
 }
+
+// onclick에서 접근 가능하도록 window에 등록
+window.openMissionMgr = openMissionMgr;
+window.closeMissionMgr = closeMissionMgr;
+window.addMission = addMission;
+window.deleteMission = deleteMission;
+window.onGoalChange = onGoalChange;
+window.toggleMission = toggleMission;
+window.endMonth = endMonth;
+window.closeEndModal = closeEndModal;
+window.confirmEndMonth = confirmEndMonth;
+window.openStats = openStats;
+window.onMapLoad = onMapLoad;
+window.setDayStatus = setDayStatus;
+window.toggleDayMission = toggleDayMission;
+window.renderAuthUI = renderAuthUI;
+
 </script>
 </body>
 </html>
