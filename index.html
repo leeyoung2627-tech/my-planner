@@ -1690,6 +1690,17 @@ function setLeftMode(mode){
   if(schList){schList.style.display=mode==='daily'?'none':'';}
   if(schBtn){schBtn.style.display=mode==='daily'?'none':'';}
 
+  // ── 습관 탭만 어둡게, 나머지는 테마 밝은 배경 복원 ──
+  const appEl=document.getElementById('mainApp');
+  if(mode==='habit'){
+    document.body.style.background='#111120';
+    if(appEl)appEl.style.background='#191826';
+  } else {
+    const t=currentTheme||{};
+    document.body.style.background=t.pagebg||'#f5f4ff';
+    if(appEl)appEl.style.background=t.appbg||'#ffffff';
+  }
+
   if(mode==='cal'){
     if(curView==='week'){document.getElementById('weekView').style.display='';renderWeek();}
     else{document.getElementById('monthView').style.display='';renderMonth();}
