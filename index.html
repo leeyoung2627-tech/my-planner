@@ -853,27 +853,31 @@ body{opacity:0;transition:opacity .25s ease}
       <div id="weekView" class="week-wrap" style="display:none"></div>
       <div id="moneyCalView" class="money-cal-wrap" style="display:none"></div>
       <div id="mealCalView" class="meal-cal-wrap" style="display:none"></div>
-      <div id="habitView" class="habit-view" style="display:none">
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:320px;gap:24px;padding:20px">
-          <a href="rpg-map.html" target="_blank" style="text-decoration:none">
-            <div id="rpgMapBtn" style="
-              width:200px;height:200px;
-              background:#1a1a2e;
-              border:3px solid #5a4fcf;
-              border-radius:16px;
-              display:flex;flex-direction:column;
-              align-items:center;justify-content:center;
-              gap:12px;cursor:pointer;
-              transition:all 0.2s;
-              box-shadow:0 0 24px rgba(90,79,207,0.3);
-            "
-            onmouseover="this.style.borderColor='#f0c060';this.style.boxShadow='0 0 32px rgba(240,192,96,0.4)'"
-            onmouseout="this.style.borderColor='#5a4fcf';this.style.boxShadow='0 0 24px rgba(90,79,207,0.3)'"
-            >
-              <div style="font-size:48px">🚪</div>
-              <div style="font-size:15px;font-weight:700;color:#c0b0ff;letter-spacing:1px">임시문</div>
-              <div style="font-size:10px;color:#8888aa">RPG 목표 맵으로 이동</div>
-            </div>
+      <div id="habitView" class="habit-view" style="display:none;padding:0">
+        <div style="
+          width:100%; height:100%; min-height:400px;
+          background:#0d0e1a;
+          display:flex; flex-direction:column;
+          align-items:center; justify-content:center;
+          gap:0; padding:20px 20px 28px;
+          box-sizing:border-box;
+        ">
+          <!-- 타이틀 -->
+          <img src="title.png" alt="습관 RPG"
+            style="width:min(520px,90%); object-fit:contain; margin-bottom:-10px; pointer-events:none;">
+
+          <!-- 문 (클릭 시 rpg-map으로 이동) -->
+          <a href="rpg-map.html" target="_blank" style="text-decoration:none; display:block;">
+            <img src="door.png" alt="RPG 맵 입장"
+              id="doorBtn"
+              style="
+                width:min(360px,80%); object-fit:contain;
+                cursor:pointer;
+                transition: transform 0.2s, filter 0.2s;
+                filter: drop-shadow(0 0 12px rgba(100,180,255,0.2));
+              "
+              onmouseover="this.style.transform='scale(1.04)';this.style.filter='drop-shadow(0 0 24px rgba(100,200,255,0.6))'"
+              onmouseout="this.style.transform='scale(1)';this.style.filter='drop-shadow(0 0 12px rgba(100,180,255,0.2))'">
           </a>
         </div>
       </div>
