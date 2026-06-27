@@ -864,20 +864,21 @@ body{opacity:0;transition:opacity .25s ease}
           flex-direction:column;
           align-items:center;
           justify-content:flex-start;
-          gap:8px;
-          padding:24px 20px 0px;
+          gap:0px;
+          padding:16px 0px 0px;
           box-sizing:border-box;
+          overflow:hidden;
         ">
           <!-- 타이틀 -->
           <img src="title.png" alt="습관 RPG"
-            style="width:min(300px,55%);object-fit:contain;pointer-events:none;display:block;">
+            style="width:min(220px,40%);object-fit:contain;pointer-events:none;display:block;margin-bottom:-10px;z-index:2;position:relative;">
 
           <!-- 문 -->
-          <a href="rpg-map.html" target="_blank" style="text-decoration:none;display:flex;justify-content:center;">
+          <a href="rpg-map.html" target="_blank" style="text-decoration:none;display:flex;justify-content:center;width:100%;">
             <img src="door.png" alt="RPG 맵 입장"
               id="doorBtn"
               style="
-                width:min(1000px,95%);
+                width:min(700px,100%);
                 object-fit:contain;
                 cursor:pointer;
                 display:block;
