@@ -34,9 +34,27 @@ body {
 .progress-bar-bg { height: 10px; background: #0d0d1a; border-radius: 5px; border: 1px solid #3a3a5c; overflow: hidden; }
 .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #5a4fcf, #60c0f0); border-radius: 5px; transition: width 0.4s ease; }
 
+/* ── 마녀 장식 ── */
+.page-wrap {
+  position: relative;
+  width: 100%; max-width: 1400px;
+}
+.ornament-left {
+  position: absolute;
+  left: -90px; top: 0;
+  width: 80px;
+  pointer-events: none;
+  z-index: 10;
+}
+.ornament-left img {
+  width: 100%;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.5));
+}
+
 /* ── 맵 + 상태창 ── */
 .map-section {
-  width: 100%; max-width: 1400px;
+  width: 100%;
   padding: 0 24px 20px;
   display: flex; gap: 16px; align-items: flex-start;
 }
@@ -160,20 +178,19 @@ body {
 
 /* 물약 장식 */
 .potion-row {
-  display: flex; align-items: flex-end; justify-content: center;
-  gap: 6px; width: 100%; margin-bottom: -6px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; width: 100%; margin-bottom: -4px;
 }
 .potion-item {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  display: flex; align-items: center; justify-content: center;
 }
-.potion-item img {
+.potion-item canvas {
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
   transition: transform 0.2s;
+  width: 44px !important; height: 44px !important;
 }
-.potion-item img:hover { transform: translateY(-3px) scale(1.08); }
-.potion-item.large img { width: 54px; height: 54px; }
-.potion-item.small img { width: 42px; height: 42px; }
+.potion-item canvas:hover { transform: translateY(-3px) scale(1.08); }
 
 /* 액자 */
 .frame-wrap {
@@ -424,7 +441,12 @@ body {
 </div>
 
 <!-- 맵 + 상태창 -->
-<div class="map-section">
+<div class="page-wrap">
+  <div class="ornament-left">
+    <img src="ornament.png" alt="마녀 장식">
+  </div>
+
+  <div class="map-section">
 
   <div class="map-container">
     <div class="map-wrapper" id="mapWrapper">
@@ -496,7 +518,8 @@ body {
     <!-- 미션 관리 버튼 -->
     <button class="mission-mgr-btn" id="btnMissionMgr">📋 미션 관리</button>
   </div>
-</div>
+</div><!-- /map-section -->
+</div><!-- /page-wrap -->
 
 <!-- 하단 통계 -->
 <div class="bottom-panel">
@@ -1228,9 +1251,9 @@ function drawPotions() {
       const sh = ih - pad*2;
       ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
     }
-    drawTo('potionG', 0, 42);
-    drawTo('potionR', 1, 54);
-    drawTo('potionB', 2, 42);
+    drawTo('potionG', 0, 44);
+    drawTo('potionR', 1, 44);
+    drawTo('potionB', 2, 44);
   };
   img.src = 'item.png';
 }
