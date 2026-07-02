@@ -620,7 +620,8 @@ body{opacity:0;transition:opacity .25s ease}
 .budget-nums{display:flex;justify-content:space-between;font-size:11px}
 .budget-spent{color:#D85A30;font-weight:500}
 .budget-remain{color:#aaa}
-.paymethod-row{display:flex;align-items:center;gap:10px;margin-top:2px}
+.paymethod-row{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:2px}
+.paymethod-row select{width:100%}
 .paymethod-row select{flex:0 0 auto}
 .saving-check-label{display:flex;align-items:center;gap:5px;font-size:12px;color:#666;cursor:pointer;user-select:none;white-space:nowrap}
 .saving-check-label input{width:15px;height:15px;cursor:pointer;accent-color:#D9A441}
@@ -1615,6 +1616,7 @@ let leftMode='cal'; // 'cal'|'money-cal'|'habit'|'memo'
 const DAYS=['일','월','화','수','목','금','토'];
 let habits=[],editingHabitId=null;
 let weekEvents={},moneyData={},mealData={},fixedCosts={fixed:[],semifixed:[]};
+let savingBaseline={};
 let memos=[],editingMemoId=null,currentMemoFilter='전체',viewingMemoId=null;
 let noSpendData={};
 let ddayList=[];
@@ -1689,7 +1691,7 @@ async function saveData(type,key,value){
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -1709,6 +1711,7 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'diary')),
     getDoc(doc(db,'users',currentUser.uid,'settings','diaryLock')),
     getDoc(doc(db,'users',currentUser.uid,'settings','dailyPlanner')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -1752,6 +1755,8 @@ async function loadAllData(){
   diaryPasswordHash=dpS.exists()?(dpS.data().hash||null):null;
   // 하루 계획표
   loadDailyData(dlS.exists()?dlS.data():null);
+  // 저축 상품별 초기 잔액(이전까지 저축한 금액)
+  savingBaseline=sbS.exists()?(sbS.data().items||{}):{};
 }
 
 // ── 상단 메모 ──
@@ -2966,23 +2971,35 @@ function renderSavingStats(){
   const el=document.getElementById('money-saving-content');
   const y=savingCur.getFullYear(),m=savingCur.getMonth()+1;
   const mKey=`${y}-${m}`;
-  const tagMap={};const tagItems={};let monthTotal=0;
-  let allTimeTotal=0;
+  const monthTagMap={};const monthTagItems={};let monthTotal=0;
+  const allTimeTagMap={};let allTimeLedgerTotal=0;
   Object.keys(moneyData).sort().forEach(k=>{
     moneyData[k].forEach(i=>{
       if(i.type!=='out'||!i.isSaving)return;
-      allTimeTotal+=i.amount;
+      const t=i.tag||'(미분류)';
+      allTimeTagMap[t]=(allTimeTagMap[t]||0)+i.amount;
+      allTimeLedgerTotal+=i.amount;
       if(k.startsWith(mKey+'-')){
         const day=k.split('-')[2];
-        const t=i.tag||'(미분류)';
-        tagMap[t]=(tagMap[t]||0)+i.amount;
-        if(!tagItems[t])tagItems[t]=[];
-        tagItems[t].push({day,memo:i.name||'',amount:i.amount});
+        monthTagMap[t]=(monthTagMap[t]||0)+i.amount;
+        if(!monthTagItems[t])monthTagItems[t]=[];
+        monthTagItems[t].push({day,memo:i.name||'',amount:i.amount});
         monthTotal+=i.amount;
       }
     });
   });
-  const entries=Object.entries(tagMap).sort((a,b)=>b[1]-a[1]);
+  // 상품 목록: 가계부에 등장한 태그 + 초기값만 등록된 태그 모두 포함
+  const allTags=[...new Set([...Object.keys(allTimeTagMap),...Object.keys(savingBaseline)])];
+  const baselineTotal=allTags.reduce((s,t)=>s+(savingBaseline[t]||0),0);
+  const grandTotal=baselineTotal+allTimeLedgerTotal;
+  const rows=allTags.map(t=>({
+    tag:t,
+    baseline:savingBaseline[t]||0,
+    ledger:allTimeTagMap[t]||0,
+    total:(savingBaseline[t]||0)+(allTimeTagMap[t]||0),
+    thisMonth:monthTagMap[t]||0,
+    monthItems:monthTagItems[t]||[]
+  })).sort((a,b)=>b.total-a.total);
   el.innerHTML=`
     <div class="stats-month-nav">
       <button onclick="savingMove(-1)">‹</button>
@@ -2990,30 +3007,37 @@ function renderSavingStats(){
       <button onclick="savingMove(1)">›</button>
     </div>
     <div class="saving-total-box">
-      <div class="st-label">이번 달 저축액</div>
-      <div class="st-amt">${monthTotal.toLocaleString()}원</div>
-      <div class="st-sub">누적 저축 총액 ${allTimeTotal.toLocaleString()}원</div>
+      <div class="st-label">누적 저축 총액</div>
+      <div class="st-amt">${grandTotal.toLocaleString()}원</div>
+      <div class="st-sub">이번 달 +${monthTotal.toLocaleString()}원</div>
     </div>
     <div class="pie-legend">
-      ${entries.length===0?'<div class="saving-empty">이달 저축으로 표시한 내역이 없어요</div>':
-        entries.map(([tag,amt],idx)=>{
-          const items=tagItems[tag]||[];
-          const detailRows=items.map(it=>`<div class="saving-list-row"><span>${m}월 ${it.day}일${it.memo?'<span class="saving-list-memo">· '+it.memo+'</span>':''}</span><span class="saving-list-amt">${it.amount.toLocaleString()}원</span></div>`).join('');
+      ${rows.length===0?'<div class="saving-empty">아직 저축 상품이 없어요. 아래 버튼으로 등록해보세요</div>':
+        rows.map((r,idx)=>{
+          const detailRows=r.monthItems.map(it=>`<div class="saving-list-row"><span>${m}월 ${it.day}일${it.memo?'<span class="saving-list-memo">· '+it.memo+'</span>':''}</span><span class="saving-list-amt">+${it.amount.toLocaleString()}원</span></div>`).join('')
+            ||'<div class="saving-empty" style="padding:6px 0">이번 달 추가 내역 없음</div>';
           return `
           <div class="pie-legend-row" onclick="toggleSavingDetail('sd-${idx}',this)">
             <div style="display:flex;align-items:center">
-              <div class="pie-legend-dot" style="background:${getTagColor(tag)}"></div>
-              <span class="saving-list-tag">${tag}</span>
+              <div class="pie-legend-dot" style="background:${getTagColor(r.tag)}"></div>
+              <span class="saving-list-tag">${r.tag}</span>
             </div>
             <div style="display:flex;gap:8px;color:#666;align-items:center">
-              <span style="font-weight:500">${amt.toLocaleString()}원</span>
+              <span style="font-weight:600;color:#B8860B">${r.total.toLocaleString()}원</span>
+              <span style="font-size:13px;color:#ccc;cursor:pointer" onclick="event.stopPropagation();editSavingBaseline('${r.tag}')">✎</span>
               <span style="font-size:10px;color:#bbb" id="sd-arr-${idx}">▾</span>
             </div>
           </div>
-          <div class="tag-detail-panel" id="sd-${idx}">${detailRows}</div>`;
+          <div class="tag-detail-panel" id="sd-${idx}">
+            <div class="saving-list-row"><span>이전까지 저축한 금액(초기값)</span><span class="saving-list-amt">${r.baseline.toLocaleString()}원</span></div>
+            <div class="saving-list-row"><span>가계부 자동 합산액</span><span class="saving-list-amt">${r.ledger.toLocaleString()}원</span></div>
+            <div style="font-size:10px;color:#bbb;margin:4px 0 2px">이번 달 추가분</div>
+            ${detailRows}
+          </div>`;
         }).join('')}
     </div>
-    <div style="font-size:11px;color:#bbb;text-align:center;margin-top:10px">가계부 지출 입력 시 '💰 저축으로 표시'를 체크하면 여기 자동으로 반영돼요</div>`;
+    <button class="add-btn" style="margin-top:10px" onclick="addSavingProduct()">＋ 저축 상품 초기값 등록</button>
+    <div style="font-size:11px;color:#bbb;text-align:center;margin-top:10px">가계부 지출 입력 시 태그를 상품명(예: 노란우산공제, ○○적금)으로 하고 '💰 저축으로 표시'를 체크하면 이후 저축액이 자동으로 더해져요</div>`;
 }
 window.savingMove=function(dir){
   savingCur=new Date(savingCur.getFullYear(),savingCur.getMonth()+dir,1);
@@ -3027,6 +3051,33 @@ window.toggleSavingDetail=function(id,row){
   const open=panel.classList.toggle('open');
   if(arr)arr.textContent=open?'▴':'▾';
   if(row)row.style.background=open?'var(--accent-light,#EEEDFE)':'';
+};
+async function saveSavingBaseline(){
+  if(!currentUser)return;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline'),{items:savingBaseline});
+}
+window.editSavingBaseline=async function(tag){
+  const cur=savingBaseline[tag]||0;
+  const v=prompt(`'${tag}' 이전까지 저축한 금액(초기값)을 입력해주세요.\n(가계부에 이미 기록한 금액은 자동으로 더해지니 그 이전 금액만 입력)`,cur||'');
+  if(v===null)return;
+  const amount=parseInt(String(v).replace(/,/g,''));
+  if(isNaN(amount)||amount<0){alert('숫자를 입력해주세요');return;}
+  savingBaseline[tag]=amount;
+  await saveSavingBaseline();
+  renderSavingStats();
+};
+window.addSavingProduct=async function(){
+  const tag=prompt('저축 상품명을 입력해주세요 (예: 노란우산공제, 청년적금)');
+  if(!tag||!tag.trim())return;
+  const name=tag.trim();
+  const v=prompt(`'${name}' 이전까지 저축한 금액(초기값)을 입력해주세요.`,'0');
+  if(v===null)return;
+  const amount=parseInt(String(v).replace(/,/g,''))||0;
+  savingBaseline[name]=amount;
+  await saveSavingBaseline();
+  // 가계부 태그 목록에도 없으면 지출 태그로 추가해서 바로 사용할 수 있게 함
+  if(!OUT_TAGS.includes(name)){OUT_TAGS.push(name);await saveCustomTags();}
+  renderSavingStats();
 };
 
 // ── 고정비 ──
