@@ -409,6 +409,9 @@ body{opacity:0;transition:opacity .25s ease}
 .tag-chips{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
 .tag-chip{padding:3px 9px;border-radius:12px;font-size:11px;border:1px solid #e0e0e0;cursor:pointer;color:#666;background:#fafafa;transition:all .12s}
 .tag-chip.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tag-chip[draggable="true"]{cursor:grab}
+.tag-chip.dragging{opacity:.35}
+.tag-chip.drag-over{border-color:var(--accent);background:var(--accent-light)}
 /* 통계 */
 .stats-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .stats-month-nav button{background:none;border:none;font-size:16px;cursor:pointer;color:#888;padding:2px 6px}
@@ -2742,12 +2745,93 @@ window.openTagManageModal=function(){
 };
 function renderTagManageLists(){
   document.getElementById('tm-out-tags').innerHTML=
-    OUT_TAGS.map(t=>`<div class="tag-chip">${t}<span style="margin-left:5px;color:#D85A30;cursor:pointer;font-weight:700" onclick="event.stopPropagation();deleteCustomTag('out','${t}')">×</span></div>`).join('')
+    OUT_TAGS.map(t=>`<div class="tag-chip" draggable="true" ondragstart="tagDragStart(event,'out','${t}')" ondragover="tagDragOver(event)" ondragleave="tagDragLeave(event)" ondrop="tagDrop(event,'out','${t}')" ondragend="tagDragEnd(event)">⠿ ${t}<span style="margin-left:5px;color:#888;cursor:pointer" onclick="event.stopPropagation();editCustomTag('out','${t}')">✎</span><span style="margin-left:4px;color:#D85A30;cursor:pointer;font-weight:700" onclick="event.stopPropagation();deleteCustomTag('out','${t}')">×</span></div>`).join('')
     || `<span style="font-size:11px;color:#bbb">태그 없음</span>`;
   document.getElementById('tm-in-tags').innerHTML=
-    IN_TAGS.map(t=>`<div class="tag-chip">${t}<span style="margin-left:5px;color:#D85A30;cursor:pointer;font-weight:700" onclick="event.stopPropagation();deleteCustomTag('in','${t}')">×</span></div>`).join('')
+    IN_TAGS.map(t=>`<div class="tag-chip" draggable="true" ondragstart="tagDragStart(event,'in','${t}')" ondragover="tagDragOver(event)" ondragleave="tagDragLeave(event)" ondrop="tagDrop(event,'in','${t}')" ondragend="tagDragEnd(event)">⠿ ${t}<span style="margin-left:5px;color:#888;cursor:pointer" onclick="event.stopPropagation();editCustomTag('in','${t}')">✎</span><span style="margin-left:4px;color:#D85A30;cursor:pointer;font-weight:700" onclick="event.stopPropagation();deleteCustomTag('in','${t}')">×</span></div>`).join('')
     || `<span style="font-size:11px;color:#bbb">태그 없음</span>`;
 }
+let dragTag=null,dragTagType=null;
+window.tagDragStart=function(e,type,tag){
+  dragTag=tag;dragTagType=type;
+  e.dataTransfer.effectAllowed='move';
+  try{e.dataTransfer.setData('text/plain',tag);}catch(err){}
+  e.currentTarget.classList.add('dragging');
+};
+window.tagDragOver=function(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  e.currentTarget.classList.add('drag-over');
+};
+window.tagDragLeave=function(e){
+  e.currentTarget.classList.remove('drag-over');
+};
+window.tagDrop=async function(e,type,targetTag){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(dragTagType!==type||!dragTag||dragTag===targetTag){dragTag=null;dragTagType=null;return;}
+  const arr=type==='out'?OUT_TAGS:IN_TAGS;
+  const fromIdx=arr.indexOf(dragTag);
+  if(fromIdx===-1){dragTag=null;dragTagType=null;return;}
+  arr.splice(fromIdx,1);
+  const toIdx=arr.indexOf(targetTag);
+  arr.splice(toIdx,0,dragTag);
+  dragTag=null;dragTagType=null;
+  await saveCustomTags();
+  renderTagManageLists();
+  if(document.getElementById('mn-tags'))updateTagsByType();
+  if(document.getElementById('mne-tags'))updateEditTagsByType();
+  if(document.getElementById('budget-tags'))renderBudgetTagChips();
+};
+window.tagDragEnd=function(e){
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('#tm-out-tags .tag-chip, #tm-in-tags .tag-chip').forEach(c=>c.classList.remove('drag-over'));
+};
+window.editCustomTag=async function(type,oldTag){
+  const input=prompt('태그 이름 수정:',oldTag);
+  if(input===null)return;
+  const newTag=input.trim();
+  if(!newTag||newTag===oldTag)return;
+  const arr=type==='out'?OUT_TAGS:IN_TAGS;
+  if(arr.includes(newTag)){alert(`'${newTag}' 태그가 이미 있어요`);return;}
+  // 1) 태그 배열 이름 변경 (순서 유지)
+  const i=arr.indexOf(oldTag);if(i>-1)arr[i]=newTag;
+  await saveCustomTags();
+  // 2) 가계부 내역에 쓰인 태그 전부 치환
+  const saveJobs=[];
+  Object.keys(moneyData).forEach(key=>{
+    let changed=false;
+    moneyData[key].forEach(item=>{if(item.tag===oldTag){item.tag=newTag;changed=true;}});
+    if(changed)saveJobs.push(saveData('money',key,{items:moneyData[key]}));
+  });
+  // 3) 예산 태그 필터 치환
+  Object.keys(budgetData).forEach(key=>{
+    const bd=budgetData[key];
+    if(bd.tags&&bd.tags.includes(oldTag)){
+      bd.tags=bd.tags.map(t=>t===oldTag?newTag:t);
+      saveJobs.push(saveData('budget',key,{amount:bd.amount,tags:bd.tags}));
+    }
+  });
+  await Promise.all(saveJobs);
+  // 4) 저축 상품 초기값 키 이전 (같은 이름 상품 있으면 합산)
+  if(Object.prototype.hasOwnProperty.call(savingBaseline,oldTag)){
+    savingBaseline[newTag]=(savingBaseline[newTag]||0)+savingBaseline[oldTag];
+    delete savingBaseline[oldTag];
+    await saveSavingBaseline();
+  }
+  // 5) 현재 선택 중인 값들도 갱신
+  if(selectedTag===oldTag)selectedTag=newTag;
+  if(selectedEditTag===oldTag)selectedEditTag=newTag;
+  selectedBudgetTags=selectedBudgetTags.map(t=>t===oldTag?newTag:t);
+  // 6) 화면 새로고침
+  renderTagManageLists();
+  renderMoney();
+  if(document.getElementById('mn-tags'))updateTagsByType();
+  if(document.getElementById('mne-tags'))updateEditTagsByType();
+  if(document.getElementById('budget-tags'))renderBudgetTagChips();
+  if(document.getElementById('mtab-stats')?.classList.contains('active'))renderMoneyStats();
+  if(document.getElementById('mtab-saving')?.classList.contains('active'))renderSavingStats();
+};
 window.deleteCustomTag=async function(type,tag){
   if(!confirm(`'${tag}' 태그를 삭제할까요?\n(이미 기록된 내역의 태그 표시는 그대로 남아요)`))return;
   if(type==='out') OUT_TAGS=OUT_TAGS.filter(t=>t!==tag);
