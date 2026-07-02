@@ -620,6 +620,30 @@ body{opacity:0;transition:opacity .25s ease}
 .budget-nums{display:flex;justify-content:space-between;font-size:11px}
 .budget-spent{color:#D85A30;font-weight:500}
 .budget-remain{color:#aaa}
+.paymethod-row{display:flex;align-items:center;gap:10px;margin-top:2px}
+.paymethod-row select{flex:0 0 auto}
+.saving-check-label{display:flex;align-items:center;gap:5px;font-size:12px;color:#666;cursor:pointer;user-select:none;white-space:nowrap}
+.saving-check-label input{width:15px;height:15px;cursor:pointer;accent-color:#D9A441}
+.pm-badge{font-size:10px;padding:1px 6px;border-radius:8px;margin-right:4px}
+.pm-badge.card{background:#EAF1FF;color:#3068C8}
+.pm-badge.cash{background:#EAF9F1;color:#128A55}
+.saving-badge{font-size:10px;background:#FFF3D6;color:#B8860B;padding:1px 6px;border-radius:8px;margin-right:4px}
+.pm-summary{display:flex;gap:8px;margin-bottom:14px}
+.pm-summary-box{flex:1;background:#fafafa;border:0.5px solid #eee;border-radius:10px;padding:10px 12px;text-align:center}
+.pm-summary-box .pm-label{font-size:11px;color:#888;margin-bottom:4px}
+.pm-summary-box .pm-amt{font-size:15px;font-weight:700}
+.pm-summary-box.card .pm-amt{color:#3068C8}
+.pm-summary-box.cash .pm-amt{color:#128A55}
+.saving-total-box{background:linear-gradient(135deg,#FFF8E8,#FFF3D6);border:0.5px solid #F0E0B0;border-radius:12px;padding:14px;text-align:center;margin-bottom:14px}
+.saving-total-box .st-label{font-size:11px;color:#A0832E;margin-bottom:4px}
+.saving-total-box .st-amt{font-size:20px;font-weight:800;color:#B8860B}
+.saving-total-box .st-sub{font-size:11px;color:#c0a15a;margin-top:2px}
+.saving-list-row{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:0.5px solid #f5f0e0;font-size:12px}
+.saving-list-row:last-child{border-bottom:none}
+.saving-list-tag{color:#A0832E;font-weight:600}
+.saving-list-memo{color:#aaa;margin-left:4px;font-size:11px}
+.saving-list-amt{font-weight:600;color:#B8860B}
+.saving-empty{text-align:center;color:#ccc;font-size:12px;padding:16px 0}
 
 /* 가계부 */
 .money-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid #f0f0f0}
@@ -940,6 +964,7 @@ body{opacity:0;transition:opacity .25s ease}
       <div class="money-subtabs">
         <div class="money-subtab active" onclick="switchMoneyTab('ledger',this)">내역</div>
         <div class="money-subtab" onclick="switchMoneyTab('stats',this)">📊 통계</div>
+        <div class="money-subtab" onclick="switchMoneyTab('saving',this)">💰 저축</div>
         <div class="money-subtab" onclick="switchMoneyTab('fixed',this)">📌 고정비</div>
       </div>
 
@@ -970,6 +995,11 @@ body{opacity:0;transition:opacity .25s ease}
       <!-- 통계 탭 -->
       <div id="mtab-stats" class="mtab-content">
         <div id="money-stats-content"></div>
+      </div>
+
+      <!-- 저축 탭 -->
+      <div id="mtab-saving" class="mtab-content">
+        <div id="money-saving-content"></div>
       </div>
 
       <!-- 고정비 탭 -->
@@ -1316,6 +1346,13 @@ body{opacity:0;transition:opacity .25s ease}
       <span style="font-size:11px;color:#1558CC;cursor:pointer" onclick="openTagManageModal()">태그 관리</span>
     </div>
     <div class="tag-chips" id="mn-tags"></div>
+    <div class="paymethod-row" id="mn-paymethod-row">
+      <select id="mn-paymethod">
+        <option value="card">💳 카드</option>
+        <option value="cash">💵 현금</option>
+      </select>
+      <label class="saving-check-label"><input type="checkbox" id="mn-saving"/> 💰 저축으로 표시</label>
+    </div>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('moneyModal')">취소</button>
       <button class="mbtn ok" onclick="confirmMoney()">추가</button>
@@ -1339,6 +1376,13 @@ body{opacity:0;transition:opacity .25s ease}
       <span style="font-size:11px;color:#1558CC;cursor:pointer" onclick="openTagManageModal()">태그 관리</span>
     </div>
     <div class="tag-chips" id="mne-tags"></div>
+    <div class="paymethod-row" id="mne-paymethod-row">
+      <select id="mne-paymethod">
+        <option value="card">💳 카드</option>
+        <option value="cash">💵 현금</option>
+      </select>
+      <label class="saving-check-label"><input type="checkbox" id="mne-saving"/> 💰 저축으로 표시</label>
+    </div>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('moneyEditModal')">취소</button>
       <button class="mbtn ok" onclick="confirmMoneyEdit()">저장</button>
@@ -2620,6 +2664,7 @@ window.updateTagsByType=function(){
   document.getElementById('mn-tags').innerHTML=
     tags.map(t=>`<div class="tag-chip" onclick="selectTag(this,'${t}')">${t}</div>`).join('')+
     `<div class="tag-chip" style="border-style:dashed;color:var(--accent);border-color:var(--accent)" onclick="addCustomTag('${type}','mn','updateTagsByType')">＋</div>`;
+  document.getElementById('mn-paymethod-row').style.display=type==='out'?'flex':'none';
 };
 window.selectTag=function(el,tag){
   document.querySelectorAll('#mn-tags .tag-chip').forEach(c=>c.classList.remove('selected'));
@@ -2631,6 +2676,7 @@ window.updateEditTagsByType=function(){
   document.getElementById('mne-tags').innerHTML=
     tags.map(t=>`<div class="tag-chip${selectedEditTag===t?' selected':''}" onclick="selectEditTag(this,'${t}')">${t}</div>`).join('')+
     `<div class="tag-chip" style="border-style:dashed;color:var(--accent);border-color:var(--accent)" onclick="addCustomTag('${type}','mne','updateEditTagsByType')">＋</div>`;
+  document.getElementById('mne-paymethod-row').style.display=type==='out'?'flex':'none';
 };
 window.selectEditTag=function(el,tag){
   document.querySelectorAll('#mne-tags .tag-chip').forEach(c=>c.classList.remove('selected'));
@@ -2722,6 +2768,7 @@ window.switchMoneyTab=function(name,el){
   el.classList.add('active');
   document.getElementById('mtab-'+name).classList.add('active');
   if(name==='stats')renderMoneyStats();
+  if(name==='saving')renderSavingStats();
   if(name==='fixed')renderFixedCosts();
 };
 
@@ -2734,8 +2781,10 @@ function renderMoney(){
     const row=document.createElement('div');row.className='money-row';
     const amt=item.type==='out'?-item.amount:item.amount;total+=amt;
     const tagBadge=item.tag?`<span style="font-size:10px;background:#f0f0f0;color:#888;padding:1px 6px;border-radius:8px;margin-right:4px">${item.tag}</span>`:'';
+    const pmBadge=(item.type==='out'&&item.payMethod)?`<span class="pm-badge ${item.payMethod}">${item.payMethod==='card'?'💳 카드':'💵 현금'}</span>`:'';
+    const savingBadge=(item.type==='out'&&item.isSaving)?`<span class="saving-badge">💰 저축</span>`:'';
     row.innerHTML=`
-      <span class="money-cat" style="cursor:pointer;flex:1" onclick="openMoneyEditModal('${key}',${idx})">${item.name}${tagBadge}</span>
+      <span class="money-cat" style="cursor:pointer;flex:1" onclick="openMoneyEditModal('${key}',${idx})">${item.name}${tagBadge}${pmBadge}${savingBadge}</span>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="money-amt ${item.type}" style="cursor:pointer" onclick="openMoneyEditModal('${key}',${idx})">${item.type==='out'?'-':'+'}${item.amount.toLocaleString()}</span>
         <span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteMoney('${key}',${idx})">✕</span>
@@ -2752,6 +2801,8 @@ function renderMoney(){
 window.openMoneyModal=function(){
   document.getElementById('mn-name').value='';document.getElementById('mn-amount').value='';
   document.getElementById('mn-type').value='out';
+  document.getElementById('mn-paymethod').value='card';
+  document.getElementById('mn-saving').checked=false;
   selectedTag='';updateTagsByType();
   document.getElementById('moneyModal').style.display='flex';
 };
@@ -2760,7 +2811,9 @@ window.confirmMoney=async function(){
   const type=document.getElementById('mn-type').value;
   const amount=parseInt(document.getElementById('mn-amount').value);if(!amount)return;
   const key=fmt(selDate);if(!moneyData[key])moneyData[key]=[];
-  moneyData[key].push({name,type,amount,tag:selectedTag||''});
+  const payMethod=type==='out'?document.getElementById('mn-paymethod').value:'';
+  const isSaving=type==='out'?document.getElementById('mn-saving').checked:false;
+  moneyData[key].push({name,type,amount,tag:selectedTag||'',payMethod,isSaving});
   await saveData('money',key,{items:moneyData[key]});closeModal('moneyModal');
   renderMoney();if(leftMode==='money-cal')renderMoneyCal();
 };
@@ -2776,6 +2829,8 @@ window.openMoneyEditModal=function(key,idx){
   document.getElementById('mne-name').value=item.name;
   document.getElementById('mne-amount').value=item.amount;
   document.getElementById('mne-type').value=item.type;
+  document.getElementById('mne-paymethod').value=item.payMethod||'card';
+  document.getElementById('mne-saving').checked=!!item.isSaving;
   selectedEditTag=item.tag||'';
   updateEditTagsByType();
   document.getElementById('moneyEditModal').style.display='flex';
@@ -2785,7 +2840,9 @@ window.confirmMoneyEdit=async function(){
   const name=document.getElementById('mne-name').value.trim();if(!name)return;
   const amount=parseInt(document.getElementById('mne-amount').value);if(!amount)return;
   const type=document.getElementById('mne-type').value;
-  moneyData[editMoneyKey][editMoneyIdx]={name,type,amount,tag:selectedEditTag||''};
+  const payMethod=type==='out'?document.getElementById('mne-paymethod').value:'';
+  const isSaving=type==='out'?document.getElementById('mne-saving').checked:false;
+  moneyData[editMoneyKey][editMoneyIdx]={name,type,amount,tag:selectedEditTag||'',payMethod,isSaving};
   await saveData('money',editMoneyKey,{items:moneyData[editMoneyKey]});
   closeModal('moneyEditModal');renderMoney();if(leftMode==='money-cal')renderMoneyCal();
 };
@@ -2820,6 +2877,7 @@ function renderMoneyStats(){
   const mKey=`${y}-${m}`;
   // 해당 월 데이터 집계
   const tagMap={};const tagItems={};let totalOut=0;
+  let cardTotal=0,cashTotal=0;
   Object.keys(moneyData).sort().forEach(k=>{
     if(k.startsWith(mKey+'-')){
       const day=k.split('-')[2];
@@ -2830,6 +2888,8 @@ function renderMoneyStats(){
         if(!tagItems[t])tagItems[t]=[];
         tagItems[t].push({day,memo:i.name||'',amount:i.amount});
         totalOut+=i.amount;
+        if(i.payMethod==='cash')cashTotal+=i.amount;
+        else cardTotal+=i.amount; // payMethod 미지정 과거 데이터는 카드로 집계
       });
     }
   });
@@ -2850,6 +2910,16 @@ function renderMoneyStats(){
       <button onclick="statsMove(-1)">‹</button>
       <span>${y}년 ${m}월 지출 통계</span>
       <button onclick="statsMove(1)">›</button>
+    </div>
+    <div class="pm-summary">
+      <div class="pm-summary-box card">
+        <div class="pm-label">💳 카드로 낼 돈</div>
+        <div class="pm-amt">${cardTotal.toLocaleString()}원</div>
+      </div>
+      <div class="pm-summary-box cash">
+        <div class="pm-label">💵 현금 지출</div>
+        <div class="pm-amt">${cashTotal.toLocaleString()}원</div>
+      </div>
     </div>
     <div class="pie-wrap">
       <div style="width:150px;height:150px;border-radius:50%;background:${pieStyle}"></div>
@@ -2884,6 +2954,75 @@ window.toggleTagDetail=function(id,row){
   const panel=document.getElementById(id);
   const idx=id.replace('td-','');
   const arr=document.getElementById('td-arr-'+idx);
+  if(!panel)return;
+  const open=panel.classList.toggle('open');
+  if(arr)arr.textContent=open?'▴':'▾';
+  if(row)row.style.background=open?'var(--accent-light,#EEEDFE)':'';
+};
+
+// ── 저축 현황 ──
+let savingCur=new Date();
+function renderSavingStats(){
+  const el=document.getElementById('money-saving-content');
+  const y=savingCur.getFullYear(),m=savingCur.getMonth()+1;
+  const mKey=`${y}-${m}`;
+  const tagMap={};const tagItems={};let monthTotal=0;
+  let allTimeTotal=0;
+  Object.keys(moneyData).sort().forEach(k=>{
+    moneyData[k].forEach(i=>{
+      if(i.type!=='out'||!i.isSaving)return;
+      allTimeTotal+=i.amount;
+      if(k.startsWith(mKey+'-')){
+        const day=k.split('-')[2];
+        const t=i.tag||'(미분류)';
+        tagMap[t]=(tagMap[t]||0)+i.amount;
+        if(!tagItems[t])tagItems[t]=[];
+        tagItems[t].push({day,memo:i.name||'',amount:i.amount});
+        monthTotal+=i.amount;
+      }
+    });
+  });
+  const entries=Object.entries(tagMap).sort((a,b)=>b[1]-a[1]);
+  el.innerHTML=`
+    <div class="stats-month-nav">
+      <button onclick="savingMove(-1)">‹</button>
+      <span>${y}년 ${m}월 저축 현황</span>
+      <button onclick="savingMove(1)">›</button>
+    </div>
+    <div class="saving-total-box">
+      <div class="st-label">이번 달 저축액</div>
+      <div class="st-amt">${monthTotal.toLocaleString()}원</div>
+      <div class="st-sub">누적 저축 총액 ${allTimeTotal.toLocaleString()}원</div>
+    </div>
+    <div class="pie-legend">
+      ${entries.length===0?'<div class="saving-empty">이달 저축으로 표시한 내역이 없어요</div>':
+        entries.map(([tag,amt],idx)=>{
+          const items=tagItems[tag]||[];
+          const detailRows=items.map(it=>`<div class="saving-list-row"><span>${m}월 ${it.day}일${it.memo?'<span class="saving-list-memo">· '+it.memo+'</span>':''}</span><span class="saving-list-amt">${it.amount.toLocaleString()}원</span></div>`).join('');
+          return `
+          <div class="pie-legend-row" onclick="toggleSavingDetail('sd-${idx}',this)">
+            <div style="display:flex;align-items:center">
+              <div class="pie-legend-dot" style="background:${getTagColor(tag)}"></div>
+              <span class="saving-list-tag">${tag}</span>
+            </div>
+            <div style="display:flex;gap:8px;color:#666;align-items:center">
+              <span style="font-weight:500">${amt.toLocaleString()}원</span>
+              <span style="font-size:10px;color:#bbb" id="sd-arr-${idx}">▾</span>
+            </div>
+          </div>
+          <div class="tag-detail-panel" id="sd-${idx}">${detailRows}</div>`;
+        }).join('')}
+    </div>
+    <div style="font-size:11px;color:#bbb;text-align:center;margin-top:10px">가계부 지출 입력 시 '💰 저축으로 표시'를 체크하면 여기 자동으로 반영돼요</div>`;
+}
+window.savingMove=function(dir){
+  savingCur=new Date(savingCur.getFullYear(),savingCur.getMonth()+dir,1);
+  renderSavingStats();
+};
+window.toggleSavingDetail=function(id,row){
+  const panel=document.getElementById(id);
+  const idx=id.replace('sd-','');
+  const arr=document.getElementById('sd-arr-'+idx);
   if(!panel)return;
   const open=panel.classList.toggle('open');
   if(arr)arr.textContent=open?'▴':'▾';
