@@ -1311,7 +1311,10 @@ body{opacity:0;transition:opacity .25s ease}
       <select id="mn-type" onchange="updateTagsByType()"><option value="out">지출 (−)</option><option value="in">수입 (+)</option></select>
       <input id="mn-amount" type="number" placeholder="금액" min="0"/>
     </div>
-    <div class="modal-label">태그 <span style="font-size:10px;color:#bbb">(선택)</span></div>
+    <div class="modal-label" style="display:flex;justify-content:space-between;align-items:center">
+      <span>태그 <span style="font-size:10px;color:#bbb">(선택)</span></span>
+      <span style="font-size:11px;color:#1558CC;cursor:pointer" onclick="openTagManageModal()">태그 관리</span>
+    </div>
     <div class="tag-chips" id="mn-tags"></div>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('moneyModal')">취소</button>
@@ -1331,7 +1334,10 @@ body{opacity:0;transition:opacity .25s ease}
       <select id="mne-type" onchange="updateEditTagsByType()"><option value="out">지출 (−)</option><option value="in">수입 (+)</option></select>
       <input id="mne-amount" type="number" placeholder="금액" min="0"/>
     </div>
-    <div class="modal-label">태그 <span style="font-size:10px;color:#bbb">(선택)</span></div>
+    <div class="modal-label" style="display:flex;justify-content:space-between;align-items:center">
+      <span>태그 <span style="font-size:10px;color:#bbb">(선택)</span></span>
+      <span style="font-size:11px;color:#1558CC;cursor:pointer" onclick="openTagManageModal()">태그 관리</span>
+    </div>
     <div class="tag-chips" id="mne-tags"></div>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('moneyEditModal')">취소</button>
@@ -1354,6 +1360,21 @@ body{opacity:0;transition:opacity .25s ease}
     </div>
   </div>
 </div>
+
+<!-- 가계부 태그 관리 -->
+<div class="modal-bg" id="tagManageModal" style="display:none">
+  <div class="modal">
+    <h3>가계부 태그 관리</h3>
+    <div class="modal-label">지출 태그 <span style="font-size:10px;color:#bbb">(× 눌러서 삭제)</span></div>
+    <div class="tag-chips" id="tm-out-tags"></div>
+    <div class="modal-label" style="margin-top:12px">수입 태그 <span style="font-size:10px;color:#bbb">(× 눌러서 삭제)</span></div>
+    <div class="tag-chips" id="tm-in-tags"></div>
+    <div class="modal-btns">
+      <button class="mbtn ok" onclick="closeModal('tagManageModal')" style="width:100%">닫기</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- 메모 추가/수정 -->
 <div class="modal-bg" id="memoModal" style="display:none">
@@ -2660,6 +2681,37 @@ window.confirmTagAdd=async function(){
     await saveCustomTags();
     closeModal('tagAddModal');
     renderMemoFilters();
+  }
+};
+
+// ── 가계부 태그 관리(삭제) ──
+window.openTagManageModal=function(){
+  renderTagManageLists();
+  document.getElementById('tagManageModal').style.display='flex';
+};
+function renderTagManageLists(){
+  document.getElementById('tm-out-tags').innerHTML=
+    OUT_TAGS.map(t=>`<div class="tag-chip">${t}<span style="margin-left:5px;color:#D85A30;cursor:pointer;font-weight:700" onclick="event.stopPropagation();deleteCustomTag('out','${t}')">×</span></div>`).join('')
+    || `<span style="font-size:11px;color:#bbb">태그 없음</span>`;
+  document.getElementById('tm-in-tags').innerHTML=
+    IN_TAGS.map(t=>`<div class="tag-chip">${t}<span style="margin-left:5px;color:#D85A30;cursor:pointer;font-weight:700" onclick="event.stopPropagation();deleteCustomTag('in','${t}')">×</span></div>`).join('')
+    || `<span style="font-size:11px;color:#bbb">태그 없음</span>`;
+}
+window.deleteCustomTag=async function(type,tag){
+  if(!confirm(`'${tag}' 태그를 삭제할까요?\n(이미 기록된 내역의 태그 표시는 그대로 남아요)`))return;
+  if(type==='out') OUT_TAGS=OUT_TAGS.filter(t=>t!==tag);
+  else IN_TAGS=IN_TAGS.filter(t=>t!==tag);
+  await saveCustomTags();
+  renderTagManageLists();
+  // 열려있을 수 있는 다른 태그 선택 UI들도 새로고침
+  if(document.getElementById('mn-tags')) updateTagsByType();
+  if(document.getElementById('mne-tags')&&selectedEditTag) {
+    if(selectedEditTag===tag) selectedEditTag='';
+    updateEditTagsByType();
+  }
+  if(document.getElementById('budget-tags')){
+    selectedBudgetTags=selectedBudgetTags.filter(t=>t!==tag);
+    renderBudgetTagChips();
   }
 };
 
