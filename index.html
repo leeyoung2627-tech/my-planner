@@ -478,11 +478,19 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* 가계부 달력 — 금액 표시 */
 .money-cal-wrap{padding:.65rem .85rem}
-.money-day-cell{min-height:110px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px}
+.money-day-cell{min-height:110px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative}
 .money-day-cell:hover{background:#fff8f5}
 .money-day-cell.other{color:#ccc}
 .money-day-cell.today .mdn{background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px}
 .money-day-cell.selected{border-color:#D85A30;background:#FFF0EB}
+.money-day-memo-btn{position:absolute;top:2px;right:2px;font-size:10px;opacity:0;cursor:pointer;transition:opacity .15s;padding:1px 3px;border-radius:4px;line-height:1.4}
+.money-day-cell:hover .money-day-memo-btn{opacity:.5}
+.money-day-cell.has-memo .money-day-memo-btn{opacity:.5}
+.money-day-memo-btn:hover{opacity:1!important;background:#eee}
+.money-day-cell.refund-pending{background:#FFF6E0;border-color:#E8A33D}
+.money-day-cell.refund-pending.selected{background:#FFEFC7;border-color:#D8862A}
+.money-day-memo-text{font-size:10px;color:#8a7a4a;line-height:1.3;background:#F5EFD9;border-radius:4px;padding:1px 4px;margin-top:1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.money-day-memo-text.pending{color:#B8611A;font-weight:700;background:#FFE7BD}
 
 .meal-cal-wrap{padding:.65rem .85rem}
 .meal-day-cell{min-height:110px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden}
@@ -1397,6 +1405,22 @@ body{opacity:0;transition:opacity .25s ease}
   </div>
 </div>
 
+<!-- 가계부 날짜 메모 -->
+<div class="modal-bg" id="moneyMemoModal" style="display:none">
+  <div class="modal">
+    <h3>날짜 메모</h3>
+    <div class="modal-label" id="mm-date-label"></div>
+    <textarea id="mm-text" rows="3" placeholder="예: 민수꺼 대신 결제, 3만원 돌려받을 것" style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box"></textarea>
+    <label class="saving-check-label" style="margin-top:8px;display:flex;align-items:center;gap:6px">
+      <input type="checkbox" id="mm-pending"/> 💸 아직 돈을 못 돌려받았어요 (달력에 강조 표시)
+    </label>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('moneyMemoModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmMoneyMemo()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 예산 설정 -->
 <div class="modal-bg" id="budgetModal" style="display:none">
   <div class="modal">
@@ -1626,6 +1650,7 @@ let savingBaseline={};
 let savingOrder=[];
 let memos=[],editingMemoId=null,currentMemoFilter='전체',viewingMemoId=null;
 let noSpendData={};
+let moneyMemoData={};
 let ddayList=[];
 let budgetData={};
 let anniversaries=[];
@@ -1642,6 +1667,7 @@ let diaryPasswordHash=null;
 let diarySaveTimer=null;
 
 function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function showSaving(){const el=document.getElementById('savingIndicator');el.style.display='block';setTimeout(()=>el.style.display='none',1200);}
 
 // ── Auth — 깜빡임 방지 ──
@@ -1698,7 +1724,7 @@ async function saveData(type,key,value){
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -1719,6 +1745,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','diaryLock')),
     getDoc(doc(db,'users',currentUser.uid,'settings','dailyPlanner')),
     getDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline')),
+    getDocs(collection(db,'users',currentUser.uid,'moneyMemo')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -1731,6 +1758,7 @@ async function loadAllData(){
     return (b.createdAt||0)-(a.createdAt||0);
   });
   noSpendData={};nsS.forEach(d=>{noSpendData[d.id]=d.data().done||false;});
+  moneyMemoData={};mmS.forEach(d=>{moneyMemoData[d.id]={text:d.data().text||'',pending:d.data().pending||false};});
   ddayList=[];ddS.forEach(d=>{ddayList.push({id:d.id,...d.data()});});
   ddayList.sort((a,b)=>(a.order??new Date(a.date).getTime())-(b.order??new Date(b.date).getTime()));
   budgetData={};bdS.forEach(d=>{budgetData[d.id]={amount:d.data().amount||0,tags:d.data().tags||[]};});
@@ -2050,7 +2078,11 @@ function renderMoneyCal(){
     const outHtml=dayOut>0?`<div class="money-day-out">-${dayOut.toLocaleString()}</div>`:'';
     const inHtml=dayIn>0?`<div class="money-day-in">+${dayIn.toLocaleString()}</div>`:'';
     const nsHtml=ns?`<div class="money-day-ns">💚</div>`:'';
-    html+=`<div class="money-day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><div class="mdn-row"><span class="mdn">${d}</span>${nsHtml}</div>${outHtml}${inHtml}</div>`;
+    const memo=moneyMemoData[key];
+    const memoBtn=`<span class="money-day-memo-btn" onclick="event.stopPropagation();openMoneyMemoModal('${key}')" title="날짜 메모">📝</span>`;
+    const memoHtml=(memo&&memo.text)?`<div class="money-day-memo-text${memo.pending?' pending':''}">${memo.pending?'💸 ':''}${escapeHtml(memo.text)}</div>`:'';
+    const cellClasses=`money-day-cell${isToday?' today':''}${isSel?' selected':''}${memo&&memo.pending?' refund-pending':''}${memo&&memo.text?' has-memo':''}`;
+    html+=`<div class="${cellClasses}" onclick="selectDay(${d})">${memoBtn}<div class="mdn-row"><span class="mdn">${d}</span>${nsHtml}</div>${outHtml}${inHtml}${memoHtml}</div>`;
   }
   const rem=(7-(start+total)%7)%7;
   for(let i=1;i<=rem&&rem<7;i++)html+=`<div class="money-day-cell other"><span class="mdn">${i}</span></div>`;
@@ -2296,6 +2328,32 @@ window.toggleNoSpend=async function(){
   const key=fmt(selDate);noSpendData[key]=!noSpendData[key];
   await saveData('nospend',key,{done:noSpendData[key]});
   renderNoSpend();if(leftMode==='money-cal')renderMoneyCal();
+};
+
+// ── 가계부 날짜 메모(대신 결제/환급 대기 등) ──
+let editingMoneyMemoKey='';
+window.openMoneyMemoModal=function(key){
+  editingMoneyMemoKey=key;
+  const m=moneyMemoData[key]||{text:'',pending:false};
+  document.getElementById('mm-text').value=m.text||'';
+  document.getElementById('mm-pending').checked=!!m.pending;
+  const [y,mo,da]=key.split('-');
+  document.getElementById('mm-date-label').textContent=`${y}년 ${mo}월 ${da}일`;
+  document.getElementById('moneyMemoModal').style.display='flex';
+};
+window.confirmMoneyMemo=async function(){
+  const key=editingMoneyMemoKey;if(!key)return;
+  const text=document.getElementById('mm-text').value.trim();
+  const pending=document.getElementById('mm-pending').checked;
+  if(!text&&!pending){
+    delete moneyMemoData[key];
+    await deleteData('moneyMemo',key);
+  } else {
+    moneyMemoData[key]={text,pending};
+    await saveData('moneyMemo',key,moneyMemoData[key]);
+  }
+  closeModal('moneyMemoModal');
+  if(leftMode==='money-cal')renderMoneyCal();
 };
 
 // ── 예산 ──
