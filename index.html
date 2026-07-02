@@ -648,6 +648,9 @@ body{opacity:0;transition:opacity .25s ease}
 .saving-list-memo{color:#aaa;margin-left:4px;font-size:11px}
 .saving-list-amt{font-weight:600;color:#B8860B}
 .saving-empty{text-align:center;color:#ccc;font-size:12px;padding:16px 0}
+.saving-product{border-radius:8px}
+.saving-product.dragging{opacity:.35}
+.saving-product.drag-over{background:var(--accent-light,#EEEDFE)}
 
 /* 가계부 */
 .money-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid #f0f0f0}
@@ -1620,6 +1623,7 @@ const DAYS=['일','월','화','수','목','금','토'];
 let habits=[],editingHabitId=null;
 let weekEvents={},moneyData={},mealData={},fixedCosts={fixed:[],semifixed:[]};
 let savingBaseline={};
+let savingOrder=[];
 let memos=[],editingMemoId=null,currentMemoFilter='전체',viewingMemoId=null;
 let noSpendData={};
 let ddayList=[];
@@ -1760,6 +1764,7 @@ async function loadAllData(){
   loadDailyData(dlS.exists()?dlS.data():null);
   // 저축 상품별 초기 잔액(이전까지 저축한 금액)
   savingBaseline=sbS.exists()?(sbS.data().items||{}):{};
+  savingOrder=sbS.exists()?(sbS.data().order||[]):[];
 }
 
 // ── 상단 메모 ──
@@ -2814,6 +2819,7 @@ window.editCustomTag=async function(type,oldTag){
   });
   await Promise.all(saveJobs);
   // 4) 저축 상품 초기값 키 이전 (같은 이름 상품 있으면 합산)
+  savingOrder=savingOrder.map(t=>t===oldTag?newTag:t);
   if(Object.prototype.hasOwnProperty.call(savingBaseline,oldTag)){
     savingBaseline[newTag]=(savingBaseline[newTag]||0)+savingBaseline[oldTag];
     delete savingBaseline[oldTag];
@@ -3076,14 +3082,18 @@ function renderSavingStats(){
   const allTags=[...new Set([...Object.keys(allTimeTagMap),...Object.keys(savingBaseline)])];
   const baselineTotal=allTags.reduce((s,t)=>s+(savingBaseline[t]||0),0);
   const grandTotal=baselineTotal+allTimeLedgerTotal;
-  const rows=allTags.map(t=>({
+  const totalsMap={};allTags.forEach(t=>{totalsMap[t]=(savingBaseline[t]||0)+(allTimeTagMap[t]||0);});
+  // 사용자가 드래그로 정한 순서(savingOrder) 우선, 나머지는 금액 큰 순으로 뒤에 붙임
+  const inOrder=savingOrder.filter(t=>allTags.includes(t));
+  const remaining=allTags.filter(t=>!savingOrder.includes(t)).sort((a,b)=>totalsMap[b]-totalsMap[a]);
+  const orderedTags=[...inOrder,...remaining];
+  const rows=orderedTags.map(t=>({
     tag:t,
     baseline:savingBaseline[t]||0,
     ledger:allTimeTagMap[t]||0,
-    total:(savingBaseline[t]||0)+(allTimeTagMap[t]||0),
-    thisMonth:monthTagMap[t]||0,
+    total:totalsMap[t],
     monthItems:monthTagItems[t]||[]
-  })).sort((a,b)=>b.total-a.total);
+  }));
   el.innerHTML=`
     <div class="stats-month-nav">
       <button onclick="savingMove(-1)">‹</button>
@@ -3101,27 +3111,31 @@ function renderSavingStats(){
           const detailRows=r.monthItems.map(it=>`<div class="saving-list-row"><span>${m}월 ${it.day}일${it.memo?'<span class="saving-list-memo">· '+it.memo+'</span>':''}</span><span class="saving-list-amt">+${it.amount.toLocaleString()}원</span></div>`).join('')
             ||'<div class="saving-empty" style="padding:6px 0">이번 달 추가 내역 없음</div>';
           return `
-          <div class="pie-legend-row" onclick="toggleSavingDetail('sd-${idx}',this)">
-            <div style="display:flex;align-items:center">
-              <div class="pie-legend-dot" style="background:${getTagColor(r.tag)}"></div>
-              <span class="saving-list-tag">${r.tag}</span>
+          <div class="saving-product" draggable="true" data-tag="${r.tag}" ondragstart="savingDragStart(event,'${r.tag}')" ondragover="savingDragOver(event)" ondragleave="savingDragLeave(event)" ondrop="savingDrop(event,'${r.tag}')" ondragend="savingDragEnd(event)">
+            <div class="pie-legend-row" onclick="toggleSavingDetail('sd-${idx}',this)">
+              <div style="display:flex;align-items:center">
+                <span style="color:#ccc;margin-right:5px;cursor:grab">⠿</span>
+                <div class="pie-legend-dot" style="background:${getTagColor(r.tag)}"></div>
+                <span class="saving-list-tag">${r.tag}</span>
+              </div>
+              <div style="display:flex;gap:8px;color:#666;align-items:center">
+                <span style="font-weight:600;color:#B8860B">${r.total.toLocaleString()}원</span>
+                <span style="font-size:13px;color:#ccc;cursor:pointer" onclick="event.stopPropagation();editSavingBaseline('${r.tag}')">✎</span>
+                <span style="font-size:13px;color:#D85A30;cursor:pointer" onclick="event.stopPropagation();deleteSavingProduct('${r.tag}')">×</span>
+                <span style="font-size:10px;color:#bbb" id="sd-arr-${idx}">▾</span>
+              </div>
             </div>
-            <div style="display:flex;gap:8px;color:#666;align-items:center">
-              <span style="font-weight:600;color:#B8860B">${r.total.toLocaleString()}원</span>
-              <span style="font-size:13px;color:#ccc;cursor:pointer" onclick="event.stopPropagation();editSavingBaseline('${r.tag}')">✎</span>
-              <span style="font-size:10px;color:#bbb" id="sd-arr-${idx}">▾</span>
+            <div class="tag-detail-panel" id="sd-${idx}">
+              <div class="saving-list-row"><span>이전까지 저축한 금액(초기값)</span><span class="saving-list-amt">${r.baseline.toLocaleString()}원</span></div>
+              <div class="saving-list-row"><span>가계부 자동 합산액</span><span class="saving-list-amt">${r.ledger.toLocaleString()}원</span></div>
+              <div style="font-size:10px;color:#bbb;margin:4px 0 2px">이번 달 추가분</div>
+              ${detailRows}
             </div>
-          </div>
-          <div class="tag-detail-panel" id="sd-${idx}">
-            <div class="saving-list-row"><span>이전까지 저축한 금액(초기값)</span><span class="saving-list-amt">${r.baseline.toLocaleString()}원</span></div>
-            <div class="saving-list-row"><span>가계부 자동 합산액</span><span class="saving-list-amt">${r.ledger.toLocaleString()}원</span></div>
-            <div style="font-size:10px;color:#bbb;margin:4px 0 2px">이번 달 추가분</div>
-            ${detailRows}
           </div>`;
         }).join('')}
     </div>
     <button class="add-btn" style="margin-top:10px" onclick="addSavingProduct()">＋ 저축 상품 초기값 등록</button>
-    <div style="font-size:11px;color:#bbb;text-align:center;margin-top:10px">가계부 지출 입력 시 태그를 상품명(예: 노란우산공제, ○○적금)으로 하고 '💰 저축으로 표시'를 체크하면 이후 저축액이 자동으로 더해져요</div>`;
+    <div style="font-size:11px;color:#bbb;text-align:center;margin-top:10px">가계부 지출 입력 시 태그를 상품명(예: 노란우산공제, ○○적금)으로 하고 '💰 저축으로 표시'를 체크하면 이후 저축액이 자동으로 더해져요. ⠿ 표시를 드래그하면 순서를 바꿀 수 있어요</div>`;
 }
 window.savingMove=function(dir){
   savingCur=new Date(savingCur.getFullYear(),savingCur.getMonth()+dir,1);
@@ -3138,7 +3152,7 @@ window.toggleSavingDetail=function(id,row){
 };
 async function saveSavingBaseline(){
   if(!currentUser)return;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline'),{items:savingBaseline});
+  await setDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline'),{items:savingBaseline,order:savingOrder});
 }
 window.editSavingBaseline=async function(tag){
   const cur=savingBaseline[tag]||0;
@@ -3150,6 +3164,21 @@ window.editSavingBaseline=async function(tag){
   await saveSavingBaseline();
   renderSavingStats();
 };
+window.deleteSavingProduct=async function(tag){
+  if(!confirm(`'${tag}' 항목을 저축 현황에서 삭제할까요?\n(가계부에 남은 지출 내역 자체는 지워지지 않고, 저축 표시만 해제돼요)`))return;
+  delete savingBaseline[tag];
+  savingOrder=savingOrder.filter(t=>t!==tag);
+  await saveSavingBaseline();
+  const saveJobs=[];
+  Object.keys(moneyData).forEach(key=>{
+    let changed=false;
+    moneyData[key].forEach(item=>{if(item.tag===tag&&item.isSaving){item.isSaving=false;changed=true;}});
+    if(changed)saveJobs.push(saveData('money',key,{items:moneyData[key]}));
+  });
+  await Promise.all(saveJobs);
+  renderSavingStats();
+  renderMoney();
+};
 window.addSavingProduct=async function(){
   const tag=prompt('저축 상품명을 입력해주세요 (예: 노란우산공제, 청년적금)');
   if(!tag||!tag.trim())return;
@@ -3158,10 +3187,44 @@ window.addSavingProduct=async function(){
   if(v===null)return;
   const amount=parseInt(String(v).replace(/,/g,''))||0;
   savingBaseline[name]=amount;
+  if(!savingOrder.includes(name))savingOrder.push(name);
   await saveSavingBaseline();
   // 가계부 태그 목록에도 없으면 지출 태그로 추가해서 바로 사용할 수 있게 함
   if(!OUT_TAGS.includes(name)){OUT_TAGS.push(name);await saveCustomTags();}
   renderSavingStats();
+};
+let dragSavingTag=null;
+window.savingDragStart=function(e,tag){
+  dragSavingTag=tag;
+  e.dataTransfer.effectAllowed='move';
+  try{e.dataTransfer.setData('text/plain',tag);}catch(err){}
+  e.currentTarget.classList.add('dragging');
+};
+window.savingDragOver=function(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  e.currentTarget.classList.add('drag-over');
+};
+window.savingDragLeave=function(e){
+  e.currentTarget.classList.remove('drag-over');
+};
+window.savingDrop=async function(e,targetTag){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!dragSavingTag||dragSavingTag===targetTag){dragSavingTag=null;return;}
+  const rows=[...document.querySelectorAll('#money-saving-content .saving-product')].map(el=>el.dataset.tag);
+  const fromIdx=rows.indexOf(dragSavingTag);
+  if(fromIdx>-1)rows.splice(fromIdx,1);
+  const toIdx=rows.indexOf(targetTag);
+  rows.splice(toIdx,0,dragSavingTag);
+  savingOrder=rows;
+  dragSavingTag=null;
+  await saveSavingBaseline();
+  renderSavingStats();
+};
+window.savingDragEnd=function(e){
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('#money-saving-content .saving-product').forEach(c=>c.classList.remove('drag-over'));
 };
 
 // ── 고정비 ──
