@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>목표 맵 RPG</title>
+<link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -720,8 +723,14 @@ function getScaled() {
 // ══════════════════════════════
 // 렌더
 // ══════════════════════════════
+let autoAdvanceDone = false;
 function render() {
   if(!mapLoaded) return;
+  if(!autoAdvanceDone) {
+    autoAdvanceDone = true;
+    autoAdvanceIfNeeded().then(()=>{ renderMap(); renderStatus(); });
+    return;
+  }
   renderMap(); renderStatus();
 }
 
@@ -1135,17 +1144,17 @@ function endMonth() {
 }
 function closeEndModal() { document.getElementById('endModal').classList.remove('open'); }
 
-async function confirmEndMonth() {
+// 한 달을 마감하고 다음 달로 넘어가는 핵심 로직 (수동 확정 / 자동 전환 공용)
+async function advanceToNextMonth(showAnim) {
   const { totalPct, qualifiedDays, req, levelUp } = calcLevelProgress();
   const pctOk = totalPct >= req.pct;
   const daysOk = qualifiedDays >= req.days;
   const levelDown = !pctOk && !daysOk;
-  closeEndModal();
 
   const prev=mapState.level;
   if(levelUp) mapState.level++;
   else if(levelDown) mapState.level=Math.max(1,mapState.level-1);
-  if(levelUp||levelDown) showLevelAnim(levelUp,prev,mapState.level);
+  if(showAnim && (levelUp||levelDown)) showLevelAnim(levelUp,prev,mapState.level);
 
   // 히스토리 저장
   const successCount = mapState.days.filter(d=>d===true).length;
@@ -1171,7 +1180,29 @@ async function confirmEndMonth() {
   mapState.year=next.getFullYear(); mapState.month=next.getMonth()+1;
   mapState.goal=null; mapState.days=Array(TOTAL_DAYS).fill(null); mapState.dayMissions={};
   saveMap(); saveSP();
+  return { levelUp, levelDown };
+}
+
+async function confirmEndMonth() {
+  closeEndModal();
+  const { levelUp, levelDown } = await advanceToNextMonth(true);
   setTimeout(render,(levelUp||levelDown)?2400:100);
+}
+
+// 실제 날짜 기준으로 저장된 달이 이미 지나갔으면, 버튼을 누르지 않아도
+// 자동으로 결산 처리하고 다음 달(들)로 넘어간다.
+// (여러 달을 건너뛴 경우에도 순차적으로 결산하며 따라잡는다)
+async function autoAdvanceIfNeeded() {
+  const now = new Date();
+  const curKey = now.getFullYear()*12 + (now.getMonth()+1);
+  let guard = 0; // 무한루프 안전장치
+  let advanced = false;
+  while ((mapState.year*12 + mapState.month) < curKey && guard < 36) {
+    await advanceToNextMonth(false);
+    guard++;
+    advanced = true;
+  }
+  return advanced;
 }
 
 function openStats() {
