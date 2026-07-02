@@ -721,11 +721,52 @@ function getScaled() {
 }
 
 // ══════════════════════════════
+// 지난 날짜 O/X 자동 판정
+// ══════════════════════════════
+// 해당 날짜의 체크된 미션 비율이 30% 이상이면 성공(⭕), 아니면 실패(❌)
+// (레벨업 판정에 쓰이는 "30% 이상 달성일" 기준과 동일하게 맞춤)
+function judgeDaySuccess(dayNum) {
+  const hpM = spState.hpMissions.length;
+  const mpM = spState.mpMissions.length;
+  const totalMissionsPerDay = hpM + mpM;
+  if(totalMissionsPerDay === 0) return null; // 등록된 미션이 없으면 판정 보류
+
+  const dm = mapState.dayMissions[String(dayNum)];
+  const hpChecked = dm ? (dm.hp||[]).filter(Boolean).length : 0;
+  const mpChecked = dm ? (dm.mp||[]).filter(Boolean).length : 0;
+  const dayChecked = hpChecked + mpChecked;
+  const dayPct = Math.round(dayChecked / totalMissionsPerDay * 100);
+  return dayPct >= 30;
+}
+
+// 이미 지나간 날짜 중 아직 O/X가 안 찍힌(null) 날짜를 자동으로 채워준다.
+// (오늘 날짜는 아직 하루가 끝나지 않았으므로 건드리지 않음)
+function autoFinalizeDayStatuses() {
+  const now = new Date();
+  const isCurrentMonth = (mapState.year===now.getFullYear() && mapState.month===now.getMonth()+1);
+  const lastPassedDay = isCurrentMonth ? now.getDate()-1 : TOTAL_DAYS; // 저장된 달이 이미 지난 달이면 전체 마감
+  let changed = false;
+  for(let d=1; d<=lastPassedDay; d++){
+    const idx=d-1;
+    if(mapState.days[idx]===null || mapState.days[idx]===undefined){
+      const result = judgeDaySuccess(d);
+      if(result !== null){
+        mapState.days[idx] = result;
+        changed = true;
+      }
+    }
+  }
+  if(changed) saveMap();
+  return changed;
+}
+
+// ══════════════════════════════
 // 렌더
 // ══════════════════════════════
 let autoAdvanceDone = false;
 function render() {
   if(!mapLoaded) return;
+  autoFinalizeDayStatuses();
   if(!autoAdvanceDone) {
     autoAdvanceDone = true;
     autoAdvanceIfNeeded().then(()=>{ renderMap(); renderStatus(); });
@@ -1198,6 +1239,7 @@ async function autoAdvanceIfNeeded() {
   let guard = 0; // 무한루프 안전장치
   let advanced = false;
   while ((mapState.year*12 + mapState.month) < curKey && guard < 36) {
+    autoFinalizeDayStatuses(); // 넘어가기 전, 해당 달의 남은 날짜 O/X부터 마감
     await advanceToNextMonth(false);
     guard++;
     advanced = true;
