@@ -856,6 +856,48 @@ body{opacity:0;transition:opacity .25s ease}
 .dp-emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:200px;overflow-y:auto;margin-top:6px}
 .dp-emoji-item{display:flex;align-items:center;justify-content:center;cursor:pointer;padding:4px;border-radius:8px;transition:background .12s}
 .dp-emoji-item:hover{background:#EDF4FF}
+
+/* ── RPG 입구 화면 ── */
+:root{
+  /* 문(door) 위치·크기 — 이미지 대비 % 좌표. 필요하면 이 값만 조절하세요 */
+  --rpg-door-left:40%;
+  --rpg-door-top:62%;
+  --rpg-door-w:9%;
+  --rpg-door-h:25%;
+  /* 음악바 위치·크기 — 이미지 우측 상단 골드 바 */
+  --rpg-music-left:71%;
+  --rpg-music-top:2%;
+  --rpg-music-w:19%;
+  --rpg-music-h:6.5%;
+}
+#rpgEntrance{position:relative;width:100%;height:100%;min-height:500px;overflow:hidden;background:#191826;display:flex;align-items:center;justify-content:center}
+#rpgEntrance>img{width:100%;height:100%;object-fit:cover;display:block;user-select:none;pointer-events:none}
+#rpgDoorHotspot{
+  position:absolute;left:var(--rpg-door-left);top:var(--rpg-door-top);width:var(--rpg-door-w);height:var(--rpg-door-h);
+  display:block;border-radius:16px;cursor:pointer;
+  box-shadow:0 0 0 rgba(120,255,150,0);
+  transition:box-shadow .25s,background .25s;
+}
+#rpgDoorHotspot:hover{
+  background:rgba(120,255,150,0.10);
+  box-shadow:0 0 26px 8px rgba(120,255,150,0.35),0 0 26px 8px rgba(120,255,150,0.35) inset;
+}
+#rpgMusicBar{position:absolute;left:var(--rpg-music-left);top:var(--rpg-music-top);width:var(--rpg-music-w);height:var(--rpg-music-h);display:flex}
+.rpg-music-hit{flex:1;height:100%;background:transparent;border:none;cursor:pointer;border-radius:8px;transition:background .2s}
+.rpg-music-hit:hover{background:rgba(255,220,140,0.18)}
+#rpgMusicPanel{
+  display:none;position:absolute;left:50%;top:12%;transform:translateX(-50%);
+  background:rgba(20,19,32,0.96);border:1px solid #d8b76a;border-radius:12px;
+  padding:16px 18px;z-index:20;width:min(360px,80%);box-shadow:0 10px 30px rgba(0,0,0,0.55);
+}
+#rpgMusicPanel .rpg-music-title{color:#f0d998;font-size:13px;margin-bottom:9px;font-weight:700}
+#rpgMusicPanel .rpg-music-cur{color:#9aa;font-size:11px;margin-bottom:8px;line-height:1.5;word-break:break-all}
+#rpgMusicUrlInput{width:100%;box-sizing:border-box;padding:9px 10px;border-radius:7px;border:1px solid #4a4a5a;background:#0f0e18;color:#fff;font-size:13px;margin-bottom:10px;font-family:inherit}
+#rpgMusicUrlInput:focus{outline:none;border-color:#d8b76a}
+.rpg-music-btnrow{display:flex;gap:8px;justify-content:flex-end}
+.rpg-music-btn{padding:7px 14px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit;border:none}
+.rpg-music-btn.cancel{background:transparent;border:1px solid #555;color:#ccc}
+.rpg-music-btn.save{background:#d8b76a;color:#191826;font-weight:700}
 </style>
 </head>
 <body>
@@ -910,39 +952,31 @@ body{opacity:0;transition:opacity .25s ease}
       <div id="moneyCalView" class="money-cal-wrap" style="display:none"></div>
       <div id="mealCalView" class="meal-cal-wrap" style="display:none"></div>
       <div id="habitView" class="habit-view" style="display:none;padding:0;flex:1;background:#191826;">
-        <div style="
-          width:100%;
-          height:100%;
-          min-height:500px;
-          background:#191826;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:flex-start;
-          gap:0px;
-          padding:16px 0px 0px;
-          box-sizing:border-box;
-          overflow:hidden;
-        ">
-          <!-- 타이틀 -->
-          <img src="title.png" alt="습관 RPG"
-            style="width:min(400px,70%);object-fit:contain;pointer-events:none;display:block;margin-bottom:-10px;z-index:2;position:relative;">
+        <div id="rpgEntrance">
+          <img src="rpghome1.png" alt="습관 RPG 입구">
 
-          <!-- 문 -->
-          <a href="rpg-map.html" target="_blank" style="text-decoration:none;display:flex;justify-content:center;width:100%;margin-top:50px;">
-            <img src="door.png" alt="RPG 맵 입장"
-              id="doorBtn"
-              style="
-                width:min(700px,100%);
-                object-fit:contain;
-                cursor:pointer;
-                display:block;
-                transition:transform 0.2s, filter 0.2s;
-                filter:drop-shadow(0 0 14px rgba(80,220,120,0.25));
-              "
-              onmouseover="this.style.transform='scale(1.05)';this.style.filter='drop-shadow(0 0 28px rgba(100,240,140,0.9))'"
-              onmouseout="this.style.transform='scale(1)';this.style.filter='drop-shadow(0 0 14px rgba(80,220,120,0.25))'">
-          </a>
+          <!-- 문: 클릭 시 RPG 맵으로 이동 -->
+          <a href="rpg-map.html" target="_blank" id="rpgDoorHotspot" title="RPG 맵 입장"></a>
+
+          <!-- 음악 바: 왼쪽=재생/정지, 오른쪽=곡 설정(유튜브 링크) -->
+          <div id="rpgMusicBar">
+            <button type="button" class="rpg-music-hit" id="rpgMusicToggleBtn" title="배경음악 재생/정지" onclick="toggleRpgMusic()"></button>
+            <button type="button" class="rpg-music-hit" id="rpgMusicSettingsBtn" title="배경음악 설정" onclick="openRpgMusicPanel()"></button>
+          </div>
+
+          <!-- 유튜브 링크 입력 패널 -->
+          <div id="rpgMusicPanel">
+            <div class="rpg-music-title">🎵 배경음악 (유튜브 링크)</div>
+            <div class="rpg-music-cur" id="rpgMusicCurText">등록된 음악이 없습니다.</div>
+            <input id="rpgMusicUrlInput" type="text" placeholder="유튜브 영상 URL을 붙여넣으세요" onkeydown="if(event.key==='Enter')saveRpgMusicUrl();">
+            <div class="rpg-music-btnrow">
+              <button type="button" class="rpg-music-btn cancel" onclick="closeRpgMusicPanel()">취소</button>
+              <button type="button" class="rpg-music-btn save" onclick="saveRpgMusicUrl()">저장 &amp; 재생</button>
+            </div>
+          </div>
+
+          <!-- 유튜브 오디오 재생용(화면에는 보이지 않음) -->
+          <div id="rpgYoutubePlayer" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;"></div>
         </div>
       </div>
       <div id="memoView" class="memo-view" style="display:none"></div>
@@ -1686,6 +1720,145 @@ function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function showSaving(){const el=document.getElementById('savingIndicator');el.style.display='block';setTimeout(()=>el.style.display='none',1200);}
 
+// ══════════════ RPG 입구: 배경음악(유튜브, 1곡만 저장) ══════════════
+let rpgYtPlayer=null;         // YT.Player 인스턴스
+let rpgYtApiReady=false;      // 유튜브 IFrame API 로드 완료 여부
+let rpgMusicPlaying=false;    // 현재 재생중 여부
+let rpgSavedMusic=null;       // {url, videoId} — 저장된(불러온) 곡
+
+function rpgExtractYoutubeId(raw){
+  if(!raw)return null;
+  const url=raw.trim();
+  const patterns=[
+    /youtube\.com\/watch\?[^#]*\bv=([\w-]{11})/,
+    /youtu\.be\/([\w-]{11})/,
+    /youtube\.com\/embed\/([\w-]{11})/,
+    /youtube\.com\/shorts\/([\w-]{11})/
+  ];
+  for(const re of patterns){const m=url.match(re);if(m)return m[1];}
+  if(/^[\w-]{11}$/.test(url))return url; // 아이디만 붙여넣은 경우
+  return null;
+}
+
+function rpgLoadYoutubeApi(cb){
+  if(window.YT&&window.YT.Player){cb();return;}
+  window.__rpgYtCbs=window.__rpgYtCbs||[];
+  window.__rpgYtCbs.push(cb);
+  if(document.getElementById('rpgYtApiTag'))return;
+  const tag=document.createElement('script');
+  tag.id='rpgYtApiTag';
+  tag.src='https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+  const prevReady=window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady=function(){
+    rpgYtApiReady=true;
+    (window.__rpgYtCbs||[]).forEach(f=>{try{f();}catch(e){console.error(e);}});
+    window.__rpgYtCbs=[];
+    if(typeof prevReady==='function')prevReady();
+  };
+}
+
+function rpgUpdateMusicUI(){
+  const t=document.getElementById('rpgMusicCurText');
+  if(t)t.textContent=rpgSavedMusic?('현재 곡: '+rpgSavedMusic.url):'등록된 음악이 없습니다.';
+  const btn=document.getElementById('rpgMusicToggleBtn');
+  if(btn)btn.title=rpgMusicPlaying?'배경음악 정지':'배경음악 재생';
+}
+
+function rpgCreateOrLoadPlayer(videoId,autoplay){
+  rpgLoadYoutubeApi(()=>{
+    if(rpgYtPlayer&&rpgYtPlayer.loadVideoById){
+      autoplay?rpgYtPlayer.loadVideoById(videoId):rpgYtPlayer.cueVideoById(videoId);
+      rpgMusicPlaying=!!autoplay;
+      rpgUpdateMusicUI();
+      return;
+    }
+    rpgYtPlayer=new YT.Player('rpgYoutubePlayer',{
+      height:'1',width:'1',videoId:videoId,
+      playerVars:{autoplay:autoplay?1:0,controls:0,loop:1,playlist:videoId,playsinline:1},
+      events:{
+        onReady:function(e){
+          if(autoplay){e.target.playVideo();rpgMusicPlaying=true;}
+          rpgUpdateMusicUI();
+        },
+        onStateChange:function(e){
+          rpgMusicPlaying=(e.data===1); // YT.PlayerState.PLAYING
+          rpgUpdateMusicUI();
+        }
+      }
+    });
+  });
+}
+
+window.openRpgMusicPanel=function(){
+  const panel=document.getElementById('rpgMusicPanel');
+  const input=document.getElementById('rpgMusicUrlInput');
+  if(!panel)return;
+  if(input)input.value='';
+  rpgUpdateMusicUI();
+  panel.style.display='block';
+  setTimeout(()=>input&&input.focus(),50);
+};
+window.closeRpgMusicPanel=function(){
+  const panel=document.getElementById('rpgMusicPanel');
+  if(panel)panel.style.display='none';
+};
+
+window.saveRpgMusicUrl=async function(){
+  const input=document.getElementById('rpgMusicUrlInput');
+  const raw=input?input.value:'';
+  const videoId=rpgExtractYoutubeId(raw);
+  if(!videoId){alert('유효한 유튜브 링크를 입력해주세요.');return;}
+  rpgSavedMusic={url:raw.trim(),videoId};
+  closeRpgMusicPanel();
+  rpgCreateOrLoadPlayer(videoId,true); // 사용자 클릭(제스처) 직후이므로 자동재생 허용됨
+  if(currentUser){
+    try{
+      await setDoc(doc(db,'users',currentUser.uid,'settings','rpgMusic'),{url:rpgSavedMusic.url,videoId,updatedAt:Date.now()});
+      showSaving();
+    }catch(e){console.error(e);}
+  }
+};
+
+window.toggleRpgMusic=function(){
+  if(rpgYtPlayer&&rpgYtPlayer.playVideo){
+    if(rpgMusicPlaying)rpgYtPlayer.pauseVideo();else rpgYtPlayer.playVideo();
+    return;
+  }
+  if(rpgSavedMusic&&rpgSavedMusic.videoId){
+    rpgCreateOrLoadPlayer(rpgSavedMusic.videoId,true); // 클릭(제스처) 기반 자동재생
+  }else{
+    openRpgMusicPanel();
+  }
+};
+
+async function loadRpgMusicSetting(){
+  if(!currentUser)return;
+  try{
+    const snap=await getDoc(doc(db,'users',currentUser.uid,'settings','rpgMusic'));
+    if(snap.exists()){
+      const data=snap.data();
+      if(data&&data.videoId){
+        rpgSavedMusic={url:data.url||data.videoId,videoId:data.videoId};
+        rpgUpdateMusicUI();
+        // 페이지 로드 직후에는 브라우저 자동재생 정책상 소리와 함께 자동재생이 막힐 수 있어
+        // 곡만 준비해두고, 재생 버튼(제스처) 클릭 시 실제로 재생을 시작합니다.
+      }
+    }
+  }catch(e){console.error(e);}
+}
+
+document.addEventListener('click',(e)=>{
+  const panel=document.getElementById('rpgMusicPanel');
+  if(!panel||panel.style.display!=='block')return;
+  if(panel.contains(e.target))return;
+  if(e.target.closest('#rpgMusicSettingsBtn')||e.target.closest('#rpgMusicToggleBtn'))return;
+  closeRpgMusicPanel();
+});
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='Escape')closeRpgMusicPanel();
+});
+
 // ── Auth — 깜빡임 방지 ──
 // 모든 요소 기본 display:none, onAuthStateChanged에서만 보여줌
 window.loginWithGoogle=async()=>{try{await signInWithPopup(auth,provider);}catch(e){alert('로그인 실패: '+e.message);}};
@@ -1704,7 +1877,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('mainApp').style.display='grid';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
-    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();
+    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadRpgMusicSetting();
     positionNoteButtons();
     initMissionTracker();
     // 모든 준비 완료 후 부드럽게 표시
