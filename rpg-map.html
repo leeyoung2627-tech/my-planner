@@ -11,7 +11,10 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: #1a1a2e;
+  background:
+    linear-gradient(rgba(12,14,26,0.58), rgba(12,14,26,0.58)),
+    url('forest.png') center top / cover no-repeat fixed;
+  background-color: #1a1a2e; /* 이미지 로드 전/실패 시 대비 배경색 */
   font-family: 'Noto Sans KR', sans-serif;
   min-height: 100vh;
   display: flex;
@@ -48,11 +51,16 @@ body {
   width: 200px;
   pointer-events: none;
   z-index: 10;
+  animation: rpgWitchBob 3.2s ease-in-out infinite;
 }
 .ornament-left img {
   width: 100%;
   image-rendering: pixelated;
   filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.5));
+}
+@keyframes rpgWitchBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 /* ── 맵 + 상태창 ── */
