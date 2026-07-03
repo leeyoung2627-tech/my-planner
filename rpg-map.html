@@ -418,7 +418,8 @@ body {
 
 /* ══════════════ 입장 화면 (배경 + 문 + 배경음악) ══════════════ */
 :root{
-  /* 문(door) 위치·크기 — 이미지 대비 % 좌표. 실제로 열어보고 안 맞으면 이 값만 조절하세요 */
+  /* 문(door) 기본 위치·크기 — 실제 위치는 "🛠 문 위치 조정" 버튼으로 직접 맞추면
+     브라우저에 저장되어 이 기본값을 덮어씁니다 */
   --rpg-door-left:40%;
   --rpg-door-top:62%;
   --rpg-door-w:9%;
@@ -434,18 +435,26 @@ body {
   opacity:1;transition:opacity .6s ease;
 }
 #rpgEntranceOverlay.rpg-fade-out{opacity:0;pointer-events:none;}
-.rpg-inner{position:relative;width:100%;height:100%;overflow:hidden}
-.rpg-inner>img.rpg-bg{width:100%;height:100%;object-fit:cover;display:block;user-select:none;pointer-events:none}
+.rpg-inner{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+/* 이미지 박스: 화면 크기에 맞춰 비율을 유지한 채 정확히 배치되므로(JS로 크기 계산) 이미지가 잘리지 않음 */
+#rpgImageBox{position:relative}
+#rpgImageBox>img.rpg-bg{width:100%;height:100%;display:block;user-select:none;pointer-events:none}
 #rpgDoorHotspot{
   position:absolute;left:var(--rpg-door-left);top:var(--rpg-door-top);width:var(--rpg-door-w);height:var(--rpg-door-h);
   cursor:pointer;border-radius:16px;outline:none;
-  box-shadow:0 0 0 rgba(120,255,150,0);
-  transition:box-shadow .25s,background .25s;
+  background:transparent;box-shadow:none; /* 평소엔 빛나지 않음 */
 }
-#rpgDoorHotspot:hover,#rpgDoorHotspot:focus-visible{
-  background:rgba(120,255,150,0.10);
-  box-shadow:0 0 26px 8px rgba(120,255,150,0.35),0 0 26px 8px rgba(120,255,150,0.35) inset;
+#rpgDoorHotspot.rpg-calib-active{
+  background:rgba(70,140,255,0.22);
+  border:2px dashed #6bb3ff;
+  box-shadow:0 0 0 2px rgba(107,179,255,0.35);
+  cursor:move;
 }
+#rpgDoorResizeHandle{
+  display:none;position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;
+  background:#6bb3ff;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;
+}
+#rpgDoorHotspot.rpg-calib-active #rpgDoorResizeHandle{display:block}
 #rpgMusicBar{position:absolute;left:var(--rpg-music-left);top:var(--rpg-music-top);width:var(--rpg-music-w);height:var(--rpg-music-h);display:flex}
 .rpg-music-hit{flex:1;height:100%;background:transparent;border:none;cursor:pointer;border-radius:8px;transition:background .2s}
 .rpg-music-hit:hover{background:rgba(255,220,140,0.18)}
@@ -470,6 +479,28 @@ body {
 }
 @keyframes rpgHintPulse{0%,100%{opacity:.55}50%{opacity:1}}
 
+/* 문 위치 조정 모드 UI */
+#rpgCalibToggleBtn{
+  position:absolute;left:14px;bottom:14px;z-index:30;
+  padding:7px 12px;border-radius:8px;
+  background:rgba(20,19,32,0.55);color:#cfd6e6;
+  border:1px solid rgba(255,255,255,0.28);
+  font-size:11px;cursor:pointer;font-family:inherit;
+  opacity:.6;transition:opacity .2s;
+}
+#rpgCalibToggleBtn:hover{opacity:1}
+#rpgCalibBar{
+  display:none;position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:31;
+  background:rgba(20,19,32,0.96);border:1px solid #6bb3ff;border-radius:10px;
+  padding:10px 14px;align-items:center;gap:10px;
+  color:#dbe6ff;font-size:12px;max-width:min(560px,90%);
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+#rpgCalibBar.show{display:flex}
+.rpg-calib-btn{padding:6px 12px;border-radius:7px;font-size:12px;cursor:pointer;border:none;font-family:inherit;white-space:nowrap}
+.rpg-calib-btn.done{background:#6bb3ff;color:#101018;font-weight:700}
+.rpg-calib-btn.reset{background:transparent;border:1px solid #666;color:#ccc}
+
 /* 맵 본체: 입장 화면이 사라지며 자연스럽게 페이드인 */
 #rpgMapContent{opacity:0;transition:opacity .7s ease;}
 #rpgMapContent.rpg-content-show{opacity:1;}
@@ -480,33 +511,45 @@ body {
 <!-- ══════════════ 입장 화면 ══════════════ -->
 <div id="rpgEntranceOverlay">
   <div class="rpg-inner">
-    <img class="rpg-bg" src="rpghome1.png" alt="습관 RPG 입구">
+    <div id="rpgImageBox">
+      <img class="rpg-bg" src="rpghome1.png" alt="습관 RPG 입구">
 
-    <!-- 문: 클릭하면 맵 화면으로 페이드 전환 -->
-    <div id="rpgDoorHotspot" role="button" tabindex="0" title="RPG 맵 입장"
-      onclick="enterRpgMap()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();enterRpgMap();}"></div>
-
-    <!-- 음악 바: 왼쪽=재생/정지, 오른쪽=곡 설정(유튜브 링크) -->
-    <div id="rpgMusicBar">
-      <button type="button" class="rpg-music-hit" id="rpgMusicToggleBtn" title="배경음악 재생/정지" onclick="toggleRpgMusic()"></button>
-      <button type="button" class="rpg-music-hit" id="rpgMusicSettingsBtn" title="배경음악 설정" onclick="openRpgMusicPanel()"></button>
-    </div>
-
-    <!-- 유튜브 링크 입력 패널 -->
-    <div id="rpgMusicPanel">
-      <div class="rpg-music-title">🎵 배경음악 (유튜브 링크)</div>
-      <div class="rpg-music-cur" id="rpgMusicCurText">등록된 음악이 없습니다.</div>
-      <input id="rpgMusicUrlInput" type="text" placeholder="유튜브 영상 URL을 붙여넣으세요" onkeydown="if(event.key==='Enter')saveRpgMusicUrl();">
-      <div class="rpg-music-btnrow">
-        <button type="button" class="rpg-music-btn cancel" onclick="closeRpgMusicPanel()">취소</button>
-        <button type="button" class="rpg-music-btn save" onclick="saveRpgMusicUrl()">저장 &amp; 재생</button>
+      <!-- 문: 클릭하면 맵 화면으로 페이드 전환 (위치조정 모드에서는 드래그로 이동/크기조절) -->
+      <div id="rpgDoorHotspot" role="button" tabindex="0" title="RPG 맵 입장"
+        onclick="handleDoorClick()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleDoorClick();}">
+        <div id="rpgDoorResizeHandle" title="크기 조절"></div>
       </div>
+
+      <!-- 음악 바: 왼쪽=재생/정지, 오른쪽=곡 설정(유튜브 링크) -->
+      <div id="rpgMusicBar">
+        <button type="button" class="rpg-music-hit" id="rpgMusicToggleBtn" title="배경음악 재생/정지" onclick="toggleRpgMusic()"></button>
+        <button type="button" class="rpg-music-hit" id="rpgMusicSettingsBtn" title="배경음악 설정" onclick="openRpgMusicPanel()"></button>
+      </div>
+
+      <!-- 유튜브 링크 입력 패널 -->
+      <div id="rpgMusicPanel">
+        <div class="rpg-music-title">🎵 배경음악 (유튜브 링크)</div>
+        <div class="rpg-music-cur" id="rpgMusicCurText">등록된 음악이 없습니다.</div>
+        <input id="rpgMusicUrlInput" type="text" placeholder="유튜브 영상 URL을 붙여넣으세요" onkeydown="if(event.key==='Enter')saveRpgMusicUrl();">
+        <div class="rpg-music-btnrow">
+          <button type="button" class="rpg-music-btn cancel" onclick="closeRpgMusicPanel()">취소</button>
+          <button type="button" class="rpg-music-btn save" onclick="saveRpgMusicUrl()">저장 &amp; 재생</button>
+        </div>
+      </div>
+
+      <div class="rpg-enter-hint">문을 클릭해서 입장하기</div>
+
+      <!-- 유튜브 오디오 재생용(화면에는 보이지 않음) -->
+      <div id="rpgYoutubePlayer" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;"></div>
     </div>
 
-    <div class="rpg-enter-hint">문을 클릭해서 입장하기</div>
-
-    <!-- 유튜브 오디오 재생용(화면에는 보이지 않음) -->
-    <div id="rpgYoutubePlayer" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;"></div>
+    <!-- 문 위치 조정 모드 -->
+    <button type="button" id="rpgCalibToggleBtn" onclick="toggleDoorCalibration()">🛠 문 위치 조정</button>
+    <div id="rpgCalibBar">
+      <span>파란 점선 박스를 드래그해서 문 위로 옮기고, 오른쪽 아래 동그란 점을 드래그해서 크기를 맞추세요.</span>
+      <button type="button" class="rpg-calib-btn reset" onclick="resetDoorCalibration()">초기화</button>
+      <button type="button" class="rpg-calib-btn done" onclick="toggleDoorCalibration()">완료</button>
+    </div>
   </div>
 </div>
 
@@ -701,9 +744,16 @@ body {
 
 <script>
 (function(){
-  // ══════════════ 입장 화면: 문 전환 + 배경음악(유튜브, 1곡만 저장) ══════════════
+  // ══════════════ 입장 화면: 문 전환 + 배경음악(유튜브, 1곡만 저장) + 문 위치 조정 ══════════════
   var STORAGE_KEY='rpgEntranceMusic';
+  var DOOR_KEY='rpgDoorRect_v1';
+  var IMG_W=2752, IMG_H=1536; // rpghome1.png 실제 픽셀 크기 (비율 계산용)
+  var DEFAULT_DOOR={left:40,top:62,w:9,h:25};
+
   var ytPlayer=null, musicPlaying=false, savedMusic=null, fadeTimer=null;
+  var calibrating=false;
+  var imageBox=null, doorEl=null, resizeHandleEl=null;
+  var dragState=null; // {mode:'move'|'resize', startX, startY, boxW, boxH, startRect}
 
   function extractYoutubeId(raw){
     if(!raw)return null;
@@ -807,6 +857,116 @@ body {
     }catch(e){}
   }
 
+  // ── 이미지 박스: 화면 크기에 맞춰 원본 비율 그대로 배치 (잘리지 않음, 남는 여백은 배경색) ──
+  function sizeImageBox(){
+    imageBox=imageBox||document.getElementById('rpgImageBox');
+    if(!imageBox)return;
+    var vw=window.innerWidth, vh=window.innerHeight;
+    var ratio=IMG_W/IMG_H;
+    var w,h;
+    if(vw/vh>ratio){ h=vh; w=h*ratio; }
+    else{ w=vw; h=w/ratio; }
+    imageBox.style.width=w+'px';
+    imageBox.style.height=h+'px';
+  }
+
+  // ── 문 위치·크기: localStorage에 저장/복원 ──
+  function clamp(v,min,max){return Math.min(max,Math.max(min,v));}
+  function applyDoorRect(r){
+    doorEl=doorEl||document.getElementById('rpgDoorHotspot');
+    if(!doorEl)return;
+    doorEl.style.left=r.left+'%';
+    doorEl.style.top=r.top+'%';
+    doorEl.style.width=r.w+'%';
+    doorEl.style.height=r.h+'%';
+  }
+  function saveDoorRect(r){
+    try{localStorage.setItem(DOOR_KEY,JSON.stringify(r));}catch(e){}
+  }
+  function loadDoorRect(){
+    try{
+      var raw=localStorage.getItem(DOOR_KEY);
+      if(raw){ applyDoorRect(JSON.parse(raw)); return; }
+    }catch(e){}
+    applyDoorRect(DEFAULT_DOOR);
+  }
+  function currentDoorRectPercent(){
+    var boxRect=imageBox.getBoundingClientRect();
+    var dRect=doorEl.getBoundingClientRect();
+    return {
+      left:(dRect.left-boxRect.left)/boxRect.width*100,
+      top:(dRect.top-boxRect.top)/boxRect.height*100,
+      w:dRect.width/boxRect.width*100,
+      h:dRect.height/boxRect.height*100
+    };
+  }
+  window.resetDoorCalibration=function(){
+    applyDoorRect(DEFAULT_DOOR);
+    saveDoorRect(DEFAULT_DOOR);
+  };
+
+  // ── 문 위치 조정 모드 on/off ──
+  window.toggleDoorCalibration=function(){
+    calibrating=!calibrating;
+    doorEl=doorEl||document.getElementById('rpgDoorHotspot');
+    var bar=document.getElementById('rpgCalibBar');
+    if(doorEl)doorEl.classList.toggle('rpg-calib-active',calibrating);
+    if(bar)bar.classList.toggle('show',calibrating);
+  };
+
+  // 문 클릭: 조정 모드일 때는 입장하지 않고, 평소엔 맵으로 전환
+  window.handleDoorClick=function(){
+    if(calibrating)return;
+    enterRpgMap();
+  };
+
+  // ── 문 드래그(이동) / 리사이즈(모서리 핸들) ──
+  function onDoorPointerDown(e){
+    if(!calibrating)return;
+    e.preventDefault();e.stopPropagation();
+    var boxRect=imageBox.getBoundingClientRect();
+    dragState={
+      mode:(e.target===resizeHandleEl)?'resize':'move',
+      startX:e.clientX, startY:e.clientY,
+      boxW:boxRect.width, boxH:boxRect.height,
+      startRect:currentDoorRectPercent()
+    };
+    if(doorEl.setPointerCapture){try{doorEl.setPointerCapture(e.pointerId);}catch(err){}}
+  }
+  function onDoorPointerMove(e){
+    if(!dragState)return;
+    var dxPct=(e.clientX-dragState.startX)/dragState.boxW*100;
+    var dyPct=(e.clientY-dragState.startY)/dragState.boxH*100;
+    var r=dragState.startRect;
+    if(dragState.mode==='move'){
+      applyDoorRect({
+        left:clamp(r.left+dxPct,0,100-r.w),
+        top:clamp(r.top+dyPct,0,100-r.h),
+        w:r.w,h:r.h
+      });
+    }else{
+      applyDoorRect({
+        left:r.left,top:r.top,
+        w:clamp(r.w+dxPct,3,100-r.left),
+        h:clamp(r.h+dyPct,3,100-r.top)
+      });
+    }
+  }
+  function onDoorPointerUp(){
+    if(!dragState)return;
+    dragState=null;
+    saveDoorRect(currentDoorRectPercent());
+  }
+  function initDoorDrag(){
+    doorEl=document.getElementById('rpgDoorHotspot');
+    resizeHandleEl=document.getElementById('rpgDoorResizeHandle');
+    if(!doorEl)return;
+    doorEl.addEventListener('pointerdown',onDoorPointerDown);
+    document.addEventListener('pointermove',onDoorPointerMove);
+    document.addEventListener('pointerup',onDoorPointerUp);
+    document.addEventListener('pointercancel',onDoorPointerUp);
+  }
+
   // 문 클릭 → 입장 화면 페이드아웃 + 맵 화면 페이드인
   window.enterRpgMap=function(){
     var overlay=document.getElementById('rpgEntranceOverlay');
@@ -831,7 +991,12 @@ body {
     if(e.key==='Escape')closeRpgMusicPanel();
   });
 
+  window.addEventListener('resize',sizeImageBox);
+
   document.body.style.overflow='hidden'; // 입장 화면 보이는 동안 스크롤 잠금
+  sizeImageBox();
+  loadDoorRect();
+  initDoorDrag();
   loadSavedMusic();
 })();
 </script>

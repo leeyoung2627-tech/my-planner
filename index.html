@@ -857,22 +857,29 @@ body{opacity:0;transition:opacity .25s ease}
 .dp-emoji-item{display:flex;align-items:center;justify-content:center;cursor:pointer;padding:4px;border-radius:8px;transition:background .12s}
 .dp-emoji-item:hover{background:#EDF4FF}
 
-/* ── 습관 RPG 이동 버튼(슬라임) ── */
+/* ── 습관 RPG 이동 버튼(슬라임) — 크기 확대 + 흰색 글로우 + 자유롭게 드래그 이동 ── */
 .rpg-slime-btn{
-  position:fixed;right:24px;bottom:24px;z-index:60;
-  width:64px;height:64px;
+  position:fixed;right:28px;bottom:28px;z-index:60;
+  width:112px;height:112px;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;
   background:transparent;
-  cursor:pointer;text-decoration:none;
+  cursor:grab;text-decoration:none;
+  user-select:none;-webkit-user-drag:none;touch-action:none;
   animation:rpgSlimeBob 2.6s ease-in-out infinite;
   transition:transform .15s;
 }
-.rpg-slime-btn img{width:100%;height:100%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.35))}
-.rpg-slime-btn:hover{transform:scale(1.1)}
-.rpg-slime-btn:active{transform:scale(.95)}
+.rpg-slime-btn.rpg-dragging{cursor:grabbing;animation-play-state:paused;transition:none}
+.rpg-slime-btn img{
+  width:100%;height:100%;object-fit:contain;pointer-events:none;
+  filter:drop-shadow(0 0 12px rgba(255,255,255,0.65)) drop-shadow(0 0 26px rgba(255,255,255,0.4));
+  transition:filter .2s;
+}
+.rpg-slime-btn:hover img{filter:drop-shadow(0 0 18px rgba(255,255,255,0.9)) drop-shadow(0 0 34px rgba(255,255,255,0.6))}
+.rpg-slime-btn:hover{transform:scale(1.08)}
+.rpg-slime-btn:active{transform:scale(.96)}
 @keyframes rpgSlimeBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-.rpg-slime-btn:hover{animation-play-state:paused}
+.rpg-slime-btn:hover,.rpg-slime-btn.rpg-dragging{animation-play-state:paused}
 </style>
 </head>
 <body>
@@ -1661,6 +1668,79 @@ let diarySaveTimer=null;
 function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function showSaving(){const el=document.getElementById('savingIndicator');el.style.display='block';setTimeout(()=>el.style.display='none',1200);}
+
+// ── 습관 RPG 이동 버튼(슬라임): 직접 드래그해서 원하는 위치에 두기 ──
+(function(){
+  const POS_KEY='rpgSlimeBtnPos';
+  const btn=document.getElementById('rpgSlimeBtn');
+  if(!btn)return;
+  let dragging=false, moved=false, startX=0, startY=0, startLeft=0, startTop=0;
+
+  function clampNum(v,min,max){return Math.min(max,Math.max(min,v));}
+  function applyPos(leftPct,topPct){
+    btn.style.right='auto';
+    btn.style.bottom='auto';
+    btn.style.left=leftPct+'%';
+    btn.style.top=topPct+'%';
+  }
+  function savePos(leftPct,topPct){
+    try{localStorage.setItem(POS_KEY,JSON.stringify({left:leftPct,top:topPct}));}catch(e){}
+  }
+  function loadPos(){
+    try{
+      const raw=localStorage.getItem(POS_KEY);
+      if(raw){
+        const p=JSON.parse(raw);
+        if(typeof p.left==='number'&&typeof p.top==='number')applyPos(p.left,p.top);
+      }
+    }catch(e){}
+  }
+
+  btn.addEventListener('pointerdown',(e)=>{
+    dragging=true;moved=false;
+    const rect=btn.getBoundingClientRect();
+    startX=e.clientX;startY=e.clientY;
+    startLeft=rect.left;startTop=rect.top;
+    btn.classList.add('rpg-dragging');
+    if(btn.setPointerCapture){try{btn.setPointerCapture(e.pointerId);}catch(err){}}
+  });
+  btn.addEventListener('pointermove',(e)=>{
+    if(!dragging)return;
+    const dx=e.clientX-startX, dy=e.clientY-startY;
+    if(Math.abs(dx)>4||Math.abs(dy)>4)moved=true;
+    if(!moved)return;
+    const w=btn.offsetWidth,h=btn.offsetHeight;
+    const newLeft=clampNum(startLeft+dx,0,window.innerWidth-w);
+    const newTop=clampNum(startTop+dy,0,window.innerHeight-h);
+    applyPos(newLeft/window.innerWidth*100, newTop/window.innerHeight*100);
+  });
+  function endDrag(){
+    if(!dragging)return;
+    dragging=false;
+    btn.classList.remove('rpg-dragging');
+    if(moved){
+      const rect=btn.getBoundingClientRect();
+      savePos(rect.left/window.innerWidth*100, rect.top/window.innerHeight*100);
+    }
+  }
+  btn.addEventListener('pointerup',endDrag);
+  btn.addEventListener('pointercancel',endDrag);
+  btn.addEventListener('click',(e)=>{
+    if(moved){e.preventDefault();moved=false;} // 드래그였으면 링크 이동 막기
+  });
+  window.addEventListener('resize',()=>{
+    // 화면 크기 바뀌어도 버튼이 화면 밖으로 나가지 않도록 보정
+    const rect=btn.getBoundingClientRect();
+    const w=btn.offsetWidth,h=btn.offsetHeight;
+    const newLeft=clampNum(rect.left,0,window.innerWidth-w);
+    const newTop=clampNum(rect.top,0,window.innerHeight-h);
+    if(newLeft!==rect.left||newTop!==rect.top){
+      applyPos(newLeft/window.innerWidth*100, newTop/window.innerHeight*100);
+    }
+  });
+
+  loadPos();
+})();
 
 // ── Auth — 깜빡임 방지 ──
 // 모든 요소 기본 display:none, onAuthStateChanged에서만 보여줌
