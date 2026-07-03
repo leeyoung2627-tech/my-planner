@@ -620,6 +620,16 @@ body{opacity:0;transition:opacity .25s ease}
 .ns-badge{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:999px;background:#E1F5EE;color:#0F6E56;display:none}
 .ns-badge.show{display:block}
 
+/* 공복 16시간 */
+.fast-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:0.5px solid #eee;border-radius:8px;cursor:pointer;flex-shrink:0;margin-bottom:8px}
+.fast-bar:hover{background:#fff5f7}
+.fs-check{width:18px;height:18px;border-radius:4px;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.fs-check.done{background:#E0507A;border-color:#E0507A;color:#fff}
+.fs-label{font-size:13px;color:#222}
+.fs-badge{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:999px;background:#FCE4EC;color:#C2185B;display:none}
+.fs-badge.show{display:block}
+.meal-day-fast{font-size:11px;margin-left:4px}
+
 /* 예산 바 */
 .budget-box{background:#fff;border:0.5px solid #eee;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
 .budget-top{display:flex;align-items:center;justify-content:space-between}
@@ -1024,6 +1034,11 @@ body{opacity:0;transition:opacity .25s ease}
     </div>
 
     <div id="tab-meal" class="tab-content">
+      <div class="fast-bar" onclick="toggleFasting()">
+        <div class="fs-check" id="fsCheck"></div>
+        <span class="fs-label">공복 16시간 이상 달성 🤍</span>
+        <span class="fs-badge" id="fsBadge">♥ 달성!</span>
+      </div>
       <div style="background:#fff;border:0.5px solid #eee;border-radius:8px;padding:10px 12px;flex-shrink:0">
         <div style="font-size:11px;color:#aaa;margin-bottom:5px">🗒️ 식단 계획 메모</div>
         <div contenteditable="true" id="mealPlanNote" spellcheck="false"
@@ -1650,6 +1665,7 @@ let savingBaseline={};
 let savingOrder=[];
 let memos=[],editingMemoId=null,currentMemoFilter='전체',viewingMemoId=null;
 let noSpendData={};
+let fastingData={};
 let moneyMemoData={};
 let ddayList=[];
 let budgetData={};
@@ -1688,7 +1704,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('mainApp').style.display='grid';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
-    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();
+    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();
     positionNoteButtons();
     initMissionTracker();
     // 모든 준비 완료 후 부드럽게 표시
@@ -1724,7 +1740,7 @@ async function saveData(type,key,value){
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -1746,6 +1762,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','dailyPlanner')),
     getDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline')),
     getDocs(collection(db,'users',currentUser.uid,'moneyMemo')),
+    getDocs(collection(db,'users',currentUser.uid,'fasting')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -1758,6 +1775,7 @@ async function loadAllData(){
     return (b.createdAt||0)-(a.createdAt||0);
   });
   noSpendData={};nsS.forEach(d=>{noSpendData[d.id]=d.data().done||false;});
+  fastingData={};fsS.forEach(d=>{fastingData[d.id]=d.data().done||false;});
   moneyMemoData={};mmS.forEach(d=>{moneyMemoData[d.id]={text:d.data().text||'',pending:d.data().pending||false};});
   ddayList=[];ddS.forEach(d=>{ddayList.push({id:d.id,...d.data()});});
   ddayList.sort((a,b)=>(a.order??new Date(a.date).getTime())-(b.order??new Date(b.date).getTime()));
@@ -2107,7 +2125,8 @@ function renderMealCal(){
     const slots=['breakfast','lunch','dinner','snack'];
     const filled=slots.filter(s=>data[s]&&data[s].trim());
     const itemsHtml=filled.length>0?`<div class="meal-day-items">${filled.map(s=>`<div class="meal-day-item"><span class="mlabel">${MEAL_LABELS[s]}</span>${data[s]}</div>`).join('')}</div>`:'';
-    html+=`<div class="meal-day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><span class="mln">${d}</span>${itemsHtml}</div>`;
+    const fastHtml=fastingData[key]?`<span class="meal-day-fast" title="공복 16시간 달성">♥</span>`:'';
+    html+=`<div class="meal-day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><span class="mln">${d}</span>${fastHtml}${itemsHtml}</div>`;
   }
   const rem=(7-(start+total)%7)%7;
   for(let i=1;i<=rem&&rem<7;i++)html+=`<div class="meal-day-cell other"><span class="mln">${i}</span></div>`;
@@ -2182,14 +2201,14 @@ window.selectDay=function(d){
   if(leftMode==='money-cal')renderMoneyCal();
   else if(leftMode==='meal-cal')renderMealCal();
   else renderMonth();
-  updateRightDate();renderSchedule();renderMoney();renderMeal();renderNoSpend();
+  updateRightDate();renderSchedule();renderMoney();renderMeal();renderNoSpend();renderFasting();
   // 가계부 달력에서 날짜 클릭 시 내역 탭으로 자동 전환
   if(leftMode==='money-cal'){
     const ledgerTab=document.querySelector('.money-subtab');
     if(ledgerTab)switchMoneyTab('ledger',ledgerTab);
   }
 };
-window.selectDayFromWeek=function(y,m,d){selDate=new Date(y,m,d);renderWeek();updateRightDate();renderSchedule();renderMoney();renderMeal();renderNoSpend();};
+window.selectDayFromWeek=function(y,m,d){selDate=new Date(y,m,d);renderWeek();updateRightDate();renderSchedule();renderMoney();renderMeal();renderNoSpend();renderFasting();};
 function updateRightDate(){document.getElementById('rightDate').textContent=selDate.getFullYear()+'년 '+(selDate.getMonth()+1)+'월 '+selDate.getDate()+'일 '+DAYS[selDate.getDay()]+'요일';}
 window.addWeekEvent=async function(key){
   const name=prompt('일정 입력:');if(!name||!name.trim())return;
@@ -2328,6 +2347,20 @@ window.toggleNoSpend=async function(){
   const key=fmt(selDate);noSpendData[key]=!noSpendData[key];
   await saveData('nospend',key,{done:noSpendData[key]});
   renderNoSpend();if(leftMode==='money-cal')renderMoneyCal();
+};
+
+// ── 공복 16시간 ──
+function renderFasting(){
+  const key=fmt(selDate);const done=fastingData[key]||false;
+  const check=document.getElementById('fsCheck'),badge=document.getElementById('fsBadge');
+  if(!check||!badge)return;
+  check.className='fs-check'+(done?' done':'');check.textContent=done?'✓':'';
+  badge.className='fs-badge'+(done?' show':'');
+}
+window.toggleFasting=async function(){
+  const key=fmt(selDate);fastingData[key]=!fastingData[key];
+  await saveData('fasting',key,{done:fastingData[key]});
+  renderFasting();if(leftMode==='meal-cal')renderMealCal();
 };
 
 // ── 가계부 날짜 메모(대신 결제/환급 대기 등) ──
