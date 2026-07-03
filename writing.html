@@ -39,7 +39,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 .folder-group{display:flex;align-items:flex-end;background:rgba(83,74,183,.05);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;padding:4px 6px 0;gap:3px;margin-right:4px}
 .folder-label{font-size:11px;font-weight:700;color:var(--base);padding:2px 6px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:4px}
 .folder-label:hover{background:var(--base-light)}
-.folder-title-input{border:none;background:transparent;font-weight:700;font-size:11px;color:var(--base);width:60px;outline:none;font-family:inherit}
+.folder-title-input{border:none;background:transparent;font-weight:700;font-size:11px;color:var(--base);width:60px;min-width:20px;max-width:200px;outline:none;font-family:inherit}
 .episodes-wrap{display:flex;gap:2px;align-items:flex-end}
 .ep-tab{padding:5px 10px;background:rgba(255,255,255,.7);border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;transition:.15s;white-space:nowrap}
 .ep-tab:hover{background:#fff;color:var(--base)}
@@ -389,9 +389,10 @@ function renderTabBar(){
     const fl=document.createElement('div');fl.className='folder-label';
     fl.innerHTML=`<span onclick="toggleFolder(${fi})" style="user-select:none">${fd.collapsed?'▶':'▼'}</span>`;
     const ft=document.createElement('input');ft.className='folder-title-input';ft.value=fd.title;ft.spellcheck=false;
-    ft.oninput=()=>{state.folders[fi].title=ft.value;scheduleSave();};
+    ft.oninput=()=>{state.folders[fi].title=ft.value;autoSizeInput(ft);scheduleSave();};
     ft.ondblclick=e=>e.stopPropagation();
     fl.appendChild(ft);
+    autoSizeInput(ft);
     const fo=document.createElement('span');fo.className='ep-opt';fo.textContent='⋮';
     fo.onclick=e=>openCtxMenu(e,[
       {label:'폴더 삭제',cls:'danger',action:()=>deleteFolder(fi)}
@@ -511,8 +512,8 @@ function renderMemos(){
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function autoResize(ta){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';}
 window.onTitleChange=()=>{state.title=document.getElementById('workTitle').value;resizeTitleInput();scheduleSave();};
-function resizeTitleInput(){
-  const input=document.getElementById('workTitle');
+function resizeTitleInput(){autoSizeInput(document.getElementById('workTitle'));}
+function autoSizeInput(input){
   if(!input)return;
   let measurer=document.getElementById('titleMeasurer');
   if(!measurer){
@@ -529,7 +530,8 @@ function resizeTitleInput(){
   measurer.style.fontFamily=cs.fontFamily;
   measurer.textContent=input.value||input.placeholder||'';
   const width=measurer.offsetWidth+12;
-  input.style.width=Math.max(60,width)+'px';
+  const min=parseFloat(cs.minWidth)||0;
+  input.style.width=Math.max(min,width)+'px';
 }
 window.onSummaryChange=(ta)=>{curEp().summary=ta.value;autoResize(ta);scheduleSave();};
 window.onSceneChange=(ci,ta)=>{curEp().cuts[ci].scene=ta.value;autoResize(ta);scheduleSave();};
