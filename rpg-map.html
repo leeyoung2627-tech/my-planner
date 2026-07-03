@@ -170,7 +170,7 @@ body {
 /* ── 캐릭터 ── */
 .character {
   position: absolute; width: 90px; height: 110px;
-  transform: translate(-50%, -100%);
+  transform: translate(-50%, -100%) translateY(18px); /* 캐릭터를 타일 기준보다 조금 더 아래로 */
   pointer-events: none; z-index: 20;
   transition: left 0.6s cubic-bezier(0.4,0,0.2,1), top 0.6s cubic-bezier(0.4,0,0.2,1);
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.7));
