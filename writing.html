@@ -21,7 +21,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 
 /* 상단 네비 */
 .top-nav{background:var(--base);color:var(--base-text);padding:0 16px;height:46px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(83,74,183,.3);flex-shrink:0;gap:10px}
-.work-title-input{background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,.5);color:#fff;font-size:15px;font-weight:700;outline:none;width:220px;font-family:inherit}
+.work-title-input{background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,.5);color:#fff;font-size:15px;font-weight:700;outline:none;width:220px;min-width:60px;max-width:60vw;font-family:inherit}
 .work-title-input:focus{border-bottom-color:#fff}
 .nav-btns{display:flex;gap:6px;align-items:center}
 .nav-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:.15s}
@@ -377,6 +377,7 @@ function setSaveIndicator(saved){
 // ── 렌더 ──
 function renderAll(){
   document.getElementById('workTitle').value=state.title||'새 작품';
+  resizeTitleInput();
   renderTabBar();
   renderEditor();
 }
@@ -509,7 +510,27 @@ function renderMemos(){
 // ── 이벤트 핸들러 ──
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function autoResize(ta){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';}
-window.onTitleChange=()=>{state.title=document.getElementById('workTitle').value;scheduleSave();};
+window.onTitleChange=()=>{state.title=document.getElementById('workTitle').value;resizeTitleInput();scheduleSave();};
+function resizeTitleInput(){
+  const input=document.getElementById('workTitle');
+  if(!input)return;
+  let measurer=document.getElementById('titleMeasurer');
+  if(!measurer){
+    measurer=document.createElement('span');
+    measurer.id='titleMeasurer';
+    measurer.style.position='absolute';
+    measurer.style.visibility='hidden';
+    measurer.style.whiteSpace='pre';
+    document.body.appendChild(measurer);
+  }
+  const cs=getComputedStyle(input);
+  measurer.style.fontSize=cs.fontSize;
+  measurer.style.fontWeight=cs.fontWeight;
+  measurer.style.fontFamily=cs.fontFamily;
+  measurer.textContent=input.value||input.placeholder||'';
+  const width=measurer.offsetWidth+12;
+  input.style.width=Math.max(60,width)+'px';
+}
 window.onSummaryChange=(ta)=>{curEp().summary=ta.value;autoResize(ta);scheduleSave();};
 window.onSceneChange=(ci,ta)=>{curEp().cuts[ci].scene=ta.value;autoResize(ta);scheduleSave();};
 window.onDialogChange=(ci,di,ta)=>{curEp().cuts[ci].dialogs[di]=ta.value;autoResize(ta);scheduleSave();};
