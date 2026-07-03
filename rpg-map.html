@@ -416,7 +416,7 @@ body {
   100% { transform: scale(0.8); opacity: 0; }
 }
 
-/* ══════════════ 입장 화면 (배경 + 문 + 배경음악) ══════════════ */
+/* ══════════════ 입장 화면 (배경 + 문) ══════════════ */
 :root{
   /* 문(door) 기본 위치·크기 — 실제 위치는 "🛠 문 위치 조정" 버튼으로 직접 맞추면
      브라우저에 저장되어 이 기본값을 덮어씁니다 */
@@ -424,11 +424,6 @@ body {
   --rpg-door-top:62%;
   --rpg-door-w:9%;
   --rpg-door-h:25%;
-  /* 음악바 위치·크기 — 이미지 우측 상단 골드 바 */
-  --rpg-music-left:71%;
-  --rpg-music-top:2%;
-  --rpg-music-w:19%;
-  --rpg-music-h:6.5%;
 }
 #rpgEntranceOverlay{
   position:fixed;inset:0;z-index:99999;background:#191826;
@@ -455,22 +450,6 @@ body {
   background:#6bb3ff;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;
 }
 #rpgDoorHotspot.rpg-calib-active #rpgDoorResizeHandle{display:block}
-#rpgMusicBar{position:absolute;left:var(--rpg-music-left);top:var(--rpg-music-top);width:var(--rpg-music-w);height:var(--rpg-music-h);display:flex}
-.rpg-music-hit{flex:1;height:100%;background:transparent;border:none;cursor:pointer;border-radius:8px;transition:background .2s}
-.rpg-music-hit:hover{background:rgba(255,220,140,0.18)}
-#rpgMusicPanel{
-  display:none;position:absolute;left:50%;top:12%;transform:translateX(-50%);
-  background:rgba(20,19,32,0.96);border:1px solid #d8b76a;border-radius:12px;
-  padding:16px 18px;z-index:20;width:min(360px,80%);box-shadow:0 10px 30px rgba(0,0,0,.55);
-}
-#rpgMusicPanel .rpg-music-title{color:#f0d998;font-size:13px;margin-bottom:9px;font-weight:700}
-#rpgMusicPanel .rpg-music-cur{color:#9aa;font-size:11px;margin-bottom:8px;line-height:1.5;word-break:break-all}
-#rpgMusicUrlInput{width:100%;box-sizing:border-box;padding:9px 10px;border-radius:7px;border:1px solid #4a4a5a;background:#0f0e18;color:#fff;font-size:13px;margin-bottom:10px;font-family:inherit}
-#rpgMusicUrlInput:focus{outline:none;border-color:#d8b76a}
-.rpg-music-btnrow{display:flex;gap:8px;justify-content:flex-end}
-.rpg-music-btn{padding:7px 14px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit;border:none}
-.rpg-music-btn.cancel{background:transparent;border:1px solid #555;color:#ccc}
-.rpg-music-btn.save{background:#d8b76a;color:#191826;font-weight:700}
 .rpg-enter-hint{
   position:absolute;left:50%;bottom:4%;transform:translateX(-50%);
   color:rgba(255,255,255,0.75);font-size:13px;letter-spacing:.04em;
@@ -504,6 +483,68 @@ body {
 /* 맵 본체: 입장 화면이 사라지며 자연스럽게 페이드인 */
 #rpgMapContent{opacity:0;transition:opacity .7s ease;}
 #rpgMapContent.rpg-content-show{opacity:1;}
+
+/* ══════════════ 배경음악 위젯 (musicbar.png) — 입장화면 + 맵화면 어디서나 계속 보임 ══════════════ */
+#rpgMusicWidget{
+  position:fixed;z-index:100000;
+  left:20px;top:18px;
+  width:min(92vw,380px);
+  aspect-ratio:1408/768;
+  cursor:grab;user-select:none;-webkit-user-drag:none;touch-action:none;
+  filter:drop-shadow(0 6px 16px rgba(0,0,0,0.45));
+  transition:transform .15s;
+}
+#rpgMusicWidget.rpg-dragging{cursor:grabbing;transition:none}
+#rpgMusicWidget .rpg-mb-bg{width:100%;height:100%;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none}
+#rpgMusicWidget:hover{transform:scale(1.015)}
+
+.rpg-mb-hot{
+  position:absolute;background:transparent;border:none;border-radius:6px;
+  cursor:pointer;padding:0;
+  /* 평소엔 문처럼 안 보임 */
+}
+.rpg-mb-hot.rpg-calib-active{
+  background:rgba(70,140,255,0.25);
+  border:2px dashed #6bb3ff;
+  cursor:move;
+}
+.rpg-mb-resize{
+  display:none;position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;
+  background:#6bb3ff;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;
+}
+.rpg-mb-hot.rpg-calib-active .rpg-mb-resize{display:block}
+
+#rpgMbCalibToggle{
+  position:absolute;right:-8px;top:-8px;z-index:5;
+  width:24px;height:24px;border-radius:50%;
+  background:rgba(20,19,32,0.65);color:#cfd6e6;border:1px solid rgba(255,255,255,0.32);
+  font-size:12px;cursor:pointer;opacity:.5;transition:opacity .2s;
+  display:flex;align-items:center;justify-content:center;font-family:inherit;
+}
+#rpgMbCalibToggle:hover{opacity:1}
+
+#rpgMbCalibBar{
+  display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:100001;
+  background:rgba(20,19,32,0.97);border:1px solid #6bb3ff;border-radius:10px;
+  padding:10px 14px;align-items:center;gap:10px;
+  color:#dbe6ff;font-size:12px;max-width:min(560px,92vw);
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+#rpgMbCalibBar.show{display:flex}
+
+#rpgMusicPanel{
+  display:none;position:fixed;left:50%;top:16%;transform:translateX(-50%);
+  background:rgba(20,19,32,0.97);border:1px solid #d8b76a;border-radius:12px;
+  padding:16px 18px;z-index:100002;width:min(360px,86vw);box-shadow:0 10px 30px rgba(0,0,0,.55);
+}
+#rpgMusicPanel .rpg-music-title{color:#f0d998;font-size:13px;margin-bottom:9px;font-weight:700}
+#rpgMusicPanel .rpg-music-cur{color:#9aa;font-size:11px;margin-bottom:8px;line-height:1.5;word-break:break-all}
+#rpgMusicUrlInput{width:100%;box-sizing:border-box;padding:9px 10px;border-radius:7px;border:1px solid #4a4a5a;background:#0f0e18;color:#fff;font-size:13px;margin-bottom:10px;font-family:inherit}
+#rpgMusicUrlInput:focus{outline:none;border-color:#d8b76a}
+.rpg-music-btnrow{display:flex;gap:8px;justify-content:flex-end}
+.rpg-music-btn{padding:7px 14px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit;border:none}
+.rpg-music-btn.cancel{background:transparent;border:1px solid #555;color:#ccc}
+.rpg-music-btn.save{background:#d8b76a;color:#191826;font-weight:700}
 </style>
 </head>
 <body>
@@ -520,27 +561,7 @@ body {
         <div id="rpgDoorResizeHandle" title="크기 조절"></div>
       </div>
 
-      <!-- 음악 바: 왼쪽=재생/정지, 오른쪽=곡 설정(유튜브 링크) -->
-      <div id="rpgMusicBar">
-        <button type="button" class="rpg-music-hit" id="rpgMusicToggleBtn" title="배경음악 재생/정지" onclick="toggleRpgMusic()"></button>
-        <button type="button" class="rpg-music-hit" id="rpgMusicSettingsBtn" title="배경음악 설정" onclick="openRpgMusicPanel()"></button>
-      </div>
-
-      <!-- 유튜브 링크 입력 패널 -->
-      <div id="rpgMusicPanel">
-        <div class="rpg-music-title">🎵 배경음악 (유튜브 링크)</div>
-        <div class="rpg-music-cur" id="rpgMusicCurText">등록된 음악이 없습니다.</div>
-        <input id="rpgMusicUrlInput" type="text" placeholder="유튜브 영상 URL을 붙여넣으세요" onkeydown="if(event.key==='Enter')saveRpgMusicUrl();">
-        <div class="rpg-music-btnrow">
-          <button type="button" class="rpg-music-btn cancel" onclick="closeRpgMusicPanel()">취소</button>
-          <button type="button" class="rpg-music-btn save" onclick="saveRpgMusicUrl()">저장 &amp; 재생</button>
-        </div>
-      </div>
-
       <div class="rpg-enter-hint">문을 클릭해서 입장하기</div>
-
-      <!-- 유튜브 오디오 재생용(화면에는 보이지 않음) -->
-      <div id="rpgYoutubePlayer" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;"></div>
     </div>
 
     <!-- 문 위치 조정 모드 -->
@@ -552,6 +573,46 @@ body {
     </div>
   </div>
 </div>
+
+<!-- ══════════════ 배경음악 위젯 — 입장화면/맵화면 어디서나 항상 보이고, 재생 상태도 그대로 이어짐 ══════════════ -->
+<div id="rpgMusicWidget" role="group" aria-label="배경음악">
+  <img class="rpg-mb-bg" src="musicbar.png" alt="배경음악 플레이어">
+
+  <div id="mbPlay" class="rpg-mb-hot" title="재생 / 일시정지" onclick="rpgMbAction('play')">
+    <div class="rpg-mb-resize"></div>
+  </div>
+  <div id="mbSkip" class="rpg-mb-hot" title="처음부터 다시 재생" onclick="rpgMbAction('skip')">
+    <div class="rpg-mb-resize"></div>
+  </div>
+  <div id="mbList" class="rpg-mb-hot" title="배경음악 설정(유튜브 링크)" onclick="rpgMbAction('list')">
+    <div class="rpg-mb-resize"></div>
+  </div>
+  <div id="mbMute" class="rpg-mb-hot" title="음소거" onclick="rpgMbAction('mute')">
+    <div class="rpg-mb-resize"></div>
+  </div>
+
+  <button type="button" id="rpgMbCalibToggle" title="버튼 위치·크기 조정" onclick="toggleMbCalibration()">🛠</button>
+</div>
+
+<div id="rpgMbCalibBar">
+  <span>파란 점선 박스를 드래그해서 버튼 위로 옮기고, 오른쪽 아래 점을 드래그해서 크기를 맞추세요.</span>
+  <button type="button" class="rpg-calib-btn reset" onclick="resetMbCalibration()">초기화</button>
+  <button type="button" class="rpg-calib-btn done" onclick="toggleMbCalibration()">완료</button>
+</div>
+
+<!-- 유튜브 링크 입력 패널 -->
+<div id="rpgMusicPanel">
+  <div class="rpg-music-title">🎵 배경음악 (유튜브 링크)</div>
+  <div class="rpg-music-cur" id="rpgMusicCurText">등록된 음악이 없습니다.</div>
+  <input id="rpgMusicUrlInput" type="text" placeholder="유튜브 영상 URL을 붙여넣으세요" onkeydown="if(event.key==='Enter')saveRpgMusicUrl();">
+  <div class="rpg-music-btnrow">
+    <button type="button" class="rpg-music-btn cancel" onclick="closeRpgMusicPanel()">취소</button>
+    <button type="button" class="rpg-music-btn save" onclick="saveRpgMusicUrl()">저장 &amp; 재생</button>
+  </div>
+</div>
+
+<!-- 유튜브 오디오 재생용(화면에는 보이지 않음) -->
+<div id="rpgYoutubePlayer" style="position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:-9999px;"></div>
 
 <div id="rpgMapContent">
 
@@ -744,16 +805,30 @@ body {
 
 <script>
 (function(){
-  // ══════════════ 입장 화면: 문 전환 + 배경음악(유튜브, 1곡만 저장) + 문 위치 조정 ══════════════
+  // ══════════════ 입장 화면: 문 전환 + 위치 조정 + 배경음악 위젯(유튜브, 1곡만 저장) ══════════════
   var STORAGE_KEY='rpgEntranceMusic';
   var DOOR_KEY='rpgDoorRect_v1';
+  var MB_RECTS_KEY='rpgMbRects_v1';
+  var MB_POS_KEY='rpgMbWidgetPos_v1';
   var IMG_W=2752, IMG_H=1536; // rpghome1.png 실제 픽셀 크기 (비율 계산용)
   var DEFAULT_DOOR={left:40,top:62,w:9,h:25};
+  var MB_IDS={play:'mbPlay',skip:'mbSkip',list:'mbList',mute:'mbMute'};
+  var MB_DEFAULTS={
+    play:{left:76,top:41,w:6.5,h:8.5},
+    skip:{left:83,top:41,w:6.5,h:8.5},
+    list:{left:76,top:50,w:6.5,h:8.5},
+    mute:{left:83,top:50,w:6.5,h:8.5}
+  };
 
-  var ytPlayer=null, musicPlaying=false, savedMusic=null, fadeTimer=null;
-  var calibrating=false;
+  var ytPlayer=null, musicPlaying=false, musicMuted=false, savedMusic=null, fadeTimer=null;
+  var calibrating=false;       // 문 위치 조정 모드
+  var mbCalibrating=false;     // 음악 버튼 위치 조정 모드
   var imageBox=null, doorEl=null, resizeHandleEl=null;
-  var dragState=null; // {mode:'move'|'resize', startX, startY, boxW, boxH, startRect}
+  var dragState=null;          // 문 드래그 상태
+  var mbDragState=null;        // 음악 버튼 드래그 상태
+  var widgetEl=null, widgetDragState=null; // 음악 위젯 전체 드래그 상태
+
+  function clamp(v,min,max){return Math.min(max,Math.max(min,v));}
 
   function extractYoutubeId(raw){
     if(!raw)return null;
@@ -789,8 +864,10 @@ body {
   function updateMusicUI(){
     var t=document.getElementById('rpgMusicCurText');
     if(t)t.textContent=savedMusic?('현재 곡: '+savedMusic.url):'등록된 음악이 없습니다.';
-    var btn=document.getElementById('rpgMusicToggleBtn');
-    if(btn)btn.title=musicPlaying?'배경음악 정지':'배경음악 재생';
+    var btn=document.getElementById('mbPlay');
+    if(btn)btn.title=musicPlaying?'일시정지 (재생 중)':'재생';
+    var mute=document.getElementById('mbMute');
+    if(mute)mute.title=musicMuted?'음소거 해제':'음소거';
   }
 
   function createOrLoadPlayer(videoId,autoplay){
@@ -846,6 +923,28 @@ body {
       openRpgMusicPanel();
     }
   };
+  function restartMusic(){
+    if(ytPlayer&&ytPlayer.seekTo){
+      ytPlayer.seekTo(0,true);
+      if(!musicPlaying)ytPlayer.playVideo();
+    }else{
+      toggleRpgMusic(); // 아직 곡이 없으면 재생/설정 흐름으로
+    }
+  }
+  function toggleMute(){
+    if(!ytPlayer||!ytPlayer.mute)return;
+    musicMuted=!musicMuted;
+    musicMuted?ytPlayer.mute():ytPlayer.unMute();
+    updateMusicUI();
+  }
+  // 뮤직바의 4개 버튼(재생/처음부터/설정/음소거) 클릭 처리
+  window.rpgMbAction=function(key){
+    if(mbCalibrating)return; // 버튼 위치 조정 중에는 클릭 동작 막기
+    if(key==='play')toggleRpgMusic();
+    else if(key==='skip')restartMusic();
+    else if(key==='list')openRpgMusicPanel();
+    else if(key==='mute')toggleMute();
+  };
 
   function loadSavedMusic(){
     try{
@@ -871,7 +970,6 @@ body {
   }
 
   // ── 문 위치·크기: localStorage에 저장/복원 ──
-  function clamp(v,min,max){return Math.min(max,Math.max(min,v));}
   function applyDoorRect(r){
     doorEl=doorEl||document.getElementById('rpgDoorHotspot');
     if(!doorEl)return;
@@ -968,6 +1066,7 @@ body {
   }
 
   // 문 클릭 → 입장 화면 페이드아웃 + 맵 화면 페이드인
+  // (음악 위젯은 입장화면/맵화면 밖(body 최상위)에 별도로 있어서 이 전환과 무관하게 계속 재생됨)
   window.enterRpgMap=function(){
     var overlay=document.getElementById('rpgEntranceOverlay');
     var content=document.getElementById('rpgMapContent');
@@ -979,16 +1078,170 @@ body {
     fadeTimer=setTimeout(function(){ overlay.style.display='none'; },700);
   };
 
-  // 음악 설정 패널: 바깥 클릭/Esc로 닫기
+  // ══════════════ 음악 위젯: 버튼 4개 위치·크기 조정 ══════════════
+  function mbApplyRect(key,r){
+    var el=document.getElementById(MB_IDS[key]);
+    if(!el)return;
+    el.style.left=r.left+'%';
+    el.style.top=r.top+'%';
+    el.style.width=r.w+'%';
+    el.style.height=r.h+'%';
+  }
+  function mbSaveAll(rects){
+    try{localStorage.setItem(MB_RECTS_KEY,JSON.stringify(rects));}catch(e){}
+  }
+  function mbLoadAll(){
+    var rects=null;
+    try{
+      var raw=localStorage.getItem(MB_RECTS_KEY);
+      if(raw)rects=JSON.parse(raw);
+    }catch(e){}
+    Object.keys(MB_DEFAULTS).forEach(function(key){
+      mbApplyRect(key,(rects&&rects[key])?rects[key]:MB_DEFAULTS[key]);
+    });
+  }
+  function mbCurrentRects(){
+    var out={};
+    var boxRect=widgetEl.getBoundingClientRect();
+    Object.keys(MB_IDS).forEach(function(key){
+      var el=document.getElementById(MB_IDS[key]);
+      var er=el.getBoundingClientRect();
+      out[key]={
+        left:(er.left-boxRect.left)/boxRect.width*100,
+        top:(er.top-boxRect.top)/boxRect.height*100,
+        w:er.width/boxRect.width*100,
+        h:er.height/boxRect.height*100
+      };
+    });
+    return out;
+  }
+  window.resetMbCalibration=function(){
+    Object.keys(MB_DEFAULTS).forEach(function(key){ mbApplyRect(key,MB_DEFAULTS[key]); });
+    mbSaveAll(MB_DEFAULTS);
+  };
+  window.toggleMbCalibration=function(){
+    mbCalibrating=!mbCalibrating;
+    Object.keys(MB_IDS).forEach(function(key){
+      var el=document.getElementById(MB_IDS[key]);
+      if(el)el.classList.toggle('rpg-calib-active',mbCalibrating);
+    });
+    var bar=document.getElementById('rpgMbCalibBar');
+    if(bar)bar.classList.toggle('show',mbCalibrating);
+  };
+  function onMbHotPointerDown(e){
+    if(!mbCalibrating)return;
+    e.preventDefault();e.stopPropagation();
+    var el=e.currentTarget;
+    var key=Object.keys(MB_IDS).filter(function(k){return MB_IDS[k]===el.id;})[0];
+    var handle=el.querySelector('.rpg-mb-resize');
+    var boxRect=widgetEl.getBoundingClientRect();
+    var allRects=mbCurrentRects();
+    mbDragState={
+      key:key,
+      mode:(e.target===handle)?'resize':'move',
+      startX:e.clientX, startY:e.clientY,
+      boxW:boxRect.width, boxH:boxRect.height,
+      startRect:allRects[key]
+    };
+    if(el.setPointerCapture){try{el.setPointerCapture(e.pointerId);}catch(err){}}
+  }
+  function onMbHotPointerMove(e){
+    if(!mbDragState)return;
+    var dxPct=(e.clientX-mbDragState.startX)/mbDragState.boxW*100;
+    var dyPct=(e.clientY-mbDragState.startY)/mbDragState.boxH*100;
+    var r=mbDragState.startRect;
+    if(mbDragState.mode==='move'){
+      mbApplyRect(mbDragState.key,{
+        left:clamp(r.left+dxPct,0,100-r.w),
+        top:clamp(r.top+dyPct,0,100-r.h),
+        w:r.w,h:r.h
+      });
+    }else{
+      mbApplyRect(mbDragState.key,{
+        left:r.left,top:r.top,
+        w:clamp(r.w+dxPct,3,100-r.left),
+        h:clamp(r.h+dyPct,3,100-r.top)
+      });
+    }
+  }
+  function onMbHotPointerUp(){
+    if(!mbDragState)return;
+    mbDragState=null;
+    mbSaveAll(mbCurrentRects());
+  }
+  function initMbHotDrag(){
+    Object.keys(MB_IDS).forEach(function(key){
+      var el=document.getElementById(MB_IDS[key]);
+      if(el)el.addEventListener('pointerdown',onMbHotPointerDown);
+    });
+    document.addEventListener('pointermove',onMbHotPointerMove);
+    document.addEventListener('pointerup',onMbHotPointerUp);
+    document.addEventListener('pointercancel',onMbHotPointerUp);
+  }
+
+  // ══════════════ 음악 위젯 전체: 자유롭게 드래그해서 원하는 자리로 이동 ══════════════
+  function mbApplyWidgetPos(leftPct,topPct){
+    widgetEl.style.right='auto';widgetEl.style.bottom='auto';
+    widgetEl.style.left=leftPct+'%';widgetEl.style.top=topPct+'%';
+  }
+  function loadWidgetPos(){
+    try{
+      var raw=localStorage.getItem(MB_POS_KEY);
+      if(raw){
+        var p=JSON.parse(raw);
+        if(typeof p.left==='number'&&typeof p.top==='number')mbApplyWidgetPos(p.left,p.top);
+      }
+    }catch(e){}
+  }
+  function saveWidgetPos(leftPct,topPct){
+    try{localStorage.setItem(MB_POS_KEY,JSON.stringify({left:leftPct,top:topPct}));}catch(e){}
+  }
+  function onWidgetPointerDown(e){
+    if(mbCalibrating)return; // 버튼 위치 조정 중엔 위젯 전체 이동 비활성화
+    if(e.target.closest('.rpg-mb-hot')||e.target.closest('#rpgMbCalibToggle'))return;
+    var rect=widgetEl.getBoundingClientRect();
+    widgetDragState={startX:e.clientX,startY:e.clientY,startLeft:rect.left,startTop:rect.top,moved:false};
+    widgetEl.classList.add('rpg-dragging');
+    if(widgetEl.setPointerCapture){try{widgetEl.setPointerCapture(e.pointerId);}catch(err){}}
+  }
+  function onWidgetPointerMove(e){
+    if(!widgetDragState)return;
+    var dx=e.clientX-widgetDragState.startX, dy=e.clientY-widgetDragState.startY;
+    if(Math.abs(dx)>4||Math.abs(dy)>4)widgetDragState.moved=true;
+    if(!widgetDragState.moved)return;
+    var w=widgetEl.offsetWidth,h=widgetEl.offsetHeight;
+    var newLeft=clamp(widgetDragState.startLeft+dx,0,window.innerWidth-w);
+    var newTop=clamp(widgetDragState.startTop+dy,0,window.innerHeight-h);
+    mbApplyWidgetPos(newLeft/window.innerWidth*100,newTop/window.innerHeight*100);
+  }
+  function onWidgetPointerUp(){
+    if(!widgetDragState)return;
+    widgetEl.classList.remove('rpg-dragging');
+    if(widgetDragState.moved){
+      var rect=widgetEl.getBoundingClientRect();
+      saveWidgetPos(rect.left/window.innerWidth*100,rect.top/window.innerHeight*100);
+    }
+    widgetDragState=null;
+  }
+  function initWidgetDrag(){
+    widgetEl=document.getElementById('rpgMusicWidget');
+    if(!widgetEl)return;
+    widgetEl.addEventListener('pointerdown',onWidgetPointerDown);
+    document.addEventListener('pointermove',onWidgetPointerMove);
+    document.addEventListener('pointerup',onWidgetPointerUp);
+    document.addEventListener('pointercancel',onWidgetPointerUp);
+  }
+
+  // 음악 설정 패널: 위젯 바깥 클릭/Esc로 닫기
   document.addEventListener('click',function(e){
     var panel=document.getElementById('rpgMusicPanel');
     if(!panel||panel.style.display!=='block')return;
     if(panel.contains(e.target))return;
-    if(e.target.closest('#rpgMusicSettingsBtn')||e.target.closest('#rpgMusicToggleBtn'))return;
+    if(e.target.closest('#rpgMusicWidget'))return;
     closeRpgMusicPanel();
   });
   document.addEventListener('keydown',function(e){
-    if(e.key==='Escape')closeRpgMusicPanel();
+    if(e.key==='Escape'){closeRpgMusicPanel();}
   });
 
   window.addEventListener('resize',sizeImageBox);
@@ -998,6 +1251,10 @@ body {
   loadDoorRect();
   initDoorDrag();
   loadSavedMusic();
+  mbLoadAll();
+  initMbHotDrag();
+  initWidgetDrag();
+  loadWidgetPos();
 })();
 </script>
 
