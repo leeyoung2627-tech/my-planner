@@ -881,6 +881,61 @@ body{opacity:0;transition:opacity .25s ease}
 .rpg-slime-btn:active{transform:scale(.96)}
 @keyframes rpgSlimeBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 .rpg-slime-btn:hover,.rpg-slime-btn.rpg-dragging{animation-play-state:paused}
+
+/* ── 메모 물약병: 숨겨져 있다가 필요할 때만 꺼내 쓰는 메모장 ── */
+.memo-bottle-toggle{
+  position:fixed;right:0;top:62%;z-index:59;
+  width:30px;height:64px;
+  background:rgba(255,255,255,.85);
+  border:0.5px solid #ddd;border-right:none;
+  border-radius:12px 0 0 12px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:-2px 2px 8px #0001;
+  writing-mode:vertical-rl;letter-spacing:2px;
+  font-size:11px;color:#888;opacity:.55;
+  transition:opacity .2s,width .2s,background .2s;
+}
+.memo-bottle-toggle:hover{opacity:1;width:34px;background:#fff}
+.memo-bottle-toggle.on{color:#c0698a;opacity:.85}
+.memo-bottle-btn{
+  position:fixed;left:50%;top:38%;z-index:65;
+  width:104px;height:104px;
+  display:none;align-items:center;justify-content:center;
+  border-radius:50%;background:transparent;
+  cursor:grab;user-select:none;-webkit-user-drag:none;touch-action:none;
+  animation:memoBottleBob 3s ease-in-out infinite;
+  transition:transform .15s,opacity .25s;
+  opacity:0;
+}
+.memo-bottle-btn.show{opacity:1}
+.memo-bottle-btn.dragging{cursor:grabbing;animation-play-state:paused;transition:none}
+.memo-bottle-btn img{
+  width:100%;height:100%;object-fit:contain;pointer-events:none;
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.7)) drop-shadow(0 0 22px rgba(255,180,210,.35));
+  transition:filter .2s;
+}
+.memo-bottle-btn:hover img{filter:drop-shadow(0 0 14px rgba(255,255,255,.9)) drop-shadow(0 0 28px rgba(255,180,210,.55))}
+.memo-bottle-btn:hover,.memo-bottle-btn.dragging{animation-play-state:paused}
+.memo-bottle-btn:active{transform:scale(.96)}
+@keyframes memoBottleBob{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(0,-7px) rotate(-2deg)}}
+.memo-bottle-close{
+  position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;
+  background:#fff;border:0.5px solid #ddd;color:#999;font-size:12px;line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px #0002;
+}
+.memo-bottle-close:hover{background:#faeaea;color:#c0698a}
+.memo-bottle-panel{
+  position:fixed;z-index:66;display:none;flex-direction:column;
+  width:210px;
+  background:#fffaf9;border:0.5px solid #f0d9e0;border-radius:14px;
+  box-shadow:0 8px 24px #0002;padding:12px;gap:6px;
+}
+.memo-bottle-panel-label{font-size:11px;color:#c0698a;font-weight:600;letter-spacing:.5px}
+.memo-bottle-panel textarea{
+  width:100%;min-height:120px;max-height:260px;resize:vertical;
+  border:none;outline:none;background:transparent;
+  font-family:inherit;font-size:13px;line-height:1.6;color:#444;
+}
 </style>
 </head>
 <body>
@@ -1068,6 +1123,21 @@ body{opacity:0;transition:opacity .25s ease}
 <a class="rpg-slime-btn" id="rpgSlimeBtn" href="rpg-map.html" target="_blank" title="습관 RPG로 이동" style="visibility:hidden;opacity:0;transition:opacity .4s">
   <img src="slime.png" alt="습관 RPG 가기">
 </a>
+
+<!-- 메모 물약병 열기 탭 (항상 살짝 보이는 손잡이) -->
+<div class="memo-bottle-toggle" id="memoBottleToggle" onclick="toggleMemoBottle()" title="메모병 꺼내기">MEMO</div>
+
+<!-- 메모 물약병 (드래그 이동 가능, 클릭하면 메모창) -->
+<div class="memo-bottle-btn" id="memoBottleBtn" title="드래그로 이동 · 클릭해서 메모 쓰기">
+  <img src="memo-bottle.png" alt="메모병">
+</div>
+
+<!-- 메모 물약병 메모창 -->
+<div class="memo-bottle-panel" id="memoBottlePanel">
+  <div class="memo-bottle-close" onclick="closeMemoBottlePanel()">✕</div>
+  <div class="memo-bottle-panel-label">🩵 병 속 메모</div>
+  <textarea id="memoBottleInput" placeholder="여기에 적어두면 나중에 병을 열 때 그대로 있어요" spellcheck="false" oninput="scheduleSaveMemoBottle()" onblur="saveMemoBottle()"></textarea>
+</div>
 
 <!-- 노트 버튼 -->
 <div class="note-buttons">
@@ -1688,6 +1758,8 @@ let anniversaries=[];
 let folders=[],currentFolderId=null,editingDdayId=null,editingScheduleKey=null,editingScheduleIdx=null,editingHabitNameId=null;
 let habitPostitContent='';
 let topMemoContent='';
+let bottleMemoContent='';
+let bottleMemoSaveTimer=null;
 let mealSaveTimers={};
 let dragSrcKey=null,dragSrcIdx=null;
 // ── 일기장 상태 ──
@@ -1774,6 +1846,147 @@ function showSaving(){const el=document.getElementById('savingIndicator');el.sty
   loadPos();
 })();
 
+// ── 메모 물약병: 숨겨져 있다가 필요할 때 꺼내 쓰는 메모장 ──
+(function(){
+  const POS_KEY='memoBottlePos';
+  const VIS_KEY='memoBottleVisible';
+  const btn=document.getElementById('memoBottleBtn');
+  const panel=document.getElementById('memoBottlePanel');
+  const toggleTab=document.getElementById('memoBottleToggle');
+  const input=document.getElementById('memoBottleInput');
+  if(!btn||!panel||!toggleTab)return;
+
+  let dragging=false, moved=false, startX=0, startY=0, startLeft=0, startTop=0;
+
+  function clampNum(v,min,max){return Math.min(max,Math.max(min,v));}
+  function applyPos(leftPct,topPct){
+    btn.style.left=leftPct+'%';
+    btn.style.top=topPct+'%';
+  }
+  function savePos(leftPct,topPct){
+    try{localStorage.setItem(POS_KEY,JSON.stringify({left:leftPct,top:topPct}));}catch(e){}
+  }
+  function loadPos(){
+    try{
+      const raw=localStorage.getItem(POS_KEY);
+      if(raw){
+        const p=JSON.parse(raw);
+        if(typeof p.left==='number'&&typeof p.top==='number')applyPos(p.left,p.top);
+      }
+    }catch(e){}
+  }
+
+  function positionPanelNearBottle(){
+    const rect=btn.getBoundingClientRect();
+    const pw=210, ph=panel.offsetHeight||220;
+    let left=rect.left+rect.width/2-pw/2;
+    let top=rect.top-ph-14;
+    if(top<10)top=rect.bottom+14; // 위쪽 공간 부족하면 아래로
+    left=clampNum(left,10,window.innerWidth-pw-10);
+    top=clampNum(top,10,window.innerHeight-ph-10);
+    panel.style.left=left+'px';
+    panel.style.top=top+'px';
+  }
+
+  window.toggleMemoBottle=function(){
+    const isOn=btn.classList.contains('show');
+    if(isOn){
+      btn.classList.remove('show');
+      setTimeout(()=>{ if(!btn.classList.contains('show'))btn.style.display='none'; },250);
+      closeMemoBottlePanel();
+      toggleTab.classList.remove('on');
+      try{localStorage.setItem(VIS_KEY,'0');}catch(e){}
+    }else{
+      btn.style.display='flex';
+      requestAnimationFrame(()=>btn.classList.add('show'));
+      toggleTab.classList.add('on');
+      try{localStorage.setItem(VIS_KEY,'1');}catch(e){}
+    }
+  };
+
+  window.closeMemoBottlePanel=function(){
+    panel.style.display='none';
+    clearTimeout(bottleMemoSaveTimer);
+    window.saveMemoBottle();
+  };
+
+  function openMemoBottlePanel(){
+    if(input)input.value=bottleMemoContent;
+    panel.style.display='flex';
+    positionPanelNearBottle();
+    if(input)input.focus();
+  }
+
+  window.scheduleSaveMemoBottle=function(){
+    clearTimeout(bottleMemoSaveTimer);
+    bottleMemoSaveTimer=setTimeout(()=>{window.saveMemoBottle();},900);
+  };
+  window.saveMemoBottle=async function(){
+    if(!currentUser||!input)return;
+    const text=input.value;
+    if(text===bottleMemoContent)return;
+    bottleMemoContent=text;
+    await setDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo'),{text});
+    showSaving();
+  };
+
+  btn.addEventListener('pointerdown',(e)=>{
+    dragging=true;moved=false;
+    const rect=btn.getBoundingClientRect();
+    startX=e.clientX;startY=e.clientY;
+    startLeft=rect.left;startTop=rect.top;
+    btn.classList.add('dragging');
+    if(btn.setPointerCapture){try{btn.setPointerCapture(e.pointerId);}catch(err){}}
+  });
+  btn.addEventListener('pointermove',(e)=>{
+    if(!dragging)return;
+    const dx=e.clientX-startX, dy=e.clientY-startY;
+    if(Math.abs(dx)>4||Math.abs(dy)>4)moved=true;
+    if(!moved)return;
+    const w=btn.offsetWidth,h=btn.offsetHeight;
+    const newLeft=clampNum(startLeft+dx,0,window.innerWidth-w);
+    const newTop=clampNum(startTop+dy,0,window.innerHeight-h);
+    btn.style.left=newLeft+'px';
+    btn.style.top=newTop+'px';
+    if(panel.style.display==='flex')positionPanelNearBottle();
+  });
+  function endDrag(){
+    if(!dragging)return;
+    dragging=false;
+    btn.classList.remove('dragging');
+    if(moved){
+      const rect=btn.getBoundingClientRect();
+      savePos(rect.left/window.innerWidth*100, rect.top/window.innerHeight*100);
+    }
+  }
+  btn.addEventListener('pointerup',endDrag);
+  btn.addEventListener('pointercancel',endDrag);
+  btn.addEventListener('click',(e)=>{
+    if(moved){moved=false;return;} // 드래그였으면 메모창 열지 않기
+    if(panel.style.display==='flex'){closeMemoBottlePanel();}
+    else{openMemoBottlePanel();}
+  });
+  window.addEventListener('resize',()=>{
+    const rect=btn.getBoundingClientRect();
+    const w=btn.offsetWidth,h=btn.offsetHeight;
+    const newLeft=clampNum(rect.left,0,window.innerWidth-w);
+    const newTop=clampNum(rect.top,0,window.innerHeight-h);
+    if(newLeft!==rect.left||newTop!==rect.top){
+      applyPos(newLeft/window.innerWidth*100, newTop/window.innerHeight*100);
+    }
+    if(panel.style.display==='flex')positionPanelNearBottle();
+  });
+
+  loadPos();
+  try{
+    if(localStorage.getItem(VIS_KEY)==='1'){
+      btn.style.display='flex';
+      requestAnimationFrame(()=>btn.classList.add('show'));
+      toggleTab.classList.add('on');
+    }
+  }catch(e){}
+})();
+
 // ── Auth — 깜빡임 방지 ──
 // 모든 요소 기본 display:none, onAuthStateChanged에서만 보여줌
 window.loginWithGoogle=async()=>{try{await signInWithPopup(auth,provider);}catch(e){alert('로그인 실패: '+e.message);}};
@@ -1830,7 +2043,7 @@ async function saveData(type,key,value){
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -1853,6 +2066,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline')),
     getDocs(collection(db,'users',currentUser.uid,'moneyMemo')),
     getDocs(collection(db,'users',currentUser.uid,'fasting')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -1901,6 +2115,7 @@ async function loadAllData(){
   // 저축 상품별 초기 잔액(이전까지 저축한 금액)
   savingBaseline=sbS.exists()?(sbS.data().items||{}):{};
   savingOrder=sbS.exists()?(sbS.data().order||[]):[];
+  bottleMemoContent=bmS.exists()?(bmS.data().text||''):'';
 }
 
 // ── 상단 메모 ──
