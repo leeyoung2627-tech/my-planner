@@ -345,13 +345,6 @@ body{opacity:0;transition:opacity .25s ease}
 .bg-panel-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.04em;text-transform:uppercase}
 .bg-panel-section{display:flex;flex-direction:column;gap:6px}
 
-/* 프리셋 그리드 */
-.theme-presets{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
-.theme-preset{border-radius:10px;height:48px;cursor:pointer;border:2px solid transparent;transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:flex-end}
-.theme-preset:hover{transform:scale(1.04)}
-.theme-preset.active{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
-.theme-preset-name{font-size:9px;font-weight:700;color:rgba(255,255,255,.9);text-shadow:0 1px 3px #0005;padding:3px 5px;width:100%;background:linear-gradient(transparent,rgba(0,0,0,.25));text-align:center}
-
 /* 커스텀 컬러 */
 .color-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .color-label{font-size:12px;color:#555;flex:1}
@@ -362,8 +355,12 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* 폰트 */
 .font-btns{display:flex;gap:5px;flex-wrap:wrap}
-.font-btn{padding:4px 10px;border-radius:6px;border:1px solid #eee;font-size:12px;cursor:pointer;background:#fafafa;color:#555;transition:.15s}
+.font-btn{padding:4px 10px;border-radius:6px;border:1px solid #eee;font-size:12px;cursor:pointer;background:#fafafa;color:#555;transition:.15s;display:inline-flex;align-items:center;gap:5px}
 .font-btn:hover,.font-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.font-btn.font-add-btn{border-style:dashed;color:#aaa}
+.font-btn.font-add-btn:hover{border-color:var(--accent);color:var(--accent);background:#fafafa}
+.font-del{font-size:10px;color:#ccc;cursor:pointer;line-height:1}
+.font-del:hover{color:#e66}
 
 /* 패턴 */
 .bg-pattern-row{display:flex;gap:5px;flex-wrap:wrap}
@@ -1224,10 +1221,6 @@ body{opacity:0;transition:opacity .25s ease}
 
 <button class="bg-setting-btn" onclick="toggleBgPanel()" title="테마 설정">🎨</button>
 <div class="bg-panel" id="bgPanel">
-  <div class="bg-panel-title">테마 프리셋</div>
-  <div class="theme-presets" id="themePresets"></div>
-
-  <hr class="theme-divider"/>
   <div class="bg-panel-title">세부 설정</div>
 
   <div class="bg-panel-section">
@@ -1274,15 +1267,18 @@ body{opacity:0;transition:opacity .25s ease}
     <button class="bg-pattern" onclick="setBgPattern('diagonal',this)">사선</button>
     <button class="bg-pattern" onclick="setBgPattern('cross',this)">크로스</button>
   </div>
+  <div class="color-row" style="margin-top:6px">
+    <span class="color-label">🔳 패턴 색</span>
+    <div class="color-input-wrap">
+      <div class="color-preview" id="prev-pattern" onclick="document.getElementById('inp-pattern').click()"></div>
+      <span class="color-hex" id="hex-pattern">#000000</span>
+      <input type="color" id="inp-pattern" oninput="onPatternColor(this.value)"/>
+    </div>
+  </div>
 
   <hr class="theme-divider"/>
   <div class="bg-panel-title">폰트</div>
-  <div class="font-btns">
-    <button class="font-btn active" onclick="setFont('system',this)">시스템</button>
-    <button class="font-btn" onclick="setFont('serif',this)">명조</button>
-    <button class="font-btn" onclick="setFont('mono',this)">모노</button>
-    <button class="font-btn" onclick="setFont('nanum',this)">나눔</button>
-  </div>
+  <div class="font-btns" id="fontBtnsWrap"></div>
 
   <hr class="theme-divider"/>
   <button class="theme-reset-btn" onclick="resetTheme()">↺ 기본값으로 초기화</button>
@@ -4286,12 +4282,18 @@ const FONTS={
 let currentTheme={...THEMES[0]};
 let currentPattern='none';
 let currentFont='system';
+let patternColor='#000000';
+let customFonts=[];
 
 function loadTheme(){
   const saved=localStorage.getItem('planner_theme_v2');
   if(saved){try{currentTheme=JSON.parse(saved);}catch(e){}}
   const p=localStorage.getItem('planner_pattern');if(p)currentPattern=p;
   const f=localStorage.getItem('planner_font');if(f)currentFont=f;
+  const pc=localStorage.getItem('planner_pattern_color');if(pc)patternColor=pc;
+  const cf=localStorage.getItem('planner_custom_fonts');
+  if(cf){try{customFonts=JSON.parse(cf);}catch(e){customFonts=[];}}
+  customFonts.forEach(f=>loadGoogleFont(f.google));
   applyTheme();
   applyPattern(currentPattern);
   applyFont(currentFont);
@@ -4394,38 +4396,69 @@ function updatePanelPreviews(){
   setP('prev-appbg','hex-appbg',t.appbg);
   setP('prev-text','hex-text',t.text);
   setP('prev-pagebg','hex-pagebg',t.pagebg);
+  setP('prev-pattern','hex-pattern',patternColor);
   // 인풋 색 동기화
   ['accent','appbg','text','pagebg'].forEach(k=>{
     const el=document.getElementById('inp-'+k);
     if(el)el.value=currentTheme[k];
   });
+  const pInp=document.getElementById('inp-pattern');
+  if(pInp)pInp.value=patternColor;
 }
-function renderThemePresets(){
-  const wrap=document.getElementById('themePresets');if(!wrap)return;
-  wrap.innerHTML='';
-  THEMES.forEach((t,i)=>{
-    const el=document.createElement('div');
-    el.className='theme-preset';
-    el.style.background=`linear-gradient(135deg,${t.pagebg},${t.accentLight})`;
-    el.innerHTML=`<div class="theme-preset-name" style="color:${isColorDark(t.pagebg)?'rgba(255,255,255,.9)':'rgba(0,0,0,.6)'}">${t.name}</div>`;
-    // 포인트색 점
-    el.style.borderTop=`4px solid ${t.accent}`;
-    const isActive=JSON.stringify(currentTheme)===JSON.stringify(t);
-    if(isActive)el.classList.add('active');
-    el.onclick=()=>{currentTheme={...t};applyTheme();renderThemePresets();};
-    wrap.appendChild(el);
-  });
+function renderFontButtons(){
+  const wrap=document.getElementById('fontBtnsWrap');if(!wrap)return;
+  const builtins=[['system','시스템'],['serif','명조'],['mono','모노'],['nanum','나눔']];
+  let html=builtins.map(([k,l])=>`<button class="font-btn${currentFont===k?' active':''}" onclick="setFont('${k}',this)">${l}</button>`).join('');
+  html+=customFonts.map(f=>`<button class="font-btn${currentFont===f.key?' active':''}" onclick="setFont('${f.key}',this)" style="font-family:'${f.google}'">${escapeHtml(f.name)}<span class="font-del" onclick="event.stopPropagation();deleteCustomFont('${f.key}')" title="삭제">✕</span></button>`).join('');
+  html+=`<button class="font-btn font-add-btn" onclick="addCustomFont()">＋ 추가</button>`;
+  wrap.innerHTML=html;
+}
+window.addCustomFont=function(){
+  const name=prompt('폰트 버튼에 표시될 이름을 입력하세요\n예: 고운바탕');
+  if(!name)return;
+  const google=prompt('Google Fonts 폰트명을 정확히 입력하세요\n(fonts.google.com 에서 확인, 예: Gowun Batang)');
+  if(!google)return;
+  const key='custom_'+Date.now();
+  customFonts.push({key,name,google});
+  localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
+  loadGoogleFont(google);
+  renderFontButtons();
+};
+window.deleteCustomFont=function(key){
+  customFonts=customFonts.filter(f=>f.key!==key);
+  localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
+  if(currentFont===key){
+    currentFont='system';
+    localStorage.setItem('planner_font','system');
+    applyFont('system');
+  }
+  renderFontButtons();
+};
+function loadGoogleFont(googleName){
+  if(!googleName)return;
+  const id='gfont-'+googleName.replace(/\s+/g,'-');
+  if(document.getElementById(id))return;
+  const link=document.createElement('link');
+  link.id=id;link.rel='stylesheet';
+  link.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(googleName).replace(/%20/g,'+')}:wght@400;700&display=swap`;
+  document.head.appendChild(link);
 }
 
 window.toggleBgPanel=function(){
   const panel=document.getElementById('bgPanel');
   const isOpen=panel.style.display==='flex';
   panel.style.display=isOpen?'none':'flex';
-  if(!isOpen){renderThemePresets();updatePanelPreviews();}
+  if(!isOpen){renderFontButtons();updatePanelPreviews();}
 };
 window.onCustomColor=function(key,val){
   currentTheme[key]=val;
   applyTheme();
+};
+window.onPatternColor=function(val){
+  patternColor=val;
+  localStorage.setItem('planner_pattern_color',val);
+  applyPattern(currentPattern);
+  updatePanelPreviews();
 };
 window.setBgPattern=function(pattern,btn){
   currentPattern=pattern;
@@ -4442,33 +4475,42 @@ window.setFont=function(fontKey,btn){
   if(btn)btn.classList.add('active');
 };
 function applyFont(fontKey){
+  const cf=customFonts.find(f=>f.key===fontKey);
+  if(cf){document.body.style.fontFamily=`'${cf.google}',${FONTS.system}`;return;}
   document.body.style.fontFamily=FONTS[fontKey]||FONTS.system;
 }
 window.resetTheme=function(){
-  currentTheme={...THEMES[0]};currentPattern='none';currentFont='system';
+  currentTheme={...THEMES[0]};currentPattern='none';currentFont='system';patternColor='#000000';
   applyTheme();applyPattern('none');applyFont('system');
   localStorage.removeItem('planner_theme_v2');
   localStorage.removeItem('planner_pattern');
   localStorage.removeItem('planner_font');
-  renderThemePresets();updatePanelPreviews();
+  localStorage.removeItem('planner_pattern_color');
+  renderFontButtons();updatePanelPreviews();
   document.querySelectorAll('.bg-pattern').forEach(b=>b.classList.remove('active'));
   document.querySelector('.bg-pattern')?.classList.add('active');
-  document.querySelectorAll('.font-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.font-btn')?.classList.add('active');
 };
 
 function loadBgSetting(){loadTheme();}
 
+function hexToRgba(hex,alpha){
+  hex=(hex||'#000000').replace('#','');
+  if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
+  const r=parseInt(hex.slice(0,2),16)||0,g=parseInt(hex.slice(2,4),16)||0,b=parseInt(hex.slice(4,6),16)||0;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 function applyPattern(pattern){
   const overlayId='bg-pattern-overlay';
   let overlay=document.getElementById(overlayId);
-  if(!overlay){overlay=document.createElement('div');overlay.id=overlayId;overlay.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:0';document.body.prepend(overlay);}
+  if(!overlay){overlay=document.createElement('div');overlay.id=overlayId;overlay.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:-1';document.body.prepend(overlay);}
+  const cDot=hexToRgba(patternColor,0.14);
+  const cLine=hexToRgba(patternColor,0.08);
   const patterns={
     none:'',
-    dots:'radial-gradient(circle,#0002 1px,transparent 1px)',
-    grid:'linear-gradient(#0001 1px,transparent 1px),linear-gradient(90deg,#0001 1px,transparent 1px)',
-    diagonal:'repeating-linear-gradient(45deg,#0001,#0001 1px,transparent 1px,transparent 8px)',
-    cross:'linear-gradient(#0001 1px,transparent 1px),linear-gradient(90deg,#0001 1px,transparent 1px)',
+    dots:`radial-gradient(circle,${cDot} 1px,transparent 1px)`,
+    grid:`linear-gradient(${cLine} 1px,transparent 1px),linear-gradient(90deg,${cLine} 1px,transparent 1px)`,
+    diagonal:`repeating-linear-gradient(45deg,${cLine},${cLine} 1px,transparent 1px,transparent 8px)`,
+    cross:`linear-gradient(${cLine} 1px,transparent 1px),linear-gradient(90deg,${cLine} 1px,transparent 1px)`,
   };
   const sizes={none:'',dots:'16px 16px',grid:'20px 20px',diagonal:'8px 8px',cross:'12px 12px'};
   overlay.style.backgroundImage=patterns[pattern]||'';
