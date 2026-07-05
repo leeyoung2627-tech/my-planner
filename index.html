@@ -4807,11 +4807,13 @@ function applyTheme(){
     if(lo){lo.style.color=nb?nt+'77':'';lo.style.borderColor=nb?nt+'33':'';}
   }
 
-  // 노트 버튼
+  // 노트 버튼 — 팔레트의 상단바/사이드바 색(navbg)이 있으면 그 색, 없으면 테마 accent 색을 따라감
+  const noteBtnColor=nb||t.accent;
   document.querySelectorAll('.note-btn').forEach(b=>{
+    if(b.classList.contains('note-btn-secondary'))return; // '우리끼리' 버튼은 고유 초록색 유지
     b.style.background='#fff';
-    b.style.borderColor='#1558CC';
-    b.style.color='#1558CC';
+    b.style.borderColor=noteBtnColor;
+    b.style.color=noteBtnColor;
   });
 
   // 미션트래커 말풍선 영역 (배경 흰색 고정)
