@@ -4649,11 +4649,12 @@ function applyPattern(pattern){
   const oldOverlay=document.getElementById('bg-pattern-overlay');
   if(oldOverlay)oldOverlay.remove();
 
-  const cDot=hexToRgba(patternColor,0.16);
-  const cLine=hexToRgba(patternColor,0.09);
+  // 반투명도를 확 낮춰서(=진하게) 색을 바꿨을 때 눈에 잘 보이도록 함
+  const cDot=hexToRgba(patternColor,0.45);
+  const cLine=hexToRgba(patternColor,0.3);
   const patterns={
     none:'',
-    dots:`radial-gradient(circle,${cDot} 1px,transparent 1px)`,
+    dots:`radial-gradient(circle,${cDot} 1.2px,transparent 1.2px)`,
     grid:`linear-gradient(${cLine} 1px,transparent 1px),linear-gradient(90deg,${cLine} 1px,transparent 1px)`,
     diagonal:`repeating-linear-gradient(45deg,${cLine},${cLine} 1px,transparent 1px,transparent 8px)`,
     cross:`linear-gradient(${cLine} 1px,transparent 1px),linear-gradient(90deg,${cLine} 1px,transparent 1px)`,
@@ -4661,15 +4662,16 @@ function applyPattern(pattern){
   const sizes={none:'',dots:'16px 16px',grid:'20px 20px',diagonal:'8px 8px',cross:'12px 12px'};
   const img=patterns[pattern]||'';
   const size=sizes[pattern]||'';
-  // background-image는 그 요소의 내용(글자·카드)보다 항상 아래에 그려지므로
-  // 별도 레이어 없이 body/앱카드/일기장 화면 자체에 적용하면 텍스트를 가릴 일이 없음
+  // 패턴은 body(페이지 맨 아래 레이어)에만 적용 — 앱 카드/달력/일기장 등
+  // 실제 콘텐츠 영역은 전부 불투명 배경이라 어차피 안 보이므로,
+  // 아예 body 배경으로만 두고 그 위에서 겹치는 문제 자체를 없앰
   document.body.style.backgroundImage=img;
   document.body.style.backgroundSize=size;
   document.body.style.backgroundAttachment='fixed';
   const app=document.getElementById('mainApp');
-  if(app){app.style.backgroundImage=img;app.style.backgroundSize=size;}
+  if(app){app.style.backgroundImage='';app.style.backgroundSize='';}
   const diaryScreen=document.getElementById('diaryScreen');
-  if(diaryScreen){diaryScreen.style.backgroundImage=img;diaryScreen.style.backgroundSize=size;}
+  if(diaryScreen){diaryScreen.style.backgroundImage='';diaryScreen.style.backgroundSize='';}
 }
 
 // ── Ctrl+S 저장 ── (capture:true로 최우선 preventDefault 보장)
