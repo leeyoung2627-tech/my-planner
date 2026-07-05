@@ -32,6 +32,7 @@
   --border-col:#ddd;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+button,input,textarea,select{font-family:inherit}
 [contenteditable],[spellcheck]{-webkit-spell-check:none;spell-check:none}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);display:flex;flex-direction:column;align-items:center;padding:16px 16px 80px 16px;min-height:100vh;gap:10px}
 
@@ -1254,6 +1255,38 @@ body{opacity:0;transition:opacity .25s ease}
         <div class="color-preview" id="prev-pagebg" onclick="document.getElementById('inp-pagebg').click()"></div>
         <span class="color-hex" id="hex-pagebg">#f5f4ff</span>
         <input type="color" id="inp-pagebg" oninput="onCustomColor('pagebg',this.value)"/>
+      </div>
+    </div>
+    <div class="color-row">
+      <span class="color-label">💡 포인트 연한색</span>
+      <div class="color-input-wrap">
+        <div class="color-preview" id="prev-accentLight" onclick="document.getElementById('inp-accentLight').click()"></div>
+        <span class="color-hex" id="hex-accentLight">#EEEDFE</span>
+        <input type="color" id="inp-accentLight" oninput="onCustomColor('accentLight',this.value)"/>
+      </div>
+    </div>
+    <div class="color-row">
+      <span class="color-label">📌 상단바/사이드바 배경</span>
+      <div class="color-input-wrap">
+        <div class="color-preview" id="prev-navbg" onclick="document.getElementById('inp-navbg').click()"></div>
+        <span class="color-hex" id="hex-navbg">#2B7FFF</span>
+        <input type="color" id="inp-navbg" oninput="onCustomColor('navbg',this.value)"/>
+      </div>
+    </div>
+    <div class="color-row">
+      <span class="color-label">🔤 상단바/사이드바 글자색</span>
+      <div class="color-input-wrap">
+        <div class="color-preview" id="prev-navtext" onclick="document.getElementById('inp-navtext').click()"></div>
+        <span class="color-hex" id="hex-navtext">#ffffff</span>
+        <input type="color" id="inp-navtext" oninput="onCustomColor('navtext',this.value)"/>
+      </div>
+    </div>
+    <div class="color-row">
+      <span class="color-label">▭ 테두리 색</span>
+      <div class="color-input-wrap">
+        <div class="color-preview" id="prev-bordercol" onclick="document.getElementById('inp-bordercol').click()"></div>
+        <span class="color-hex" id="hex-bordercol">#DDE4F0</span>
+        <input type="color" id="inp-bordercol" oninput="onCustomColor('bordercol',this.value)"/>
       </div>
     </div>
   </div>
@@ -4275,9 +4308,10 @@ const THEMES=[
 const FONTS={
   system:"'Apple SD Gothic Neo','Malgun Gothic',sans-serif",
   serif:"'Noto Serif KR',Georgia,serif",
-  mono:"'D2Coding','Courier New',monospace",
+  mono:"'Nanum Gothic Coding','D2Coding','Courier New',monospace",
   nanum:"'Nanum Gothic',sans-serif",
 };
+const BUILTIN_GFONTS=['Noto Serif KR','Nanum Gothic Coding','Nanum Gothic'];
 
 let currentTheme={...THEMES[0]};
 let currentPattern='none';
@@ -4293,6 +4327,7 @@ function loadTheme(){
   const pc=localStorage.getItem('planner_pattern_color');if(pc)patternColor=pc;
   const cf=localStorage.getItem('planner_custom_fonts');
   if(cf){try{customFonts=JSON.parse(cf);}catch(e){customFonts=[];}}
+  BUILTIN_GFONTS.forEach(g=>loadGoogleFont(g));
   customFonts.forEach(f=>loadGoogleFont(f.google));
   applyTheme();
   applyPattern(currentPattern);
@@ -4309,11 +4344,13 @@ function applyTheme(){
   root.style.setProperty('--nav-bg', t.navbg||t.appbg);
   root.style.setProperty('--nav-text', t.navtext||t.text);
   root.style.setProperty('--border-col', t.bordercol||'#ddd');
-  document.body.style.background=t.pagebg;
+  document.body.style.backgroundColor=t.pagebg;
   document.body.style.color=t.text;
   // 앱 배경
   const app=document.getElementById('mainApp');
-  if(app){app.style.background=t.appbg;app.style.color=t.text;}
+  if(app){app.style.backgroundColor=t.appbg;app.style.color=t.text;}
+  const diaryScreen=document.getElementById('diaryScreen');
+  if(diaryScreen)diaryScreen.style.backgroundColor=t.pagebg;
 
   // ── 네이비 구역 직접 적용 (navbg 있을 때만)
   const nb=t.navbg||'';
@@ -4396,12 +4433,19 @@ function updatePanelPreviews(){
   setP('prev-appbg','hex-appbg',t.appbg);
   setP('prev-text','hex-text',t.text);
   setP('prev-pagebg','hex-pagebg',t.pagebg);
+  setP('prev-accentLight','hex-accentLight',t.accentLight||t.appbg);
+  setP('prev-navbg','hex-navbg',t.navbg||t.appbg);
+  setP('prev-navtext','hex-navtext',t.navtext||t.text);
+  setP('prev-bordercol','hex-bordercol',t.bordercol||'#dddddd');
   setP('prev-pattern','hex-pattern',patternColor);
   // 인풋 색 동기화
-  ['accent','appbg','text','pagebg'].forEach(k=>{
+  ['accent','appbg','text','pagebg','accentLight'].forEach(k=>{
     const el=document.getElementById('inp-'+k);
-    if(el)el.value=currentTheme[k];
+    if(el)el.value=currentTheme[k]||'#ffffff';
   });
+  const navbgInp=document.getElementById('inp-navbg');if(navbgInp)navbgInp.value=t.navbg||t.appbg;
+  const navtextInp=document.getElementById('inp-navtext');if(navtextInp)navtextInp.value=t.navtext||t.text;
+  const bcInp=document.getElementById('inp-bordercol');if(bcInp)bcInp.value=t.bordercol||'#dddddd';
   const pInp=document.getElementById('inp-pattern');
   if(pInp)pInp.value=patternColor;
 }
@@ -4409,20 +4453,30 @@ function renderFontButtons(){
   const wrap=document.getElementById('fontBtnsWrap');if(!wrap)return;
   const builtins=[['system','시스템'],['serif','명조'],['mono','모노'],['nanum','나눔']];
   let html=builtins.map(([k,l])=>`<button class="font-btn${currentFont===k?' active':''}" onclick="setFont('${k}',this)">${l}</button>`).join('');
-  html+=customFonts.map(f=>`<button class="font-btn${currentFont===f.key?' active':''}" onclick="setFont('${f.key}',this)" style="font-family:'${f.google}'">${escapeHtml(f.name)}<span class="font-del" onclick="event.stopPropagation();deleteCustomFont('${f.key}')" title="삭제">✕</span></button>`).join('');
+  html+=customFonts.map(f=>`<button class="font-btn${currentFont===f.key?' active':''}" data-key="${f.key}" onclick="setFont('${f.key}',this)" style="font-family:'${f.google}'">${escapeHtml(f.name)}<span class="font-del" onclick="event.stopPropagation();deleteCustomFont('${f.key}')" title="삭제">✕</span></button>`).join('');
   html+=`<button class="font-btn font-add-btn" onclick="addCustomFont()">＋ 추가</button>`;
   wrap.innerHTML=html;
 }
 window.addCustomFont=function(){
   const name=prompt('폰트 버튼에 표시될 이름을 입력하세요\n예: 고운바탕');
   if(!name)return;
-  const google=prompt('Google Fonts 폰트명을 정확히 입력하세요\n(fonts.google.com 에서 확인, 예: Gowun Batang)');
+  const google=prompt('Google Fonts 폰트명을 정확히 입력하세요\n(fonts.google.com 에서 폰트 페이지에 적힌 이름을 그대로 복사해서 넣는 걸 추천해요. 예: Gowun Batang)');
   if(!google)return;
   const key='custom_'+Date.now();
   customFonts.push({key,name,google});
   localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
   loadGoogleFont(google);
   renderFontButtons();
+  setFont(key,document.querySelector(`.font-btn[data-key="${key}"]`));
+  // 실제로 폰트가 로드됐는지 잠시 후 확인 — 이름이 틀리면 대체 폰트로 보일 수 있어 안내
+  setTimeout(()=>{
+    if(document.fonts&&document.fonts.check){
+      const loaded=document.fonts.check(`16px "${google}"`);
+      if(!loaded){
+        alert(`'${google}' 폰트를 확인하지 못했어요.\n버튼은 추가됐지만 실제 화면엔 대체 글꼴이 보일 수 있어요.\nGoogle Fonts(fonts.google.com)에서 폰트명이 정확한지 다시 확인해주세요.`);
+      }
+    }
+  },1000);
 };
 window.deleteCustomFont=function(key){
   customFonts=customFonts.filter(f=>f.key!==key);
@@ -4438,9 +4492,11 @@ function loadGoogleFont(googleName){
   if(!googleName)return;
   const id='gfont-'+googleName.replace(/\s+/g,'-');
   if(document.getElementById(id))return;
+  const family=googleName.trim().split(/\s+/).join('+');
   const link=document.createElement('link');
   link.id=id;link.rel='stylesheet';
-  link.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(googleName).replace(/%20/g,'+')}:wght@400;700&display=swap`;
+  link.href=`https://fonts.googleapis.com/css2?family=${family}:wght@400;700&display=swap`;
+  link.onerror=()=>{console.warn('[폰트 로드 실패]',googleName);};
   document.head.appendChild(link);
 }
 
@@ -4500,11 +4556,12 @@ function hexToRgba(hex,alpha){
   return `rgba(${r},${g},${b},${alpha})`;
 }
 function applyPattern(pattern){
-  const overlayId='bg-pattern-overlay';
-  let overlay=document.getElementById(overlayId);
-  if(!overlay){overlay=document.createElement('div');overlay.id=overlayId;overlay.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:-1';document.body.prepend(overlay);}
-  const cDot=hexToRgba(patternColor,0.14);
-  const cLine=hexToRgba(patternColor,0.08);
+  // 이전 버전에서 만들어진 오버레이 div가 남아있다면 제거 (더 이상 사용하지 않음)
+  const oldOverlay=document.getElementById('bg-pattern-overlay');
+  if(oldOverlay)oldOverlay.remove();
+
+  const cDot=hexToRgba(patternColor,0.16);
+  const cLine=hexToRgba(patternColor,0.09);
   const patterns={
     none:'',
     dots:`radial-gradient(circle,${cDot} 1px,transparent 1px)`,
@@ -4513,8 +4570,17 @@ function applyPattern(pattern){
     cross:`linear-gradient(${cLine} 1px,transparent 1px),linear-gradient(90deg,${cLine} 1px,transparent 1px)`,
   };
   const sizes={none:'',dots:'16px 16px',grid:'20px 20px',diagonal:'8px 8px',cross:'12px 12px'};
-  overlay.style.backgroundImage=patterns[pattern]||'';
-  overlay.style.backgroundSize=sizes[pattern]||'';
+  const img=patterns[pattern]||'';
+  const size=sizes[pattern]||'';
+  // background-image는 그 요소의 내용(글자·카드)보다 항상 아래에 그려지므로
+  // 별도 레이어 없이 body/앱카드/일기장 화면 자체에 적용하면 텍스트를 가릴 일이 없음
+  document.body.style.backgroundImage=img;
+  document.body.style.backgroundSize=size;
+  document.body.style.backgroundAttachment='fixed';
+  const app=document.getElementById('mainApp');
+  if(app){app.style.backgroundImage=img;app.style.backgroundSize=size;}
+  const diaryScreen=document.getElementById('diaryScreen');
+  if(diaryScreen){diaryScreen.style.backgroundImage=img;diaryScreen.style.backgroundSize=size;}
 }
 
 // ── Ctrl+S 저장 ── (capture:true로 최우선 preventDefault 보장)
