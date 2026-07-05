@@ -21,25 +21,6 @@
 })();
 </script>
 <style>
-@font-face{
-  font-family:'Memoment Kkukkuk';
-  src:url('fonts/MemomentKkukkukk.woff2') format('woff2');
-  font-weight:normal;
-  font-style:normal;
-  font-display:swap;
-}
-@font-face{
-  font-family:'BookkGothic';
-  src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkGothic-Lt.woff2') format('woff2');
-  font-weight:300;
-  font-display:swap;
-}
-@font-face{
-  font-family:'BookkGothic';
-  src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkGothic-Bd.woff2') format('woff2');
-  font-weight:700;
-  font-display:swap;
-}
 :root{
   --accent:#534AB7;
   --accent-light:#EEEDFE;
@@ -4329,14 +4310,12 @@ const FONTS={
   serif:"'Noto Serif KR',Georgia,serif",
   mono:"'Nanum Gothic Coding','D2Coding','Courier New',monospace",
   nanum:"'Nanum Gothic',sans-serif",
-  memoment:"'Memoment Kkukkuk','Nanum Gothic',sans-serif",
-  bookk:"'BookkGothic','Apple SD Gothic Neo','Malgun Gothic',sans-serif",
 };
 const BUILTIN_GFONTS=['Noto Serif KR','Nanum Gothic Coding','Nanum Gothic'];
 
 let currentTheme={...THEMES[0]};
 let currentPattern='none';
-let currentFont='bookk';
+let currentFont='system';
 let patternColor='#000000';
 let customFonts=[];
 
@@ -4348,14 +4327,14 @@ function loadTheme(){
   const pc=localStorage.getItem('planner_pattern_color');if(pc)patternColor=pc;
   const cf=localStorage.getItem('planner_custom_fonts');
   if(cf){try{customFonts=JSON.parse(cf);}catch(e){customFonts=[];}}
-  // 예전에 Google 폰트 방식으로 시도했다가 실패한 '메모먼트' 항목이 남아있으면 정리
-  // (이제 꾹꾹체는 위에서 @font-face로 직접 등록했으므로 그 항목은 더 이상 필요 없음)
-  const brokenMemoment=customFonts.find(f=>f.google&&/memoment/i.test(f.google));
-  if(brokenMemoment){
-    customFonts=customFonts.filter(f=>f!==brokenMemoment);
-    localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
-    if(currentFont===brokenMemoment.key){currentFont='memoment';localStorage.setItem('planner_font','memoment');}
+  // 이전에 추천했던 폰트(꾹꾹체/북크고딕/프로슬림)가 저장돼 있으면 시스템 폰트로 정리
+  const removedKeys=['memoment','bookk','cafe24slim'];
+  if(removedKeys.includes(currentFont)){
+    currentFont='system';
+    localStorage.setItem('planner_font','system');
   }
+  customFonts=customFonts.filter(f=>!(f.google&&/memoment/i.test(f.google)));
+  localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
   BUILTIN_GFONTS.forEach(g=>loadGoogleFont(g));
   customFonts.forEach(f=>{
     if(f.type==='file'&&f.dataUrl)registerFileFont(f.family,f.dataUrl);
@@ -4483,7 +4462,7 @@ function updatePanelPreviews(){
 }
 function renderFontButtons(){
   const wrap=document.getElementById('fontBtnsWrap');if(!wrap)return;
-  const builtins=[['system','시스템'],['serif','명조'],['mono','모노'],['nanum','나눔'],['memoment','꾹꾹체'],['bookk','북크고딕']];
+  const builtins=[['system','시스템'],['serif','명조'],['mono','모노'],['nanum','나눔']];
   let html=builtins.map(([k,l])=>`<button class="font-btn${currentFont===k?' active':''}" onclick="setFont('${k}',this)">${l}</button>`).join('');
   html+=customFonts.map(f=>{
     const fam=f.type==='file'?f.family:f.google;
