@@ -882,7 +882,7 @@ body{opacity:0;transition:opacity .25s ease}
 @keyframes rpgSlimeBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 .rpg-slime-btn:hover,.rpg-slime-btn.rpg-dragging{animation-play-state:paused}
 
-/* ── 메모 물약병: 숨겨져 있다가 필요할 때만 꺼내 쓰는 메모장 ── */
+/* ── 메모 물약병: 숨겨져 있다가 필요할 때만 꺼내 쓰는 메모장 (이미지 위에 직접 씀) ── */
 .memo-bottle-toggle{
   position:fixed;right:0;top:62%;z-index:59;
   width:30px;height:64px;
@@ -897,45 +897,54 @@ body{opacity:0;transition:opacity .25s ease}
 }
 .memo-bottle-toggle:hover{opacity:1;width:34px;background:#fff}
 .memo-bottle-toggle.on{color:#c0698a;opacity:.85}
+
+.memo-bottle-picker{
+  position:fixed;right:34px;top:62%;transform:translateY(-50%);z-index:59;
+  display:none;gap:10px;align-items:center;
+  background:rgba(255,255,255,.95);border:0.5px solid #eee;border-radius:16px;
+  padding:10px;box-shadow:0 4px 16px #0002;
+}
+.memo-bottle-picker.show{display:flex}
+.memo-bottle-pick-thumb{
+  width:46px;height:46px;object-fit:contain;cursor:pointer;border-radius:50%;
+  transition:transform .15s,filter .15s;filter:drop-shadow(0 0 4px #0002);
+}
+.memo-bottle-pick-thumb:hover{transform:scale(1.14)}
+.memo-bottle-pick-thumb.active{filter:drop-shadow(0 0 0 3px #fff) drop-shadow(0 0 8px rgba(192,105,138,.7))}
+
 .memo-bottle-btn{
-  position:fixed;left:50%;top:38%;z-index:65;
-  width:104px;height:104px;
+  position:fixed;left:50%;top:32%;z-index:65;
+  width:260px;height:280px;
   display:none;align-items:center;justify-content:center;
-  border-radius:50%;background:transparent;
-  cursor:grab;user-select:none;-webkit-user-drag:none;touch-action:none;
-  animation:memoBottleBob 3s ease-in-out infinite;
+  cursor:grab;user-select:none;
+  animation:memoBottleBob 3.4s ease-in-out infinite;
   transition:transform .15s,opacity .25s;
   opacity:0;
 }
 .memo-bottle-btn.show{opacity:1}
 .memo-bottle-btn.dragging{cursor:grabbing;animation-play-state:paused;transition:none}
-.memo-bottle-btn img{
-  width:100%;height:100%;object-fit:contain;pointer-events:none;
-  filter:drop-shadow(0 0 10px rgba(255,255,255,.7)) drop-shadow(0 0 22px rgba(255,180,210,.35));
-  transition:filter .2s;
-}
-.memo-bottle-btn:hover img{filter:drop-shadow(0 0 14px rgba(255,255,255,.9)) drop-shadow(0 0 28px rgba(255,180,210,.55))}
 .memo-bottle-btn:hover,.memo-bottle-btn.dragging{animation-play-state:paused}
-.memo-bottle-btn:active{transform:scale(.96)}
-@keyframes memoBottleBob{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(0,-7px) rotate(-2deg)}}
+.memo-bottle-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;
+  filter:drop-shadow(0 6px 16px rgba(0,0,0,.18));
+}
+@keyframes memoBottleBob{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(0,-7px) rotate(-1.5deg)}}
 .memo-bottle-close{
-  position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;
-  background:#fff;border:0.5px solid #ddd;color:#999;font-size:12px;line-height:1;
+  position:absolute;top:2%;right:6%;width:24px;height:24px;border-radius:50%;z-index:2;
+  background:#fff;border:0.5px solid #ddd;color:#999;font-size:13px;line-height:1;
   display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px #0002;
 }
 .memo-bottle-close:hover{background:#faeaea;color:#c0698a}
-.memo-bottle-panel{
-  position:fixed;z-index:66;display:none;flex-direction:column;
-  width:210px;
-  background:#fffaf9;border:0.5px solid #f0d9e0;border-radius:14px;
-  box-shadow:0 8px 24px #0002;padding:12px;gap:6px;
+.memo-bottle-text{
+  position:absolute;left:26%;right:26%;top:37%;bottom:22%;z-index:1;
+  border:none;outline:none;background:transparent;resize:none;
+  text-align:center;
+  font-family:inherit;font-size:12px;line-height:1.45;color:#38424f;
+  cursor:text;
 }
-.memo-bottle-panel-label{font-size:11px;color:#c0698a;font-weight:600;letter-spacing:.5px}
-.memo-bottle-panel textarea{
-  width:100%;min-height:120px;max-height:260px;resize:vertical;
-  border:none;outline:none;background:transparent;
-  font-family:inherit;font-size:13px;line-height:1.6;color:#444;
-}
+.memo-bottle-btn[data-color="pink"] .memo-bottle-text{color:#7a3d54}
+.memo-bottle-text::placeholder{color:#8fa3b8;opacity:.75}
+.memo-bottle-btn[data-color="pink"] .memo-bottle-text::placeholder{color:#c091a8}
 </style>
 </head>
 <body>
@@ -1125,18 +1134,26 @@ body{opacity:0;transition:opacity .25s ease}
 </a>
 
 <!-- 메모 물약병 열기 탭 (항상 살짝 보이는 손잡이) -->
-<div class="memo-bottle-toggle" id="memoBottleToggle" onclick="toggleMemoBottle()" title="메모병 꺼내기">MEMO</div>
+<div class="memo-bottle-toggle" id="memoBottleToggle" onclick="toggleMemoPicker()" title="메모병 꺼내기">MEMO</div>
 
-<!-- 메모 물약병 (드래그 이동 가능, 클릭하면 메모창) -->
-<div class="memo-bottle-btn" id="memoBottleBtn" title="드래그로 이동 · 클릭해서 메모 쓰기">
-  <img src="memo-bottle.png" alt="메모병">
+<!-- 색 고르는 팔레트: 파란병 / 핑크병 중 선택 -->
+<div class="memo-bottle-picker" id="memoBottlePicker">
+  <img class="memo-bottle-pick-thumb" id="memoPickBlue" src="memo-bottle.png" alt="파란 메모병" title="파란 병" onclick="toggleMemoBottle('blue')">
+  <img class="memo-bottle-pick-thumb" id="memoPickPink" src="memo-bottle-pink.png" alt="핑크 메모병" title="핑크 병" onclick="toggleMemoBottle('pink')">
 </div>
 
-<!-- 메모 물약병 메모창 -->
-<div class="memo-bottle-panel" id="memoBottlePanel">
-  <div class="memo-bottle-close" onclick="closeMemoBottlePanel()">✕</div>
-  <div class="memo-bottle-panel-label">🩵 병 속 메모</div>
-  <textarea id="memoBottleInput" placeholder="여기에 적어두면 나중에 병을 열 때 그대로 있어요" spellcheck="false" oninput="scheduleSaveMemoBottle()" onblur="saveMemoBottle()"></textarea>
+<!-- 메모 물약병 (파란): 이미지 위에 직접 글씨를 씀 -->
+<div class="memo-bottle-btn" id="memoBottleBtn-blue" data-color="blue" title="드래그로 이동 · 안쪽에 바로 메모">
+  <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('blue')">✕</div>
+  <img class="memo-bottle-img" src="memo-bottle.png" alt="파란 메모병">
+  <textarea class="memo-bottle-text" id="memoBottleText-blue" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('blue')" onblur="saveMemoBottle('blue')"></textarea>
+</div>
+
+<!-- 메모 물약병 (핑크) -->
+<div class="memo-bottle-btn" id="memoBottleBtn-pink" data-color="pink" title="드래그로 이동 · 안쪽에 바로 메모">
+  <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('pink')">✕</div>
+  <img class="memo-bottle-img" src="memo-bottle-pink.png" alt="핑크 메모병">
+  <textarea class="memo-bottle-text" id="memoBottleText-pink" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('pink')" onblur="saveMemoBottle('pink')"></textarea>
 </div>
 
 <!-- 노트 버튼 -->
@@ -1758,8 +1775,8 @@ let anniversaries=[];
 let folders=[],currentFolderId=null,editingDdayId=null,editingScheduleKey=null,editingScheduleIdx=null,editingHabitNameId=null;
 let habitPostitContent='';
 let topMemoContent='';
-let bottleMemoContent='';
-let bottleMemoSaveTimer=null;
+let bottleMemoContent={blue:'',pink:''};
+let bottleMemoSaveTimer={blue:null,pink:null};
 let mealSaveTimers={};
 let dragSrcKey=null,dragSrcIdx=null;
 // ── 일기장 상태 ──
@@ -1846,145 +1863,159 @@ function showSaving(){const el=document.getElementById('savingIndicator');el.sty
   loadPos();
 })();
 
-// ── 메모 물약병: 숨겨져 있다가 필요할 때 꺼내 쓰는 메모장 ──
-(function(){
-  const POS_KEY='memoBottlePos';
-  const VIS_KEY='memoBottleVisible';
-  const btn=document.getElementById('memoBottleBtn');
-  const panel=document.getElementById('memoBottlePanel');
-  const toggleTab=document.getElementById('memoBottleToggle');
-  const input=document.getElementById('memoBottleInput');
-  if(!btn||!panel||!toggleTab)return;
+// ── 메모 물약병: 숨겨져 있다가 필요할 때 꺼내 쓰는 메모장 (파란/핑크 둘 다 선택 가능) ──
+window.loadMemoBottleTexts=function(){
+  ['blue','pink'].forEach(c=>{
+    const el=document.getElementById('memoBottleText-'+c);
+    if(el)el.value=bottleMemoContent[c]||'';
+  });
+};
+window.scheduleSaveMemoBottle=function(color){
+  clearTimeout(bottleMemoSaveTimer[color]);
+  bottleMemoSaveTimer[color]=setTimeout(()=>{window.saveMemoBottle(color);},900);
+};
+window.saveMemoBottle=async function(color){
+  if(!currentUser)return;
+  const el=document.getElementById('memoBottleText-'+color);
+  if(!el)return;
+  const text=el.value;
+  if(text===bottleMemoContent[color])return;
+  bottleMemoContent[color]=text;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo'),bottleMemoContent);
+  showSaving();
+};
 
-  let dragging=false, moved=false, startX=0, startY=0, startLeft=0, startTop=0;
+(function(){
+  const COLORS=['blue','pink'];
+  const toggleTab=document.getElementById('memoBottleToggle');
+  const picker=document.getElementById('memoBottlePicker');
+  const bottles={};
+  COLORS.forEach(c=>{bottles[c]=document.getElementById('memoBottleBtn-'+c);});
+  if(!toggleTab||!picker)return;
+
+  function posKey(c){return 'memoBottlePos_'+c;}
+  const VIS_KEY='memoBottleVisibleColors'; // ex: '["blue"]'
 
   function clampNum(v,min,max){return Math.min(max,Math.max(min,v));}
-  function applyPos(leftPct,topPct){
-    btn.style.left=leftPct+'%';
-    btn.style.top=topPct+'%';
+  function applyPos(btn,leftPct,topPct){btn.style.left=leftPct+'%';btn.style.top=topPct+'%';}
+  function savePos(color,leftPct,topPct){
+    try{localStorage.setItem(posKey(color),JSON.stringify({left:leftPct,top:topPct}));}catch(e){}
   }
-  function savePos(leftPct,topPct){
-    try{localStorage.setItem(POS_KEY,JSON.stringify({left:leftPct,top:topPct}));}catch(e){}
-  }
-  function loadPos(){
+  function loadPosFor(color){
+    const btn=bottles[color];if(!btn)return;
     try{
-      const raw=localStorage.getItem(POS_KEY);
+      const raw=localStorage.getItem(posKey(color));
       if(raw){
         const p=JSON.parse(raw);
-        if(typeof p.left==='number'&&typeof p.top==='number')applyPos(p.left,p.top);
+        if(typeof p.left==='number'&&typeof p.top==='number'){applyPos(btn,p.left,p.top);return;}
       }
     }catch(e){}
+    // 기본 위치: 파란은 살짝 왼쪽, 핑크는 살짝 오른쪽
+    applyPos(btn, color==='blue'?38:58, 30);
   }
 
-  function positionPanelNearBottle(){
-    const rect=btn.getBoundingClientRect();
-    const pw=210, ph=panel.offsetHeight||220;
-    let left=rect.left+rect.width/2-pw/2;
-    let top=rect.top-ph-14;
-    if(top<10)top=rect.bottom+14; // 위쪽 공간 부족하면 아래로
-    left=clampNum(left,10,window.innerWidth-pw-10);
-    top=clampNum(top,10,window.innerHeight-ph-10);
-    panel.style.left=left+'px';
-    panel.style.top=top+'px';
+  function getVisibleColors(){
+    try{return JSON.parse(localStorage.getItem(VIS_KEY)||'[]');}catch(e){return [];}
+  }
+  function setVisibleColors(arr){
+    try{localStorage.setItem(VIS_KEY,JSON.stringify(arr));}catch(e){}
+  }
+  function updatePickerActiveState(){
+    const visible=getVisibleColors();
+    document.getElementById('memoPickBlue')?.classList.toggle('active',visible.includes('blue'));
+    document.getElementById('memoPickPink')?.classList.toggle('active',visible.includes('pink'));
+    toggleTab.classList.toggle('on',visible.length>0);
   }
 
-  window.toggleMemoBottle=function(){
+  window.toggleMemoPicker=function(){
+    picker.classList.toggle('show');
+  };
+
+  window.toggleMemoBottle=function(color){
+    const btn=bottles[color];if(!btn)return;
     const isOn=btn.classList.contains('show');
-    if(isOn){
-      btn.classList.remove('show');
-      setTimeout(()=>{ if(!btn.classList.contains('show'))btn.style.display='none'; },250);
-      closeMemoBottlePanel();
-      toggleTab.classList.remove('on');
-      try{localStorage.setItem(VIS_KEY,'0');}catch(e){}
-    }else{
+    if(isOn){hideMemoBottle(color);}
+    else{
+      const el=document.getElementById('memoBottleText-'+color);
+      if(el)el.value=bottleMemoContent[color]||'';
       btn.style.display='flex';
       requestAnimationFrame(()=>btn.classList.add('show'));
-      toggleTab.classList.add('on');
-      try{localStorage.setItem(VIS_KEY,'1');}catch(e){}
+      let visible=getVisibleColors();
+      if(!visible.includes(color)){visible.push(color);setVisibleColors(visible);}
+      updatePickerActiveState();
     }
   };
 
-  window.closeMemoBottlePanel=function(){
-    panel.style.display='none';
-    clearTimeout(bottleMemoSaveTimer);
-    window.saveMemoBottle();
+  window.hideMemoBottle=function(color){
+    const btn=bottles[color];if(!btn)return;
+    clearTimeout(bottleMemoSaveTimer[color]);
+    window.saveMemoBottle(color);
+    btn.classList.remove('show');
+    setTimeout(()=>{if(!btn.classList.contains('show'))btn.style.display='none';},250);
+    let visible=getVisibleColors().filter(c=>c!==color);
+    setVisibleColors(visible);
+    updatePickerActiveState();
   };
 
-  function openMemoBottlePanel(){
-    if(input)input.value=bottleMemoContent;
-    panel.style.display='flex';
-    positionPanelNearBottle();
-    if(input)input.focus();
-  }
+  COLORS.forEach(color=>{
+    const btn=bottles[color];if(!btn)return;
+    let dragging=false, moved=false, startX=0, startY=0, startLeft=0, startTop=0;
 
-  window.scheduleSaveMemoBottle=function(){
-    clearTimeout(bottleMemoSaveTimer);
-    bottleMemoSaveTimer=setTimeout(()=>{window.saveMemoBottle();},900);
-  };
-  window.saveMemoBottle=async function(){
-    if(!currentUser||!input)return;
-    const text=input.value;
-    if(text===bottleMemoContent)return;
-    bottleMemoContent=text;
-    await setDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo'),{text});
-    showSaving();
-  };
-
-  btn.addEventListener('pointerdown',(e)=>{
-    dragging=true;moved=false;
-    const rect=btn.getBoundingClientRect();
-    startX=e.clientX;startY=e.clientY;
-    startLeft=rect.left;startTop=rect.top;
-    btn.classList.add('dragging');
-    if(btn.setPointerCapture){try{btn.setPointerCapture(e.pointerId);}catch(err){}}
-  });
-  btn.addEventListener('pointermove',(e)=>{
-    if(!dragging)return;
-    const dx=e.clientX-startX, dy=e.clientY-startY;
-    if(Math.abs(dx)>4||Math.abs(dy)>4)moved=true;
-    if(!moved)return;
-    const w=btn.offsetWidth,h=btn.offsetHeight;
-    const newLeft=clampNum(startLeft+dx,0,window.innerWidth-w);
-    const newTop=clampNum(startTop+dy,0,window.innerHeight-h);
-    btn.style.left=newLeft+'px';
-    btn.style.top=newTop+'px';
-    if(panel.style.display==='flex')positionPanelNearBottle();
-  });
-  function endDrag(){
-    if(!dragging)return;
-    dragging=false;
-    btn.classList.remove('dragging');
-    if(moved){
+    btn.addEventListener('pointerdown',(e)=>{
+      if(e.target.classList.contains('memo-bottle-text')||e.target.classList.contains('memo-bottle-close'))return; // 텍스트 입력·닫기 버튼은 드래그 제외
+      dragging=true;moved=false;
       const rect=btn.getBoundingClientRect();
-      savePos(rect.left/window.innerWidth*100, rect.top/window.innerHeight*100);
+      startX=e.clientX;startY=e.clientY;
+      startLeft=rect.left;startTop=rect.top;
+      btn.classList.add('dragging');
+      if(btn.setPointerCapture){try{btn.setPointerCapture(e.pointerId);}catch(err){}}
+    });
+    btn.addEventListener('pointermove',(e)=>{
+      if(!dragging)return;
+      const dx=e.clientX-startX, dy=e.clientY-startY;
+      if(Math.abs(dx)>4||Math.abs(dy)>4)moved=true;
+      if(!moved)return;
+      const w=btn.offsetWidth,h=btn.offsetHeight;
+      const newLeft=clampNum(startLeft+dx,0,window.innerWidth-w);
+      const newTop=clampNum(startTop+dy,0,window.innerHeight-h);
+      btn.style.left=newLeft+'px';
+      btn.style.top=newTop+'px';
+    });
+    function endDrag(){
+      if(!dragging)return;
+      dragging=false;
+      btn.classList.remove('dragging');
+      if(moved){
+        const rect=btn.getBoundingClientRect();
+        savePos(color, rect.left/window.innerWidth*100, rect.top/window.innerHeight*100);
+      }
     }
-  }
-  btn.addEventListener('pointerup',endDrag);
-  btn.addEventListener('pointercancel',endDrag);
-  btn.addEventListener('click',(e)=>{
-    if(moved){moved=false;return;} // 드래그였으면 메모창 열지 않기
-    if(panel.style.display==='flex'){closeMemoBottlePanel();}
-    else{openMemoBottlePanel();}
-  });
-  window.addEventListener('resize',()=>{
-    const rect=btn.getBoundingClientRect();
-    const w=btn.offsetWidth,h=btn.offsetHeight;
-    const newLeft=clampNum(rect.left,0,window.innerWidth-w);
-    const newTop=clampNum(rect.top,0,window.innerHeight-h);
-    if(newLeft!==rect.left||newTop!==rect.top){
-      applyPos(newLeft/window.innerWidth*100, newTop/window.innerHeight*100);
-    }
-    if(panel.style.display==='flex')positionPanelNearBottle();
+    btn.addEventListener('pointerup',endDrag);
+    btn.addEventListener('pointercancel',endDrag);
+    window.addEventListener('resize',()=>{
+      const rect=btn.getBoundingClientRect();
+      const w=btn.offsetWidth,h=btn.offsetHeight;
+      const newLeft=clampNum(rect.left,0,window.innerWidth-w);
+      const newTop=clampNum(rect.top,0,window.innerHeight-h);
+      if(newLeft!==rect.left||newTop!==rect.top)applyPos(btn,newLeft/window.innerWidth*100,newTop/window.innerHeight*100);
+    });
+    loadPosFor(color);
   });
 
-  loadPos();
-  try{
-    if(localStorage.getItem(VIS_KEY)==='1'){
-      btn.style.display='flex';
-      requestAnimationFrame(()=>btn.classList.add('show'));
-      toggleTab.classList.add('on');
-    }
-  }catch(e){}
+  // 팔레트 바깥 클릭하면 팔레트 닫기
+  document.addEventListener('pointerdown',(e)=>{
+    if(!picker.classList.contains('show'))return;
+    if(picker.contains(e.target)||e.target===toggleTab)return;
+    picker.classList.remove('show');
+  });
+
+  // 저장된 상태 복원: 마지막에 켜져 있던 병들 다시 보이기
+  getVisibleColors().forEach(color=>{
+    const btn=bottles[color];if(!btn)return;
+    btn.style.display='flex';
+    requestAnimationFrame(()=>btn.classList.add('show'));
+  });
+  updatePickerActiveState();
 })();
 
 // ── Auth — 깜빡임 방지 ──
@@ -2005,7 +2036,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('mainApp').style.display='grid';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
-    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();
+    renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
     positionNoteButtons();
     initMissionTracker();
     // 모든 준비 완료 후 부드럽게 표시
@@ -2115,7 +2146,7 @@ async function loadAllData(){
   // 저축 상품별 초기 잔액(이전까지 저축한 금액)
   savingBaseline=sbS.exists()?(sbS.data().items||{}):{};
   savingOrder=sbS.exists()?(sbS.data().order||[]):[];
-  bottleMemoContent=bmS.exists()?(bmS.data().text||''):'';
+  bottleMemoContent={blue:(bmS.exists()?(bmS.data().blue||''):''),pink:(bmS.exists()?(bmS.data().pink||''):'')};
 }
 
 // ── 상단 메모 ──
