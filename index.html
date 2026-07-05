@@ -917,7 +917,7 @@ body{opacity:0;transition:opacity .25s ease}
 
 .memo-bottle-btn{
   position:fixed;left:50%;top:26%;z-index:65;
-  width:380px;
+  width:280px;
   display:none;align-items:center;justify-content:center;
   cursor:grab;user-select:none;
   animation:memoBottleBob 3.4s ease-in-out infinite;
@@ -958,7 +958,7 @@ body{opacity:0;transition:opacity .25s ease}
   border:none;outline:none;background:transparent;resize:none;
   text-align:left;
   font-family:'Nanum Gothic',sans-serif;font-weight:700;
-  font-size:24px;line-height:1.4;color:#000;
+  font-size:16px;line-height:1.35;color:#000;
   cursor:text;padding:2px;
 }
 .memo-bottle-text:focus{outline:1px dashed rgba(0,0,0,.25);border-radius:4px}
@@ -2071,10 +2071,10 @@ window.saveMemoBottle=async function(color){
 // ── 메모 글자 위치: 핸들을 드래그해서 내가 원하는 자리에 두기 ──
 (function(){
   const DEFAULTS={
-    blue:{left:99,top:151,width:182,height:168},
-    pink:{left:99,top:146,width:182,height:161},
-    garden:{left:34,top:63,width:312,height:265},
-    linen:{left:34,top:49,width:312,height:278}
+    blue:{left:73,top:111,width:134,height:124},
+    pink:{left:73,top:108,width:134,height:119},
+    garden:{left:25,top:46,width:230,height:195},
+    linen:{left:25,top:36,width:230,height:205}
   };
   Object.keys(DEFAULTS).forEach(color=>{
     const ta=document.getElementById('memoBottleText-'+color);
@@ -2090,6 +2090,12 @@ window.saveMemoBottle=async function(color){
         if(typeof p.left==='number'&&typeof p.top==='number'){pos.left=p.left;pos.top=p.top;}
       }
     }catch(e){}
+    function clampPos(){
+      const cw=container.offsetWidth||280, ch=container.offsetHeight||280;
+      pos.left=Math.min(Math.max(0,pos.left),Math.max(0,cw-pos.width));
+      pos.top=Math.min(Math.max(0,pos.top),Math.max(0,ch-pos.height));
+    }
+    clampPos();
     function apply(){
       ta.style.left=pos.left+'px';
       ta.style.top=pos.top+'px';
