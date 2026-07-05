@@ -86,7 +86,7 @@ body{opacity:0;transition:opacity .25s ease}
 .diary-dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
 .diary-dow{text-align:center;font-size:11px;color:#aaa;padding:2px 0}
 .diary-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;flex:1}
-.diary-day-cell{min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:5px 3px;border-radius:8px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative}
+.diary-day-cell{min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:5px 3px;border-radius:8px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative;background:var(--app-bg,#fff)}
 .diary-day-cell:hover{background:#f5f4ff}
 .diary-day-cell.other{color:#ccc;cursor:default}
 .diary-day-cell.today .ddn{background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
@@ -466,7 +466,7 @@ body{opacity:0;transition:opacity .25s ease}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 
 /* 날짜 칸 2배 높이 */
-.day-cell{height:130px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden}
+.day-cell{height:130px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--app-bg,#fff)}
 .day-cell-events{display:flex;flex-direction:column;gap:1px;width:100%;align-items:stretch;margin-top:2px;overflow:hidden}
 .day-cell-ev{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0;cursor:grab}
 .day-cell-ev.dragging{opacity:.4}
@@ -479,7 +479,7 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* 가계부 달력 — 금액 표시 */
 .money-cal-wrap{padding:.65rem .85rem}
-.money-day-cell{min-height:110px;min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative;overflow:hidden}
+.money-day-cell{min-height:110px;min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative;overflow:hidden;background:var(--app-bg,#fff)}
 .money-day-cell:hover{background:#fff8f5}
 .money-day-cell.other{color:#ccc}
 .money-day-cell.today .mdn{background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px}
@@ -4328,7 +4328,10 @@ function loadTheme(){
   const cf=localStorage.getItem('planner_custom_fonts');
   if(cf){try{customFonts=JSON.parse(cf);}catch(e){customFonts=[];}}
   BUILTIN_GFONTS.forEach(g=>loadGoogleFont(g));
-  customFonts.forEach(f=>loadGoogleFont(f.google));
+  customFonts.forEach(f=>{
+    if(f.type==='file'&&f.dataUrl)registerFileFont(f.family,f.dataUrl);
+    else if(f.google)loadGoogleFont(f.google);
+  });
   applyTheme();
   applyPattern(currentPattern);
   applyFont(currentFont);
@@ -4453,14 +4456,18 @@ function renderFontButtons(){
   const wrap=document.getElementById('fontBtnsWrap');if(!wrap)return;
   const builtins=[['system','시스템'],['serif','명조'],['mono','모노'],['nanum','나눔']];
   let html=builtins.map(([k,l])=>`<button class="font-btn${currentFont===k?' active':''}" onclick="setFont('${k}',this)">${l}</button>`).join('');
-  html+=customFonts.map(f=>`<button class="font-btn${currentFont===f.key?' active':''}" data-key="${f.key}" onclick="setFont('${f.key}',this)" style="font-family:'${f.google}'">${escapeHtml(f.name)}<span class="font-del" onclick="event.stopPropagation();deleteCustomFont('${f.key}')" title="삭제">✕</span></button>`).join('');
-  html+=`<button class="font-btn font-add-btn" onclick="addCustomFont()">＋ 추가</button>`;
+  html+=customFonts.map(f=>{
+    const fam=f.type==='file'?f.family:f.google;
+    return `<button class="font-btn${currentFont===f.key?' active':''}" data-key="${f.key}" onclick="setFont('${f.key}',this)" style="font-family:'${fam}'">${escapeHtml(f.name)}${f.type==='file'?' 📁':''}<span class="font-del" onclick="event.stopPropagation();deleteCustomFont('${f.key}')" title="삭제">✕</span></button>`;
+  }).join('');
+  html+=`<button class="font-btn font-add-btn" onclick="addCustomFont()">＋ Google 폰트</button>`;
+  html+=`<label class="font-btn font-add-btn" style="cursor:pointer">＋ 파일 업로드<input type="file" accept=".ttf,.otf,.woff,.woff2" style="display:none" onchange="handleFontFileUpload(event)"/></label>`;
   wrap.innerHTML=html;
 }
 window.addCustomFont=function(){
   const name=prompt('폰트 버튼에 표시될 이름을 입력하세요\n예: 고운바탕');
   if(!name)return;
-  const google=prompt('Google Fonts 폰트명을 정확히 입력하세요\n(fonts.google.com 에서 폰트 페이지에 적힌 이름을 그대로 복사해서 넣는 걸 추천해요. 예: Gowun Batang)');
+  const google=prompt('Google Fonts 폰트명을 정확히 입력하세요\n(fonts.google.com 에서 폰트 페이지에 적힌 이름을 그대로 복사해서 넣는 걸 추천해요. 예: Gowun Batang)\n\n※ 눈누(noonnu.co.kr)에서 받은 폰트처럼 Google Fonts에 없는 폰트라면 취소를 누르고 "＋ 파일 업로드" 버튼을 이용해주세요.');
   if(!google)return;
   const key='custom_'+Date.now();
   customFonts.push({key,name,google});
@@ -4473,11 +4480,60 @@ window.addCustomFont=function(){
     if(document.fonts&&document.fonts.check){
       const loaded=document.fonts.check(`16px "${google}"`);
       if(!loaded){
-        alert(`'${google}' 폰트를 확인하지 못했어요.\n버튼은 추가됐지만 실제 화면엔 대체 글꼴이 보일 수 있어요.\nGoogle Fonts(fonts.google.com)에서 폰트명이 정확한지 다시 확인해주세요.`);
+        alert(`'${google}' 폰트를 확인하지 못했어요.\n버튼은 추가됐지만 실제 화면엔 대체 글꼴이 보일 수 있어요.\nGoogle Fonts에 없는 폰트(눈누 등에서 받은 파일)라면 이 폰트를 삭제하고 "＋ 파일 업로드"로 다시 추가해주세요.`);
       }
     }
   },1000);
 };
+window.handleFontFileUpload=function(e){
+  const file=e.target.files&&e.target.files[0];
+  if(!file){return;}
+  const MAX=4*1024*1024;
+  if(file.size>MAX){
+    alert('폰트 파일이 너무 커요(4MB 초과). 브라우저에 저장할 수 없어서 추가하지 못했어요.\n가능하면 .woff2 형식(용량이 훨씨 작아요)으로 준비해주세요.');
+    e.target.value='';
+    return;
+  }
+  const name=prompt('폰트 버튼에 표시될 이름을 입력하세요\n예: 온글잎 박다현체');
+  if(!name){e.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const dataUrl=ev.target.result;
+    const key='customfile_'+Date.now();
+    const family='cf_'+key;
+    registerFileFont(family,dataUrl).then(ok=>{
+      if(!ok){
+        alert('폰트 파일을 불러오지 못했어요. 파일 형식(ttf/otf/woff/woff2)을 확인해주세요.');
+        e.target.value='';
+        return;
+      }
+      customFonts.push({key,name,type:'file',family,dataUrl});
+      try{
+        localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
+      }catch(err){
+        customFonts.pop();
+        alert('폰트 파일이 너무 커서 저장 공간이 부족해요. 이 폰트는 새로고침하면 사라져요.\n더 작은 용량(.woff2 권장)의 파일을 써보시거나, 기존에 추가한 파일 폰트를 하나 삭제해주세요.');
+      }
+      renderFontButtons();
+      setFont(key,document.querySelector(`.font-btn[data-key="${key}"]`));
+      e.target.value='';
+    });
+  };
+  reader.onerror=function(){
+    alert('파일을 읽지 못했어요. 다시 시도해주세요.');
+    e.target.value='';
+  };
+  reader.readAsDataURL(file);
+};
+function registerFileFont(family,dataUrl){
+  try{
+    const fontFace=new FontFace(family,`url(${dataUrl})`);
+    document.fonts.add(fontFace);
+    return fontFace.load().then(()=>true).catch(()=>false);
+  }catch(err){
+    return Promise.resolve(false);
+  }
+}
 window.deleteCustomFont=function(key){
   customFonts=customFonts.filter(f=>f.key!==key);
   localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
@@ -4532,7 +4588,11 @@ window.setFont=function(fontKey,btn){
 };
 function applyFont(fontKey){
   const cf=customFonts.find(f=>f.key===fontKey);
-  if(cf){document.body.style.fontFamily=`'${cf.google}',${FONTS.system}`;return;}
+  if(cf){
+    const fam=cf.type==='file'?cf.family:cf.google;
+    document.body.style.fontFamily=`'${fam}',${FONTS.system}`;
+    return;
+  }
   document.body.style.fontFamily=FONTS[fontKey]||FONTS.system;
 }
 window.resetTheme=function(){
