@@ -13,6 +13,9 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon/android-chrome-192x192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon/android-chrome-512x512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700&display=swap" rel="stylesheet">
 <script>
 (function(){
   const saved=localStorage.getItem('planner_theme_v2');
@@ -953,24 +956,21 @@ body{opacity:0;transition:opacity .25s ease}
 .memo-bottle-text{
   position:absolute;z-index:1;
   border:none;outline:none;background:transparent;resize:none;
-  text-align:center;
-  font-family:inherit;font-size:24px;line-height:1.4;color:#38424f;
-  cursor:text;
+  text-align:left;
+  font-family:'Nanum Gothic',sans-serif;font-weight:700;
+  font-size:24px;line-height:1.4;color:#000;
+  cursor:text;padding:2px;
 }
-.memo-bottle-btn[data-color="blue"] .memo-bottle-text{left:26%;right:26%;top:37%;bottom:22%}
-.memo-bottle-btn[data-color="pink"] .memo-bottle-text{left:26%;right:26%;top:37%;bottom:22%;color:#7a3d54}
-.memo-bottle-btn[data-color="garden"] .memo-bottle-text,
-.memo-bottle-btn[data-color="linen"] .memo-bottle-text{
-  left:9%;right:9%;top:13%;
-  font-family:Georgia,'Times New Roman',serif;font-style:italic;
-  color:#3b3b30;text-align:left;font-size:22px;line-height:1.5;
+.memo-bottle-text:focus{outline:1px dashed rgba(0,0,0,.25);border-radius:4px}
+.memo-bottle-text::placeholder{color:#666;opacity:.6}
+.memo-text-handle{
+  position:absolute;z-index:3;width:26px;height:26px;border-radius:50%;
+  background:#fff;border:0.5px solid #ddd;box-shadow:0 1px 4px #0002;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:#999;cursor:move;opacity:.45;transition:opacity .15s;
+  touch-action:none;
 }
-.memo-bottle-btn[data-color="garden"] .memo-bottle-text{bottom:32%}
-.memo-bottle-btn[data-color="linen"] .memo-bottle-text{bottom:14%}
-.memo-bottle-text::placeholder{color:#8fa3b8;opacity:.75}
-.memo-bottle-btn[data-color="pink"] .memo-bottle-text::placeholder{color:#c091a8}
-.memo-bottle-btn[data-color="garden"] .memo-bottle-text::placeholder,
-.memo-bottle-btn[data-color="linen"] .memo-bottle-text::placeholder{color:#6b6b58;opacity:.6}
+.memo-text-handle:hover{opacity:1}
 </style>
 </head>
 <body>
@@ -1175,6 +1175,7 @@ body{opacity:0;transition:opacity .25s ease}
   <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('blue')">✕</div>
   <img class="memo-bottle-img" src="memo-bottle.png" alt="파란 메모병">
   <textarea class="memo-bottle-text" id="memoBottleText-blue" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('blue')" onblur="saveMemoBottle('blue')"></textarea>
+  <div class="memo-text-handle" data-target="blue" title="드래그로 글자 위치 옮기기">⠿</div>
 </div>
 
 <!-- 메모 물약병 (핑크) -->
@@ -1182,6 +1183,7 @@ body{opacity:0;transition:opacity .25s ease}
   <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('pink')">✕</div>
   <img class="memo-bottle-img" src="memo-bottle-pink.png" alt="핑크 메모병">
   <textarea class="memo-bottle-text" id="memoBottleText-pink" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('pink')" onblur="saveMemoBottle('pink')"></textarea>
+  <div class="memo-text-handle" data-target="pink" title="드래그로 글자 위치 옮기기">⠿</div>
 </div>
 
 <!-- 메모 노트 (정원 그림) -->
@@ -1189,6 +1191,7 @@ body{opacity:0;transition:opacity .25s ease}
   <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('garden')">✕</div>
   <img class="memo-bottle-img" src="memo-note-garden.png" alt="정원 그림 메모">
   <textarea class="memo-bottle-text" id="memoBottleText-garden" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('garden')" onblur="saveMemoBottle('garden')"></textarea>
+  <div class="memo-text-handle" data-target="garden" title="드래그로 글자 위치 옮기기">⠿</div>
 </div>
 
 <!-- 메모 노트 (인물 그림) -->
@@ -1196,6 +1199,7 @@ body{opacity:0;transition:opacity .25s ease}
   <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('linen')">✕</div>
   <img class="memo-bottle-img" src="memo-note-linen.png" alt="인물 그림 메모">
   <textarea class="memo-bottle-text" id="memoBottleText-linen" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('linen')" onblur="saveMemoBottle('linen')"></textarea>
+  <div class="memo-text-handle" data-target="linen" title="드래그로 글자 위치 옮기기">⠿</div>
 </div>
 
 <!-- 노트 버튼 -->
@@ -2008,7 +2012,7 @@ window.saveMemoBottle=async function(color){
     let dragging=false, moved=false, startX=0, startY=0, startLeft=0, startTop=0;
 
     btn.addEventListener('pointerdown',(e)=>{
-      if(e.target.classList.contains('memo-bottle-text')||e.target.classList.contains('memo-bottle-close'))return; // 텍스트 입력·닫기 버튼은 드래그 제외
+      if(e.target.classList.contains('memo-bottle-text')||e.target.classList.contains('memo-bottle-close')||e.target.classList.contains('memo-text-handle'))return; // 텍스트 입력·닫기 버튼·글자 위치 핸들은 병 드래그 제외
       dragging=true;moved=false;
       const rect=btn.getBoundingClientRect();
       startX=e.clientX;startY=e.clientY;
@@ -2062,6 +2066,66 @@ window.saveMemoBottle=async function(color){
     requestAnimationFrame(()=>btn.classList.add('show'));
   });
   updatePickerActiveState();
+})();
+
+// ── 메모 글자 위치: 핸들을 드래그해서 내가 원하는 자리에 두기 ──
+(function(){
+  const DEFAULTS={
+    blue:{left:99,top:151,width:182,height:168},
+    pink:{left:99,top:146,width:182,height:161},
+    garden:{left:34,top:63,width:312,height:265},
+    linen:{left:34,top:49,width:312,height:278}
+  };
+  Object.keys(DEFAULTS).forEach(color=>{
+    const ta=document.getElementById('memoBottleText-'+color);
+    const handle=document.querySelector('.memo-text-handle[data-target="'+color+'"]');
+    const container=document.getElementById('memoBottleBtn-'+color);
+    if(!ta||!handle||!container)return;
+    const KEY='memoTextPos_'+color;
+    const pos=Object.assign({},DEFAULTS[color]);
+    try{
+      const raw=localStorage.getItem(KEY);
+      if(raw){
+        const p=JSON.parse(raw);
+        if(typeof p.left==='number'&&typeof p.top==='number'){pos.left=p.left;pos.top=p.top;}
+      }
+    }catch(e){}
+    function apply(){
+      ta.style.left=pos.left+'px';
+      ta.style.top=pos.top+'px';
+      ta.style.width=pos.width+'px';
+      ta.style.height=pos.height+'px';
+      handle.style.left=(pos.left-13)+'px';
+      handle.style.top=(pos.top-13)+'px';
+    }
+    apply();
+
+    let dragging=false,startX=0,startY=0,startLeft=0,startTop=0;
+    handle.addEventListener('pointerdown',(e)=>{
+      e.stopPropagation();e.preventDefault();
+      dragging=true;
+      startX=e.clientX;startY=e.clientY;
+      startLeft=pos.left;startTop=pos.top;
+      if(handle.setPointerCapture){try{handle.setPointerCapture(e.pointerId);}catch(err){}}
+    });
+    handle.addEventListener('pointermove',(e)=>{
+      if(!dragging)return;
+      const dx=e.clientX-startX, dy=e.clientY-startY;
+      const cw=container.offsetWidth||380, ch=container.offsetHeight||380;
+      let newLeft=startLeft+dx, newTop=startTop+dy;
+      newLeft=Math.min(Math.max(0,newLeft),Math.max(0,cw-pos.width));
+      newTop=Math.min(Math.max(0,newTop),Math.max(0,ch-pos.height));
+      pos.left=newLeft;pos.top=newTop;
+      apply();
+    });
+    function endDrag(){
+      if(!dragging)return;
+      dragging=false;
+      try{localStorage.setItem(KEY,JSON.stringify({left:pos.left,top:pos.top}));}catch(e){}
+    }
+    handle.addEventListener('pointerup',endDrag);
+    handle.addEventListener('pointercancel',endDrag);
+  });
 })();
 
 // ── Auth — 깜빡임 방지 ──
