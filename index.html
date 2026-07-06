@@ -435,6 +435,10 @@ body{opacity:0;transition:opacity .25s ease}
 .tag-detail-item{display:flex;justify-content:space-between;gap:8px}
 .tag-detail-item span:first-child{color:#888;flex-shrink:0}
 .tag-detail-item span:last-child{font-weight:500;color:#1558CC}
+.stats-grand-total{text-align:center;font-size:12px;color:#666;background:#f4f4f4;border-radius:10px;padding:8px 0;margin-bottom:14px}
+.stats-grand-total b{color:var(--accent);font-size:14px}
+.stats-section-title{font-size:12.5px;font-weight:700;color:#333;margin:4px 0 10px;display:flex;align-items:center;gap:5px}
+.stats-section-divider{border-top:1px dashed #ddd;margin:18px 0}
 /* 고정비 */
 .fixed-section-title{font-size:12px;font-weight:700;color:#555;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid #eee}
 .fixed-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
@@ -450,6 +454,14 @@ body{opacity:0;transition:opacity .25s ease}
 .fixed-add-btn:hover{border-color:var(--accent);color:var(--accent)}
 .fixed-del{color:#ddd;background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px}
 .fixed-del:hover{color:#e66}
+.fixed-card{border:1.5px solid #eee;border-radius:10px;padding:9px 10px;margin-bottom:8px;background:#fafbff}
+.fixed-card-row1{display:flex;gap:6px;align-items:center;margin-bottom:7px}
+.fixed-card-row1 input{flex:1;min-width:0;font-size:13px;padding:6px 8px;border:0.5px solid #ddd;border-radius:6px;background:#fff;font-family:inherit;color:#222}
+.fixed-card-row2{display:flex;gap:6px;align-items:center}
+.fixed-card-row2 .fixed-amount-input{flex:1;min-width:0;font-size:12px;padding:6px 8px;border:0.5px solid #ddd;border-radius:6px;background:#fff;text-align:right;font-family:inherit}
+.fixed-card-row2 .fixed-day-wrap{display:flex;align-items:center;gap:3px;font-size:11px;color:#999;flex-shrink:0}
+.fixed-day-input{width:38px;font-size:12px;padding:6px 2px;border:0.5px solid #ddd;border-radius:6px;background:#fff;text-align:center;font-family:inherit}
+.fixed-method-select{font-size:12px;padding:6px 4px;border:0.5px solid #ddd;border-radius:6px;background:#fff;flex-shrink:0;font-family:inherit}
 #mealPlanNote:empty:before{content:attr(data-ph);color:#ccc;pointer-events:none}
 
 /* 왼쪽 */
@@ -2340,6 +2352,10 @@ onAuthStateChanged(auth,async user=>{
     await loadAllData();
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
     renderRoutineList();checkRoutineReminders();
+    runFixedCostAutoRecord();
+    if(!window._fixedCostAutoTimer){
+      window._fixedCostAutoTimer=setInterval(runFixedCostAutoRecord,30*60*1000); // 30분마다 재확인 (자정 넘겨도 놓치지 않게)
+    }
     positionNoteButtons();
     initMissionTracker();
     // 모든 준비 완료 후 부드럽게 표시
@@ -2429,6 +2445,18 @@ async function loadAllData(){
   fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
   if(!fixedCosts.fixed)fixedCosts.fixed=[];
   if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
+  // 기존 항목 중 id/day/method 없는 경우 채워넣기 (자동기록 기능 추가 이전 데이터 호환)
+  let fcNeedsSave=false;
+  ['fixed','semifixed'].forEach(type=>{
+    fixedCosts[type].forEach((r,i)=>{
+      if(!r.id){r.id='fx_'+Date.now()+'_'+type+'_'+i;fcNeedsSave=true;}
+      if(r.day===undefined){r.day='';fcNeedsSave=true;}
+      if(r.method===undefined){r.method='card';fcNeedsSave=true;}
+    });
+  });
+  if(fcNeedsSave){
+    try{await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);}catch(e){console.error('fixedCosts 마이그레이션 저장 실패:',e);}
+  }
   if(ctS.exists()){
     const ct=ctS.data();
     if(ct.out)OUT_TAGS=ct.out;
@@ -4031,33 +4059,10 @@ function getTagColor(tag){
   let hash=0;for(let i=0;i<tag.length;i++)hash=(hash*31+tag.charCodeAt(i))%EXTRA_PASTEL.length;
   return EXTRA_PASTEL[Math.abs(hash)];
 }
-function renderMoneyStats(){
-  const el=document.getElementById('money-stats-content');
-  const y=statsCur.getFullYear(),m=statsCur.getMonth()+1;
-  const mKey=`${y}-${m}`;
-  // 해당 월 데이터 집계
-  const tagMap={};const tagItems={};let totalOut=0;
-  let cardTotal=0,cashTotal=0;
-  Object.keys(moneyData).sort().forEach(k=>{
-    if(k.startsWith(mKey+'-')){
-      const day=k.split('-')[2];
-      moneyData[k].forEach(i=>{
-        if(i.type!=='out')return;
-        const t=i.tag||'(미분류)';
-        tagMap[t]=(tagMap[t]||0)+i.amount;
-        if(!tagItems[t])tagItems[t]=[];
-        tagItems[t].push({day,memo:i.name||'',amount:i.amount});
-        totalOut+=i.amount;
-        if(i.payMethod==='cash')cashTotal+=i.amount;
-        else cardTotal+=i.amount; // payMethod 미지정 과거 데이터는 카드로 집계
-      });
-    }
-  });
-  const entries=Object.entries(tagMap).sort((a,b)=>b[1]-a[1]);
-  // SVG 파이차트 (conic-gradient 방식)
+function buildPieSection(entries,tagItems,total,idPrefix,m){
   let conicParts=[];let acc=0;
   entries.forEach(([tag,amt])=>{
-    const pct=totalOut>0?amt/totalOut*100:0;
+    const pct=total>0?amt/total*100:0;
     const color=getTagColor(tag);
     conicParts.push(`${color} ${acc.toFixed(1)}% ${(acc+pct).toFixed(1)}%`);
     acc+=pct;
@@ -4065,6 +4070,64 @@ function renderMoneyStats(){
   const pieStyle=entries.length>0
     ?`conic-gradient(${conicParts.join(',')})`
     :'conic-gradient(#eee 0% 100%)';
+  return `
+    <div class="pie-wrap">
+      <div style="width:150px;height:150px;border-radius:50%;background:${pieStyle}"></div>
+    </div>
+    <div class="pie-total">소계 ${total.toLocaleString()}원</div>
+    <div class="pie-legend">
+      ${entries.length===0?'<div style="text-align:center;color:#ccc;font-size:12px;padding:16px 0">해당 내역이 없어요</div>':
+        entries.map(([tag,amt],idx)=>{
+          const items=tagItems[tag]||[];
+          const detailRows=items.map(it=>`<div class="tag-detail-item"><span>${m}월 ${it.day}일${it.memo?' · '+it.memo:''}</span><span>${it.amount.toLocaleString()}원</span></div>`).join('');
+          return `
+          <div class="pie-legend-row" onclick="toggleTagDetail('${idPrefix}-${idx}',this)">
+            <div style="display:flex;align-items:center">
+              <div class="pie-legend-dot" style="background:${getTagColor(tag)}"></div>
+              <span>${escapeHtml(tag)}</span>
+            </div>
+            <div style="display:flex;gap:8px;color:#666;align-items:center">
+              <span>${total>0?Math.round(amt/total*100):0}%</span>
+              <span style="font-weight:500">${amt.toLocaleString()}원</span>
+              <span style="font-size:10px;color:#bbb" id="td-arr-${idPrefix}-${idx}">▾</span>
+            </div>
+          </div>
+          <div class="tag-detail-panel" id="${idPrefix}-${idx}">${detailRows}</div>`;
+        }).join('')}
+    </div>`;
+}
+function renderMoneyStats(){
+  const el=document.getElementById('money-stats-content');
+  const y=statsCur.getFullYear(),m=statsCur.getMonth()+1;
+  const mKey=`${y}-${m}`;
+  // 해당 월 데이터 집계: 고정비(태그='고정비') / 고정비 제외로 나눠서 집계
+  const tagMapNF={},tagItemsNF={};let totalNF=0;
+  const nameMapFX={},nameItemsFX={};let totalFX=0;
+  let cardTotalAll=0,cashTotalAll=0;
+  Object.keys(moneyData).sort().forEach(k=>{
+    if(!k.startsWith(mKey+'-'))return;
+    const day=k.split('-')[2];
+    moneyData[k].forEach(i=>{
+      if(i.type!=='out')return;
+      const t=i.tag||'(미분류)';
+      if(i.payMethod==='cash')cashTotalAll+=i.amount;else cardTotalAll+=i.amount;
+      if(t==='고정비'){
+        const nk=i.name||'(이름없음)';
+        nameMapFX[nk]=(nameMapFX[nk]||0)+i.amount;
+        if(!nameItemsFX[nk])nameItemsFX[nk]=[];
+        nameItemsFX[nk].push({day,memo:'',amount:i.amount});
+        totalFX+=i.amount;
+      }else{
+        tagMapNF[t]=(tagMapNF[t]||0)+i.amount;
+        if(!tagItemsNF[t])tagItemsNF[t]=[];
+        tagItemsNF[t].push({day,memo:i.name||'',amount:i.amount});
+        totalNF+=i.amount;
+      }
+    });
+  });
+  const totalAll=totalNF+totalFX;
+  const entriesNF=Object.entries(tagMapNF).sort((a,b)=>b[1]-a[1]);
+  const entriesFX=Object.entries(nameMapFX).sort((a,b)=>b[1]-a[1]);
   el.innerHTML=`
     <div class="stats-month-nav">
       <button onclick="statsMove(-1)">‹</button>
@@ -4074,37 +4137,23 @@ function renderMoneyStats(){
     <div class="pm-summary">
       <div class="pm-summary-box card">
         <div class="pm-label">💳 카드로 낼 돈</div>
-        <div class="pm-amt">${cardTotal.toLocaleString()}원</div>
+        <div class="pm-amt">${cardTotalAll.toLocaleString()}원</div>
       </div>
       <div class="pm-summary-box cash">
         <div class="pm-label">💵 현금 지출</div>
-        <div class="pm-amt">${cashTotal.toLocaleString()}원</div>
+        <div class="pm-amt">${cashTotalAll.toLocaleString()}원</div>
       </div>
     </div>
-    <div class="pie-wrap">
-      <div style="width:150px;height:150px;border-radius:50%;background:${pieStyle}"></div>
-    </div>
-    <div class="pie-total">총 지출 ${totalOut.toLocaleString()}원</div>
-    <div class="pie-legend">
-      ${entries.length===0?'<div style="text-align:center;color:#ccc;font-size:12px;padding:16px 0">이달 지출 내역이 없어요</div>':
-        entries.map(([tag,amt],idx)=>{
-          const items=tagItems[tag]||[];
-          const detailRows=items.map(it=>`<div class="tag-detail-item"><span>${m}월 ${it.day}일${it.memo?' · '+it.memo:''}</span><span>${it.amount.toLocaleString()}원</span></div>`).join('');
-          return `
-          <div class="pie-legend-row" onclick="toggleTagDetail('td-${idx}',this)">
-            <div style="display:flex;align-items:center">
-              <div class="pie-legend-dot" style="background:${getTagColor(tag)}"></div>
-              <span>${tag}</span>
-            </div>
-            <div style="display:flex;gap:8px;color:#666;align-items:center">
-              <span>${totalOut>0?Math.round(amt/totalOut*100):0}%</span>
-              <span style="font-weight:500">${amt.toLocaleString()}원</span>
-              <span style="font-size:10px;color:#bbb" id="td-arr-${idx}">▾</span>
-            </div>
-          </div>
-          <div class="tag-detail-panel" id="td-${idx}">${detailRows}</div>`;
-        }).join('')}
-    </div>`;
+    <div class="stats-grand-total">이번 달 총 지출 (고정비 포함) <b>${totalAll.toLocaleString()}원</b></div>
+
+    <div class="stats-section-title">🧾 고정비 제외 지출</div>
+    ${buildPieSection(entriesNF,tagItemsNF,totalNF,'nf',m)}
+
+    <div class="stats-section-divider"></div>
+
+    <div class="stats-section-title">📌 고정비 지출</div>
+    ${buildPieSection(entriesFX,nameItemsFX,totalFX,'fx',m)}
+  `;
 }
 window.statsMove=function(dir){
   statsCur=new Date(statsCur.getFullYear(),statsCur.getMonth()+dir,1);
@@ -4295,22 +4344,31 @@ window.savingDragEnd=function(e){
 // ── 고정비 ──
 function renderFixedCosts(){
   const el=document.getElementById('fixed-costs-content');
-  const makeTable=(type,label)=>{
+  const makeList=(type,label)=>{
     const rows=fixedCosts[type]||[];
     return `
       <div class="fixed-section-title">${label}</div>
-      <table class="fixed-table">
-        <tr><th>항목</th><th>금액</th><th></th></tr>
-        ${rows.map((r,i)=>`
-          <tr>
-            <td><input class="fixed-input" value="${r.name}" placeholder="항목명"
-              onblur="updateFixedRow('${type}',${i},'name',this.value)"/></td>
-            <td><input class="fixed-input" value="${r.amount}" placeholder="0" type="text"
-              style="text-align:right"
-              onblur="updateFixedRow('${type}',${i},'amount',this.value)"/></td>
-            <td><button class="fixed-del" onclick="deleteFixedRow('${type}',${i})">✕</button></td>
-          </tr>`).join('')}
-      </table>
+      ${rows.length===0?'<div style="text-align:center;color:#ccc;font-size:11px;padding:8px 0">아직 등록된 항목이 없어요</div>':''}
+      ${rows.map((r,i)=>`
+        <div class="fixed-card">
+          <div class="fixed-card-row1">
+            <input value="${escapeHtml(r.name||'')}" placeholder="항목명 (예: 넷플릭스)"
+              onblur="updateFixedRow('${type}',${i},'name',this.value)"/>
+            <button class="fixed-del" onclick="deleteFixedRow('${type}',${i})">✕</button>
+          </div>
+          <div class="fixed-card-row2">
+            <input class="fixed-amount-input" value="${r.amount||''}" placeholder="금액"
+              onblur="updateFixedRow('${type}',${i},'amount',this.value)"/>
+            <span class="fixed-day-wrap">매월
+              <input class="fixed-day-input" type="number" min="1" max="31" value="${r.day||''}" placeholder="일"
+                onblur="updateFixedRow('${type}',${i},'day',this.value)"/>일
+            </span>
+            <select class="fixed-method-select" onchange="updateFixedRow('${type}',${i},'method',this.value)">
+              <option value="card"${(r.method||'card')==='card'?' selected':''}>💳 카드</option>
+              <option value="cash"${r.method==='cash'?' selected':''}>💵 현금</option>
+            </select>
+          </div>
+        </div>`).join('')}
       <button class="fixed-add-btn" onclick="addFixedRow('${type}')">＋ 추가</button>`;
   };
   const fixed=fixedCosts.fixed||[];
@@ -4318,9 +4376,12 @@ function renderFixedCosts(){
   const fTotal=fixed.reduce((s,r)=>s+parseAmount(r.amount),0);
   const sTotal=semi.reduce((s,r)=>s+parseAmount(r.amount),0);
   el.innerHTML=`
-    ${makeTable('fixed','📌 고정비')}
+    <div style="font-size:11px;color:#999;background:#f4f7ff;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.6">
+      💡 "매월 며칠"을 설정해두면, 그 날짜가 되었을 때 자동으로 가계부에 지출로 기록돼요.
+    </div>
+    ${makeList('fixed','📌 고정비')}
     <div style="font-size:11px;color:#888;text-align:right;margin:2px 0 10px">합계 ${fTotal.toLocaleString()}원</div>
-    ${makeTable('semifixed','📎 반고정비')}
+    ${makeList('semifixed','📎 반고정비')}
     <div style="font-size:11px;color:#888;text-align:right;margin:2px 0 10px">합계 ${sTotal.toLocaleString()}원</div>
     <div style="font-size:12px;font-weight:600;text-align:right;color:var(--accent);padding:6px 0;border-top:1px solid #eee">
       월 고정지출 합계 ${(fTotal+sTotal).toLocaleString()}원
@@ -4328,12 +4389,12 @@ function renderFixedCosts(){
 }
 function parseAmount(v){const n=parseInt(String(v).replace(/,/g,''));return isNaN(n)?0:n;}
 window.addFixedRow=function(type){
-  fixedCosts[type].push({name:'',amount:''});
+  fixedCosts[type].push({id:'fx_'+Date.now()+'_'+type+'_'+fixedCosts[type].length,name:'',amount:'',day:'',method:'card'});
   renderFixedCosts();
   // 포커스 마지막 행 이름 칸
   setTimeout(()=>{
-    const inputs=document.querySelectorAll(`#fixed-costs-content .fixed-input`);
-    if(inputs.length)inputs[inputs.length-2].focus();
+    const inputs=document.querySelectorAll(`#fixed-costs-content .fixed-card-row1 input`);
+    if(inputs.length)inputs[inputs.length-1].focus();
   },50);
 };
 window.updateFixedRow=async function(type,idx,field,val){
@@ -4347,6 +4408,36 @@ window.deleteFixedRow=async function(type,idx){
   await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);
   renderFixedCosts();
 };
+
+// ── 고정비 자동 기록: 설정해둔 "매월 며칠"이 오늘이면 가계부에 자동으로 기록 ──
+async function runFixedCostAutoRecord(){
+  if(!currentUser)return;
+  const now=new Date();
+  const todayDay=now.getDate();
+  const key=fmt(now);
+  const allRows=[...(fixedCosts.fixed||[]),...(fixedCosts.semifixed||[])];
+  let touched=false;
+  for(const row of allRows){
+    const d=parseInt(row.day);
+    if(!d||d!==todayDay)continue;
+    const amt=parseAmount(row.amount);
+    if(!amt||!row.id)continue;
+    if(!moneyData[key])moneyData[key]=[];
+    const already=moneyData[key].some(it=>it.fixedId===row.id);
+    if(already)continue;
+    moneyData[key].push({
+      name:row.name||'고정비',type:'out',amount:amt,tag:'고정비',
+      payMethod:row.method||'card',isSaving:false,fixedId:row.id,auto:true
+    });
+    await saveData('money',key,{items:moneyData[key]});
+    touched=true;
+  }
+  if(touched){
+    renderMoney();
+    if(leftMode==='money-cal')renderMoneyCal();
+    if(document.getElementById('mtab-stats')?.classList.contains('active'))renderMoneyStats();
+  }
+}
 
 // ── 식단 ──
 function renderMeal(){
