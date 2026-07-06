@@ -993,21 +993,23 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
 /* ── 루틴 (Routine) ── */
 .routine-toggle{
-  position:fixed;left:0;top:62%;z-index:59;
+  position:fixed;right:0;top:calc(62% - 74px);z-index:59;
   width:30px;height:64px;
   background:rgba(255,255,255,.85);
-  border:0.5px solid #ddd;border-left:none;
-  border-radius:0 12px 12px 0;
+  border:0.5px solid #ddd;border-right:none;
+  border-radius:12px 0 0 12px;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;box-shadow:2px 2px 8px #0001;
+  cursor:grab;box-shadow:-2px 2px 8px #0001;
   writing-mode:vertical-rl;letter-spacing:2px;
   font-size:11px;color:#888;opacity:.55;
-  transition:opacity .2s,width .2s,background .2s;
+  user-select:none;touch-action:none;
+  transition:opacity .2s,background .2s;
 }
-.routine-toggle:hover{opacity:1;width:34px;background:#fff}
+.routine-toggle:hover{opacity:1;background:#fff}
+.routine-toggle.routine-dragging{cursor:grabbing;opacity:1;background:#fff;transition:none}
 .routine-toggle.on{color:var(--accent);opacity:.85}
 .routine-panel{
-  position:fixed;left:34px;top:62%;transform:translateY(-50%);z-index:59;
+  position:fixed;z-index:59;
   display:none;flex-direction:column;gap:8px;
   background:rgba(255,255,255,.97);border:0.5px solid #eee;border-radius:16px;
   padding:14px;width:270px;max-height:70vh;overflow-y:auto;
@@ -1274,7 +1276,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 </div>
 
 <!-- 루틴 탭 열기 손잡이 -->
-<div class="routine-toggle" id="routineToggle" onclick="toggleRoutinePanel()" title="루틴 열기">ROUTINE</div>
+<div class="routine-toggle" id="routineToggle" title="루틴 열기">ROUTINE</div>
 
 <!-- 루틴 패널: 저장된 루틴 목록 + 새 루틴 만들기 -->
 <div class="routine-panel" id="routinePanel">
@@ -2566,8 +2568,103 @@ window.toggleRoutinePanel=function(){
   const p=document.getElementById('routinePanel');
   const on=p.classList.toggle('show');
   document.getElementById('routineToggle').classList.toggle('on',on);
-  if(on)renderRoutineList();
+  if(on){positionRoutinePanel();renderRoutineList();}
 };
+
+// 토글 버튼 현재 위치 기준으로 패널을 화면 안에 들어오게 배치
+function positionRoutinePanel(){
+  const btn=document.getElementById('routineToggle');
+  const p=document.getElementById('routinePanel');
+  const r=btn.getBoundingClientRect();
+  const pw=270,gap=6;
+  // 버튼이 화면 오른쪽 절반에 있으면 패널은 왼쪽으로, 아니면 오른쪽으로
+  const openLeft=(r.left+r.width/2)>window.innerWidth/2;
+  let left=openLeft?(r.left-gap-pw):(r.right+gap);
+  left=Math.max(6,Math.min(left,window.innerWidth-pw-6));
+  let top=r.top;
+  const maxTop=window.innerHeight-Math.min(window.innerHeight*0.7,400)-6;
+  top=Math.max(6,Math.min(top,maxTop));
+  p.style.left=left+'px';
+  p.style.top=top+'px';
+  p.style.right='auto';
+  p.style.bottom='auto';
+}
+window.addEventListener('resize',()=>{
+  const p=document.getElementById('routinePanel');
+  if(p&&p.classList.contains('show'))positionRoutinePanel();
+});
+
+// ── 루틴 버튼 드래그 이동 (자유 위치 조정) ──
+(function(){
+  const POS_KEY='routineTogglePos';
+  const btn=document.getElementById('routineToggle');
+  if(!btn)return;
+  let dragging=false, moved=false, startX=0, startY=0, startLeft=0, startTop=0;
+
+  function clampNum(v,min,max){return Math.min(max,Math.max(min,v));}
+  function applyPos(leftPct,topPct){
+    btn.style.right='auto';
+    btn.style.left=leftPct+'%';
+    btn.style.top=topPct+'%';
+  }
+  function savePos(leftPct,topPct){
+    try{localStorage.setItem(POS_KEY,JSON.stringify({left:leftPct,top:topPct}));}catch(e){}
+  }
+  function loadPos(){
+    try{
+      const raw=localStorage.getItem(POS_KEY);
+      if(raw){
+        const p=JSON.parse(raw);
+        if(typeof p.left==='number'&&typeof p.top==='number')applyPos(p.left,p.top);
+      }
+    }catch(e){}
+  }
+
+  btn.addEventListener('pointerdown',(e)=>{
+    dragging=true;moved=false;
+    const rect=btn.getBoundingClientRect();
+    startX=e.clientX;startY=e.clientY;
+    startLeft=rect.left;startTop=rect.top;
+    btn.classList.add('routine-dragging');
+    if(btn.setPointerCapture){try{btn.setPointerCapture(e.pointerId);}catch(err){}}
+  });
+  btn.addEventListener('pointermove',(e)=>{
+    if(!dragging)return;
+    const dx=e.clientX-startX, dy=e.clientY-startY;
+    if(Math.abs(dx)>4||Math.abs(dy)>4)moved=true;
+    if(!moved)return;
+    const w=btn.offsetWidth,h=btn.offsetHeight;
+    const newLeft=clampNum(startLeft+dx,0,window.innerWidth-w);
+    const newTop=clampNum(startTop+dy,0,window.innerHeight-h);
+    applyPos(newLeft/window.innerWidth*100, newTop/window.innerHeight*100);
+  });
+  function endDrag(){
+    if(!dragging)return;
+    dragging=false;
+    btn.classList.remove('routine-dragging');
+    if(moved){
+      const rect=btn.getBoundingClientRect();
+      savePos(rect.left/window.innerWidth*100, rect.top/window.innerHeight*100);
+    }
+  }
+  btn.addEventListener('pointerup',endDrag);
+  btn.addEventListener('pointercancel',endDrag);
+  btn.addEventListener('click',()=>{
+    if(moved){moved=false;return;} // 드래그 직후 클릭은 무시
+    window.toggleRoutinePanel();
+  });
+  window.addEventListener('resize',()=>{
+    const rect=btn.getBoundingClientRect();
+    const w=btn.offsetWidth,h=btn.offsetHeight;
+    const newLeft=clampNum(rect.left,0,window.innerWidth-w);
+    const newTop=clampNum(rect.top,0,window.innerHeight-h);
+    if(newLeft!==rect.left||newTop!==rect.top){
+      applyPos(newLeft/window.innerWidth*100, newTop/window.innerHeight*100);
+    }
+  });
+
+  loadPos();
+})();
 
 function renderRoutineList(){
   const wrap=document.getElementById('routineListWrap');
