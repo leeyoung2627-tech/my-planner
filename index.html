@@ -2570,10 +2570,10 @@ window.toggleRoutinePanel=function(){
   const p=document.getElementById('routinePanel');
   const on=p.classList.toggle('show');
   document.getElementById('routineToggle').classList.toggle('on',on);
-  if(on){positionRoutinePanel();renderRoutineList();}
+  if(on){renderRoutineList();positionRoutinePanel();}
 };
 
-// 토글 버튼 현재 위치 기준으로 패널을 화면 안에 들어오게 배치
+// 토글 버튼을 세로 중앙에 두고, 패널이 화면 안에서 위아래로 최대한 펼쳐지게 배치
 function positionRoutinePanel(){
   const btn=document.getElementById('routineToggle');
   const p=document.getElementById('routinePanel');
@@ -2583,13 +2583,20 @@ function positionRoutinePanel(){
   const openLeft=(r.left+r.width/2)>window.innerWidth/2;
   let left=openLeft?(r.left-gap-pw):(r.right+gap);
   left=Math.max(6,Math.min(left,window.innerWidth-pw-6));
-  let top=r.top;
-  const maxTop=window.innerHeight-Math.min(window.innerHeight*0.7,400)-6;
-  top=Math.max(6,Math.min(top,maxTop));
   p.style.left=left+'px';
-  p.style.top=top+'px';
   p.style.right='auto';
   p.style.bottom='auto';
+  // 실제 렌더된 높이를 기준으로 잡아야 정확하므로, 화면에 그려진 다음 프레임에 위치를 보정
+  const maxH=window.innerHeight-12;
+  p.style.maxHeight=maxH+'px';
+  p.style.top='6px'; // 측정 전 임시 위치 (화면 밖으로 안 튀어나가게)
+  requestAnimationFrame(()=>{
+    const btnCenter=r.top+r.height/2;
+    const ph=Math.min(p.offsetHeight,maxH);
+    let top=btnCenter-ph/2;
+    top=Math.max(6,Math.min(top,window.innerHeight-ph-6));
+    p.style.top=top+'px';
+  });
 }
 window.addEventListener('resize',()=>{
   const p=document.getElementById('routinePanel');
