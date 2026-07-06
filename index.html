@@ -1028,6 +1028,10 @@ body.memo-edit-on .memo-text-handle{display:flex}
 .routine-card-btns{display:flex;gap:5px;margin-top:2px}
 .routine-mini-btn{flex:1;padding:5px 0;font-size:11px;border-radius:8px;border:0.5px solid #ddd;background:#fafafa;color:#666;cursor:pointer}
 .routine-mini-btn.start{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.routine-card{cursor:grab}
+.routine-card.dragging{opacity:.4}
+.routine-card.drag-over{outline:2px dashed var(--accent);background:#f6f5ff}
+.routine-card-grip{color:#ccc;font-size:13px;cursor:grab;flex-shrink:0}
 .routine-add-btn{margin-top:2px;padding:8px 0;border-radius:10px;border:1px dashed var(--accent);color:var(--accent);background:#fff;font-size:12px;cursor:pointer;font-weight:600}
 .routine-step-card{border:1.5px solid #eee;border-radius:10px;padding:9px 10px;margin-bottom:8px;display:flex;flex-direction:column;gap:7px;background:#fafbff}
 .routine-step-card-top{display:flex;align-items:center;gap:6px}
@@ -2603,8 +2607,9 @@ function renderRoutineList(){
   wrap.innerHTML=routines.map((r,idx)=>{
     const streak=r.streak||0;
     const doneT=r.lastDoneDate===doneToday;
-    return `<div class="routine-card">
+    return `<div class="routine-card" draggable="true" data-routine-id="${r.id}">
       <div class="routine-card-top">
+        <span class="routine-card-grip" title="드래그해서 순서 변경">⠿</span>
         <span class="routine-card-icon">${r.icon||'🏁'}</span>
         <span class="routine-card-name">${escapeHtml(r.name)}</span>
         <span class="routine-card-type">${routineTypeLabel(r.type)}</span>
@@ -2616,26 +2621,55 @@ function renderRoutineList(){
         <button class="routine-mini-btn" onclick="openRoutineEditModal('${r.id}')">수정</button>
         <button class="routine-mini-btn" onclick="deleteRoutine('${r.id}')">삭제</button>
       </div>
-      <div class="routine-card-btns">
-        <button class="routine-mini-btn" ${idx===0?'disabled style="opacity:.35;cursor:default"':''} onclick="moveRoutineOrder('${r.id}',-1)">↑ 위로</button>
-        <button class="routine-mini-btn" ${idx===routines.length-1?'disabled style="opacity:.35;cursor:default"':''} onclick="moveRoutineOrder('${r.id}',1)">↓ 아래로</button>
-      </div>
     </div>`;
   }).join('');
+  bindRoutineDrag();
 }
 
-window.moveRoutineOrder=async function(id,dir){
-  const idx=routines.findIndex(r=>r.id===id);
-  const j=idx+dir;
-  if(idx<0||j<0||j>=routines.length)return;
-  [routines[idx],routines[j]]=[routines[j],routines[idx]];
-  routines.forEach((r,i)=>{r.order=i;});
-  renderRoutineList();
-  await Promise.all(routines.map(r=>saveData('routines',r.id,{
-    name:r.name,icon:r.icon,type:r.type,steps:r.steps,order:r.order,
-    streak:r.streak||0,lastDoneDate:r.lastDoneDate||null
-  })));
-};
+function bindRoutineDrag(){
+  const container=document.getElementById('routineListWrap');
+  if(!container)return;
+  const cards=container.querySelectorAll('[data-routine-id]');
+  let dragSrcId=null;
+  cards.forEach(card=>{
+    card.addEventListener('dragstart',e=>{
+      dragSrcId=card.dataset.routineId;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',dragSrcId);
+    });
+    card.addEventListener('dragend',()=>{
+      card.classList.remove('dragging');
+      container.querySelectorAll('[data-routine-id]').forEach(c=>c.classList.remove('drag-over'));
+    });
+    card.addEventListener('dragover',e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      container.querySelectorAll('[data-routine-id]').forEach(c=>c.classList.remove('drag-over'));
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave',()=>{
+      card.classList.remove('drag-over');
+    });
+    card.addEventListener('drop',async e=>{
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      const targetId=card.dataset.routineId;
+      if(!dragSrcId||dragSrcId===targetId)return;
+      const fromIdx=routines.findIndex(r=>r.id===dragSrcId);
+      const toIdx=routines.findIndex(r=>r.id===targetId);
+      if(fromIdx<0||toIdx<0)return;
+      const [moved]=routines.splice(fromIdx,1);
+      routines.splice(toIdx,0,moved);
+      routines.forEach((r,i)=>{r.order=i;});
+      renderRoutineList();
+      await Promise.all(routines.map(r=>saveData('routines',r.id,{
+        name:r.name,icon:r.icon,type:r.type,steps:r.steps,order:r.order,
+        streak:r.streak||0,lastDoneDate:r.lastDoneDate||null
+      })));
+    });
+  });
+}
 
 // ── 루틴 만들기/수정 모달 ──
 window.openRoutineCreateModal=function(){
