@@ -999,14 +999,12 @@ body.memo-edit-on .memo-text-handle{display:flex}
   border:0.5px solid #ddd;border-right:none;
   border-radius:12px 0 0 12px;
   display:flex;align-items:center;justify-content:center;
-  cursor:grab;box-shadow:-2px 2px 8px #0001;
+  cursor:pointer;box-shadow:-2px 2px 8px #0001;
   writing-mode:vertical-rl;letter-spacing:2px;
   font-size:11px;color:#888;opacity:.55;
-  user-select:none;touch-action:none;
-  transition:opacity .2s,background .2s;
+  transition:opacity .2s,width .2s,background .2s;
 }
-.routine-toggle:hover{opacity:1;background:#fff}
-.routine-toggle.routine-dragging{cursor:grabbing;opacity:1;background:#fff;transition:none}
+.routine-toggle:hover{opacity:1;width:34px;background:#fff}
 .routine-toggle.on{color:var(--accent);opacity:.85}
 .routine-panel{
   position:fixed;z-index:59;
@@ -1276,7 +1274,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 </div>
 
 <!-- 루틴 탭 열기 손잡이 -->
-<div class="routine-toggle" id="routineToggle" title="루틴 열기">ROUTINE</div>
+<div class="routine-toggle" id="routineToggle" onclick="toggleRoutinePanel()" title="루틴 열기">ROUTINE</div>
 
 <!-- 루틴 패널: 저장된 루틴 목록 + 새 루틴 만들기 -->
 <div class="routine-panel" id="routinePanel">
@@ -2594,78 +2592,6 @@ window.addEventListener('resize',()=>{
   if(p&&p.classList.contains('show'))positionRoutinePanel();
 });
 
-// ── 루틴 버튼 드래그 이동 (자유 위치 조정) ──
-(function(){
-  const POS_KEY='routineTogglePos';
-  const btn=document.getElementById('routineToggle');
-  if(!btn)return;
-  let dragging=false, moved=false, startX=0, startY=0, startLeft=0, startTop=0;
-
-  function clampNum(v,min,max){return Math.min(max,Math.max(min,v));}
-  function applyPos(leftPct,topPct){
-    btn.style.right='auto';
-    btn.style.left=leftPct+'%';
-    btn.style.top=topPct+'%';
-  }
-  function savePos(leftPct,topPct){
-    try{localStorage.setItem(POS_KEY,JSON.stringify({left:leftPct,top:topPct}));}catch(e){}
-  }
-  function loadPos(){
-    try{
-      const raw=localStorage.getItem(POS_KEY);
-      if(raw){
-        const p=JSON.parse(raw);
-        if(typeof p.left==='number'&&typeof p.top==='number')applyPos(p.left,p.top);
-      }
-    }catch(e){}
-  }
-
-  btn.addEventListener('pointerdown',(e)=>{
-    dragging=true;moved=false;
-    const rect=btn.getBoundingClientRect();
-    startX=e.clientX;startY=e.clientY;
-    startLeft=rect.left;startTop=rect.top;
-    btn.classList.add('routine-dragging');
-    if(btn.setPointerCapture){try{btn.setPointerCapture(e.pointerId);}catch(err){}}
-  });
-  btn.addEventListener('pointermove',(e)=>{
-    if(!dragging)return;
-    const dx=e.clientX-startX, dy=e.clientY-startY;
-    if(Math.abs(dx)>4||Math.abs(dy)>4)moved=true;
-    if(!moved)return;
-    const w=btn.offsetWidth,h=btn.offsetHeight;
-    const newLeft=clampNum(startLeft+dx,0,window.innerWidth-w);
-    const newTop=clampNum(startTop+dy,0,window.innerHeight-h);
-    applyPos(newLeft/window.innerWidth*100, newTop/window.innerHeight*100);
-  });
-  function endDrag(){
-    if(!dragging)return;
-    dragging=false;
-    btn.classList.remove('routine-dragging');
-    if(moved){
-      const rect=btn.getBoundingClientRect();
-      savePos(rect.left/window.innerWidth*100, rect.top/window.innerHeight*100);
-    }
-  }
-  btn.addEventListener('pointerup',endDrag);
-  btn.addEventListener('pointercancel',endDrag);
-  btn.addEventListener('click',()=>{
-    if(moved){moved=false;return;} // 드래그 직후 클릭은 무시
-    window.toggleRoutinePanel();
-  });
-  window.addEventListener('resize',()=>{
-    const rect=btn.getBoundingClientRect();
-    const w=btn.offsetWidth,h=btn.offsetHeight;
-    const newLeft=clampNum(rect.left,0,window.innerWidth-w);
-    const newTop=clampNum(rect.top,0,window.innerHeight-h);
-    if(newLeft!==rect.left||newTop!==rect.top){
-      applyPos(newLeft/window.innerWidth*100, newTop/window.innerHeight*100);
-    }
-  });
-
-  loadPos();
-})();
-
 function renderRoutineList(){
   const wrap=document.getElementById('routineListWrap');
   if(!wrap)return;
@@ -2674,7 +2600,7 @@ function renderRoutineList(){
     return;
   }
   const doneToday=todayStr();
-  wrap.innerHTML=routines.map(r=>{
+  wrap.innerHTML=routines.map((r,idx)=>{
     const streak=r.streak||0;
     const doneT=r.lastDoneDate===doneToday;
     return `<div class="routine-card">
@@ -2690,9 +2616,26 @@ function renderRoutineList(){
         <button class="routine-mini-btn" onclick="openRoutineEditModal('${r.id}')">수정</button>
         <button class="routine-mini-btn" onclick="deleteRoutine('${r.id}')">삭제</button>
       </div>
+      <div class="routine-card-btns">
+        <button class="routine-mini-btn" ${idx===0?'disabled style="opacity:.35;cursor:default"':''} onclick="moveRoutineOrder('${r.id}',-1)">↑ 위로</button>
+        <button class="routine-mini-btn" ${idx===routines.length-1?'disabled style="opacity:.35;cursor:default"':''} onclick="moveRoutineOrder('${r.id}',1)">↓ 아래로</button>
+      </div>
     </div>`;
   }).join('');
 }
+
+window.moveRoutineOrder=async function(id,dir){
+  const idx=routines.findIndex(r=>r.id===id);
+  const j=idx+dir;
+  if(idx<0||j<0||j>=routines.length)return;
+  [routines[idx],routines[j]]=[routines[j],routines[idx]];
+  routines.forEach((r,i)=>{r.order=i;});
+  renderRoutineList();
+  await Promise.all(routines.map(r=>saveData('routines',r.id,{
+    name:r.name,icon:r.icon,type:r.type,steps:r.steps,order:r.order,
+    streak:r.streak||0,lastDoneDate:r.lastDoneDate||null
+  })));
+};
 
 // ── 루틴 만들기/수정 모달 ──
 window.openRoutineCreateModal=function(){
