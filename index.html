@@ -454,14 +454,16 @@ body{opacity:0;transition:opacity .25s ease}
 .fixed-add-btn:hover{border-color:var(--accent);color:var(--accent)}
 .fixed-del{color:#ddd;background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px}
 .fixed-del:hover{color:#e66}
-.fixed-card{border:1.5px solid #eee;border-radius:10px;padding:9px 10px;margin-bottom:8px;background:#fafbff}
-.fixed-card-row1{display:flex;gap:6px;align-items:center;margin-bottom:7px}
-.fixed-card-row1 input{flex:1;min-width:0;font-size:13px;padding:6px 8px;border:0.5px solid #ddd;border-radius:6px;background:#fff;font-family:inherit;color:#222}
-.fixed-card-row2{display:flex;gap:6px;align-items:center}
-.fixed-card-row2 .fixed-amount-input{flex:1;min-width:0;font-size:12px;padding:6px 8px;border:0.5px solid #ddd;border-radius:6px;background:#fff;text-align:right;font-family:inherit}
-.fixed-card-row2 .fixed-day-wrap{display:flex;align-items:center;gap:3px;font-size:11px;color:#999;flex-shrink:0}
-.fixed-day-input{width:38px;font-size:12px;padding:6px 2px;border:0.5px solid #ddd;border-radius:6px;background:#fff;text-align:center;font-family:inherit}
-.fixed-method-select{font-size:12px;padding:6px 4px;border:0.5px solid #ddd;border-radius:6px;background:#fff;flex-shrink:0;font-family:inherit}
+.fixed-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:360px){.fixed-grid{grid-template-columns:1fr}}
+.fixed-card{border:1.5px solid #eee;border-radius:10px;padding:8px 9px;margin-bottom:8px;background:#fafbff;min-width:0}
+.fixed-card-row1{display:flex;gap:4px;align-items:center;margin-bottom:6px}
+.fixed-card-row1 input{flex:1;min-width:0;font-size:12px;padding:5px 6px;border:0.5px solid #ddd;border-radius:6px;background:#fff;font-family:inherit;color:#222}
+.fixed-amount-input{width:100%;box-sizing:border-box;font-size:12px;padding:5px 6px;border:0.5px solid #ddd;border-radius:6px;background:#fff;text-align:right;font-family:inherit;margin-bottom:6px}
+.fixed-card-row3{display:flex;gap:4px;align-items:center}
+.fixed-day-wrap{display:flex;align-items:center;gap:2px;font-size:10px;color:#999;flex:1;min-width:0}
+.fixed-day-input{width:30px;font-size:11px;padding:5px 2px;border:0.5px solid #ddd;border-radius:6px;background:#fff;text-align:center;font-family:inherit}
+.fixed-method-select{font-size:10.5px;padding:5px 2px;border:0.5px solid #ddd;border-radius:6px;background:#fff;flex-shrink:0;font-family:inherit;max-width:66px}
 #mealPlanNote:empty:before{content:attr(data-ph);color:#ccc;pointer-events:none}
 
 /* 왼쪽 */
@@ -4059,22 +4061,25 @@ function getTagColor(tag){
   let hash=0;for(let i=0;i<tag.length;i++)hash=(hash*31+tag.charCodeAt(i))%EXTRA_PASTEL.length;
   return EXTRA_PASTEL[Math.abs(hash)];
 }
-function buildPieSection(entries,tagItems,total,idPrefix,m){
-  let conicParts=[];let acc=0;
-  entries.forEach(([tag,amt])=>{
-    const pct=total>0?amt/total*100:0;
-    const color=getTagColor(tag);
-    conicParts.push(`${color} ${acc.toFixed(1)}% ${(acc+pct).toFixed(1)}%`);
-    acc+=pct;
-  });
-  const pieStyle=entries.length>0
-    ?`conic-gradient(${conicParts.join(',')})`
-    :'conic-gradient(#eee 0% 100%)';
-  return `
-    <div class="pie-wrap">
-      <div style="width:150px;height:150px;border-radius:50%;background:${pieStyle}"></div>
-    </div>
-    <div class="pie-total">소계 ${total.toLocaleString()}원</div>
+function buildStatsBlock(entries,tagItems,total,idPrefix,m,opts){
+  opts=opts||{};
+  const showPie=opts.showPie!==false;
+  const totalLabel=opts.totalLabel||'소계';
+  let pieHtml='';
+  if(showPie){
+    let conicParts=[];let acc=0;
+    entries.forEach(([tag,amt])=>{
+      const pct=total>0?amt/total*100:0;
+      const color=getTagColor(tag);
+      conicParts.push(`${color} ${acc.toFixed(1)}% ${(acc+pct).toFixed(1)}%`);
+      acc+=pct;
+    });
+    const pieStyle=entries.length>0
+      ?`conic-gradient(${conicParts.join(',')})`
+      :'conic-gradient(#eee 0% 100%)';
+    pieHtml=`<div class="pie-wrap"><div style="width:150px;height:150px;border-radius:50%;background:${pieStyle}"></div></div>`;
+  }
+  const legendHtml=`
     <div class="pie-legend">
       ${entries.length===0?'<div style="text-align:center;color:#ccc;font-size:12px;padding:16px 0">해당 내역이 없어요</div>':
         entries.map(([tag,amt],idx)=>{
@@ -4095,6 +4100,7 @@ function buildPieSection(entries,tagItems,total,idPrefix,m){
           <div class="tag-detail-panel" id="${idPrefix}-${idx}">${detailRows}</div>`;
         }).join('')}
     </div>`;
+  return `${pieHtml}${legendHtml}<div class="pie-total">${totalLabel} ${total.toLocaleString()}원</div>`;
 }
 function renderMoneyStats(){
   const el=document.getElementById('money-stats-content');
@@ -4103,14 +4109,12 @@ function renderMoneyStats(){
   // 해당 월 데이터 집계: 고정비(태그='고정비') / 고정비 제외로 나눠서 집계
   const tagMapNF={},tagItemsNF={};let totalNF=0;
   const nameMapFX={},nameItemsFX={};let totalFX=0;
-  let cardTotalAll=0,cashTotalAll=0;
   Object.keys(moneyData).sort().forEach(k=>{
     if(!k.startsWith(mKey+'-'))return;
     const day=k.split('-')[2];
     moneyData[k].forEach(i=>{
       if(i.type!=='out')return;
       const t=i.tag||'(미분류)';
-      if(i.payMethod==='cash')cashTotalAll+=i.amount;else cardTotalAll+=i.amount;
       if(t==='고정비'){
         const nk=i.name||'(이름없음)';
         nameMapFX[nk]=(nameMapFX[nk]||0)+i.amount;
@@ -4125,7 +4129,6 @@ function renderMoneyStats(){
       }
     });
   });
-  const totalAll=totalNF+totalFX;
   const entriesNF=Object.entries(tagMapNF).sort((a,b)=>b[1]-a[1]);
   const entriesFX=Object.entries(nameMapFX).sort((a,b)=>b[1]-a[1]);
   el.innerHTML=`
@@ -4134,25 +4137,12 @@ function renderMoneyStats(){
       <span>${y}년 ${m}월 지출 통계</span>
       <button onclick="statsMove(1)">›</button>
     </div>
-    <div class="pm-summary">
-      <div class="pm-summary-box card">
-        <div class="pm-label">💳 카드로 낼 돈</div>
-        <div class="pm-amt">${cardTotalAll.toLocaleString()}원</div>
-      </div>
-      <div class="pm-summary-box cash">
-        <div class="pm-label">💵 현금 지출</div>
-        <div class="pm-amt">${cashTotalAll.toLocaleString()}원</div>
-      </div>
-    </div>
-    <div class="stats-grand-total">이번 달 총 지출 (고정비 포함) <b>${totalAll.toLocaleString()}원</b></div>
-
-    <div class="stats-section-title">🧾 고정비 제외 지출</div>
-    ${buildPieSection(entriesNF,tagItemsNF,totalNF,'nf',m)}
+    ${buildStatsBlock(entriesNF,tagItemsNF,totalNF,'nf',m,{showPie:true,totalLabel:'고정비 제외 총 지출'})}
 
     <div class="stats-section-divider"></div>
 
-    <div class="stats-section-title">📌 고정비 지출</div>
-    ${buildPieSection(entriesFX,nameItemsFX,totalFX,'fx',m)}
+    <div class="stats-section-title">📌 고정비</div>
+    ${buildStatsBlock(entriesFX,nameItemsFX,totalFX,'fx',m,{showPie:false,totalLabel:'고정비 총 지출'})}
   `;
 }
 window.statsMove=function(dir){
@@ -4349,26 +4339,28 @@ function renderFixedCosts(){
     return `
       <div class="fixed-section-title">${label}</div>
       ${rows.length===0?'<div style="text-align:center;color:#ccc;font-size:11px;padding:8px 0">아직 등록된 항목이 없어요</div>':''}
-      ${rows.map((r,i)=>`
-        <div class="fixed-card">
-          <div class="fixed-card-row1">
-            <input value="${escapeHtml(r.name||'')}" placeholder="항목명 (예: 넷플릭스)"
-              onblur="updateFixedRow('${type}',${i},'name',this.value)"/>
-            <button class="fixed-del" onclick="deleteFixedRow('${type}',${i})">✕</button>
-          </div>
-          <div class="fixed-card-row2">
+      <div class="fixed-grid">
+        ${rows.map((r,i)=>`
+          <div class="fixed-card">
+            <div class="fixed-card-row1">
+              <input value="${escapeHtml(r.name||'')}" placeholder="항목명"
+                onblur="updateFixedRow('${type}',${i},'name',this.value)"/>
+              <button class="fixed-del" onclick="deleteFixedRow('${type}',${i})">✕</button>
+            </div>
             <input class="fixed-amount-input" value="${r.amount||''}" placeholder="금액"
               onblur="updateFixedRow('${type}',${i},'amount',this.value)"/>
-            <span class="fixed-day-wrap">매월
-              <input class="fixed-day-input" type="number" min="1" max="31" value="${r.day||''}" placeholder="일"
-                onblur="updateFixedRow('${type}',${i},'day',this.value)"/>일
-            </span>
-            <select class="fixed-method-select" onchange="updateFixedRow('${type}',${i},'method',this.value)">
-              <option value="card"${(r.method||'card')==='card'?' selected':''}>💳 카드</option>
-              <option value="cash"${r.method==='cash'?' selected':''}>💵 현금</option>
-            </select>
-          </div>
-        </div>`).join('')}
+            <div class="fixed-card-row3">
+              <span class="fixed-day-wrap">매월
+                <input class="fixed-day-input" type="number" min="1" max="31" value="${r.day||''}" placeholder="-"
+                  onblur="updateFixedRow('${type}',${i},'day',this.value)"/>일
+              </span>
+              <select class="fixed-method-select" onchange="updateFixedRow('${type}',${i},'method',this.value)">
+                <option value="card"${(r.method||'card')==='card'?' selected':''}>💳카드</option>
+                <option value="cash"${r.method==='cash'?' selected':''}>💵현금</option>
+              </select>
+            </div>
+          </div>`).join('')}
+      </div>
       <button class="fixed-add-btn" onclick="addFixedRow('${type}')">＋ 추가</button>`;
   };
   const fixed=fixedCosts.fixed||[];
