@@ -990,6 +990,83 @@ body.memo-edit-on .memo-text-handle{display:flex}
 }
 .memo-edit-toggle:hover{background:#eee}
 .memo-edit-toggle.on{background:#333;color:#fff;border-color:#333}
+
+/* ── 루틴 (Routine) ── */
+.routine-toggle{
+  position:fixed;left:0;top:62%;z-index:59;
+  width:30px;height:64px;
+  background:rgba(255,255,255,.85);
+  border:0.5px solid #ddd;border-left:none;
+  border-radius:0 12px 12px 0;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:2px 2px 8px #0001;
+  writing-mode:vertical-rl;letter-spacing:2px;
+  font-size:11px;color:#888;opacity:.55;
+  transition:opacity .2s,width .2s,background .2s;
+}
+.routine-toggle:hover{opacity:1;width:34px;background:#fff}
+.routine-toggle.on{color:var(--accent);opacity:.85}
+.routine-panel{
+  position:fixed;left:34px;top:62%;transform:translateY(-50%);z-index:59;
+  display:none;flex-direction:column;gap:8px;
+  background:rgba(255,255,255,.97);border:0.5px solid #eee;border-radius:16px;
+  padding:14px;width:270px;max-height:70vh;overflow-y:auto;
+  box-shadow:0 4px 20px #0002;
+}
+.routine-panel.show{display:flex}
+.routine-panel-title{font-size:13px;font-weight:700;color:#222;margin-bottom:2px}
+.routine-card{
+  background:#fff;border:1.5px solid #eee;border-radius:12px;padding:10px 12px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.routine-card-top{display:flex;align-items:center;gap:6px}
+.routine-card-icon{font-size:16px}
+.routine-card-name{font-size:13px;font-weight:700;color:#222;flex:1}
+.routine-card-type{font-size:9px;color:#999;background:#f4f4f4;border-radius:6px;padding:1px 6px}
+.routine-card-steps{font-size:11px;color:#999}
+.routine-card-streak{font-size:10.5px;color:#e08a2e;font-weight:600}
+.routine-card-btns{display:flex;gap:5px;margin-top:2px}
+.routine-mini-btn{flex:1;padding:5px 0;font-size:11px;border-radius:8px;border:0.5px solid #ddd;background:#fafafa;color:#666;cursor:pointer}
+.routine-mini-btn.start{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.routine-add-btn{margin-top:2px;padding:8px 0;border-radius:10px;border:1px dashed var(--accent);color:var(--accent);background:#fff;font-size:12px;cursor:pointer;font-weight:600}
+.routine-step-row{display:flex;gap:5px;align-items:center;margin-bottom:6px}
+.routine-step-select{font-size:11px;padding:5px;border-radius:6px;border:0.5px solid #ddd;flex-shrink:0}
+.routine-step-label{flex:1;font-size:11px;padding:5px 7px;border-radius:6px;border:0.5px solid #ddd}
+.routine-step-arrow{font-size:11px;color:#aaa;cursor:pointer;padding:2px}
+.routine-step-del{font-size:12px;color:#D85A30;cursor:pointer;padding:2px 4px}
+.routine-type-chips{display:flex;gap:6px;margin:4px 0}
+.routine-type-chip{padding:5px 10px;border-radius:8px;font-size:11px;border:1.5px solid #eee;cursor:pointer;color:#999}
+.routine-type-chip.selected{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* 루틴 실행 바 */
+.routine-runner-bar{
+  position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:200;
+  display:none;align-items:center;gap:10px;
+  background:#222;color:#fff;border-radius:16px;padding:10px 16px;
+  box-shadow:0 6px 24px #0003;max-width:92vw;
+}
+.routine-runner-bar.show{display:flex}
+.routine-runner-info{display:flex;flex-direction:column;gap:1px;min-width:0}
+.routine-runner-step{font-size:9.5px;color:#bbb;letter-spacing:.03em}
+.routine-runner-label{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.routine-runner-btn{
+  padding:7px 12px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+}
+.routine-runner-btn.next{background:var(--accent);color:#fff}
+.routine-runner-btn.prev{background:#444;color:#ccc}
+.routine-runner-btn.exit{background:transparent;color:#888;font-weight:400}
+
+/* 루틴 리마인더 배너 */
+.routine-reminder-banner{
+  position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:150;
+  display:none;align-items:center;gap:10px;
+  background:#fff;border:1.5px solid var(--accent);border-radius:14px;
+  padding:9px 14px;box-shadow:0 4px 16px #0002;max-width:92vw;
+}
+.routine-reminder-banner.show{display:flex}
+.routine-reminder-text{font-size:12px;color:#333;font-weight:600}
+.routine-reminder-btn{padding:5px 10px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer}
+.routine-reminder-close{font-size:13px;color:#bbb;cursor:pointer;padding:2px 4px}
 </style>
 </head>
 <body>
@@ -1172,6 +1249,59 @@ body.memo-edit-on .memo-text-handle{display:flex}
 </div>
 
 <div class="saving-indicator" id="savingIndicator">저장 중...</div>
+
+<!-- 루틴 리마인더 배너 -->
+<div class="routine-reminder-banner" id="routineReminderBanner">
+  <span class="routine-reminder-text" id="routineReminderText"></span>
+  <button class="routine-reminder-btn" id="routineReminderStartBtn">▶ 시작</button>
+  <span class="routine-reminder-close" onclick="dismissRoutineReminder()">✕</span>
+</div>
+
+<!-- 루틴 실행 바 -->
+<div class="routine-runner-bar" id="routineRunnerBar">
+  <div class="routine-runner-info">
+    <span class="routine-runner-step" id="routineRunnerStep"></span>
+    <span class="routine-runner-label" id="routineRunnerLabel"></span>
+  </div>
+  <button class="routine-runner-btn prev" onclick="prevRoutineStep()">◀ 이전</button>
+  <button class="routine-runner-btn next" id="routineRunnerNextBtn" onclick="nextRoutineStep()">다음 ▶</button>
+  <button class="routine-runner-btn exit" onclick="exitRoutineRun()">종료</button>
+</div>
+
+<!-- 루틴 탭 열기 손잡이 -->
+<div class="routine-toggle" id="routineToggle" onclick="toggleRoutinePanel()" title="루틴 열기">ROUTINE</div>
+
+<!-- 루틴 패널: 저장된 루틴 목록 + 새 루틴 만들기 -->
+<div class="routine-panel" id="routinePanel">
+  <div class="routine-panel-title">🏁 루틴</div>
+  <div id="routineListWrap"></div>
+  <button class="routine-add-btn" onclick="openRoutineCreateModal()">＋ 새 루틴 만들기</button>
+</div>
+
+<!-- 루틴 만들기/수정 모달 -->
+<div class="modal-bg" id="routineEditModal" style="display:none">
+  <div class="modal" style="max-width:320px">
+    <h3 id="routineEditTitle">새 루틴 만들기</h3>
+    <div class="modal-label">루틴 이름</div>
+    <input id="routine-name" placeholder="예: 아침 루틴"/>
+    <div class="modal-label">아이콘 (이모지, 선택)</div>
+    <input id="routine-icon" placeholder="🌅" maxlength="2" style="width:60px"/>
+    <div class="modal-label">시간대</div>
+    <div class="routine-type-chips" id="routineTypeChips">
+      <div class="routine-type-chip" data-type="morning" onclick="selectRoutineType('morning')">🌅 오전</div>
+      <div class="routine-type-chip" data-type="afternoon" onclick="selectRoutineType('afternoon')">☀️ 오후</div>
+      <div class="routine-type-chip" data-type="evening" onclick="selectRoutineType('evening')">🌙 마무리</div>
+      <div class="routine-type-chip" data-type="custom" onclick="selectRoutineType('custom')">✨ 기타</div>
+    </div>
+    <div class="modal-label">단계 (순서대로 진행됩니다)</div>
+    <div id="routineStepsWrap"></div>
+    <button class="routine-add-btn" onclick="addRoutineStepRow()">＋ 단계 추가</button>
+    <div class="modal-btns" style="margin-top:10px">
+      <button class="mbtn cancel" onclick="closeModal('routineEditModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmRoutineSave()">저장</button>
+    </div>
+  </div>
+</div>
 
 <!-- 습관 RPG 이동 버튼 (슬라임) -->
 <a class="rpg-slime-btn" id="rpgSlimeBtn" href="rpg-map.html" target="_blank" title="습관 RPG로 이동" style="visibility:hidden;opacity:0;transition:opacity .4s">
@@ -1857,6 +1987,21 @@ let diaryCur=new Date();
 let diarySelDate=new Date();
 let diaryPasswordHash=null;
 let diarySaveTimer=null;
+// ── 루틴 상태 ──
+let routines=[]; // {id,name,icon,type,steps:[{target,label}],streak,lastDoneDate,order}
+let editingRoutineId=null;
+let routineEditStepsTmp=[];
+let routineEditType='morning';
+let activeRoutine=null;
+let activeStepIdx=0;
+const ROUTINE_TARGETS=[
+  {value:'schedule',label:'📅 일정'},
+  {value:'money',label:'💰 가계부'},
+  {value:'meal',label:'🥗 식단'},
+  {value:'memo',label:'📝 메모'},
+  {value:'habitrpg',label:'🎮 습관 RPG(새창)'},
+  {value:'diary',label:'🍀 다이어리'}
+];
 
 function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -2185,6 +2330,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
+    renderRoutineList();checkRoutineReminders();
     positionNoteButtons();
     initMissionTracker();
     // 모든 준비 완료 후 부드럽게 표시
@@ -2222,7 +2368,7 @@ async function saveData(type,key,value){
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -2246,6 +2392,7 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'moneyMemo')),
     getDocs(collection(db,'users',currentUser.uid,'fasting')),
     getDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo')),
+    getDocs(collection(db,'users',currentUser.uid,'routines')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -2300,6 +2447,9 @@ async function loadAllData(){
     garden:(bmS.exists()?(bmS.data().garden||''):''),
     linen:(bmS.exists()?(bmS.data().linen||''):'')
   };
+  // 루틴
+  routines=[];rtS.forEach(d=>{routines.push({id:d.id,...d.data()});});
+  routines.sort((a,b)=>(a.order??999)-(b.order??999));
 }
 
 // ── 상단 메모 ──
@@ -2383,10 +2533,15 @@ window.handleLeftBack=function(){
 };
 
 // ── 탭 전환 ──
+const TAB_ORDER=['schedule','money','meal','memo'];
 window.switchTab=function(name,el){
+  if(!el){
+    const idx=TAB_ORDER.indexOf(name);
+    el=document.querySelectorAll('.right>.tabs>.tab')[idx>=0?idx:0];
+  }
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
+  if(el)el.classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
   // daily 모드면 해제
   if(leftMode==='daily'){switchView('month');}
@@ -2395,6 +2550,255 @@ window.switchTab=function(name,el){
   else if(name==='memo'){if(leftMode!=='memo')setLeftMode('cal');}
   else{if(leftMode!=='cal')setLeftMode('cal');}
 };
+
+// ══════════════════════════════════════════
+// ── 루틴 (Routine) ──
+// ══════════════════════════════════════════
+function todayStr(){const n=new Date();return n.getFullYear()+'-'+(n.getMonth()+1)+'-'+n.getDate();}
+function routineTypeLabel(t){return {morning:'🌅 오전',afternoon:'☀️ 오후',evening:'🌙 마무리',custom:'✨ 기타'}[t]||'✨ 기타';}
+
+window.toggleRoutinePanel=function(){
+  const p=document.getElementById('routinePanel');
+  const on=p.classList.toggle('show');
+  document.getElementById('routineToggle').classList.toggle('on',on);
+  if(on)renderRoutineList();
+};
+
+function renderRoutineList(){
+  const wrap=document.getElementById('routineListWrap');
+  if(!wrap)return;
+  if(routines.length===0){
+    wrap.innerHTML='<div style="text-align:center;color:#ccc;font-size:12px;padding:14px 0">아직 만든 루틴이 없어요</div>';
+    return;
+  }
+  const doneToday=todayStr();
+  wrap.innerHTML=routines.map(r=>{
+    const streak=r.streak||0;
+    const doneT=r.lastDoneDate===doneToday;
+    return `<div class="routine-card">
+      <div class="routine-card-top">
+        <span class="routine-card-icon">${r.icon||'🏁'}</span>
+        <span class="routine-card-name">${escapeHtml(r.name)}</span>
+        <span class="routine-card-type">${routineTypeLabel(r.type)}</span>
+      </div>
+      <div class="routine-card-steps">${(r.steps||[]).length}단계 · ${(r.steps||[]).map(s=>escapeHtml(s.label||'')).join(' → ')}</div>
+      ${streak>0?`<div class="routine-card-streak">🔥 ${streak}일 연속${doneT?' · 오늘 완료':''}</div>`:''}
+      <div class="routine-card-btns">
+        <button class="routine-mini-btn start" onclick="startRoutine('${r.id}')">▶ 시작</button>
+        <button class="routine-mini-btn" onclick="openRoutineEditModal('${r.id}')">수정</button>
+        <button class="routine-mini-btn" onclick="deleteRoutine('${r.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── 루틴 만들기/수정 모달 ──
+window.openRoutineCreateModal=function(){
+  editingRoutineId=null;
+  document.getElementById('routineEditTitle').textContent='새 루틴 만들기';
+  document.getElementById('routine-name').value='';
+  document.getElementById('routine-icon').value='';
+  routineEditStepsTmp=[{target:'schedule',label:''}];
+  selectRoutineType('morning');
+  renderRoutineStepsUI();
+  document.getElementById('routineEditModal').style.display='flex';
+};
+
+window.openRoutineEditModal=function(id){
+  const r=routines.find(x=>x.id===id);if(!r)return;
+  editingRoutineId=id;
+  document.getElementById('routineEditTitle').textContent='루틴 수정';
+  document.getElementById('routine-name').value=r.name||'';
+  document.getElementById('routine-icon').value=r.icon||'';
+  routineEditStepsTmp=(r.steps||[]).map(s=>({...s}));
+  if(routineEditStepsTmp.length===0)routineEditStepsTmp=[{target:'schedule',label:''}];
+  selectRoutineType(r.type||'morning');
+  renderRoutineStepsUI();
+  document.getElementById('routineEditModal').style.display='flex';
+};
+
+window.selectRoutineType=function(t){
+  routineEditType=t;
+  document.querySelectorAll('#routineTypeChips .routine-type-chip').forEach(c=>{
+    c.classList.toggle('selected',c.dataset.type===t);
+  });
+};
+
+function routineTargetOptionsHtml(selected){
+  return ROUTINE_TARGETS.map(t=>`<option value="${t.value}"${t.value===selected?' selected':''}>${t.label}</option>`).join('');
+}
+
+window.updateRoutineStepTarget=function(i,val){routineEditStepsTmp[i].target=val;};
+window.updateRoutineStepLabel=function(i,val){routineEditStepsTmp[i].label=val;};
+function renderRoutineStepsUI(){
+  const wrap=document.getElementById('routineStepsWrap');
+  wrap.innerHTML=routineEditStepsTmp.map((s,i)=>`
+    <div class="routine-step-row">
+      <select class="routine-step-select" onchange="updateRoutineStepTarget(${i},this.value)">
+        ${routineTargetOptionsHtml(s.target)}
+      </select>
+      <input class="routine-step-label" placeholder="할 일 (예: 일정 정리하기)" value="${escapeHtml(s.label||'')}"
+        oninput="updateRoutineStepLabel(${i},this.value)"/>
+      <span class="routine-step-arrow" onclick="moveRoutineStep(${i},-1)">↑</span>
+      <span class="routine-step-arrow" onclick="moveRoutineStep(${i},1)">↓</span>
+      <span class="routine-step-del" onclick="removeRoutineStep(${i})">✕</span>
+    </div>`).join('');
+}
+
+window.addRoutineStepRow=function(){
+  routineEditStepsTmp.push({target:'schedule',label:''});
+  renderRoutineStepsUI();
+};
+window.removeRoutineStep=function(i){
+  if(routineEditStepsTmp.length<=1)return;
+  routineEditStepsTmp.splice(i,1);
+  renderRoutineStepsUI();
+};
+window.moveRoutineStep=function(i,dir){
+  const j=i+dir;
+  if(j<0||j>=routineEditStepsTmp.length)return;
+  [routineEditStepsTmp[i],routineEditStepsTmp[j]]=[routineEditStepsTmp[j],routineEditStepsTmp[i]];
+  renderRoutineStepsUI();
+};
+
+window.confirmRoutineSave=async function(){
+  const name=document.getElementById('routine-name').value.trim();
+  if(!name){alert('루틴 이름을 입력해주세요');return;}
+  const icon=document.getElementById('routine-icon').value.trim()||'🏁';
+  const steps=routineEditStepsTmp.filter(s=>s.label&&s.label.trim()).map(s=>({target:s.target,label:s.label.trim()}));
+  if(steps.length===0){alert('단계를 최소 1개 이상 입력해주세요');return;}
+  if(editingRoutineId){
+    const r=routines.find(x=>x.id===editingRoutineId);
+    const payload={name,icon,type:routineEditType,steps,order:r.order??routines.length,streak:r.streak||0,lastDoneDate:r.lastDoneDate||null};
+    Object.assign(r,payload);
+    await saveData('routines',editingRoutineId,payload);
+  }else{
+    const id='rt_'+Date.now();
+    const payload={name,icon,type:routineEditType,steps,order:routines.length,streak:0,lastDoneDate:null};
+    routines.push({id,...payload});
+    await saveData('routines',id,payload);
+  }
+  closeModal('routineEditModal');
+  renderRoutineList();
+};
+
+window.deleteRoutine=async function(id){
+  if(!confirm('이 루틴을 삭제할까요?'))return;
+  routines=routines.filter(r=>r.id!==id);
+  await deleteData('routines',id);
+  renderRoutineList();
+};
+
+// ── 루틴 실행 ──
+window.startRoutine=function(id){
+  const r=routines.find(x=>x.id===id);if(!r||!(r.steps||[]).length)return;
+  activeRoutine=r;activeStepIdx=0;
+  document.getElementById('routinePanel').classList.remove('show');
+  document.getElementById('routineToggle').classList.remove('on');
+  document.getElementById('routineReminderBanner').classList.remove('show');
+  renderRoutineRunner();
+  goToRoutineStep(0);
+};
+
+function renderRoutineRunner(){
+  if(!activeRoutine)return;
+  const bar=document.getElementById('routineRunnerBar');
+  bar.classList.add('show');
+  const steps=activeRoutine.steps;
+  document.getElementById('routineRunnerStep').textContent=
+    `${activeRoutine.icon||'🏁'} ${activeRoutine.name}  ·  ${activeStepIdx+1}/${steps.length}`;
+  document.getElementById('routineRunnerLabel').textContent=steps[activeStepIdx].label;
+  document.getElementById('routineRunnerNextBtn').textContent=
+    (activeStepIdx===steps.length-1)?'완료 🎉':'다음 ▶';
+}
+
+function goToRoutineStep(idx){
+  if(!activeRoutine)return;
+  const step=activeRoutine.steps[idx];if(!step)return;
+  applyRoutineStepTarget(step.target);
+  renderRoutineRunner();
+}
+
+function applyRoutineStepTarget(target){
+  if(target==='habitrpg'){
+    window.open('rpg-map.html','_blank');
+    return;
+  }
+  if(target==='diary'){
+    if(typeof openDiaryLock==='function')openDiaryLock();
+    return;
+  }
+  // schedule/money/meal/memo → 우측 탭 전환
+  window.switchTab(target,null);
+}
+
+window.nextRoutineStep=function(){
+  if(!activeRoutine)return;
+  if(activeStepIdx>=activeRoutine.steps.length-1){
+    finishRoutineRun();
+    return;
+  }
+  activeStepIdx++;
+  goToRoutineStep(activeStepIdx);
+};
+
+window.prevRoutineStep=function(){
+  if(!activeRoutine||activeStepIdx<=0)return;
+  activeStepIdx--;
+  goToRoutineStep(activeStepIdx);
+};
+
+window.exitRoutineRun=function(){
+  activeRoutine=null;activeStepIdx=0;
+  document.getElementById('routineRunnerBar').classList.remove('show');
+};
+
+async function finishRoutineRun(){
+  const r=activeRoutine;
+  if(r){
+    const t=todayStr();
+    if(r.lastDoneDate!==t){
+      // 어제까지 이어졌으면 streak 증가, 아니면 1로 리셋
+      const y=new Date();y.setDate(y.getDate()-1);
+      const yStr=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
+      r.streak=(r.lastDoneDate===yStr)?(r.streak||0)+1:1;
+      r.lastDoneDate=t;
+      await saveData('routines',r.id,{name:r.name,icon:r.icon,type:r.type,steps:r.steps,order:r.order,streak:r.streak,lastDoneDate:r.lastDoneDate});
+    }
+  }
+  activeRoutine=null;activeStepIdx=0;
+  document.getElementById('routineRunnerBar').classList.remove('show');
+  renderRoutineList();
+}
+
+// ── 루틴 리마인더 배너: 시간대가 됐는데 오늘 아직 안 한 루틴 알려주기 ──
+let dismissedReminderIds=[];
+let currentReminderId=null;
+window.dismissRoutineReminder=function(){
+  if(currentReminderId)dismissedReminderIds.push(currentReminderId);
+  document.getElementById('routineReminderBanner').classList.remove('show');
+};
+function checkRoutineReminders(){
+  if(!routines.length)return;
+  const hour=new Date().getHours();
+  const t=todayStr();
+  const threshold={morning:6,afternoon:12,evening:18};
+  const candidate=routines.find(r=>{
+    if(r.lastDoneDate===t)return false;
+    if(dismissedReminderIds.includes(r.id))return false;
+    const th=threshold[r.type];
+    if(th==null)return false;
+    return hour>=th;
+  });
+  if(!candidate){currentReminderId=null;return;}
+  currentReminderId=candidate.id;
+  document.getElementById('routineReminderText').textContent=
+    `${candidate.icon||'🏁'} 아직 오늘의 '${candidate.name}'을(를) 안 했어요`;
+  const btn=document.getElementById('routineReminderStartBtn');
+  btn.onclick=()=>startRoutine(candidate.id);
+  document.getElementById('routineReminderBanner').classList.add('show');
+}
+
 
 // ── 한국 공휴일 (고정) ──
 const HOLIDAYS={
