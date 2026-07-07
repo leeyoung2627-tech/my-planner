@@ -615,8 +615,11 @@ body{opacity:0;transition:opacity .25s ease}
 .tab-content{flex:1;padding:.75rem 1rem;overflow-y:auto;display:none;flex-direction:column;gap:6px}
 .tab-content.active{display:flex}
 .section-title{font-size:11px;color:#aaa}
-.item-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:0.5px solid #f0f0f0}
+.item-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:0.5px solid #f0f0f0;position:relative}
 .item-row:last-of-type{border-bottom:none}
+.item-row.past-time::after{content:'';position:absolute;inset:0;background:rgba(15,15,15,.16);pointer-events:none}
+.item-row.past-time .item-text{color:#666}
+.item-row.past-time .ev-time-badge{opacity:.75}
 .item-row-time{width:52px;flex-shrink:0;padding-top:1px}
 .item-text{font-size:13px;color:#222;flex:1;line-height:1.5;padding-top:1px}
 .ev-time-badge{
@@ -2441,6 +2444,9 @@ onAuthStateChanged(auth,async user=>{
     if(!window._fixedCostAutoTimer){
       window._fixedCostAutoTimer=setInterval(runFixedCostAutoRecord,30*60*1000); // 30분마다 재확인 (자정 넘겨도 놓치지 않게)
     }
+    if(!window._scheduleTimePastTimer){
+      window._scheduleTimePastTimer=setInterval(renderSchedule,60*1000); // 1분마다 재확인해서 시간 지난 일정 자동으로 어둡게
+    }
     positionNoteButtons();
     initMissionTracker();
     // 모든 준비 완료 후 부드럽게 표시
@@ -3433,6 +3439,12 @@ function splitEvTime(txt){
   if(m)return {time:m[1],text:m[2]};
   return {time:'',text:txt};
 }
+function isEvTimePast(time){
+  if(!time)return false;
+  const m=time.match(/^(\d{2}):(\d{2})$/);if(!m)return false;
+  const t=new Date(selDate);t.setHours(parseInt(m[1],10),parseInt(m[2],10),0,0);
+  return t.getTime()<=Date.now();
+}
 function renderSchedule(){
   const key=fmt(selDate);const evs=weekEvents[key]||[];
   const list=document.getElementById('schedule-list');list.innerHTML='';
@@ -3440,8 +3452,9 @@ function renderSchedule(){
     const isDone=ev.startsWith('[✓] ');
     const displayText=isDone?ev.slice(4):ev;
     const {time,text}=splitEvTime(displayText);
+    const past=isEvTimePast(time);
     const row=document.createElement('div');
-    row.className='item-row';
+    row.className='item-row'+(past?' past-time':'');
     row.draggable=true;
     row.dataset.idx=idx;
     row.style.cursor='grab';
