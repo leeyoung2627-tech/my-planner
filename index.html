@@ -621,21 +621,15 @@ body{opacity:0;transition:opacity .25s ease}
 .check.done{background:var(--accent);border-color:var(--accent);color:#fff}
 .item-text{font-size:13px;color:#222;flex:1}
 .item-text.done{text-decoration:line-through;color:#bbb}
-@font-face{
-  font-family:'DSEG7ClassicMini';
-  src:url('https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Classic-MINI/DSEG7ClassicMini-Bold.woff2') format('woff2'),
-      url('https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Classic-MINI/DSEG7ClassicMini-Bold.woff') format('woff');
-  font-weight:700;font-style:normal;font-display:swap;
-}
 .ev-time-badge{
   display:inline-block;flex-shrink:0;
-  font-family:var(--time-font,'DSEG7ClassicMini',ui-monospace,'SFMono-Regular',monospace);
-  font-weight:700;font-size:13px;letter-spacing:1px;
+  font-family:var(--time-font,ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace);
+  font-weight:800;font-size:12.5px;letter-spacing:0.5px;
   padding:2px 7px;border-radius:5px;
-  background:#1c1c1c;color:var(--accent);
+  background:#fff;border:1px solid #eee;color:var(--accent);
   margin-right:6px;vertical-align:middle;
 }
-.day-cell-ev .ev-time-badge{font-size:10.5px;padding:1px 5px;margin-right:4px}
+.day-cell-ev .ev-time-badge{font-size:9.5px;padding:1px 4px;margin-right:4px}
 .add-btn{display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer;padding:3px 0;background:none;border:none;font-family:inherit;margin-top:2px}
 .add-btn:hover{color:#666}
 
