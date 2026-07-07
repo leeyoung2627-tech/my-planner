@@ -454,16 +454,14 @@ body{opacity:0;transition:opacity .25s ease}
 .fixed-add-btn:hover{border-color:var(--accent);color:var(--accent)}
 .fixed-del{color:#ddd;background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px}
 .fixed-del:hover{color:#e66}
-.fixed-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media (max-width:360px){.fixed-grid{grid-template-columns:1fr}}
-.fixed-card{border:1.5px solid #eee;border-radius:10px;padding:8px 9px;margin-bottom:8px;background:#fafbff;min-width:0}
-.fixed-card-row1{display:flex;gap:4px;align-items:center;margin-bottom:6px}
-.fixed-card-row1 input{flex:1;min-width:0;font-size:12px;padding:5px 6px;border:0.5px solid #ddd;border-radius:6px;background:#fff;font-family:inherit;color:#222}
-.fixed-amount-input{width:100%;box-sizing:border-box;font-size:12px;padding:5px 6px;border:0.5px solid #ddd;border-radius:6px;background:#fff;text-align:right;font-family:inherit;margin-bottom:6px}
-.fixed-card-row3{display:flex;gap:4px;align-items:center}
-.fixed-day-wrap{display:flex;align-items:center;gap:2px;font-size:10px;color:#999;flex:1;min-width:0}
-.fixed-day-input{width:30px;font-size:11px;padding:5px 2px;border:0.5px solid #ddd;border-radius:6px;background:#fff;text-align:center;font-family:inherit}
-.fixed-method-select{font-size:10.5px;padding:5px 2px;border:0.5px solid #ddd;border-radius:6px;background:#fff;flex-shrink:0;font-family:inherit;max-width:66px}
+.fixed-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;border-bottom:0.5px solid #f0f0f0;padding:7px 2px}
+.fixed-row-main{display:flex;align-items:baseline;gap:6px;flex:1;min-width:0}
+.fixed-row-name{font-size:12.5px;color:#333;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
+.fixed-row-amount{font-size:12.5px;color:#222;flex-shrink:0}
+.fixed-row-meta{font-size:10.5px;color:#999;flex-shrink:0}
+.fixed-row-btns{display:flex;gap:4px;flex-shrink:0;margin-left:auto}
+.fixed-row-edit-btn{font-size:10.5px;color:#888;background:#f4f4f4;border:none;border-radius:6px;padding:3px 8px;cursor:pointer}
+.fixed-row-edit-btn:hover{background:var(--accent-light,#EEEDFE);color:var(--accent)}
 #mealPlanNote:empty:before{content:attr(data-ph);color:#ccc;pointer-events:none}
 
 /* 왼쪽 */
@@ -1061,6 +1059,35 @@ body.memo-edit-on .memo-text-handle{display:flex}
 .routine-type-chip{padding:5px 10px;border-radius:8px;font-size:11px;border:1.5px solid #eee;cursor:pointer;color:#999}
 .routine-type-chip.selected{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
 
+/* ── TIP (행동 패턴 정리) ── */
+.tip-toggle{
+  position:fixed;right:0;top:calc(62% - 148px);z-index:59;
+  width:30px;height:64px;
+  background:rgba(255,255,255,.85);
+  border:0.5px solid #ddd;border-right:none;
+  border-radius:12px 0 0 12px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:-2px 2px 8px #0001;
+  writing-mode:vertical-rl;letter-spacing:2px;
+  font-size:11px;color:#888;opacity:.55;
+  transition:opacity .2s,background .2s;
+}
+.tip-toggle:hover{opacity:1;background:#fff}
+.tip-toggle.on{color:var(--accent);opacity:.85}
+.tip-card{background:#fff;border:1.5px solid #eee;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.tip-card-top{display:flex;align-items:center;gap:6px}
+.tip-card-title{font-size:13px;font-weight:700;color:#222;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tip-card-cat{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:6px;flex-shrink:0}
+.tip-card-cat.good{background:#E3F5E9;color:#2E9E5B}
+.tip-card-cat.bad{background:#FDEAEA;color:#D0453C}
+.tip-card-cat.insight{background:#FFF6DE;color:#B8860B}
+.tip-card-content{font-size:11.5px;color:#666;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tip-cat-chips{display:flex;gap:6px;margin:4px 0}
+.tip-cat-chip{padding:5px 10px;border-radius:8px;font-size:11px;border:1.5px solid #eee;cursor:pointer;color:#999}
+.tip-cat-chip.selected.good{border-color:#2E9E5B;color:#2E9E5B;background:#E3F5E9}
+.tip-cat-chip.selected.bad{border-color:#D0453C;color:#D0453C;background:#FDEAEA}
+.tip-cat-chip.selected.insight{border-color:#B8860B;color:#B8860B;background:#FFF6DE}
+
 /* 루틴 실행 바 */
 .routine-runner-bar{
   position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:200;
@@ -1071,7 +1098,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 .routine-runner-bar.show{display:flex}
 .routine-runner-info{display:flex;flex-direction:column;gap:1px;min-width:0}
 .routine-runner-step{font-size:9.5px;color:#bbb;letter-spacing:.03em}
-.routine-runner-label{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.routine-runner-label{font-size:13px;font-weight:700;white-space:normal;word-break:keep-all;overflow-wrap:break-word;line-height:1.4;max-width:min(58vw,340px)}
 .routine-runner-btn{
   padding:7px 12px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;
 }
@@ -1301,6 +1328,37 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <button class="routine-add-btn" onclick="openRoutineCreateModal()">＋ 새 루틴 만들기</button>
 </div>
 
+<!-- TIP 탭 열기 손잡이 (행동 패턴 정리) -->
+<div class="tip-toggle" id="tipToggle" onclick="toggleTipPanel()" title="TIP 열기">TIP</div>
+
+<!-- TIP 패널: 행동 패턴 목록 + 새로 추가 -->
+<div class="routine-panel" id="tipPanel">
+  <div class="routine-panel-title">💡 TIP · 내 행동 패턴</div>
+  <div id="tipListWrap"></div>
+  <button class="routine-add-btn" onclick="openTipCreateModal()">＋ 새 TIP 추가</button>
+</div>
+
+<!-- TIP 추가/수정 모달 -->
+<div class="modal-bg" id="tipEditModal" style="display:none">
+  <div class="modal wide" style="max-height:85vh;overflow-y:auto">
+    <h3 id="tipEditTitle">새 TIP 추가</h3>
+    <div class="modal-label">분류</div>
+    <div class="tip-cat-chips" id="tipCatChips">
+      <div class="tip-cat-chip good" data-cat="good" onclick="selectTipCat('good')">🌱 좋은 습관</div>
+      <div class="tip-cat-chip bad" data-cat="bad" onclick="selectTipCat('bad')">⚠️ 피해야 할 패턴</div>
+      <div class="tip-cat-chip insight" data-cat="insight" onclick="selectTipCat('insight')">💡 깨달음</div>
+    </div>
+    <div class="modal-label">제목</div>
+    <input id="tip-title" placeholder="예: 야식 먹기 전엔 물부터 마시기"/>
+    <div class="modal-label">내용</div>
+    <textarea id="tip-content" rows="5" placeholder="상황·행동·결과를 자유롭게 적어보세요"></textarea>
+    <div class="modal-btns" style="margin-top:10px">
+      <button class="mbtn cancel" onclick="closeModal('tipEditModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmTipSave()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 루틴 만들기/수정 모달 -->
 <div class="modal-bg" id="routineEditModal" style="display:none">
   <div class="modal wide" style="max-height:85vh;overflow-y:auto">
@@ -1322,6 +1380,28 @@ body.memo-edit-on .memo-text-handle{display:flex}
     <div class="modal-btns" style="margin-top:10px">
       <button class="mbtn cancel" onclick="closeModal('routineEditModal')">취소</button>
       <button class="mbtn ok" onclick="confirmRoutineSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 고정비 추가/수정 모달 -->
+<div class="modal-bg" id="fixedEditModal" style="display:none">
+  <div class="modal" style="max-width:300px">
+    <h3 id="fixedEditTitle">고정비 추가</h3>
+    <div class="modal-label">항목명</div>
+    <input id="fixed-e-name" placeholder="예: 넷플릭스"/>
+    <div class="modal-label">금액</div>
+    <input id="fixed-e-amount" placeholder="예: 17000" inputmode="numeric"/>
+    <div class="modal-label">매월 며칠에 나가나요? (선택)</div>
+    <input id="fixed-e-day" placeholder="예: 15" inputmode="numeric" maxlength="2"/>
+    <div class="modal-label">결제 수단</div>
+    <select id="fixed-e-method">
+      <option value="card">💳 카드</option>
+      <option value="cash">💵 현금</option>
+    </select>
+    <div class="modal-btns" style="margin-top:10px">
+      <button class="mbtn cancel" onclick="closeModal('fixedEditModal')">취소</button>
+      <button class="mbtn ok" onclick="confirmFixedSave()">저장</button>
     </div>
   </div>
 </div>
@@ -2354,6 +2434,7 @@ onAuthStateChanged(auth,async user=>{
     await loadAllData();
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
     renderRoutineList();checkRoutineReminders();
+    renderTipList();
     runFixedCostAutoRecord();
     if(!window._fixedCostAutoTimer){
       window._fixedCostAutoTimer=setInterval(runFixedCostAutoRecord,30*60*1000); // 30분마다 재확인 (자정 넘겨도 놓치지 않게)
@@ -2395,7 +2476,7 @@ async function saveData(type,key,value){
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -2420,6 +2501,7 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'fasting')),
     getDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo')),
     getDocs(collection(db,'users',currentUser.uid,'routines')),
+    getDocs(collection(db,'users',currentUser.uid,'tips')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -2489,6 +2571,8 @@ async function loadAllData(){
   // 루틴
   routines=[];rtS.forEach(d=>{routines.push({id:d.id,...d.data()});});
   routines.sort((a,b)=>(a.order??999)-(b.order??999));
+  tips=[];tpS.forEach(d=>{tips.push({id:d.id,...d.data()});});
+  tips.sort((a,b)=>(a.order??999)-(b.order??999));
 }
 
 // ── 상단 메모 ──
@@ -2604,9 +2688,9 @@ window.toggleRoutinePanel=function(){
 };
 
 // 토글 버튼을 세로 중앙에 두고, 패널이 화면 안에서 위아래로 최대한 펼쳐지게 배치
-function positionRoutinePanel(){
-  const btn=document.getElementById('routineToggle');
-  const p=document.getElementById('routinePanel');
+function positionFloatingPanel(btnId,panelId){
+  const btn=document.getElementById(btnId);
+  const p=document.getElementById(panelId);
   const r=btn.getBoundingClientRect();
   const pw=270,gap=6;
   // 버튼이 화면 오른쪽 절반에 있으면 패널은 왼쪽으로, 아니면 오른쪽으로
@@ -2628,6 +2712,7 @@ function positionRoutinePanel(){
     p.style.top=top+'px';
   });
 }
+function positionRoutinePanel(){positionFloatingPanel('routineToggle','routinePanel');}
 window.addEventListener('resize',()=>{
   const p=document.getElementById('routinePanel');
   if(p&&p.classList.contains('show'))positionRoutinePanel();
@@ -2919,6 +3004,95 @@ function checkRoutineReminders(){
   btn.onclick=()=>startRoutine(candidate.id);
   document.getElementById('routineReminderBanner').classList.add('show');
 }
+
+
+// ══════════════════════════════════════════
+// ── TIP (내 행동 패턴 정리) ──
+// ══════════════════════════════════════════
+let tips=[]; // {id,title,category,content,order}
+let editingTipId=null;
+let tipEditCat='good';
+const TIP_CAT_LABEL={good:'🌱 좋은 습관',bad:'⚠️ 피해야 할 패턴',insight:'💡 깨달음'};
+
+window.toggleTipPanel=function(){
+  const p=document.getElementById('tipPanel');
+  const on=p.classList.toggle('show');
+  document.getElementById('tipToggle').classList.toggle('on',on);
+  if(on){renderTipList();positionFloatingPanel('tipToggle','tipPanel');}
+};
+window.addEventListener('resize',()=>{
+  const p=document.getElementById('tipPanel');
+  if(p&&p.classList.contains('show'))positionFloatingPanel('tipToggle','tipPanel');
+});
+
+function renderTipList(){
+  const wrap=document.getElementById('tipListWrap');
+  if(!wrap)return;
+  if(tips.length===0){
+    wrap.innerHTML='<div style="text-align:center;color:#ccc;font-size:12px;padding:14px 0">아직 기록한 TIP이 없어요</div>';
+    return;
+  }
+  wrap.innerHTML=tips.map(t=>`
+    <div class="tip-card">
+      <div class="tip-card-top">
+        <span class="tip-card-cat ${t.category||'good'}">${TIP_CAT_LABEL[t.category]||TIP_CAT_LABEL.good}</span>
+        <span class="tip-card-title">${escapeHtml(t.title||'')}</span>
+      </div>
+      <div class="tip-card-content">${escapeHtml(t.content||'')}</div>
+      <div class="routine-card-btns">
+        <button class="routine-mini-btn" onclick="openTipEditModal('${t.id}')">수정</button>
+        <button class="routine-mini-btn" onclick="deleteTip('${t.id}')">삭제</button>
+      </div>
+    </div>`).join('');
+}
+
+window.openTipCreateModal=function(){
+  editingTipId=null;
+  document.getElementById('tipEditTitle').textContent='새 TIP 추가';
+  document.getElementById('tip-title').value='';
+  document.getElementById('tip-content').value='';
+  selectTipCat('good');
+  document.getElementById('tipEditModal').style.display='flex';
+};
+window.openTipEditModal=function(id){
+  const t=tips.find(x=>x.id===id);if(!t)return;
+  editingTipId=id;
+  document.getElementById('tipEditTitle').textContent='TIP 수정';
+  document.getElementById('tip-title').value=t.title||'';
+  document.getElementById('tip-content').value=t.content||'';
+  selectTipCat(t.category||'good');
+  document.getElementById('tipEditModal').style.display='flex';
+};
+window.selectTipCat=function(cat){
+  tipEditCat=cat;
+  document.querySelectorAll('#tipCatChips .tip-cat-chip').forEach(c=>{
+    c.classList.toggle('selected',c.dataset.cat===cat);
+  });
+};
+window.confirmTipSave=async function(){
+  const title=document.getElementById('tip-title').value.trim();
+  if(!title){alert('제목을 입력해주세요');return;}
+  const content=document.getElementById('tip-content').value.trim();
+  if(editingTipId){
+    const t=tips.find(x=>x.id===editingTipId);
+    const payload={title,content,category:tipEditCat,order:t.order??tips.length};
+    Object.assign(t,payload);
+    await saveData('tips',editingTipId,payload);
+  }else{
+    const id='tip_'+Date.now();
+    const payload={title,content,category:tipEditCat,order:tips.length};
+    tips.push({id,...payload});
+    await saveData('tips',id,payload);
+  }
+  closeModal('tipEditModal');
+  renderTipList();
+};
+window.deleteTip=async function(id){
+  if(!confirm('이 TIP을 삭제할까요?'))return;
+  tips=tips.filter(t=>t.id!==id);
+  await deleteData('tips',id);
+  renderTipList();
+};
 
 
 // ── 한국 공휴일 (고정) ──
@@ -4339,29 +4513,19 @@ function renderFixedCosts(){
     return `
       <div class="fixed-section-title">${label}</div>
       ${rows.length===0?'<div style="text-align:center;color:#ccc;font-size:11px;padding:8px 0">아직 등록된 항목이 없어요</div>':''}
-      <div class="fixed-grid">
-        ${rows.map((r,i)=>`
-          <div class="fixed-card">
-            <div class="fixed-card-row1">
-              <input value="${escapeHtml(r.name||'')}" placeholder="항목명"
-                onblur="updateFixedRow('${type}',${i},'name',this.value)"/>
-              <button class="fixed-del" onclick="deleteFixedRow('${type}',${i})">✕</button>
-            </div>
-            <input class="fixed-amount-input" value="${r.amount||''}" placeholder="금액"
-              onblur="updateFixedRow('${type}',${i},'amount',this.value)"/>
-            <div class="fixed-card-row3">
-              <span class="fixed-day-wrap">매월
-                <input class="fixed-day-input" type="number" min="1" max="31" value="${r.day||''}" placeholder="-"
-                  onblur="updateFixedRow('${type}',${i},'day',this.value)"/>일
-              </span>
-              <select class="fixed-method-select" onchange="updateFixedRow('${type}',${i},'method',this.value)">
-                <option value="card"${(r.method||'card')==='card'?' selected':''}>💳카드</option>
-                <option value="cash"${r.method==='cash'?' selected':''}>💵현금</option>
-              </select>
-            </div>
-          </div>`).join('')}
-      </div>
-      <button class="fixed-add-btn" onclick="addFixedRow('${type}')">＋ 추가</button>`;
+      ${rows.map((r,i)=>`
+        <div class="fixed-row">
+          <div class="fixed-row-main">
+            <span class="fixed-row-name">${escapeHtml(r.name||'(이름없음)')}</span>
+            <span class="fixed-row-amount">${parseAmount(r.amount).toLocaleString()}원</span>
+          </div>
+          <span class="fixed-row-meta">${r.day?`매월 ${r.day}일`:'날짜 미설정'} · ${r.method==='cash'?'💵현금':'💳카드'}</span>
+          <div class="fixed-row-btns">
+            <button class="fixed-row-edit-btn" onclick="openFixedEditModal('${type}',${i})">수정</button>
+            <button class="fixed-del" onclick="deleteFixedRow('${type}',${i})">✕</button>
+          </div>
+        </div>`).join('')}
+      <button class="fixed-add-btn" onclick="openFixedAddModal('${type}')">＋ 추가</button>`;
   };
   const fixed=fixedCosts.fixed||[];
   const semi=fixedCosts.semifixed||[];
@@ -4380,22 +4544,49 @@ function renderFixedCosts(){
     </div>`;
 }
 function parseAmount(v){const n=parseInt(String(v).replace(/,/g,''));return isNaN(n)?0:n;}
-window.addFixedRow=function(type){
-  fixedCosts[type].push({id:'fx_'+Date.now()+'_'+type+'_'+fixedCosts[type].length,name:'',amount:'',day:'',method:'card'});
-  renderFixedCosts();
-  // 포커스 마지막 행 이름 칸
-  setTimeout(()=>{
-    const inputs=document.querySelectorAll(`#fixed-costs-content .fixed-card-row1 input`);
-    if(inputs.length)inputs[inputs.length-1].focus();
-  },50);
+
+// ── 고정비 추가/수정: 리스트는 한 줄 표시만, 실제 수정은 모달에서 ──
+let editingFixedType=null,editingFixedIdx=-1;
+window.openFixedAddModal=function(type){
+  editingFixedType=type;editingFixedIdx=-1;
+  document.getElementById('fixedEditTitle').textContent='고정비 추가';
+  document.getElementById('fixed-e-name').value='';
+  document.getElementById('fixed-e-amount').value='';
+  document.getElementById('fixed-e-day').value='';
+  document.getElementById('fixed-e-method').value='card';
+  document.getElementById('fixedEditModal').style.display='flex';
 };
-window.updateFixedRow=async function(type,idx,field,val){
-  fixedCosts[type][idx][field]=val;
+window.openFixedEditModal=function(type,idx){
+  const r=fixedCosts[type][idx];if(!r)return;
+  editingFixedType=type;editingFixedIdx=idx;
+  document.getElementById('fixedEditTitle').textContent='고정비 수정';
+  document.getElementById('fixed-e-name').value=r.name||'';
+  document.getElementById('fixed-e-amount').value=r.amount||'';
+  document.getElementById('fixed-e-day').value=r.day||'';
+  document.getElementById('fixed-e-method').value=r.method||'card';
+  document.getElementById('fixedEditModal').style.display='flex';
+};
+window.confirmFixedSave=async function(){
+  const name=document.getElementById('fixed-e-name').value.trim();
+  if(!name){alert('항목명을 입력해주세요');return;}
+  const amount=document.getElementById('fixed-e-amount').value.trim();
+  let day=document.getElementById('fixed-e-day').value.trim();
+  day=day.replace(/[^0-9]/g,'');
+  if(day){const dn=parseInt(day);if(dn<1)day='1';else if(dn>31)day='31';else day=String(dn);}
+  const method=document.getElementById('fixed-e-method').value;
+  const type=editingFixedType;
+  if(editingFixedIdx===-1){
+    fixedCosts[type].push({id:'fx_'+Date.now()+'_'+type+'_'+fixedCosts[type].length,name,amount,day,method});
+  }else{
+    fixedCosts[type][editingFixedIdx]={...fixedCosts[type][editingFixedIdx],name,amount,day,method};
+  }
   await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);
   showSaving();
+  closeModal('fixedEditModal');
   renderFixedCosts();
 };
 window.deleteFixedRow=async function(type,idx){
+  if(!confirm('이 항목을 삭제할까요?'))return;
   fixedCosts[type].splice(idx,1);
   await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);
   renderFixedCosts();
