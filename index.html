@@ -1074,19 +1074,12 @@ body.memo-edit-on .memo-text-handle{display:flex}
 }
 .tip-toggle:hover{opacity:1;background:#fff}
 .tip-toggle.on{color:var(--accent);opacity:.85}
-.tip-card{background:#fff;border:1.5px solid #eee;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
-.tip-card-top{display:flex;align-items:center;gap:6px}
-.tip-card-title{font-size:13px;font-weight:700;color:#222;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tip-card-cat{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:6px;flex-shrink:0}
-.tip-card-cat.good{background:#E3F5E9;color:#2E9E5B}
-.tip-card-cat.bad{background:#FDEAEA;color:#D0453C}
-.tip-card-cat.insight{background:#FFF6DE;color:#B8860B}
-.tip-card-content{font-size:11.5px;color:#666;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.tip-cat-chips{display:flex;gap:6px;margin:4px 0}
-.tip-cat-chip{padding:5px 10px;border-radius:8px;font-size:11px;border:1.5px solid #eee;cursor:pointer;color:#999}
-.tip-cat-chip.selected.good{border-color:#2E9E5B;color:#2E9E5B;background:#E3F5E9}
-.tip-cat-chip.selected.bad{border-color:#D0453C;color:#D0453C;background:#FDEAEA}
-.tip-cat-chip.selected.insight{border-color:#B8860B;color:#B8860B;background:#FFF6DE}
+.tip-card{background:#fff;border:1.5px solid #eee;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.tip-flow{display:flex;flex-direction:column;align-items:stretch;gap:2px}
+.tip-box{min-width:0;border:1.5px solid #ddd;border-radius:10px;padding:9px 11px;font-size:12.5px;color:#333;line-height:1.4;word-break:keep-all}
+.tip-box.situation{background:#F5F7FF;border-color:#D6DCF7}
+.tip-box.action{background:#F3FBF6;border-color:#CDEEDB}
+.tip-arrow{text-align:center;color:#ccc;font-size:14px;font-weight:700;line-height:1.2}
 
 /* 루틴 실행 바 */
 .routine-runner-bar{
@@ -1342,16 +1335,11 @@ body.memo-edit-on .memo-text-handle{display:flex}
 <div class="modal-bg" id="tipEditModal" style="display:none">
   <div class="modal wide" style="max-height:85vh;overflow-y:auto">
     <h3 id="tipEditTitle">새 TIP 추가</h3>
-    <div class="modal-label">분류</div>
-    <div class="tip-cat-chips" id="tipCatChips">
-      <div class="tip-cat-chip good" data-cat="good" onclick="selectTipCat('good')">🌱 좋은 습관</div>
-      <div class="tip-cat-chip bad" data-cat="bad" onclick="selectTipCat('bad')">⚠️ 피해야 할 패턴</div>
-      <div class="tip-cat-chip insight" data-cat="insight" onclick="selectTipCat('insight')">💡 깨달음</div>
-    </div>
-    <div class="modal-label">제목</div>
-    <input id="tip-title" placeholder="예: 야식 먹기 전엔 물부터 마시기"/>
-    <div class="modal-label">내용</div>
-    <textarea id="tip-content" rows="5" placeholder="상황·행동·결과를 자유롭게 적어보세요"></textarea>
+    <div class="modal-label">어떤 상황일 때</div>
+    <input id="tip-situation" placeholder="예: 야식 생각날 때"/>
+    <div style="text-align:center;color:#ccc;font-size:16px;margin:2px 0">↓</div>
+    <div class="modal-label">이렇게 한다</div>
+    <input id="tip-action" placeholder="예: 물 한 잔부터 마신다"/>
     <div class="modal-btns" style="margin-top:10px">
       <button class="mbtn cancel" onclick="closeModal('tipEditModal')">취소</button>
       <button class="mbtn ok" onclick="confirmTipSave()">저장</button>
@@ -3009,10 +2997,8 @@ function checkRoutineReminders(){
 // ══════════════════════════════════════════
 // ── TIP (내 행동 패턴 정리) ──
 // ══════════════════════════════════════════
-let tips=[]; // {id,title,category,content,order}
+let tips=[]; // {id,situation,action,order}
 let editingTipId=null;
-let tipEditCat='good';
-const TIP_CAT_LABEL={good:'🌱 좋은 습관',bad:'⚠️ 피해야 할 패턴',insight:'💡 깨달음'};
 
 window.toggleTipPanel=function(){
   const p=document.getElementById('tipPanel');
@@ -3034,11 +3020,11 @@ function renderTipList(){
   }
   wrap.innerHTML=tips.map(t=>`
     <div class="tip-card">
-      <div class="tip-card-top">
-        <span class="tip-card-cat ${t.category||'good'}">${TIP_CAT_LABEL[t.category]||TIP_CAT_LABEL.good}</span>
-        <span class="tip-card-title">${escapeHtml(t.title||'')}</span>
+      <div class="tip-flow">
+        <div class="tip-box situation">${escapeHtml(t.situation||'')}</div>
+        <div class="tip-arrow">↓</div>
+        <div class="tip-box action">${escapeHtml(t.action||'')}</div>
       </div>
-      <div class="tip-card-content">${escapeHtml(t.content||'')}</div>
       <div class="routine-card-btns">
         <button class="routine-mini-btn" onclick="openTipEditModal('${t.id}')">수정</button>
         <button class="routine-mini-btn" onclick="deleteTip('${t.id}')">삭제</button>
@@ -3049,38 +3035,30 @@ function renderTipList(){
 window.openTipCreateModal=function(){
   editingTipId=null;
   document.getElementById('tipEditTitle').textContent='새 TIP 추가';
-  document.getElementById('tip-title').value='';
-  document.getElementById('tip-content').value='';
-  selectTipCat('good');
+  document.getElementById('tip-situation').value='';
+  document.getElementById('tip-action').value='';
   document.getElementById('tipEditModal').style.display='flex';
 };
 window.openTipEditModal=function(id){
   const t=tips.find(x=>x.id===id);if(!t)return;
   editingTipId=id;
   document.getElementById('tipEditTitle').textContent='TIP 수정';
-  document.getElementById('tip-title').value=t.title||'';
-  document.getElementById('tip-content').value=t.content||'';
-  selectTipCat(t.category||'good');
+  document.getElementById('tip-situation').value=t.situation||'';
+  document.getElementById('tip-action').value=t.action||'';
   document.getElementById('tipEditModal').style.display='flex';
 };
-window.selectTipCat=function(cat){
-  tipEditCat=cat;
-  document.querySelectorAll('#tipCatChips .tip-cat-chip').forEach(c=>{
-    c.classList.toggle('selected',c.dataset.cat===cat);
-  });
-};
 window.confirmTipSave=async function(){
-  const title=document.getElementById('tip-title').value.trim();
-  if(!title){alert('제목을 입력해주세요');return;}
-  const content=document.getElementById('tip-content').value.trim();
+  const situation=document.getElementById('tip-situation').value.trim();
+  const action=document.getElementById('tip-action').value.trim();
+  if(!situation||!action){alert('상황과 행동을 모두 입력해주세요');return;}
   if(editingTipId){
     const t=tips.find(x=>x.id===editingTipId);
-    const payload={title,content,category:tipEditCat,order:t.order??tips.length};
+    const payload={situation,action,order:t.order??tips.length};
     Object.assign(t,payload);
     await saveData('tips',editingTipId,payload);
   }else{
     const id='tip_'+Date.now();
-    const payload={title,content,category:tipEditCat,order:tips.length};
+    const payload={situation,action,order:tips.length};
     tips.push({id,...payload});
     await saveData('tips',id,payload);
   }
