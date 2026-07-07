@@ -2111,7 +2111,6 @@ function showSaving(){const el=document.getElementById('savingIndicator');el.sty
   }
   function savePos(leftPct,topPct){
     try{localStorage.setItem(POS_KEY,JSON.stringify({left:leftPct,top:topPct}));}catch(e){}
-    if(window.queueSaveAppearance)window.queueSaveAppearance();
   }
   function loadPos(){
     try{
@@ -2122,7 +2121,6 @@ function showSaving(){const el=document.getElementById('savingIndicator');el.sty
       }
     }catch(e){}
   }
-  window.refreshSlimeBtnPos=loadPos;
 
   btn.addEventListener('pointerdown',(e)=>{
     dragging=true;moved=false;
@@ -2225,7 +2223,6 @@ function closeOtherFloatingPanels(exceptPanelId){
   function applyPos(btn,leftPct,topPct){btn.style.left=leftPct+'%';btn.style.top=topPct+'%';}
   function savePos(color,leftPct,topPct){
     try{localStorage.setItem(posKey(color),JSON.stringify({left:leftPct,top:topPct}));}catch(e){}
-    if(window.queueSaveAppearance)window.queueSaveAppearance();
   }
   function loadPosFor(color){
     const btn=bottles[color];if(!btn)return;
@@ -2247,7 +2244,6 @@ function closeOtherFloatingPanels(exceptPanelId){
   }
   function setVisibleColors(arr){
     try{localStorage.setItem(VIS_KEY,JSON.stringify(arr));}catch(e){}
-    if(window.queueSaveAppearance)window.queueSaveAppearance();
   }
   function updatePickerActiveState(){
     const visible=getVisibleColors();
@@ -2349,24 +2345,12 @@ function closeOtherFloatingPanels(exceptPanelId){
   });
 
   // 저장된 상태 복원: 마지막에 켜져 있던 병들 다시 보이기
-  function restoreVisibleBottles(){
-    const visible=getVisibleColors();
-    COLORS.forEach(color=>{
-      const btn=bottles[color];if(!btn)return;
-      if(visible.includes(color)){
-        loadPosFor(color);
-        btn.style.display='flex';
-        requestAnimationFrame(()=>btn.classList.add('show'));
-      } else {
-        btn.classList.remove('show');
-        btn.style.display='none';
-      }
-    });
-    updatePickerActiveState();
-  }
-  restoreVisibleBottles();
-  // 로그인 후 서버에서 최신 설정을 받아온 다음 다시 호출하기 위해 노출
-  window.refreshMemoBottleUI=restoreVisibleBottles;
+  getVisibleColors().forEach(color=>{
+    const btn=bottles[color];if(!btn)return;
+    btn.style.display='flex';
+    requestAnimationFrame(()=>btn.classList.add('show'));
+  });
+  updatePickerActiveState();
 })();
 
 // ── 메모 글자 위치: 핸들을 드래그해서 내가 원하는 자리에 두기 ──
@@ -2377,7 +2361,6 @@ function closeOtherFloatingPanels(exceptPanelId){
     garden:{left:25,top:46,width:230,height:195},
     linen:{left:25,top:36,width:230,height:205}
   };
-  const refreshFns=[];
   Object.keys(DEFAULTS).forEach(color=>{
     const ta=document.getElementById('memoBottleText-'+color);
     const handle=document.querySelector('.memo-text-handle[data-target="'+color+'"]');
@@ -2430,25 +2413,10 @@ function closeOtherFloatingPanels(exceptPanelId){
       if(!dragging)return;
       dragging=false;
       try{localStorage.setItem(KEY,JSON.stringify({left:pos.left,top:pos.top}));}catch(e){}
-      if(window.queueSaveAppearance)window.queueSaveAppearance();
     }
     handle.addEventListener('pointerup',endDrag);
     handle.addEventListener('pointercancel',endDrag);
-
-    // 로그인 후 서버에서 받아온 최신 위치값을 다시 읽어 적용하기 위해 노출
-    refreshFns.push(()=>{
-      try{
-        const raw2=localStorage.getItem(KEY);
-        if(raw2){
-          const p2=JSON.parse(raw2);
-          if(typeof p2.left==='number'&&typeof p2.top==='number'){pos.left=p2.left;pos.top=p2.top;}
-        }
-      }catch(e){}
-      clampPos();
-      apply();
-    });
   });
-  window.refreshMemoTextPos=function(){refreshFns.forEach(fn=>fn());};
 })();
 
 // ── Auth — 깜빡임 방지 ──
@@ -2514,42 +2482,9 @@ async function saveData(type,key,value){
   }
 }
 async function deleteData(type,key){if(!currentUser)return;await deleteDoc(doc(db,'users',currentUser.uid,type,key));}
-
-// ── 외모 설정(스킨/패턴/폰트/다이어리 투명도/메모병 위치·표시여부) 동기화 ──
-// localStorage에는 그대로 캐싱해두고(로그인 전 깜빡임 방지용), 로그인 상태면 Firestore에도 저장해서
-// 집/작업실 등 다른 기기에서도 같은 설정이 뜨도록 동기화한다.
-let _appearanceSaveTimer=null;
-function queueSaveAppearance(){
-  clearTimeout(_appearanceSaveTimer);
-  _appearanceSaveTimer=setTimeout(saveAppearanceNow,700);
-}
-async function saveAppearanceNow(){
-  if(!currentUser)return;
-  const data={
-    theme:currentTheme,
-    pattern:currentPattern,
-    font:currentFont,
-    patternColor:patternColor,
-    // 파일 업로드 폰트(용량이 커서 기기별로만 유지되는 폰트)는 제외하고, Google 폰트만 동기화
-    customFonts:customFonts.filter(f=>f.google&&f.type!=='file'),
-    diaryOpacityPct:(()=>{try{return Number(localStorage.getItem('diaryOpacityPct'))||32;}catch(e){return 32;}})(),
-    memoBottleVisible:(()=>{try{return JSON.parse(localStorage.getItem('memoBottleVisibleColors')||'[]');}catch(e){return [];}})(),
-    memoBottlePos:{},
-    memoTextPos:{},
-    slimeBtnPos:(()=>{try{return JSON.parse(localStorage.getItem('rpgSlimeBtnPos')||'null');}catch(e){return null;}})()
-  };
-  ['blue','pink','garden','linen'].forEach(c=>{
-    try{const p=localStorage.getItem('memoBottlePos_'+c);if(p)data.memoBottlePos[c]=JSON.parse(p);}catch(e){}
-    try{const p=localStorage.getItem('memoTextPos_'+c);if(p)data.memoTextPos[c]=JSON.parse(p);}catch(e){}
-  });
-  try{
-    await setDoc(doc(db,'users',currentUser.uid,'settings','appearance'),data);
-  }catch(err){console.error('appearance 저장 실패:',err);}
-}
-window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -2575,7 +2510,6 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo')),
     getDocs(collection(db,'users',currentUser.uid,'routines')),
     getDocs(collection(db,'users',currentUser.uid,'tips')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','appearance')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -2647,33 +2581,6 @@ async function loadAllData(){
   routines.sort((a,b)=>(a.order??999)-(b.order??999));
   tips=[];tpS.forEach(d=>{tips.push({id:d.id,...d.data()});});
   tips.sort((a,b)=>(a.order??999)-(b.order??999));
-  // 외모 설정(스킨/패턴/폰트/다이어리 투명도/메모병 위치·표시여부) — 서버 값을 localStorage에 덮어써서
-  // 이 기기에서도 다른 기기와 같은 설정이 보이게 한다.
-  if(apS.exists()){
-    const ap=apS.data();
-    try{
-      if(ap.theme){currentTheme=ap.theme;localStorage.setItem('planner_theme_v2',JSON.stringify(ap.theme));}
-      if(ap.pattern){currentPattern=ap.pattern;localStorage.setItem('planner_pattern',ap.pattern);}
-      if(ap.font){currentFont=ap.font;localStorage.setItem('planner_font',ap.font);}
-      if(ap.patternColor){patternColor=ap.patternColor;localStorage.setItem('planner_pattern_color',ap.patternColor);}
-      if(ap.customFonts){
-        // 파일 업로드 폰트(이 기기에만 있는 대용량 폰트)는 유지하고, 서버의 Google 폰트 목록으로 나머지를 덮어씀
-        let localFileFonts=[];
-        try{const cur=JSON.parse(localStorage.getItem('planner_custom_fonts')||'[]');localFileFonts=cur.filter(f=>f.type==='file');}catch(e){}
-        customFonts=[...ap.customFonts,...localFileFonts];
-        localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
-      }
-      if(ap.diaryOpacityPct!=null)localStorage.setItem('diaryOpacityPct',ap.diaryOpacityPct);
-      if(ap.memoBottleVisible)localStorage.setItem('memoBottleVisibleColors',JSON.stringify(ap.memoBottleVisible));
-      if(ap.slimeBtnPos)localStorage.setItem('rpgSlimeBtnPos',JSON.stringify(ap.slimeBtnPos));
-      if(ap.memoBottlePos)Object.keys(ap.memoBottlePos).forEach(c=>localStorage.setItem('memoBottlePos_'+c,JSON.stringify(ap.memoBottlePos[c])));
-      if(ap.memoTextPos)Object.keys(ap.memoTextPos).forEach(c=>localStorage.setItem('memoTextPos_'+c,JSON.stringify(ap.memoTextPos[c])));
-    }catch(e){console.error('appearance 동기화 실패:',e);}
-  }
-  // 위에서 localStorage를 갱신한 뒤, 이미 화면에 그려진 메모병/슬라임 버튼 위치·표시상태를 다시 적용
-  if(window.refreshMemoBottleUI)window.refreshMemoBottleUI();
-  if(window.refreshMemoTextPos)window.refreshMemoTextPos();
-  if(window.refreshSlimeBtnPos)window.refreshSlimeBtnPos();
 }
 
 // ── 상단 메모 ──
@@ -5743,7 +5650,6 @@ function isColorDark(hex){
 }
 function saveTheme(){
   localStorage.setItem('planner_theme_v2',JSON.stringify(currentTheme));
-  if(window.queueSaveAppearance)window.queueSaveAppearance();
 }
 function updatePanelPreviews(){
   const t=currentTheme;
@@ -5791,7 +5697,6 @@ window.addCustomFont=function(){
   const key='custom_'+Date.now();
   customFonts.push({key,name,google});
   localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
-  if(window.queueSaveAppearance)window.queueSaveAppearance();
   loadGoogleFont(google);
   renderFontButtons();
   setFont(key,document.querySelector(`.font-btn[data-key="${key}"]`));
@@ -5863,7 +5768,6 @@ window.deleteCustomFont=function(key){
     applyFont('system');
   }
   renderFontButtons();
-  if(window.queueSaveAppearance)window.queueSaveAppearance();
 };
 function loadGoogleFont(googleName){
   if(!googleName)return;
@@ -5892,7 +5796,6 @@ window.onPatternColor=function(val){
   localStorage.setItem('planner_pattern_color',val);
   applyPattern(currentPattern);
   updatePanelPreviews();
-  if(window.queueSaveAppearance)window.queueSaveAppearance();
 };
 window.setBgPattern=function(pattern,btn){
   currentPattern=pattern;
@@ -5900,7 +5803,6 @@ window.setBgPattern=function(pattern,btn){
   localStorage.setItem('planner_pattern',pattern);
   document.querySelectorAll('.bg-pattern').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  if(window.queueSaveAppearance)window.queueSaveAppearance();
 };
 window.setFont=function(fontKey,btn){
   currentFont=fontKey;
@@ -5908,7 +5810,6 @@ window.setFont=function(fontKey,btn){
   localStorage.setItem('planner_font',fontKey);
   document.querySelectorAll('.font-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  if(window.queueSaveAppearance)window.queueSaveAppearance();
 };
 function applyFont(fontKey){
   const cf=customFonts.find(f=>f.key===fontKey);
@@ -5929,7 +5830,6 @@ window.resetTheme=function(){
   renderFontButtons();updatePanelPreviews();
   document.querySelectorAll('.bg-pattern').forEach(b=>b.classList.remove('active'));
   document.querySelector('.bg-pattern')?.classList.add('active');
-  if(window.queueSaveAppearance)window.queueSaveAppearance();
 };
 
 function loadBgSetting(){loadTheme();}
@@ -7329,7 +7229,6 @@ window.setDiaryOpacity=function(val){
   const alpha=(Number(val)/100).toFixed(2);
   document.getElementById('diaryScreen').style.setProperty('--diary-alpha',alpha);
   try{localStorage.setItem('diaryOpacityPct',val);}catch(e){}
-  if(window.queueSaveAppearance)window.queueSaveAppearance();
 };
 function loadDiaryOpacity(){
   let val=32;
