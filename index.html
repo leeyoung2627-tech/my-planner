@@ -1074,12 +1074,16 @@ body.memo-edit-on .memo-text-handle{display:flex}
 }
 .tip-toggle:hover{opacity:1;background:#fff}
 .tip-toggle.on{color:var(--accent);opacity:.85}
-.tip-card{background:#fff;border:1.5px solid #eee;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.tip-card{background:#fff;border:1.5px solid #eee;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px;margin-bottom:8px;position:relative}
 .tip-flow{display:flex;flex-direction:column;align-items:stretch;gap:2px}
 .tip-box{min-width:0;border:1.5px solid #ddd;border-radius:10px;padding:9px 11px;font-size:12.5px;color:#333;line-height:1.4;word-break:keep-all}
-.tip-box.situation{background:#F5F7FF;border-color:#D6DCF7}
-.tip-box.action{background:#F3FBF6;border-color:#CDEEDB}
+.tip-box.situation{background:#FDEEF3;border-color:#F5C7D8}
+.tip-box.action{background:#EAF6FC;border-color:#BFE3F2}
 .tip-arrow{text-align:center;color:#ccc;font-size:14px;font-weight:700;line-height:1.2}
+.tip-card-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.tip-card:hover .tip-card-actions,.tip-card:focus-within .tip-card-actions{opacity:1}
+.tip-mini-icon-btn{background:#f4f4f4;border:none;border-radius:6px;width:22px;height:22px;font-size:11px;color:#999;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.tip-mini-icon-btn:hover{background:#eee;color:#555}
 
 /* 루틴 실행 바 */
 .routine-runner-bar{
@@ -3020,14 +3024,14 @@ function renderTipList(){
   }
   wrap.innerHTML=tips.map(t=>`
     <div class="tip-card">
+      <div class="tip-card-actions">
+        <button class="tip-mini-icon-btn" onclick="openTipEditModal('${t.id}')" title="수정">✏️</button>
+        <button class="tip-mini-icon-btn" onclick="deleteTip('${t.id}')" title="삭제">✕</button>
+      </div>
       <div class="tip-flow">
         <div class="tip-box situation">${escapeHtml(t.situation||'')}</div>
         <div class="tip-arrow">↓</div>
         <div class="tip-box action">${escapeHtml(t.action||'')}</div>
-      </div>
-      <div class="routine-card-btns">
-        <button class="routine-mini-btn" onclick="openTipEditModal('${t.id}')">수정</button>
-        <button class="routine-mini-btn" onclick="deleteTip('${t.id}')">삭제</button>
       </div>
     </div>`).join('');
 }
