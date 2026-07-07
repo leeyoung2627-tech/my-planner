@@ -1700,7 +1700,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
     <div class="modal-label">일정 이름</div>
     <input id="sch-name" placeholder="예: 병원 예약"/>
     <div class="modal-label">시간 (선택)</div>
-    <input id="sch-time" type="time"/>
+    <input id="sch-time" type="text" inputmode="numeric" placeholder="예: 930, 9:30, 1430 (비우면 시간 없음)" maxlength="7"/>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('scheduleModal')">취소</button>
       <button class="mbtn ok" onclick="confirmSchedule()">추가</button>
@@ -1928,7 +1928,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
     <div class="modal-label">일정 이름</div>
     <input id="sche-name" placeholder="일정 이름"/>
     <div class="modal-label">시간 (선택)</div>
-    <input id="sche-time" type="time"/>
+    <input id="sche-time" type="text" inputmode="numeric" placeholder="예: 930, 9:30, 1430 (비우면 시간 없음)" maxlength="7"/>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('scheduleEditModal')">취소</button>
       <button class="mbtn ok" onclick="confirmScheduleEdit()">저장</button>
@@ -3485,6 +3485,23 @@ window.deleteScheduleItem=async function(key,idx){
   renderSchedule();
   if(curView==='week')renderWeek();else renderMonth();
 };
+function parseTimeInput(str){
+  str=(str||'').trim();
+  if(!str)return '';
+  let h,m;
+  const colonMatch=str.match(/^([0-9]{1,2}):([0-9]{1,2})$/);
+  if(colonMatch){
+    h=parseInt(colonMatch[1],10);m=parseInt(colonMatch[2],10);
+  }else{
+    const digits=str.replace(/[^0-9]/g,'');
+    if(!digits)return null;
+    if(digits.length<=2){h=parseInt(digits,10);m=0;}
+    else if(digits.length===3){h=parseInt(digits.slice(0,1),10);m=parseInt(digits.slice(1),10);}
+    else{h=parseInt(digits.slice(0,digits.length-2),10);m=parseInt(digits.slice(-2),10);}
+  }
+  if(isNaN(h)||isNaN(m)||h<0||h>23||m<0||m>59)return null;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
 window.openScheduleModal=function(){
   document.getElementById('sch-name').value='';document.getElementById('sch-time').value='';
   document.getElementById('scheduleModal').style.display='flex';
@@ -3501,7 +3518,8 @@ window.openScheduleEditModal=function(key,idx){
 };
 window.confirmScheduleEdit=async function(){
   const name=document.getElementById('sche-name').value.trim();if(!name)return;
-  const time=document.getElementById('sche-time').value;
+  const time=parseTimeInput(document.getElementById('sche-time').value);
+  if(time===null){alert('시간 형식을 확인해주세요 (예: 930, 9:30, 1430)');return;}
   const prev=weekEvents[editingScheduleKey][editingScheduleIdx]||'';
   const wasDone=prev.startsWith('[✓] ');
   const newVal=time?`[${time}] ${name}`:name;
@@ -3512,7 +3530,9 @@ window.confirmScheduleEdit=async function(){
 };
 window.confirmSchedule=async function(){
   const name=document.getElementById('sch-name').value.trim();if(!name)return;
-  const time=document.getElementById('sch-time').value;const key=fmt(selDate);
+  const time=parseTimeInput(document.getElementById('sch-time').value);
+  if(time===null){alert('시간 형식을 확인해주세요 (예: 930, 9:30, 1430)');return;}
+  const key=fmt(selDate);
   if(!weekEvents[key])weekEvents[key]=[];
   weekEvents[key].push(time?`[${time}] ${name}`:name);
   await saveData('events',key,{items:weekEvents[key]});
