@@ -3439,20 +3439,34 @@ function splitEvTime(txt){
   if(m)return {time:m[1],text:m[2]};
   return {time:'',text:txt};
 }
-function isEvTimePast(time){
-  if(!time)return false;
-  const m=time.match(/^(\d{2}):(\d{2})$/);if(!m)return false;
-  const t=new Date(selDate);t.setHours(parseInt(m[1],10),parseInt(m[2],10),0,0);
-  return t.getTime()<=Date.now();
+const DAY_END_HOUR=3; // 하루 기준: 아침에 시작해서 다음날 새벽 3시까지
+function evDateTime(time){
+  const m=time.match(/^(\d{2}):(\d{2})$/);if(!m)return null;
+  const h=parseInt(m[1],10),mi=parseInt(m[2],10);
+  const t=new Date(selDate);
+  if(h<DAY_END_HOUR)t.setDate(t.getDate()+1); // 새벽 0~2시대는 그날의 "밤 늦은 시간"이라 다음날 새벽으로 취급
+  t.setHours(h,mi,0,0);
+  return t;
 }
 function renderSchedule(){
   const key=fmt(selDate);const evs=weekEvents[key]||[];
   const list=document.getElementById('schedule-list');list.innerHTML='';
-  evs.forEach((ev,idx)=>{
+  const parsed=evs.map(ev=>{
     const isDone=ev.startsWith('[✓] ');
     const displayText=isDone?ev.slice(4):ev;
-    const {time,text}=splitEvTime(displayText);
-    const past=isEvTimePast(time);
+    return splitEvTime(displayText);
+  });
+  // 시간이 적힌 항목 중 이미 지난 가장 아래(마지막) 항목의 위치를 찾고,
+  // 그 위쪽(시간 없는 항목 포함) 전체를 지난 것으로 간주
+  let lastPastIdx=-1;
+  parsed.forEach((p,i)=>{
+    if(!p.time)return;
+    const dt=evDateTime(p.time);
+    if(dt&&dt.getTime()<=Date.now())lastPastIdx=i;
+  });
+  parsed.forEach((p,idx)=>{
+    const {time,text}=p;
+    const past=idx<=lastPastIdx;
     const row=document.createElement('div');
     row.className='item-row'+(past?' past-time':'');
     row.draggable=true;
