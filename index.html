@@ -621,6 +621,21 @@ body{opacity:0;transition:opacity .25s ease}
 .check.done{background:var(--accent);border-color:var(--accent);color:#fff}
 .item-text{font-size:13px;color:#222;flex:1}
 .item-text.done{text-decoration:line-through;color:#bbb}
+@font-face{
+  font-family:'DSEG7ClassicMini';
+  src:url('https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Classic-MINI/DSEG7ClassicMini-Bold.woff2') format('woff2'),
+      url('https://unpkg.com/dseg@0.46.0/fonts/DSEG7-Classic-MINI/DSEG7ClassicMini-Bold.woff') format('woff');
+  font-weight:700;font-style:normal;font-display:swap;
+}
+.ev-time-badge{
+  display:inline-block;flex-shrink:0;
+  font-family:var(--time-font,'DSEG7ClassicMini',ui-monospace,'SFMono-Regular',monospace);
+  font-weight:700;font-size:13px;letter-spacing:1px;
+  padding:2px 7px;border-radius:5px;
+  background:#1c1c1c;color:var(--accent);
+  margin-right:6px;vertical-align:middle;
+}
+.day-cell-ev .ev-time-badge{font-size:10.5px;padding:1px 5px;margin-right:4px}
 .add-btn{display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer;padding:3px 0;background:none;border:none;font-family:inherit;margin-top:2px}
 .add-btn:hover{color:#666}
 
@@ -3230,7 +3245,7 @@ function renderMonth(){
     const dnColor=holiday||isSun?'color:#D85A30':isSat?'color:var(--accent)':'';
     // 일정 텍스트 (최대 3개, 나머지는 +N)
     const maxShow=3;
-    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map((ev,idx)=>{const done=ev.startsWith('[✓] ');const txt=done?ev.slice(4):ev;return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${idx})" ondragend="dragEnd(event)"${done?' style="text-decoration:line-through;opacity:.5"':''}>${txt}</div>`;}).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
+    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map((ev,idx)=>{const done=ev.startsWith('[✓] ');const txt=done?ev.slice(4):ev;return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${idx})" ondragend="dragEnd(event)"${done?' style="text-decoration:line-through;opacity:.5"':''}>${evTimeHTML(txt)}</div>`;}).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
     html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
@@ -3329,7 +3344,7 @@ function renderWeek(){
         ondragstart="dragStart(event,'${key}',${idx})"
         ondragend="dragEnd(event)"
         onclick="event.stopPropagation();editWeekEvent('${key}',${idx})"
-        style="${done?'text-decoration:line-through;opacity:.5':''}">${txt}</div>`;
+        style="${done?'text-decoration:line-through;opacity:.5':''}">${evTimeHTML(txt)}</div>`;
     });
     bH+=`<div class="week-add-btn" onclick="event.stopPropagation();addWeekEvent('${key}')">＋</div></div>`;
   }
@@ -3416,6 +3431,11 @@ window.switchView=function(v){
 };
 
 // ── 일정 ──
+function evTimeHTML(txt){
+  const m=txt.match(/^\[(\d{2}:\d{2})\] (.*)/);
+  if(m)return `<span class="ev-time-badge">${m[1]}</span>${m[2]}`;
+  return txt;
+}
 function renderSchedule(){
   const key=fmt(selDate);const evs=weekEvents[key]||[];
   const list=document.getElementById('schedule-list');list.innerHTML='';
@@ -3430,7 +3450,7 @@ function renderSchedule(){
     row.innerHTML=`
       <span style="font-size:14px;color:#ccc;cursor:grab;padding:0 4px 0 0;user-select:none">⠿</span>
       <div class="check${isDone?' done':''}" onclick="toggleScheduleCheck(this,'${key}',${idx})">${isDone?'✓':''}</div>
-      <span class="item-text editable-title${isDone?' done':''}" onclick="openScheduleEditModal('${key}',${idx})">${displayText}</span>
+      <span class="item-text editable-title${isDone?' done':''}" onclick="openScheduleEditModal('${key}',${idx})">${evTimeHTML(displayText)}</span>
       <span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteScheduleItem('${key}',${idx})">✕</span>`;
     // 드래그 이벤트
     row.addEventListener('dragstart',e=>{
