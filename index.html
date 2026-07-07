@@ -202,23 +202,20 @@ body{opacity:0;transition:opacity .25s ease}
   padding:0;
 }
 .mt-title-input::placeholder{color:#ccc;font-weight:600;text-align:center;font-size:15px;}
-/* 팔레트 하단 hover 영역 */
-.mt-palette-bar{
-  display:flex;align-items:center;justify-content:center;
-  padding:4px 0 2px;
-  position:relative;
-}
+/* 팔레트/미션추가 버튼 - 트래커 틀 안에 겹쳐서 반투명하게, 평소엔 거의 안 보이게 */
 .mt-color-btn{
-  flex-shrink:0;width:26px;height:26px;
-  background:none;border:none;cursor:pointer;
-  font-size:15px;border-radius:6px;
+  position:absolute;bottom:8px;left:8px;z-index:5;
+  width:22px;height:22px;
+  background:rgba(255,255,255,.55);border:none;border-radius:50%;cursor:pointer;
+  font-size:12px;
   display:flex;align-items:center;justify-content:center;
-  transition:.15s;opacity:0;
+  transition:opacity .18s,background .18s;opacity:.18;
 }
-.mt-palette-bar:hover .mt-color-btn{opacity:.7}
-.mt-color-btn:hover{background:#f0f0f0;opacity:1!important}
+.mt-path-wrap:hover .mt-color-btn{opacity:.55}
+.mt-color-btn:hover{background:#fff;opacity:1!important}
 /* 경로 캔버스 영역 */
 .mt-path-wrap{
+  position:relative;
   background:var(--app-bg,#fff);
   border:1.5px solid var(--border-col,#e4e4e4);
   border-top:1.5px solid var(--border-col,#e8e8e8);
@@ -235,20 +232,11 @@ body{opacity:0;transition:opacity .25s ease}
 .mt-node:hover path{
   opacity:0.82;
 }
-/* 색상 설정 버튼 */
-.mt-color-btn{
-  flex-shrink:0;width:26px;height:26px;
-  background:none;border:none;cursor:pointer;
-  font-size:15px;border-radius:6px;
-  display:flex;align-items:center;justify-content:center;
-  transition:.15s;opacity:.6;
-}
-.mt-color-btn:hover{background:#f0f0f0;opacity:1}
 
 /* 색상 팔레트 팝업 */
 .mt-color-panel{
   display:none;position:absolute;
-  bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  bottom:34px;left:8px;
   background:#fff;border:1.5px solid #e8e8e8;
   border-radius:14px;box-shadow:0 8px 24px #00000012;
   padding:12px;width:200px;z-index:200;
@@ -294,20 +282,23 @@ body{opacity:0;transition:opacity .25s ease}
   border-top:7px solid #ddd;
   border-bottom:none;
 }
-/* 하단 버튼 */
+/* 하단 버튼: 트래커 틀(경로 캔버스) 안에 겹쳐서 작게, 평소엔 반투명 */
 .mt-add-btn{
-  margin-top:8px;width:100%;
-  background:#fafafa;
-  border:1.5px dashed #d8d8d8;
-  border-radius:12px;color:#bbb;
-  font-size:12px;font-weight:600;
-  cursor:pointer;padding:7px 0;
-  font-family:inherit;transition:.18s;
-  letter-spacing:0.3px;
+  position:absolute;bottom:8px;right:8px;z-index:5;
+  width:22px;height:22px;margin:0;padding:0;
+  background:rgba(255,255,255,.55);
+  border:1.5px dashed #bbb;
+  border-radius:50%;color:#999;
+  font-size:14px;font-weight:700;line-height:1;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:inherit;transition:opacity .18s,background .18s,color .18s;
+  opacity:.18;
 }
+.mt-path-wrap:hover .mt-add-btn{opacity:.55}
 .mt-add-btn:hover{
   border-color:#7ec8e3;color:#4fb3d4;
-  background:#f0faff;
+  background:#fff;opacity:1!important;
 }
 /* 노드 라벨 편집 팝업 */
 .mt-edit-popup{
@@ -905,7 +896,7 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* ── 메모 물약병: 숨겨져 있다가 필요할 때만 꺼내 쓰는 메모장 (이미지 위에 직접 씀) ── */
 .memo-bottle-toggle{
-  position:fixed;right:0;top:62%;z-index:59;
+  position:fixed;right:0;top:62%;z-index:70;
   width:30px;height:64px;
   background:rgba(255,255,255,.85);
   border:0.5px solid #ddd;border-right:none;
@@ -920,7 +911,7 @@ body{opacity:0;transition:opacity .25s ease}
 .memo-bottle-toggle.on{color:#c0698a;opacity:.85}
 
 .memo-bottle-picker{
-  position:fixed;right:34px;top:62%;transform:translateY(-50%);z-index:59;
+  position:fixed;right:34px;top:62%;transform:translateY(-50%);z-index:90;
   display:none;flex-direction:column;gap:8px;
   background:rgba(255,255,255,.95);border:0.5px solid #eee;border-radius:16px;
   padding:10px;box-shadow:0 4px 16px #0002;
@@ -1005,7 +996,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
 /* ── 루틴 (Routine) ── */
 .routine-toggle{
-  position:fixed;right:0;top:calc(62% - 74px);z-index:59;
+  position:fixed;right:0;top:calc(62% - 74px);z-index:70;
   width:30px;height:64px;
   background:rgba(255,255,255,.85);
   border:0.5px solid #ddd;border-right:none;
@@ -1019,7 +1010,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 .routine-toggle:hover{opacity:1;width:34px;background:#fff}
 .routine-toggle.on{color:var(--accent);opacity:.85}
 .routine-panel{
-  position:fixed;z-index:59;
+  position:fixed;z-index:90;
   display:none;flex-direction:column;gap:8px;
   background:rgba(255,255,255,.97);border:0.5px solid #eee;border-radius:16px;
   padding:14px;width:270px;max-height:70vh;overflow-y:auto;
@@ -1061,7 +1052,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
 /* ── TIP (행동 패턴 정리) ── */
 .tip-toggle{
-  position:fixed;right:0;top:calc(62% - 148px);z-index:59;
+  position:fixed;right:0;top:calc(62% - 148px);z-index:70;
   width:30px;height:64px;
   background:rgba(255,255,255,.85);
   border:0.5px solid #ddd;border-right:none;
@@ -1070,9 +1061,9 @@ body.memo-edit-on .memo-text-handle{display:flex}
   cursor:pointer;box-shadow:-2px 2px 8px #0001;
   writing-mode:vertical-rl;letter-spacing:2px;
   font-size:11px;color:#888;opacity:.55;
-  transition:opacity .2s,background .2s;
+  transition:opacity .2s,width .2s,background .2s;
 }
-.tip-toggle:hover{opacity:1;background:#fff}
+.tip-toggle:hover{opacity:1;width:34px;background:#fff}
 .tip-toggle.on{color:var(--accent);opacity:.85}
 .tip-card{background:#fff;border:1.5px solid #eee;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px;margin-bottom:8px;position:relative}
 .tip-flow{display:flex;flex-direction:column;align-items:stretch;gap:2px}
@@ -1477,17 +1468,12 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <a class="note-btn" href="https://leeyoung2627-tech.github.io/conti-note" target="_blank" title="웹툰 콘티 노트로 이동">웹툰콘티<br>노트</a>
   <a class="note-btn" href="https://app.xmind.com/home/my-works/q4uVwW3kLT" target="_blank" title="Xmind 마인드맵">Xmind</a>
   <a class="note-btn note-btn-secondary" href="https://cafe.naver.com/greencaejj" target="_blank" title="우리끼리 카페">우리끼리</a>
-  <a href="https://claude.ai" target="_blank" title="Claude AI" style="
+  <a href="https://mail.naver.com/v2/folders/121" target="_blank" title="뉴스레터" style="
     width:34px;height:34px;border-radius:8px;background:#fff;border:1.5px solid #ddd;
     display:flex;align-items:center;justify-content:center;
     box-shadow:0 2px 6px #0001;text-decoration:none;transition:all .15s;flex-shrink:0;
-    align-self:center;
-  " onmouseover="this.style.borderColor='#e8611a';this.style.boxShadow='0 3px 10px #e8611a30'" onmouseout="this.style.borderColor='#ddd';this.style.boxShadow='0 2px 6px #0001'">
-    <svg width="18" height="18" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M32 6C17.6 6 6 17.6 6 32s11.6 26 26 26 26-11.6 26-26S46.4 6 32 6z" fill="#e8611a"/>
-      <path d="M24 44l5-13.5L35 44m-9.5-3.5h9M20 20h24" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </a>
+    align-self:center;font-size:16px;
+  " onmouseover="this.style.borderColor='#2DB400';this.style.boxShadow='0 3px 10px #2DB40030'" onmouseout="this.style.borderColor='#ddd';this.style.boxShadow='0 2px 6px #0001'">📰</a>
 </div>
 
 <!-- 미션 트래커 -->
@@ -1501,9 +1487,6 @@ body.memo-edit-on .memo-text-handle{display:flex}
   </div>
   <div class="mt-path-wrap">
     <svg class="mt-path-svg" id="mtSvg"></svg>
-  </div>
-  <!-- 팔레트 하단 hover 영역 -->
-  <div class="mt-palette-bar">
     <button class="mt-color-btn" id="mtColorBtn" onclick="toggleMtColorPanel(event)" title="색상 설정">🎨</button>
     <!-- 색상 팔레트 팝업 -->
     <div class="mt-color-panel" id="mtColorPanel">
@@ -1527,8 +1510,8 @@ body.memo-edit-on .memo-text-handle{display:flex}
         </div>
       </div>
     </div>
+    <button class="mt-add-btn" onclick="addMissionNode()" title="미션 추가">＋</button>
   </div>
-  <button class="mt-add-btn" onclick="addMissionNode()">＋ 미션 추가</button>
 </div>
 
 <!-- 노드 라벨 편집 팝업 -->
@@ -2197,6 +2180,24 @@ window.saveMemoBottle=async function(color){
   showSaving();
 };
 
+// 메모병/루틴/TIP 패널은 하나만 열려있도록 - 하나를 열면 나머지는 자동으로 닫힘
+function closeOtherFloatingPanels(exceptPanelId){
+  const groups=[
+    {panelId:'memoBottlePicker',toggleId:'memoBottleToggle',toggleReflectsOpen:false},
+    {panelId:'routinePanel',toggleId:'routineToggle',toggleReflectsOpen:true},
+    {panelId:'tipPanel',toggleId:'tipToggle',toggleReflectsOpen:true}
+  ];
+  groups.forEach(g=>{
+    if(g.panelId===exceptPanelId)return;
+    const panel=document.getElementById(g.panelId);
+    if(panel)panel.classList.remove('show');
+    if(g.toggleReflectsOpen){
+      const t=document.getElementById(g.toggleId);
+      if(t)t.classList.remove('on');
+    }
+  });
+}
+
 (function(){
   const COLORS=['blue','pink','garden','linen'];
   const toggleTab=document.getElementById('memoBottleToggle');
@@ -2244,7 +2245,9 @@ window.saveMemoBottle=async function(color){
   }
 
   window.toggleMemoPicker=function(){
-    picker.classList.toggle('show');
+    const willOpen=!picker.classList.contains('show');
+    closeOtherFloatingPanels('memoBottlePicker');
+    if(willOpen)picker.classList.add('show');else picker.classList.remove('show');
   };
 
   window.toggleMemoEditMode=function(){
@@ -2674,7 +2677,10 @@ function routineTypeLabel(t){return {morning:'🌅 오전',afternoon:'☀️ 오
 
 window.toggleRoutinePanel=function(){
   const p=document.getElementById('routinePanel');
-  const on=p.classList.toggle('show');
+  const willOpen=!p.classList.contains('show');
+  closeOtherFloatingPanels('routinePanel');
+  const on=willOpen;
+  p.classList.toggle('show',on);
   document.getElementById('routineToggle').classList.toggle('on',on);
   if(on){renderRoutineList();positionRoutinePanel();}
 };
@@ -3006,7 +3012,10 @@ let editingTipId=null;
 
 window.toggleTipPanel=function(){
   const p=document.getElementById('tipPanel');
-  const on=p.classList.toggle('show');
+  const willOpen=!p.classList.contains('show');
+  closeOtherFloatingPanels('tipPanel');
+  const on=willOpen;
+  p.classList.toggle('show',on);
   document.getElementById('tipToggle').classList.toggle('on',on);
   if(on){renderTipList();positionFloatingPanel('tipToggle','tipPanel');}
 };
