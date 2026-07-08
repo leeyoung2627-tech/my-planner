@@ -5791,9 +5791,9 @@ function applyTheme(){
     b.style.color=t.accent;
   });
 
-  // 미션트래커 말풍선 영역 (배경 흰색 고정)
+  // 미션트래커 말풍선 영역 (배경 흰색 고정, 글자색은 포인트색 반영)
   const mtTitleInput=document.getElementById('mtTitle');
-  if(mtTitleInput)mtTitleInput.style.color='#222';
+  if(mtTitleInput)mtTitleInput.style.color=t.accent;
   const mtColorBtn=document.getElementById('mtColorBtn');
   if(mtColorBtn)mtColorBtn.style.color='';
 
