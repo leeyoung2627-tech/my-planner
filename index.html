@@ -194,7 +194,7 @@ body{opacity:0;transition:opacity .25s ease}
 }
 .mt-title-input{
   width:100%;height:100%;border:none;outline:none;
-  font-size:15px;font-weight:700;color:#222;
+  font-size:15px;font-weight:700;color:var(--accent,#222);
   font-family:inherit;background:transparent;
   line-height:1.5;resize:none;overflow:hidden;
   text-align:center;
@@ -1385,8 +1385,21 @@ body.memo-edit-on .memo-text-handle{display:flex}
     <input id="fixed-e-name" placeholder="예: 넷플릭스"/>
     <div class="modal-label">금액</div>
     <input id="fixed-e-amount" placeholder="예: 17000" inputmode="numeric"/>
-    <div class="modal-label">매월 며칠에 나가나요? (선택)</div>
-    <input id="fixed-e-day" placeholder="예: 15" inputmode="numeric" maxlength="2"/>
+    <div class="modal-label">주기</div>
+    <select id="fixed-e-cycle" onchange="onFixedCycleChange()">
+      <option value="monthly">매월</option>
+      <option value="yearly">매년</option>
+    </select>
+    <div class="modal-label" id="fixed-e-day-label">며칠에 나가나요? (선택)</div>
+    <div style="display:flex;gap:6px">
+      <select id="fixed-e-month" style="display:none;flex:1">
+        <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+        <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+        <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+        <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+      </select>
+      <input id="fixed-e-day" placeholder="예: 15" inputmode="numeric" maxlength="2" style="flex:1"/>
+    </div>
     <div class="modal-label">결제 수단</div>
     <select id="fixed-e-method">
       <option value="card">💳 카드</option>
@@ -4688,7 +4701,7 @@ function renderFixedCosts(){
             <span class="fixed-row-name">${escapeHtml(r.name||'(이름없음)')}</span>
             <span class="fixed-row-amount">${parseAmount(r.amount).toLocaleString()}원</span>
           </div>
-          <span class="fixed-row-meta">${r.day?`매월 ${r.day}일`:'날짜 미설정'} · ${r.method==='cash'?'💵현금':'💳카드'}</span>
+          <span class="fixed-row-meta">${r.day?(r.cycle==='yearly'?`매년 ${r.month||1}월 ${r.day}일`:`매월 ${r.day}일`):'날짜 미설정'} · ${r.method==='cash'?'💵현금':'💳카드'}</span>
           <div class="fixed-row-btns">
             <button class="fixed-row-edit-btn" onclick="openFixedEditModal('${type}',${i})">수정</button>
             <button class="fixed-del" onclick="deleteFixedRow('${type}',${i})">✕</button>
@@ -4696,33 +4709,47 @@ function renderFixedCosts(){
         </div>`).join('')}
       <button class="fixed-add-btn" onclick="openFixedAddModal('${type}')">＋ 추가</button>`;
   };
+  const monthlyEq=r=>r.cycle==='yearly'?parseAmount(r.amount)/12:parseAmount(r.amount);
   const fixed=fixedCosts.fixed||[];
   const semi=fixedCosts.semifixed||[];
   const fTotal=fixed.reduce((s,r)=>s+parseAmount(r.amount),0);
   const sTotal=semi.reduce((s,r)=>s+parseAmount(r.amount),0);
+  const fMonthly=fixed.reduce((s,r)=>s+monthlyEq(r),0);
+  const sMonthly=semi.reduce((s,r)=>s+monthlyEq(r),0);
+  const hasYearly=[...fixed,...semi].some(r=>r.cycle==='yearly');
   el.innerHTML=`
     <div style="font-size:11px;color:#999;background:#f4f7ff;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.6">
-      💡 "매월 며칠"을 설정해두면, 그 날짜가 되었을 때 자동으로 가계부에 지출로 기록돼요.
+      💡 날짜를 설정해두면, 그 날짜가 되었을 때 자동으로 가계부에 지출로 기록돼요. 매년 나가는 항목은 "매년"으로 설정하면 1년에 한 번만 기록돼요.
     </div>
     ${makeList('fixed','📌 고정비')}
     <div style="font-size:11px;color:#888;text-align:right;margin:2px 0 10px">합계 ${fTotal.toLocaleString()}원</div>
     ${makeList('semifixed','📎 반고정비')}
     <div style="font-size:11px;color:#888;text-align:right;margin:2px 0 10px">합계 ${sTotal.toLocaleString()}원</div>
     <div style="font-size:12px;font-weight:600;text-align:right;color:var(--accent);padding:6px 0;border-top:1px solid #eee">
-      월 고정지출 합계 ${(fTotal+sTotal).toLocaleString()}원
-    </div>`;
+      월 고정지출 합계(월 환산) ${Math.round(fMonthly+sMonthly).toLocaleString()}원
+    </div>
+    ${hasYearly?'<div style="font-size:10.5px;color:#aaa;text-align:right;margin-top:2px">* 매년 항목은 12개월로 나눈 금액으로 환산해 합산했어요</div>':''}`;
 }
 function parseAmount(v){const n=parseInt(String(v).replace(/,/g,''));return isNaN(n)?0:n;}
 
 // ── 고정비 추가/수정: 리스트는 한 줄 표시만, 실제 수정은 모달에서 ──
 let editingFixedType=null,editingFixedIdx=-1;
+window.onFixedCycleChange=function(){
+  const cycle=document.getElementById('fixed-e-cycle').value;
+  const isYearly=cycle==='yearly';
+  document.getElementById('fixed-e-month').style.display=isYearly?'':'none';
+  document.getElementById('fixed-e-day-label').textContent=isYearly?'며칠에 나가나요? (선택)':'매월 며칠에 나가나요? (선택)';
+};
 window.openFixedAddModal=function(type){
   editingFixedType=type;editingFixedIdx=-1;
   document.getElementById('fixedEditTitle').textContent='고정비 추가';
   document.getElementById('fixed-e-name').value='';
   document.getElementById('fixed-e-amount').value='';
+  document.getElementById('fixed-e-cycle').value='monthly';
+  document.getElementById('fixed-e-month').value='1';
   document.getElementById('fixed-e-day').value='';
   document.getElementById('fixed-e-method').value='card';
+  onFixedCycleChange();
   document.getElementById('fixedEditModal').style.display='flex';
 };
 window.openFixedEditModal=function(type,idx){
@@ -4731,23 +4758,28 @@ window.openFixedEditModal=function(type,idx){
   document.getElementById('fixedEditTitle').textContent='고정비 수정';
   document.getElementById('fixed-e-name').value=r.name||'';
   document.getElementById('fixed-e-amount').value=r.amount||'';
+  document.getElementById('fixed-e-cycle').value=r.cycle==='yearly'?'yearly':'monthly';
+  document.getElementById('fixed-e-month').value=r.month||'1';
   document.getElementById('fixed-e-day').value=r.day||'';
   document.getElementById('fixed-e-method').value=r.method||'card';
+  onFixedCycleChange();
   document.getElementById('fixedEditModal').style.display='flex';
 };
 window.confirmFixedSave=async function(){
   const name=document.getElementById('fixed-e-name').value.trim();
   if(!name){alert('항목명을 입력해주세요');return;}
   const amount=document.getElementById('fixed-e-amount').value.trim();
+  const cycle=document.getElementById('fixed-e-cycle').value==='yearly'?'yearly':'monthly';
+  const month=cycle==='yearly'?parseInt(document.getElementById('fixed-e-month').value)||1:null;
   let day=document.getElementById('fixed-e-day').value.trim();
   day=day.replace(/[^0-9]/g,'');
   if(day){const dn=parseInt(day);if(dn<1)day='1';else if(dn>31)day='31';else day=String(dn);}
   const method=document.getElementById('fixed-e-method').value;
   const type=editingFixedType;
   if(editingFixedIdx===-1){
-    fixedCosts[type].push({id:'fx_'+Date.now()+'_'+type+'_'+fixedCosts[type].length,name,amount,day,method});
+    fixedCosts[type].push({id:'fx_'+Date.now()+'_'+type+'_'+fixedCosts[type].length,name,amount,cycle,month,day,method});
   }else{
-    fixedCosts[type][editingFixedIdx]={...fixedCosts[type][editingFixedIdx],name,amount,day,method};
+    fixedCosts[type][editingFixedIdx]={...fixedCosts[type][editingFixedIdx],name,amount,cycle,month,day,method};
   }
   await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);
   showSaving();
@@ -4766,12 +4798,17 @@ async function runFixedCostAutoRecord(){
   if(!currentUser)return;
   const now=new Date();
   const todayDay=now.getDate();
+  const todayMonth=now.getMonth()+1;
   const key=fmt(now);
   const allRows=[...(fixedCosts.fixed||[]),...(fixedCosts.semifixed||[])];
   let touched=false;
   for(const row of allRows){
     const d=parseInt(row.day);
     if(!d||d!==todayDay)continue;
+    if(row.cycle==='yearly'){
+      const m=parseInt(row.month)||1;
+      if(m!==todayMonth)continue;
+    }
     const amt=parseAmount(row.amount);
     if(!amt||!row.id)continue;
     if(!moneyData[key])moneyData[key]=[];
