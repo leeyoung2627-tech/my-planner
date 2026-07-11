@@ -4870,7 +4870,7 @@ function renderFixedCosts(){
              ondragleave="fixedDragLeave(event)" ondrop="fixedDrop(event,'${type}',${i})" ondragend="fixedDragEnd(event)">
           <div class="fixed-row-main">
             <span style="color:#ccc;margin-right:4px;cursor:grab;font-size:13px">⠿</span>
-            <span class="fixed-row-name">${escapeHtml(r.name||'(이름없음)')}</span>
+            <span class="fixed-row-name" title="${escapeHtml(r.name||'(이름없음)')}">${escapeHtml(r.name||'(이름없음)')}</span>
             <span class="fixed-row-amount">${parseAmount(r.amount).toLocaleString()}원</span>
           </div>
           <span class="fixed-row-meta">${r.day?(r.cycle==='yearly'?`매년 ${r.month||1}월 ${r.day}일`:`매월 ${r.day}일`):'날짜 미설정'} · ${r.method==='cash'?'💵현금':'💳카드'}</span>
