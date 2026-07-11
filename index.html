@@ -294,6 +294,27 @@ body{opacity:0;transition:opacity .25s ease}
   border-top:7px solid #ddd;
   border-bottom:none;
 }
+/* 범용 호버 툴팁(고정비 등 텍스트 잘림 표시용) — 하트 트래커 툴팁과 동일한 스타일 */
+.app-tooltip{
+  position:fixed;z-index:400;
+  background:#fff;
+  border:1.5px solid #ddd;
+  border-radius:12px;
+  box-shadow:0 6px 20px #00000012;
+  padding:8px 12px;
+  font-size:12px;color:#333;
+  font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  pointer-events:none;
+  white-space:pre-wrap;max-width:220px;word-break:break-word;
+  display:none;
+  line-height:1.5;
+}
+.app-tooltip::after{
+  content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);
+  border:7px solid transparent;
+  border-top:7px solid #ddd;
+  border-bottom:none;
+}
 /* 하단 버튼: 트래커 틀(경로 캔버스) 안에 겹쳐서 작게, 평소엔 반투명 */
 .mt-add-btn{
   position:absolute;bottom:8px;right:8px;z-index:5;
@@ -2140,6 +2161,50 @@ const ROUTINE_TARGETS=[
 
 function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// ── 범용 호버 툴팁: data-tooltip 속성이 있는 요소는 어디든 하트 트래커와 같은 스타일로 빠르게 말풍선이 떠요 ──
+function getAppTooltipEl(){
+  let t=document.getElementById('appTooltip');
+  if(!t){
+    t=document.createElement('div');
+    t.id='appTooltip';
+    t.className='app-tooltip';
+    document.body.appendChild(t);
+  }
+  return t;
+}
+function positionAppTooltip(tip,e){
+  const tx=Math.min(Math.max(e.clientX-60,4),window.innerWidth-tip.offsetWidth-4);
+  const ty=e.clientY-52;
+  tip.style.left=tx+'px';
+  tip.style.top=Math.max(ty,4)+'px';
+}
+function initGlobalTooltip(){
+  if(window._appTooltipInit)return;
+  window._appTooltipInit=true;
+  document.addEventListener('mouseover',e=>{
+    const target=e.target.closest('[data-tooltip]');
+    if(!target)return;
+    const tip=getAppTooltipEl();
+    tip.textContent=target.dataset.tooltip;
+    tip.style.display='block';
+    positionAppTooltip(tip,e);
+  });
+  document.addEventListener('mousemove',e=>{
+    const tip=document.getElementById('appTooltip');
+    if(!tip||tip.style.display!=='block')return;
+    if(!e.target.closest('[data-tooltip]'))return;
+    positionAppTooltip(tip,e);
+  });
+  document.addEventListener('mouseout',e=>{
+    const target=e.target.closest('[data-tooltip]');
+    if(!target)return;
+    if(e.relatedTarget&&target.contains(e.relatedTarget))return;
+    const tip=document.getElementById('appTooltip');
+    if(tip)tip.style.display='none';
+  });
+}
+initGlobalTooltip();
 function showSaving(){const el=document.getElementById('savingIndicator');el.style.display='block';setTimeout(()=>el.style.display='none',1200);}
 
 // ── 습관 RPG 이동 버튼(슬라임): 직접 드래그해서 원하는 위치에 두기 ──
@@ -4870,7 +4935,7 @@ function renderFixedCosts(){
              ondragleave="fixedDragLeave(event)" ondrop="fixedDrop(event,'${type}',${i})" ondragend="fixedDragEnd(event)">
           <div class="fixed-row-main">
             <span style="color:#ccc;margin-right:4px;cursor:grab;font-size:13px">⠿</span>
-            <span class="fixed-row-name" title="${escapeHtml(r.name||'(이름없음)')}">${escapeHtml(r.name||'(이름없음)')}</span>
+            <span class="fixed-row-name" data-tooltip="${escapeHtml(r.name||'(이름없음)')}">${escapeHtml(r.name||'(이름없음)')}</span>
             <span class="fixed-row-amount">${parseAmount(r.amount).toLocaleString()}원</span>
           </div>
           <span class="fixed-row-meta">${r.day?(r.cycle==='yearly'?`매년 ${r.month||1}월 ${r.day}일`:`매월 ${r.day}일`):'날짜 미설정'} · ${r.method==='cash'?'💵현금':'💳카드'}</span>
