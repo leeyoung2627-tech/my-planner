@@ -246,15 +246,41 @@ body{opacity:0;transition:opacity .25s ease}
   padding:14px 12px 18px;
 }
 .mt-path-svg{width:100%;overflow:visible;display:block}
-/* 노드 — 통통한 하트 (색상은 JS renderMissionSvg에서 직접 적용) */
-.mt-node{cursor:pointer}
-.mt-node path{
-  transition:fill .22s,stroke .22s,filter .22s;
+/* 미션 목록 — 항상 텍스트가 보이는 카드 + 우측 작은 체크 하트 */
+.mt-list{display:flex;flex-direction:column;gap:7px;min-height:20px}
+.mt-node-row{position:relative;display:flex;align-items:flex-start;gap:6px}
+.mt-node-text{
+  flex:1;min-width:0;
+  background:var(--mt-box-color,#ffffff);
+  border-radius:12px;
+  padding:7px 24px 7px 10px;
+  font-size:12.5px;line-height:1.45;color:#444;
+  min-height:20px;
+  outline:none;cursor:text;
+  word-break:break-word;white-space:pre-wrap;
+  border:1px solid #00000008;
+  transition:background .18s;
 }
-/* 호버 시 밝게 */
-.mt-node:hover path{
-  opacity:0.82;
+.mt-node-text:focus{box-shadow:0 0 0 1.5px #00000014}
+.mt-node-text:empty::before{content:attr(data-placeholder);color:#bbb}
+.mt-node-row.done .mt-node-text{color:#b7b7b7;text-decoration:line-through;text-decoration-color:#d8d8d8}
+.mt-node-del{
+  position:absolute;top:2px;right:2px;z-index:2;
+  width:16px;height:16px;border:none;border-radius:50%;
+  background:transparent;color:#ccc;font-size:12px;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .15s,background .15s,color .15s;
 }
+.mt-node-row:hover .mt-node-del{opacity:1}
+.mt-node-del:hover{background:#ffeded;color:#e09090}
+.mt-node-heart-btn{
+  flex-shrink:0;width:24px;height:24px;margin-top:1px;
+  border:none;background:transparent;padding:0;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .12s;
+}
+.mt-node-heart-btn:hover{transform:scale(1.12)}
+.mt-node-heart-btn svg path{transition:fill .18s,filter .18s}
 
 /* 색상 팔레트 팝업 */
 .mt-color-panel{
@@ -716,6 +742,8 @@ body{opacity:0;transition:opacity .25s ease}
 .fs-label{font-size:13px;color:#222}
 .fs-badge{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:999px;background:#FCE4EC;color:#C2185B;display:none}
 .fs-badge.show{display:block}
+.fs-hours-edit{display:inline-block;min-width:1.4em;padding:0 2px;text-align:center;border-bottom:1.5px dashed #cbb7bd;outline:none;cursor:text;color:#222}
+.fs-hours-edit:focus{border-bottom-color:#E0507A;background:#fff5f7}
 .meal-day-fast{font-size:11px;margin-left:4px}
 
 /* 예산 바 */
@@ -1324,10 +1352,10 @@ body.memo-edit-on .memo-text-handle{display:flex}
     </div>
 
     <div id="tab-meal" class="tab-content">
-      <div class="fast-bar" onclick="toggleFasting()">
-        <div class="fs-check" id="fsCheck"></div>
-        <span class="fs-label">공복 16시간 이상 달성 🤍</span>
-        <span class="fs-badge" id="fsBadge">♥ 달성!</span>
+      <div class="fast-bar">
+        <div class="fs-check" id="fsCheck" onclick="toggleFasting()"></div>
+        <span class="fs-label" onclick="toggleFasting()">공복 <span class="fs-hours-edit" id="fsHoursEdit" contenteditable="true" spellcheck="false" title="클릭해서 시간 수정" onclick="event.stopPropagation()" onblur="saveFastingHours(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">16</span>시간 이상 달성 🤍</span>
+        <span class="fs-badge" id="fsBadge" onclick="toggleFasting()">♥ 달성!</span>
       </div>
       <div style="background:#fff;border:0.5px solid #eee;border-radius:8px;padding:10px 12px;flex-shrink:0">
         <div style="font-size:11px;color:#aaa;margin-bottom:5px">🗒️ 식단 계획 메모</div>
@@ -1573,12 +1601,12 @@ body.memo-edit-on .memo-text-handle{display:flex}
     <input type="file" id="mtCharImgInput" accept="image/*" style="display:none" onchange="onMtCharImageUpload(event)"/>
   </div>
   <div class="mt-path-wrap">
-    <svg class="mt-path-svg" id="mtSvg"></svg>
+    <div class="mt-list" id="mtList"></div>
     <button class="mt-color-btn" id="mtColorBtn" onclick="toggleMtColorPanel(event)" title="색상 설정">🎨</button>
     <button class="mt-char-upload-btn" id="mtCharUploadBtn" onclick="document.getElementById('mtCharImgInput').click()" title="캐릭터 이미지 변경">📷</button>
     <!-- 색상 팔레트 팝업 -->
     <div class="mt-color-panel" id="mtColorPanel">
-      <div class="mt-color-panel-title">노드 색상</div>
+      <div class="mt-color-panel-title">체크 색상</div>
       <div class="mt-color-presets" id="mtColorPresets"></div>
       <div class="mt-color-custom-row">
         <span class="mt-color-custom-label">직접 선택</span>
@@ -1595,6 +1623,16 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <div class="mt-color-custom-wrap">
           <div class="mt-color-custom-preview" id="mtBubblePreview" onclick="document.getElementById('mtBubbleInput').click()"></div>
           <input type="color" id="mtBubbleInput" oninput="applyBubbleColor(this.value)" onchange="saveMission()"/>
+        </div>
+      </div>
+      <div style="border-top:1px solid #eee;margin:6px 0"></div>
+      <div class="mt-color-panel-title">내용 박스 색상</div>
+      <div class="mt-color-presets" id="mtBoxPresets"></div>
+      <div class="mt-color-custom-row">
+        <span class="mt-color-custom-label">직접 선택</span>
+        <div class="mt-color-custom-wrap">
+          <div class="mt-color-custom-preview" id="mtBoxPreview" onclick="document.getElementById('mtBoxInput').click()"></div>
+          <input type="color" id="mtBoxInput" oninput="applyMtBoxColor(this.value)" onchange="saveMission()"/>
         </div>
       </div>
     </div>
@@ -2151,6 +2189,7 @@ let loans=[]; // {id,name,principal,rate} rate=연이율(%)
 let memos=[],editingMemoId=null,currentMemoFilter='전체',viewingMemoId=null;
 let noSpendData={};
 let fastingData={};
+let fastingHours=16;
 let moneyMemoData={};
 let ddayList=[];
 let budgetData={};
@@ -2702,7 +2741,7 @@ async function saveAppearanceNow(){
 window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -2730,6 +2769,7 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'tips')),
     getDoc(doc(db,'users',currentUser.uid,'settings','appearance')),
     getDoc(doc(db,'users',currentUser.uid,'settings','loans')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','fastingConfig')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -2743,6 +2783,7 @@ async function loadAllData(){
   });
   noSpendData={};nsS.forEach(d=>{noSpendData[d.id]=d.data().done||false;});
   fastingData={};fsS.forEach(d=>{fastingData[d.id]=d.data().done||false;});
+  fastingHours=(fhS.exists()&&fhS.data().hours)?fhS.data().hours:16;
   moneyMemoData={};mmS.forEach(d=>{moneyMemoData[d.id]={text:d.data().text||'',pending:d.data().pending||false};});
   ddayList=[];ddS.forEach(d=>{ddayList.push({id:d.id,...d.data()});});
   ddayList.sort((a,b)=>(a.order??new Date(a.date).getTime())-(b.order??new Date(b.date).getTime()));
@@ -2779,7 +2820,7 @@ async function loadAllData(){
   // 미션 트래커
   if(msS.exists()){
     const md=msS.data();
-    missionData={title:md.title||'',nodes:md.nodes||[],color:md.color||'#7ec8e3',bubbleColor:md.bubbleColor||'#333',charImg:md.charImg||null};
+    missionData={title:md.title||'',nodes:md.nodes||[],color:md.color||'#7ec8e3',bubbleColor:md.bubbleColor||'#333',boxColor:md.boxColor||'#ffffff',charImg:md.charImg||null};
     document.documentElement.style.setProperty('--mt-bubble-color', missionData.bubbleColor);
   }
   // 일기장
@@ -3570,7 +3611,7 @@ function renderMealCal(){
     const slots=['breakfast','lunch','dinner','snack'];
     const filled=slots.filter(s=>data[s]&&data[s].trim());
     const itemsHtml=filled.length>0?`<div class="meal-day-items">${filled.map(s=>`<div class="meal-day-item"><span class="mlabel">${MEAL_LABELS[s]}</span>${data[s]}</div>`).join('')}</div>`:'';
-    const fastHtml=fastingData[key]?`<span class="meal-day-fast" title="공복 16시간 달성">♥</span>`:'';
+    const fastHtml=fastingData[key]?`<span class="meal-day-fast" title="공복 ${fastingHours}시간 달성">♥</span>`:'';
     html+=`<div class="meal-day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><span class="mln">${d}</span>${fastHtml}${itemsHtml}</div>`;
   }
   const rem=(7-(start+total)%7)%7;
@@ -3836,18 +3877,34 @@ window.toggleNoSpend=async function(){
   renderNoSpend();if(leftMode==='money-cal')renderMoneyCal();
 };
 
-// ── 공복 16시간 ──
+// ── 공복 목표 시간(기본 16시간, 수정 가능) ──
 function renderFasting(){
   const key=fmt(selDate);const done=fastingData[key]||false;
   const check=document.getElementById('fsCheck'),badge=document.getElementById('fsBadge');
   if(!check||!badge)return;
   check.className='fs-check'+(done?' done':'');check.textContent=done?'✓':'';
   badge.className='fs-badge'+(done?' show':'');
+  const hoursEl=document.getElementById('fsHoursEdit');
+  if(hoursEl && document.activeElement!==hoursEl){
+    hoursEl.textContent=fastingHours;
+  }
 }
 window.toggleFasting=async function(){
   const key=fmt(selDate);fastingData[key]=!fastingData[key];
   await saveData('fasting',key,{done:fastingData[key]});
   renderFasting();if(leftMode==='meal-cal')renderMealCal();
+};
+window.saveFastingHours=async function(el){
+  let val=parseInt((el.textContent||'').replace(/[^0-9]/g,''),10);
+  if(!val||val<1)val=fastingHours;
+  if(val>48)val=48;
+  el.textContent=val;
+  if(val===fastingHours)return;
+  fastingHours=val;
+  if(!currentUser)return;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','fastingConfig'),{hours:fastingHours});
+  showSaving();
+  if(leftMode==='meal-cal')renderMealCal();
 };
 
 // ── 가계부 날짜 메모(대신 결제/환급 대기 등) ──
@@ -6437,7 +6494,7 @@ window.addEventListener('resize',positionNoteButtons);
 // ══════════════════════════════════════════
 //  미션 트래커
 // ══════════════════════════════════════════
-let missionData={title:'',nodes:[],color:'#7ec8e3',bubbleColor:'#333',charImg:null};
+let missionData={title:'',nodes:[],color:'#7ec8e3',bubbleColor:'#333',boxColor:'#ffffff',charImg:null};
 let _mtEditingIdx=null;
 
 // ── 트래커 색상 프리셋
@@ -6480,7 +6537,38 @@ function initMtColorPanel(){
   const binput=document.getElementById('mtBubbleInput');
   if(bpreview)bpreview.style.background=missionData.bubbleColor||'#333';
   if(binput)binput.value=missionData.bubbleColor||'#333333';
+  // 내용 박스 색상 프리셋
+  const BOX_PRESETS=['#ffffff','#fdf6ec','#fff8e1','#e8f5e9','#e3f2fd','#fce4ec','#f3e5f5','#eceff1'];
+  const xgrid=document.getElementById('mtBoxPresets');
+  if(xgrid){
+    xgrid.innerHTML='';
+    BOX_PRESETS.forEach(c=>{
+      const dot=document.createElement('div');
+      dot.className='mt-color-dot mt-box-dot'+(missionData.boxColor===c?' active':'');
+      dot.style.background=c;
+      dot.style.border=c==='#ffffff'?'1.5px solid #ddd':'';
+      dot.title=c;
+      dot.onclick=()=>{applyMtBoxColor(c);saveMission();closeMtColorPanel();};
+      xgrid.appendChild(dot);
+    });
+  }
+  const xpreview=document.getElementById('mtBoxPreview');
+  const xinput=document.getElementById('mtBoxInput');
+  if(xpreview)xpreview.style.background=missionData.boxColor||'#ffffff';
+  if(xinput)xinput.value=missionData.boxColor||'#ffffff';
 }
+
+window.applyMtBoxColor=function(hex){
+  missionData.boxColor=hex;
+  document.documentElement.style.setProperty('--mt-box-color',hex);
+  document.querySelectorAll('.mt-box-dot').forEach(d=>{
+    d.classList.toggle('active', d.title===hex);
+  });
+  const preview=document.getElementById('mtBoxPreview');
+  if(preview)preview.style.background=hex;
+  const input=document.getElementById('mtBoxInput');
+  if(input)input.value=hex;
+};
 
 window.applyBubbleColor=function(hex){
   missionData.bubbleColor=hex;
@@ -6591,119 +6679,114 @@ function positionMissionTracker(){
 }
 window.addEventListener('resize',positionMissionTracker);
 
-// SVG 렌더링 — 3열 그리드, 점선 없음, 파란 빈 하트
+// 목록 렌더링 — 내용이 항상 보이는 카드 목록, 우측 끝에 작은 체크(하트) 버튼
 function renderMissionSvg(){
   const nodes=missionData.nodes;
-  const svg=document.getElementById('mtSvg');
-  if(!svg)return;
-
-  // ── 레이아웃 상수 (3열, 간격 넉넉히)
-  const COL=3;
-  const cellW=76;   // 열 간격
-  const cellH=80;   // 행 간격
-  const padX=38;    // 좌우 여백
-  const padY=40;    // 상하 여백
-
-  const coords=nodes.map((_,i)=>{
-    const row=Math.floor(i/COL);
-    const col=i%COL;
-    const x=padX+col*cellW;
-    const y=padY+row*cellH;
-    return{x,y};
-  });
-
-  const totalRows=Math.ceil(Math.max(nodes.length,1)/COL);
-  const svgW=padX*2+(COL-1)*cellW;
-  const svgH=padY*2+(totalRows-1)*cellH+32;
-
-  svg.setAttribute('viewBox',`0 0 ${svgW} ${svgH}`);
-  svg.style.height=svgH+'px';
-  svg.innerHTML='';
+  const list=document.getElementById('mtList');
+  if(!list)return;
 
   // ── 색상 계산
   const baseColor=missionData.color||'#7ec8e3';
+  const boxColor=missionData.boxColor||'#ffffff';
+  document.documentElement.style.setProperty('--mt-box-color', boxColor);
+
   const lighten=(hex,amount)=>{
     const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
     return `rgb(${Math.round(r+(255-r)*amount)},${Math.round(g+(255-g)*amount)},${Math.round(b+(255-b)*amount)})`;
   };
-  const doneShadow='#A0AEBB33';
-  const emptyStroke=baseColor;
   const emptyFill='#ffffff';
   const hoverFill=lighten(baseColor,0.82);
+  const doneShadow='#A0AEBB33';
 
-  // ── 하트 path (cx, cy = 하트 중심)
-  const makeHeart=(cx, cy)=>{
-    const s=26; // 크기
-    return `M ${cx} ${cy+s*0.52}
+  // ── 작은 하트 path (size 기준 로컬 좌표계)
+  const size=22;
+  const cx=size/2, cy=size/2, s=size*0.42;
+  const heartD=`M ${cx} ${cy+s*0.52}
       C ${cx-s*1.18} ${cy-s*0.08}, ${cx-s*0.48} ${cy-s*1.0}, ${cx} ${cy-s*0.26}
       C ${cx+s*0.48} ${cy-s*1.0}, ${cx+s*1.18} ${cy-s*0.08}, ${cx} ${cy+s*0.52} Z`;
-  };
 
-  // ── 툴팁
-  let tooltip=document.getElementById('mtTooltip');
-  if(!tooltip){
-    tooltip=document.createElement('div');
-    tooltip.id='mtTooltip';
-    tooltip.className='mt-tooltip';
-    document.body.appendChild(tooltip);
-  }
+  list.innerHTML='';
 
-  // ── 노드 렌더
-  coords.forEach((pos,i)=>{
-    const node=nodes[i];
-    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class','mt-node'+(node.done?' done':''));
-    g.style.cursor='pointer';
+  nodes.forEach((node,i)=>{
+    const row=document.createElement('div');
+    row.className='mt-node-row'+(node.done?' done':'');
 
-    const heart=document.createElementNS('http://www.w3.org/2000/svg','path');
-    heart.setAttribute('d', makeHeart(pos.x, pos.y));
-
-    if(node.done){
-      heart.setAttribute('fill', baseColor);
-      heart.setAttribute('fill-opacity', '0.25');
-      heart.setAttribute('stroke', emptyStroke);
-      heart.setAttribute('stroke-width','1.5');
-      heart.style.filter=`drop-shadow(0 2px 6px ${doneShadow})`;
-    } else {
-      heart.setAttribute('fill', emptyFill);
-      heart.setAttribute('fill-opacity', '1');
-      heart.setAttribute('stroke', emptyStroke);
-      heart.setAttribute('stroke-width','1.5');
-    }
-    heart.style.transition='fill .18s,filter .18s';
-    g.appendChild(heart);
-
-    // 호버 효과
-    const label=node.label||'미션';
-    g.addEventListener('mouseenter',e=>{
-      if(!node.done) heart.setAttribute('fill', hoverFill);
-      tooltip.textContent=label;
-      tooltip.style.display='block';
-      const tx=Math.min(e.clientX-60,window.innerWidth-180);
-      const ty=e.clientY-52;
-      tooltip.style.left=tx+'px';
-      tooltip.style.top=ty+'px';
+    // ── 내용(텍스트) 박스 — 항상 보이고 바로 편집 가능
+    const textEl=document.createElement('div');
+    textEl.className='mt-node-text';
+    textEl.contentEditable='true';
+    textEl.spellcheck=false;
+    textEl.setAttribute('data-placeholder','미션 내용을 입력하세요');
+    textEl.textContent=node.label||'';
+    let composing=false;
+    textEl.addEventListener('compositionstart',()=>{composing=true;});
+    textEl.addEventListener('compositionend',()=>{composing=false;});
+    textEl.addEventListener('blur',()=>{
+      const val=textEl.textContent.trim();
+      if(val!==(node.label||'')){
+        missionData.nodes[i].label=val;
+        saveMission();
+      }
     });
-    g.addEventListener('mousemove',e=>{
-      const tx=Math.min(e.clientX-60,window.innerWidth-180);
-      const ty=e.clientY-52;
-      tooltip.style.left=tx+'px';
-      tooltip.style.top=ty+'px';
+    textEl.addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&!composing){e.preventDefault();textEl.blur();}
     });
-    g.addEventListener('mouseleave',()=>{
-      heart.setAttribute('fill', node.done ? doneColor : emptyFill);
-      tooltip.style.display='none';
-    });
+    textEl.addEventListener('click',e=>e.stopPropagation());
 
-    // 클릭: 완료 토글 / 더블클릭: 편집
-    let clickTimer=null;
-    g.addEventListener('click',e=>{
+    // ── 삭제 버튼 (호버 시에만 표시)
+    const delBtn=document.createElement('button');
+    delBtn.type='button';
+    delBtn.className='mt-node-del';
+    delBtn.title='삭제';
+    delBtn.textContent='×';
+    delBtn.onclick=e=>{
       e.stopPropagation();
-      if(clickTimer){clearTimeout(clickTimer);clickTimer=null;tooltip.style.display='none';openMtEditPopup(i,e);return;}
-      clickTimer=setTimeout(()=>{clickTimer=null;toggleMissionNode(i);},220);
+      missionData.nodes.splice(i,1);
+      renderMissionSvg();
+      saveMission();
+    };
+
+    // ── 우측 작은 체크(하트) 버튼
+    const heartBtn=document.createElement('button');
+    heartBtn.type='button';
+    heartBtn.className='mt-node-heart-btn';
+    heartBtn.title=node.done?'완료 취소':'완료 체크';
+    const svgNS='http://www.w3.org/2000/svg';
+    const heartSvg=document.createElementNS(svgNS,'svg');
+    heartSvg.setAttribute('width',size);
+    heartSvg.setAttribute('height',size);
+    heartSvg.setAttribute('viewBox',`0 0 ${size} ${size}`);
+    const heartPath=document.createElementNS(svgNS,'path');
+    heartPath.setAttribute('d',heartD);
+    const paintHeart=(done,hover)=>{
+      if(done){
+        heartPath.setAttribute('fill', baseColor);
+        heartPath.setAttribute('fill-opacity', '0.9');
+        heartPath.setAttribute('stroke', baseColor);
+        heartPath.setAttribute('stroke-width','1.3');
+        heartPath.style.filter=`drop-shadow(0 1px 3px ${doneShadow})`;
+      } else {
+        heartPath.setAttribute('fill', hover?hoverFill:emptyFill);
+        heartPath.setAttribute('fill-opacity', '1');
+        heartPath.setAttribute('stroke', baseColor);
+        heartPath.setAttribute('stroke-width','1.3');
+        heartPath.style.filter='none';
+      }
+    };
+    paintHeart(node.done,false);
+    heartSvg.appendChild(heartPath);
+    heartBtn.appendChild(heartSvg);
+    heartBtn.addEventListener('mouseenter',()=>paintHeart(node.done,true));
+    heartBtn.addEventListener('mouseleave',()=>paintHeart(node.done,false));
+    heartBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      toggleMissionNode(i);
     });
 
-    svg.appendChild(g);
+    row.appendChild(textEl);
+    row.appendChild(delBtn);
+    row.appendChild(heartBtn);
+    list.appendChild(row);
   });
 }
 
@@ -6714,9 +6797,12 @@ function toggleMissionNode(idx){
 }
 
 window.addMissionNode=function(){
-  missionData.nodes.push({id:Date.now().toString(),label:'미션',done:false});
+  missionData.nodes.push({id:Date.now().toString(),label:'',done:false});
   renderMissionSvg();
   saveMission();
+  const rows=document.querySelectorAll('#mtList .mt-node-text');
+  const last=rows[rows.length-1];
+  if(last){last.focus();}
 };
 
 // 편집 팝업
@@ -7659,6 +7745,7 @@ window.saveMission=async function(){
     nodes:missionData.nodes,
     color:missionData.color||'#7ec8e3',
     bubbleColor:missionData.bubbleColor||'#333',
+    boxColor:missionData.boxColor||'#ffffff',
     charImg:missionData.charImg||null
   });
   showSaving();
