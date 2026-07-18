@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>캐릭터 만들기 · 두목의 플래너</title>
+<link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
+<style>
+:root{
+  --accent:#534AB7;
+  --accent-light:#EEEDFE;
+  --page-bg:#f5f4ff;
+  --text-main:#222;
+  --border-col:#e3e1f5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+button,input,textarea{font-family:inherit}
+body{
+  font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  background:var(--page-bg);
+  color:var(--text-main);
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px 16px 60px;
+  opacity:0;transition:opacity .25s ease;
+}
+
+/* ── 로그인 화면 ── */
+#loginWrap{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;width:100%}
+.login-box{background:#fff;border-radius:16px;padding:40px;width:320px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 4px 24px #0001;border:0.5px solid #eee}
+.login-title{font-size:20px;font-weight:700;color:#222}
+.login-sub{font-size:13px;color:#aaa;text-align:center;line-height:1.6}
+.google-btn{display:flex;align-items:center;gap:10px;padding:10px 20px;border-radius:8px;border:0.5px solid #ddd;background:#fff;cursor:pointer;font-size:14px;color:#222;font-family:inherit;width:100%;justify-content:center}
+.google-btn:hover{background:#f5f5f5}
+.google-btn img{width:20px;height:20px}
+
+/* ── 상단바 ── */
+#appWrap{display:none;width:100%;max-width:1200px;flex-direction:column;gap:14px}
+.topbar{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.topbar-title{font-size:16px;font-weight:700;color:#333;display:flex;align-items:center;gap:8px;background:#fff;padding:8px 16px;border-radius:20px;box-shadow:0 2px 8px #0001}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.back-link{padding:8px 14px;border-radius:8px;background:#fff;border:0.5px solid #ddd;color:#666;font-size:12.5px;text-decoration:none;box-shadow:0 2px 6px #0001}
+.back-link:hover{background:#f5f5f5}
+.user-chip{font-size:11.5px;color:#999;padding:4px 10px}
+.logout-btn{padding:6px 12px;border-radius:8px;background:#fff;border:0.5px solid #ddd;color:#999;font-size:11.5px;cursor:pointer;font-family:inherit}
+.logout-btn:hover{color:#D85A30;border-color:#D85A30}
+
+/* ── 본문 레이아웃 ── */
+.chr-body{width:100%;display:grid;grid-template-columns:230px 1fr;gap:0;background:#fff;border-radius:16px;border:0.5px solid #eee;box-shadow:0 4px 24px #0001;overflow:hidden;min-height:70vh}
+.chr-sidebar{padding:16px 12px;border-right:0.5px solid var(--border-col);display:flex;flex-direction:column;gap:8px;background:#fbfaff}
+.chr-add-btn{width:100%;padding:10px 8px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13.5px;font-weight:700;font-family:inherit}
+.chr-add-btn:hover{opacity:.9}
+.chr-list{display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:65vh}
+.chr-item{display:flex;align-items:center;gap:4px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:#444;border:0.5px solid transparent}
+.chr-item:hover{background:var(--accent-light)}
+.chr-item.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:700}
+.chr-item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chr-item-del{opacity:0;flex-shrink:0;border:none;background:none;cursor:pointer;color:#bbb;font-size:12px;padding:2px 4px;border-radius:4px}
+.chr-item:hover .chr-item-del{opacity:1}
+.chr-item-del:hover{color:#D85A30}
+.chr-empty-list{font-size:11.5px;color:#aaa;text-align:center;padding:18px 4px;line-height:1.6}
+
+.chr-main{padding:1.8rem 2.2rem;overflow-y:auto;max-height:80vh}
+.chr-main-empty{display:flex;align-items:center;justify-content:center;height:60vh;color:#bbb;font-size:14px;text-align:center;line-height:1.8}
+.chr-name-input{width:100%;font-size:21px;font-weight:800;color:#222;border:none;outline:none;border-bottom:2px solid #eee;padding:6px 2px 12px;margin-bottom:20px;font-family:inherit;background:transparent}
+.chr-name-input:focus{border-color:var(--accent)}
+.chr-sec-title{font-size:14.5px;font-weight:800;color:var(--accent);margin:26px 0 12px;padding-bottom:5px;border-bottom:1px solid var(--accent-light)}
+.chr-sec-title:first-of-type{margin-top:0}
+.chr-q{margin-bottom:14px}
+.chr-q-label{font-size:12.5px;color:#555;margin-bottom:6px;line-height:1.55}
+.chr-q-textarea{width:100%;padding:10px 12px;border:0.5px solid #ddd;border-radius:8px;font-size:13px;outline:none;font-family:inherit;resize:none;overflow:hidden;min-height:42px;line-height:1.7;background:#fbfbfd;color:#222}
+.chr-q-textarea:focus{border-color:var(--accent);background:#fff}
+.chr-tip{font-size:11.5px;color:#7a76a8;background:var(--accent-light);border-radius:10px;padding:12px 14px;line-height:1.8;margin-top:10px}
+.chr-tip b{color:var(--accent)}
+.chr-save-hint{font-size:10.5px;color:#aaa;text-align:right;margin-top:8px;height:14px}
+
+@media (max-width:760px){
+  .chr-body{grid-template-columns:1fr}
+  .chr-sidebar{border-right:none;border-bottom:0.5px solid var(--border-col);flex-direction:row;flex-wrap:wrap;max-height:none}
+  .chr-add-btn{width:auto;flex:1 0 100%}
+  .chr-list{flex-direction:row;flex-wrap:wrap;max-height:none}
+  .chr-item{flex:0 0 auto}
+  .chr-main{padding:1.2rem 1.2rem}
+}
+</style>
+</head>
+<body>
+
+<div id="loginWrap">
+  <div class="login-box">
+    <div style="font-size:40px">🧑‍🎨</div>
+    <div class="login-title">캐릭터 만들기</div>
+    <div class="login-sub">두목의 플래너와 같은 구글 계정으로<br>로그인하면 캐릭터가 저장돼요</div>
+    <button class="google-btn" onclick="loginWithGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
+      Google로 로그인
+    </button>
+  </div>
+</div>
+
+<div id="appWrap">
+  <div class="topbar">
+    <div class="topbar-title">🧑‍🎨 캐릭터 만들기</div>
+    <div class="topbar-right">
+      <a class="back-link" href="/">← 플래너로 돌아가기</a>
+      <span class="user-chip" id="userChip"></span>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="chr-body">
+    <div class="chr-sidebar">
+      <button class="chr-add-btn" onclick="addNewCharacter()">＋ 새 캐릭터</button>
+      <div class="chr-list" id="chrList"></div>
+    </div>
+    <div class="chr-main" id="chrMain">
+      <div class="chr-main-empty" id="chrMainEmpty">왼쪽의 '＋ 새 캐릭터'를 눌러<br>캐릭터 설계를 시작해보세요</div>
+      <div id="chrForm" style="display:none">
+        <input type="text" id="chrNameInput" class="chr-name-input" placeholder="캐릭터 이름" spellcheck="false" oninput="onChrFieldInput()"/>
+        <div id="chrQuestionsWrap"></div>
+        <div class="chr-tip">
+          <b>사용 팁</b><br>
+          이 질문지를 쓸 때는 모든 항목을 완벽하게 채우려 하지 말고, 먼저 핵심 3개만 잡으면 됩니다.<br>
+          · 욕망&nbsp;&nbsp;· 두려움&nbsp;&nbsp;· 관계에서의 충돌점
+        </div>
+        <div class="chr-save-hint" id="chrSaveHint"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "179812397978",
+  appId: "1:179812397978:web:3525714542291e818e0023"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+
+window.loginWithGoogle = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch (e) { alert('로그인 실패: ' + e.message); }
+};
+window.logout = async () => {
+  try { await signOut(auth); }
+  catch (e) { alert('로그아웃 실패: ' + e.message); }
+};
+
+onAuthStateChanged(auth, async user => {
+  document.body.style.opacity = '1';
+  if (user) {
+    currentUser = user;
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('appWrap').style.display = 'flex';
+    document.getElementById('userChip').textContent = user.displayName ? (user.displayName + '님') : '';
+    await loadCharacters();
+  } else {
+    currentUser = null;
+    document.getElementById('appWrap').style.display = 'none';
+    document.getElementById('loginWrap').style.display = 'flex';
+  }
+});
+
+// ══════════ 웹툰 캐릭터 설계 질문지 ══════════
+const CHR_QUESTIONS = [
+  { title: '1. 기본 정보', qs: [
+    '이름은 무엇인가?',
+    '나이, 성별, 직업 또는 역할은 무엇인가?',
+    '겉으로 보이는 첫인상은 어떤가?',
+    '외형에서 가장 눈에 띄는 특징은 무엇인가?'
+  ]},
+  { title: '2. 성격', qs: [
+    '이 캐릭터의 기본 성격은 한마디로 무엇인가?',
+    '낯선 사람 앞과 편한 사람 앞의 모습이 다른가?',
+    '평소 자주 보이는 습관이나 말버릇이 있는가?',
+    '화났을 때, 당황했을 때, 슬플 때 어떻게 반응하는가?'
+  ]},
+  { title: '3. 욕망과 목표', qs: [
+    '이 캐릭터가 가장 원하는 것은 무엇인가?',
+    '지금 이야기 속에서 이루고 싶은 목표는 무엇인가?',
+    '그 목표를 왜 꼭 이루어야 하는가?',
+    '목표가 이루어지지 않으면 어떤 문제가 생기는가?'
+  ]},
+  { title: '4. 결핍과 상처', qs: [
+    '이 캐릭터에게 부족한 것은 무엇인가?',
+    '과거에 상처가 된 경험이 있는가?',
+    '그 경험이 지금 성격이나 행동에 어떤 영향을 주는가?',
+    '스스로도 잘 모르는 약점이 있는가?'
+  ]},
+  { title: '5. 두려움과 회피', qs: [
+    '이 캐릭터가 가장 두려워하는 것은 무엇인가?',
+    '힘들거나 불안할 때 어떤 식으로 도망치는가?',
+    '문제를 정면으로 해결하는 편인가, 피하는 편인가?',
+    '반복해서 망설이게 되는 상황은 무엇인가?'
+  ]},
+  { title: '6. 관계', qs: [
+    '누구와 가장 가까운가?',
+    '누구와 가장 부딪히는가?',
+    '다른 인물들과 비교했을 때 어떤 역할을 하는가?',
+    '관계 속에서 이 캐릭터가 주는 긴장감이나 매력은 무엇인가?'
+  ]},
+  { title: '7. 말투와 행동', qs: [
+    '말투는 직설적인가, 돌려 말하는가?',
+    '문장 길이가 짧은가, 긴가?',
+    '자주 쓰는 말이나 버릇이 있는가?',
+    '행동으로 감정을 드러내는 편인가, 숨기는 편인가?'
+  ]},
+  { title: '8. 이야기 속 역할', qs: [
+    '이 캐릭터는 주인공인가, 조력자인가, 방해자인가?',
+    '이 인물이 없으면 이야기가 어떻게 달라지는가?',
+    '이 캐릭터가 꼭 해야 하는 서사적 기능은 무엇인가?',
+    '독자가 이 캐릭터에게 느끼길 바라는 감정은 무엇인가?'
+  ]},
+  { title: '9. 성장 가능성', qs: [
+    '이 캐릭터는 무엇을 배우게 되는가?',
+    '이야기 시작 전과 끝에서 무엇이 달라지는가?',
+    '가장 크게 변하는 부분은 성격인가, 태도인가, 관계인가?',
+    '성장의 계기가 되는 사건은 무엇인가?'
+  ]},
+  { title: '10. 한 줄 정리', qs: [
+    '이 캐릭터를 한 문장으로 설명하면 무엇인가?',
+    '독자가 바로 기억할 수 있는 핵심 이미지는 무엇인가?',
+    '이 캐릭터의 가장 강한 매력은 무엇인가?'
+  ]}
+];
+
+let characters = [];
+let chrSelectedId = null;
+let chrSaveTimer = null;
+
+function chrDisplayName(c) {
+  return (c.name && c.name.trim()) ? c.name.trim() : '이름 없는 캐릭터';
+}
+
+async function loadCharacters() {
+  try {
+    const snap = await getDocs(collection(db, 'users', currentUser.uid, 'characters'));
+    characters = [];
+    snap.forEach(d => { characters.push({ id: d.id, ...d.data() }); });
+    characters.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  } catch (err) {
+    console.error('캐릭터 불러오기 실패:', err);
+    alert('캐릭터를 불러오지 못했어요. 새로고침 해주세요.');
+  }
+  renderChrList();
+  if (characters.length) {
+    selectCharacter(characters[0].id);
+  } else {
+    showChrEmpty();
+  }
+}
+
+function renderChrList() {
+  const listEl = document.getElementById('chrList');
+  if (!characters.length) {
+    listEl.innerHTML = '<div class="chr-empty-list">아직 만든 캐릭터가 없어요.<br>＋ 새 캐릭터로 시작해보세요.</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  characters.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'chr-item' + (c.id === chrSelectedId ? ' active' : '');
+    item.onclick = () => selectCharacter(c.id);
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'chr-item-name';
+    nameSpan.textContent = chrDisplayName(c);
+    const delBtn = document.createElement('button');
+    delBtn.className = 'chr-item-del';
+    delBtn.textContent = '✕';
+    delBtn.title = '삭제';
+    delBtn.onclick = (e) => { e.stopPropagation(); deleteCharacter(c.id); };
+    item.appendChild(nameSpan);
+    item.appendChild(delBtn);
+    listEl.appendChild(item);
+  });
+}
+
+window.addNewCharacter = async () => {
+  if (!currentUser) return;
+  const id = 'chr_' + Date.now();
+  const newChar = { id, name: '', answers: {}, createdAt: Date.now() };
+  characters.push(newChar);
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid, 'characters', id), {
+      name: '', answers: {}, createdAt: newChar.createdAt
+    });
+  } catch (err) { console.error('캐릭터 생성 실패:', err); }
+  renderChrList();
+  selectCharacter(id);
+};
+
+window.deleteCharacter = async (id) => {
+  const c = characters.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm('"' + chrDisplayName(c) + '" 캐릭터를 삭제할까요?\n삭제하면 되돌릴 수 없어요.')) return;
+  characters = characters.filter(x => x.id !== id);
+  try {
+    await deleteDoc(doc(db, 'users', currentUser.uid, 'characters', id));
+  } catch (err) { console.error('캐릭터 삭제 실패:', err); }
+  if (chrSelectedId === id) {
+    chrSelectedId = null;
+    if (characters.length) { selectCharacter(characters[0].id); } else { showChrEmpty(); }
+  }
+  renderChrList();
+};
+
+function showChrEmpty() {
+  document.getElementById('chrMainEmpty').style.display = 'flex';
+  document.getElementById('chrForm').style.display = 'none';
+}
+
+function autoResizeChrTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function selectCharacter(id) {
+  const c = characters.find(x => x.id === id);
+  if (!c) return;
+  chrSelectedId = id;
+  renderChrList();
+  document.getElementById('chrMainEmpty').style.display = 'none';
+  document.getElementById('chrForm').style.display = 'block';
+  document.getElementById('chrNameInput').value = c.name || '';
+  document.getElementById('chrSaveHint').textContent = '';
+  const wrap = document.getElementById('chrQuestionsWrap');
+  wrap.innerHTML = '';
+  if (!c.answers) c.answers = {};
+  CHR_QUESTIONS.forEach((sec, si) => {
+    const secTitle = document.createElement('div');
+    secTitle.className = 'chr-sec-title';
+    secTitle.textContent = sec.title;
+    wrap.appendChild(secTitle);
+    sec.qs.forEach((q, qi) => {
+      const key = si + '_' + qi;
+      const qDiv = document.createElement('div');
+      qDiv.className = 'chr-q';
+      const label = document.createElement('div');
+      label.className = 'chr-q-label';
+      label.textContent = q;
+      const ta = document.createElement('textarea');
+      ta.className = 'chr-q-textarea';
+      ta.rows = 1;
+      ta.spellcheck = false;
+      ta.value = c.answers[key] || '';
+      ta.dataset.key = key;
+      ta.addEventListener('input', () => {
+        autoResizeChrTextarea(ta);
+        onChrFieldInput();
+      });
+      qDiv.appendChild(label);
+      qDiv.appendChild(ta);
+      wrap.appendChild(qDiv);
+      requestAnimationFrame(() => autoResizeChrTextarea(ta));
+    });
+  });
+}
+window.selectCharacter = selectCharacter;
+
+function onChrFieldInput() {
+  clearTimeout(chrSaveTimer);
+  const hint = document.getElementById('chrSaveHint');
+  if (hint) hint.textContent = '저장 중...';
+  chrSaveTimer = setTimeout(saveCurrentCharacter, 700);
+}
+window.onChrFieldInput = onChrFieldInput;
+
+async function saveCurrentCharacter() {
+  if (!currentUser || !chrSelectedId) return;
+  const c = characters.find(x => x.id === chrSelectedId);
+  if (!c) return;
+  c.name = document.getElementById('chrNameInput').value;
+  const answers = {};
+  document.querySelectorAll('#chrQuestionsWrap .chr-q-textarea').forEach(ta => {
+    answers[ta.dataset.key] = ta.value;
+  });
+  c.answers = answers;
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid, 'characters', c.id), {
+      name: c.name, answers: c.answers, createdAt: c.createdAt || Date.now()
+    });
+    const hint = document.getElementById('chrSaveHint');
+    if (hint) hint.textContent = '자동 저장됨';
+    renderChrList();
+  } catch (err) {
+    console.error('캐릭터 저장 실패:', err);
+    const hint = document.getElementById('chrSaveHint');
+    if (hint) hint.textContent = '저장 실패 · 다시 시도해주세요';
+  }
+}
+</script>
+</body>
+</html>
