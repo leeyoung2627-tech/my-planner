@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>공부 &amp; 시험 일정 — 두목의 플래너</title>
+<link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700&display=swap" rel="stylesheet">
+<script>
+// index.html과 같은 배경 테마를 즉시 반영해서 페이지 전환 시 깜빡이지 않게 함
+(function(){
+  try{
+    const saved=localStorage.getItem('planner_theme_v2');
+    if(saved){const t=JSON.parse(saved);if(t.pagebg)document.documentElement.style.setProperty('--page-bg',t.pagebg);}
+  }catch(e){}
+})();
+</script>
+<style>
+:root{
+  --accent:#534AB7;
+  --accent-light:#EEEDFE;
+  --page-bg:#f5f4ff;
+  --text-main:#222;
+  --border-col:#e3e1f5;
+  --exam-col:#E4572E;
+  --exam-light:#FDEAE3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+button,input,select{font-family:inherit}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);color:var(--text-main);
+  min-height:100vh;padding:18px 18px 60px;display:flex;flex-direction:column;align-items:center;gap:14px}
+
+.sp-topbar{width:100%;max-width:1180px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sp-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:#777;text-decoration:none;padding:7px 12px;
+  border-radius:20px;background:#fff;border:1px solid var(--border-col);transition:.15s}
+.sp-back:hover{color:var(--accent);border-color:var(--accent)}
+.sp-title{font-family:'Nanum Myeongjo',serif;font-size:21px;font-weight:700;color:var(--accent);letter-spacing:-.3px}
+
+/* 상단 중앙 시험자료 버튼 */
+.sp-material-wrap{display:flex;justify-content:center;width:100%}
+.sp-material-btn{position:relative;display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--accent);
+  color:var(--accent);font-weight:700;font-size:13.5px;padding:10px 22px;border-radius:999px;cursor:pointer;
+  box-shadow:0 3px 10px rgba(83,74,183,.14);transition:.15s}
+.sp-material-btn:hover{background:var(--accent);color:#fff;transform:translateY(-1px)}
+.sp-material-dot{position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:#3DBE64;
+  border:2px solid #fff;display:none}
+.sp-material-dot.on{display:block}
+.sp-material-meta{font-size:11px;color:#999;text-align:center;margin-top:-4px}
+
+.sp-layout{width:100%;max-width:1180px;display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+@media (max-width:880px){.sp-layout{grid-template-columns:1fr}}
+
+.sp-card{background:#fff;border-radius:16px;border:1px solid var(--border-col);box-shadow:0 2px 12px rgba(80,60,160,.06);
+  padding:16px}
+
+/* 주간 캘린더 헤더 */
+.sp-week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.sp-week-nav-left{display:flex;align-items:center;gap:6px}
+.sp-nav-btn{background:var(--accent-light);color:var(--accent);border:none;width:30px;height:30px;border-radius:9px;
+  cursor:pointer;font-size:14px;font-weight:700}
+.sp-nav-btn:hover{filter:brightness(.95)}
+.sp-week-label{font-size:14.5px;font-weight:700;min-width:150px;text-align:center}
+.sp-today-btn{background:#fff;border:1px solid var(--border-col);color:#666;font-size:12px;padding:6px 12px;
+  border-radius:8px;cursor:pointer}
+.sp-today-btn:hover{border-color:var(--accent);color:var(--accent)}
+.sp-add-group{display:flex;gap:6px}
+.sp-add-btn{font-size:12px;font-weight:700;border:none;border-radius:9px;padding:8px 13px;cursor:pointer;color:#fff}
+.sp-add-btn.study{background:var(--accent)}
+.sp-add-btn.exam{background:var(--exam-col)}
+.sp-add-btn:hover{filter:brightness(1.08)}
+
+/* 주간 그리드 */
+.sp-week-grid{width:100%}
+.sp-week-headers{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.sp-day-head{text-align:center;padding:8px 2px 6px;border-radius:10px;font-size:12px;color:#888}
+.sp-day-head .dnum{font-size:16px;font-weight:800;color:var(--text-main);margin-top:2px}
+.sp-day-head.sun{color:#E4572E}
+.sp-day-head.sat{color:#3B6FE0}
+.sp-day-head.today{background:var(--accent-light)}
+.sp-day-head.today .dnum{color:var(--accent)}
+
+.sp-week-exams{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;min-height:8px}
+.sp-exam-pill{display:flex;align-items:center;gap:3px;background:var(--exam-light);color:var(--exam-col);font-size:10.5px;
+  font-weight:700;padding:3px 6px;border-radius:7px;margin-bottom:3px;cursor:pointer;line-height:1.3;word-break:keep-all}
+.sp-exam-pill.done{background:#E9F6EC;color:#2E9E52;text-decoration:line-through;opacity:.75}
+.sp-exam-pill.overdue{animation:sp-pulse 1.4s ease-in-out infinite}
+@keyframes sp-pulse{0%,100%{box-shadow:0 0 0 0 rgba(228,87,46,.35)}50%{box-shadow:0 0 0 4px rgba(228,87,46,0)}}
+
+.sp-week-body{position:relative;min-height:180px;background:linear-gradient(90deg,transparent 0,transparent 0);
+  border-radius:10px;overflow:hidden}
+.sp-week-cols-bg{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;position:absolute;inset:0}
+.sp-week-col-bg{background:#FAFAFE;border-radius:8px;cursor:pointer;transition:.12s}
+.sp-week-col-bg:hover{background:var(--accent-light)}
+.sp-week-col-bg.today-col{background:#F3F1FD}
+.sp-week-bars{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:6px 6px;grid-auto-rows:30px;padding:4px 0}
+.sp-bar{grid-row:span 1;border-radius:8px;padding:5px 9px;font-size:11.5px;font-weight:700;color:#333;cursor:pointer;
+  display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid transparent;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.sp-bar.cont-left{border-top-left-radius:2px;border-bottom-left-radius:2px}
+.sp-bar.cont-right{border-top-right-radius:2px;border-bottom-right-radius:2px}
+.sp-empty-hint{text-align:center;color:#bbb;font-size:12px;padding:30px 0}
+
+/* 사이드바 - 미니 월간 캘린더 */
+.sp-mini-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sp-mini-label{font-size:13px;font-weight:700}
+.sp-mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:10.5px}
+.sp-mini-dow{text-align:center;color:#aaa;padding:3px 0;font-weight:700}
+.sp-mini-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;
+  cursor:pointer;position:relative;color:#555}
+.sp-mini-cell:hover{background:var(--accent-light)}
+.sp-mini-cell.dim{color:#ddd}
+.sp-mini-cell.today{background:var(--accent);color:#fff;font-weight:800}
+.sp-mini-cell.in-week{background:var(--accent-light)}
+.sp-mini-dots{display:flex;gap:1px;position:absolute;bottom:2px}
+.sp-mini-dot{width:3.5px;height:3.5px;border-radius:50%}
+
+/* 시험 목록 사이드 카드 */
+.sp-exam-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.sp-exam-item{border:1px solid var(--border-col);border-radius:10px;padding:9px 10px;font-size:12px}
+.sp-exam-item .ei-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.sp-exam-item .ei-title{font-weight:700;color:#333}
+.sp-exam-item .ei-date{color:#999;font-size:11px}
+.sp-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+.sp-badge.pending{background:#F0F0F0;color:#888}
+.sp-badge.overdue{background:var(--exam-light);color:var(--exam-col)}
+.sp-badge.done{background:#E9F6EC;color:#2E9E52}
+.ei-actions{margin-top:6px;display:flex;gap:6px;align-items:center}
+.ei-proof-btn{font-size:11px;background:var(--exam-col);color:#fff;border:none;border-radius:7px;padding:5px 9px;cursor:pointer}
+.ei-thumb{width:34px;height:34px;border-radius:6px;object-fit:cover;cursor:pointer;border:1px solid var(--border-col)}
+.sp-empty-small{color:#bbb;font-size:11.5px;text-align:center;padding:10px 0}
+
+/* 모달 */
+.sp-modal-bg{display:none;position:fixed;inset:0;background:rgba(30,20,50,.4);z-index:9000;align-items:center;justify-content:center;padding:20px}
+.sp-modal-bg.open{display:flex}
+.sp-modal{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:11px;
+  max-height:88vh;overflow-y:auto}
+.sp-modal h3{font-size:15px;font-weight:800;margin-bottom:2px}
+.sp-field label{font-size:11.5px;color:#888;display:block;margin-bottom:4px;font-weight:700}
+.sp-field input[type=text],.sp-field input[type=date]{width:100%;padding:8px 10px;border:1px solid var(--border-col);
+  border-radius:8px;font-size:13px}
+.sp-field input:focus{outline:none;border-color:var(--accent)}
+.sp-date-row{display:flex;gap:8px}
+.sp-date-row .sp-field{flex:1}
+.sp-color-row{display:flex;gap:7px;flex-wrap:wrap}
+.sp-color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.sp-color-dot.sel{border-color:#333;box-shadow:0 0 0 2px #fff inset}
+.sp-modal-actions{display:flex;justify-content:space-between;margin-top:6px;gap:8px}
+.sp-btn{border:none;border-radius:9px;padding:9px 15px;font-size:12.5px;font-weight:700;cursor:pointer}
+.sp-btn.primary{background:var(--accent);color:#fff}
+.sp-btn.primary.examclr{background:var(--exam-col)}
+.sp-btn.ghost{background:#f2f2f2;color:#888}
+.sp-btn.danger{background:#fff;color:#E4572E;border:1px solid #F3C9BC}
+
+/* 라이트박스 */
+.sp-lightbox-bg{display:none;position:fixed;inset:0;background:rgba(10,8,20,.85);z-index:9500;align-items:center;justify-content:center;
+  flex-direction:column;gap:14px;padding:24px}
+.sp-lightbox-bg.open{display:flex}
+.sp-lightbox-bg img{max-width:92vw;max-height:78vh;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.sp-lightbox-actions{display:flex;gap:10px}
+.sp-lightbox-actions button{border:none;border-radius:20px;padding:9px 18px;font-size:12.5px;font-weight:700;cursor:pointer}
+.sp-lb-close{background:#fff;color:#333}
+.sp-lb-replace{background:var(--accent);color:#fff}
+
+.sp-material-empty-note{font-size:11px;color:#aaa}
+</style>
+</head>
+<body>
+
+<div class="sp-topbar">
+  <a class="sp-back" href="index.html">← 플래너로 돌아가기</a>
+  <div class="sp-title">📚 공부 &amp; 시험 일정</div>
+  <div style="width:110px"></div>
+</div>
+
+<div class="sp-material-wrap">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+    <button class="sp-material-btn" id="materialBtn" onclick="onMaterialBtn()">
+      <span id="materialBtnIcon">📎</span>
+      <span id="materialBtnLabel">이번 주 시험자료 올리기</span>
+      <span class="sp-material-dot" id="materialDot"></span>
+    </button>
+    <div class="sp-material-meta" id="materialMeta"></div>
+  </div>
+</div>
+<input type="file" id="materialFileInput" accept="image/*" style="display:none">
+
+<div class="sp-layout">
+  <!-- 주간 캘린더 -->
+  <div class="sp-card">
+    <div class="sp-week-nav">
+      <div class="sp-week-nav-left">
+        <button class="sp-nav-btn" onclick="shiftWeek(-1)">‹</button>
+        <div class="sp-week-label" id="weekLabel"></div>
+        <button class="sp-nav-btn" onclick="shiftWeek(1)">›</button>
+        <button class="sp-today-btn" onclick="goToday()">오늘</button>
+      </div>
+      <div class="sp-add-group">
+        <button class="sp-add-btn study" onclick="openScheduleModal()">+ 학습 일정</button>
+        <button class="sp-add-btn exam" onclick="openExamModal()">+ 시험 등록</button>
+      </div>
+    </div>
+
+    <div class="sp-week-grid">
+      <div class="sp-week-headers" id="weekHeaders"></div>
+      <div class="sp-week-exams" id="weekExams"></div>
+      <div class="sp-week-body">
+        <div class="sp-week-cols-bg" id="weekColsBg"></div>
+        <div class="sp-week-bars" id="weekBars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 사이드바 -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="sp-card">
+      <div class="sp-mini-nav">
+        <button class="sp-nav-btn" onclick="shiftMiniMonth(-1)">‹</button>
+        <div class="sp-mini-label" id="miniLabel"></div>
+        <button class="sp-nav-btn" onclick="shiftMiniMonth(1)">›</button>
+      </div>
+      <div class="sp-mini-grid" id="miniGrid"></div>
+    </div>
+
+    <div class="sp-card">
+      <div style="font-size:13px;font-weight:800;margin-bottom:2px">🎯 시험 목록</div>
+      <div class="sp-exam-list" id="examListSide"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 학습 일정 모달 -->
+<div class="sp-modal-bg" id="scheduleModalBg">
+  <div class="sp-modal">
+    <h3 id="scheduleModalTitle">학습 일정 추가</h3>
+    <div class="sp-field"><label>제목</label><input type="text" id="scheduleTitleInput" placeholder="예: 수학 복습"></div>
+    <div class="sp-date-row">
+      <div class="sp-field"><label>시작일</label><input type="date" id="scheduleStartInput"></div>
+      <div class="sp-field"><label>종료일</label><input type="date" id="scheduleEndInput"></div>
+    </div>
+    <div class="sp-field">
+      <label>색상</label>
+      <div class="sp-color-row" id="scheduleColorRow"></div>
+    </div>
+    <div class="sp-modal-actions">
+      <button class="sp-btn danger" id="scheduleDeleteBtn" style="display:none" onclick="deleteScheduleFromModal()">삭제</button>
+      <div style="flex:1"></div>
+      <button class="sp-btn ghost" onclick="closeModal('scheduleModalBg')">취소</button>
+      <button class="sp-btn primary" onclick="saveScheduleFromModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 시험 등록 모달 -->
+<div class="sp-modal-bg" id="examModalBg">
+  <div class="sp-modal">
+    <h3 id="examModalTitle">시험 등록</h3>
+    <div class="sp-field"><label>시험 이름</label><input type="text" id="examTitleInput" placeholder="예: 중간고사"></div>
+    <div class="sp-field"><label>날짜</label><input type="date" id="examDateInput"></div>
+    <div class="sp-modal-actions">
+      <button class="sp-btn danger" id="examDeleteBtn" style="display:none" onclick="deleteExamFromModal()">삭제</button>
+      <div style="flex:1"></div>
+      <button class="sp-btn ghost" onclick="closeModal('examModalBg')">취소</button>
+      <button class="sp-btn primary examclr" onclick="saveExamFromModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 라이트박스 (시험자료 / 인증사진 공용) -->
+<div class="sp-lightbox-bg" id="lightboxBg">
+  <img id="lightboxImg" src="" alt="">
+  <div class="sp-lightbox-actions">
+    <button class="sp-lb-close" onclick="closeLightbox()">닫기</button>
+    <button class="sp-lb-replace" id="lightboxReplaceBtn" style="display:none">다시 업로드</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "179812397978",
+  appId: "1:179812397978:web:3525714542291e818e0023"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+const DAYS = ['일','월','화','수','목','금','토'];
+const SCHEDULE_COLORS = ['#534AB7','#3B6FE0','#2E9E52','#E4572E','#D48806','#C2438A','#5C7A4E','#7A6BD6'];
+
+let scheduleEvents = [];   // {id,title,start,end,color}
+let examEvents = [];       // {id,title,date,taken,proofImg,takenAt,color}
+let materialDoc = null;    // {img,updatedAt,weekLabel}
+
+let weekStart = getWeekStart(new Date());
+let miniMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let editingScheduleId = null;
+let editingExamId = null;
+let selectedScheduleColor = SCHEDULE_COLORS[0];
+let materialUploadMode = false;
+
+function pad(n){return String(n).padStart(2,'0');}
+function fmtDate(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function parseDate(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function todayStr(){return fmtDate(new Date());}
+function getWeekStart(d){const s=new Date(d);s.setDate(d.getDate()-d.getDay());s.setHours(0,0,0,0);return s;}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function diffDays(a,b){return Math.round((b-a)/86400000);}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function hexToRgba(hex,a){
+  const h=hex.replace('#','');
+  const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+window.closeModal=function(id){document.getElementById(id).classList.remove('open');};
+
+/* ---------------- 인증 & 데이터 로드 ---------------- */
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){
+    // 로그인 안 된 상태면 메인 플래너로
+    location.href='index.html';
+    return;
+  }
+  currentUser = user;
+  await loadAll();
+  renderAll();
+  onSnapshot(collection(db,'users',currentUser.uid,'studySchedule'),(snap)=>{
+    scheduleEvents = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderAll();
+  });
+  onSnapshot(collection(db,'users',currentUser.uid,'studyExams'),(snap)=>{
+    examEvents = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderAll();
+  });
+  onSnapshot(doc(db,'users',currentUser.uid,'settings','studyMaterial'),(snap)=>{
+    materialDoc = snap.exists()? snap.data() : null;
+    renderMaterialBtn();
+  });
+});
+
+async function loadAll(){
+  const [schSnap, examSnap, matSnap] = await Promise.all([
+    getDocs(collection(db,'users',currentUser.uid,'studySchedule')),
+    getDocs(collection(db,'users',currentUser.uid,'studyExams')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','studyMaterial'))
+  ]);
+  scheduleEvents = schSnap.docs.map(d=>({id:d.id,...d.data()}));
+  examEvents = examSnap.docs.map(d=>({id:d.id,...d.data()}));
+  materialDoc = matSnap.exists()? matSnap.data() : null;
+}
+
+function renderAll(){
+  renderWeek();
+  renderMini();
+  renderExamSide();
+  renderMaterialBtn();
+}
+
+/* ---------------- 주간 캘린더 ---------------- */
+window.shiftWeek=function(dir){weekStart=addDays(weekStart,dir*7);renderWeek();renderMini();};
+window.goToday=function(){weekStart=getWeekStart(new Date());miniMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);renderWeek();renderMini();};
+
+function renderWeek(){
+  const weekEnd = addDays(weekStart,6);
+  const weekDates = Array.from({length:7},(_,i)=>addDays(weekStart,i));
+  document.getElementById('weekLabel').textContent =
+    `${weekStart.getMonth()+1}.${weekStart.getDate()} - ${weekEnd.getMonth()+1}.${weekEnd.getDate()}`;
+
+  // 헤더
+  const today = todayStr();
+  document.getElementById('weekHeaders').innerHTML = weekDates.map((d,i)=>{
+    const key=fmtDate(d);
+    const cls = ['sp-day-head'];
+    if(i===0)cls.push('sun'); if(i===6)cls.push('sat'); if(key===today)cls.push('today');
+    return `<div class="${cls.join(' ')}"><div>${DAYS[i]}</div><div class="dnum">${d.getDate()}</div></div>`;
+  }).join('');
+
+  // 배경 컬럼(클릭시 해당 날짜로 일정추가)
+  document.getElementById('weekColsBg').innerHTML = weekDates.map((d)=>{
+    const key=fmtDate(d);
+    const isToday = key===today;
+    return `<div class="sp-week-col-bg${isToday?' today-col':''}" onclick="openScheduleModal(null,'${key}','${key}')"></div>`;
+  }).join('');
+
+  // 시험 뱃지 행
+  document.getElementById('weekExams').innerHTML = weekDates.map((d)=>{
+    const key=fmtDate(d);
+    const exams = examEvents.filter(e=>e.date===key);
+    if(exams.length===0) return `<div></div>`;
+    return `<div>${exams.map(e=>{
+      const overdue = !e.taken && e.date<today;
+      const cls=['sp-exam-pill']; if(e.taken)cls.push('done'); if(overdue)cls.push('overdue');
+      return `<div class="${cls.join(' ')}" onclick="openExamModal('${e.id}')">📝 ${escapeHtml(e.title)}${e.taken?' ✓':''}</div>`;
+    }).join('')}</div>`;
+  }).join('');
+
+  // 막대 (일정 바)
+  const relevant = scheduleEvents.filter(e=>{
+    return !(parseDate(e.end) < weekStart || parseDate(e.start) > weekEnd);
+  }).sort((a,b)=> a.start<b.start?-1:1);
+
+  const lanes = []; // 각 lane의 마지막 endIdx
+  const placed = [];
+  relevant.forEach(ev=>{
+    const s = parseDate(ev.start), e = parseDate(ev.end);
+    const startIdx = Math.max(0, diffDays(weekStart, s));
+    const endIdx = Math.min(6, diffDays(weekStart, e));
+    let laneIdx = lanes.findIndex(l=>l < startIdx);
+    if(laneIdx===-1){ laneIdx = lanes.length; lanes.push(endIdx); }
+    else lanes[laneIdx]=endIdx;
+    placed.push({ev,startIdx,endIdx,laneIdx,contLeft: s<weekStart, contRight: e>weekEnd});
+  });
+
+  const barsEl = document.getElementById('weekBars');
+  if(placed.length===0){
+    barsEl.innerHTML = `<div style="grid-column:1/-1" class="sp-empty-hint">이 주에는 등록된 학습 일정이 없어요. 빈 칸을 눌러 추가해보세요.</div>`;
+  } else {
+    barsEl.innerHTML = placed.map(p=>{
+      const cls=['sp-bar']; if(p.contLeft)cls.push('cont-left'); if(p.contRight)cls.push('cont-right');
+      const bg = hexToRgba(p.ev.color||SCHEDULE_COLORS[0], .28);
+      const border = p.ev.color||SCHEDULE_COLORS[0];
+      return `<div class="${cls.join(' ')}" style="grid-column:${p.startIdx+1} / ${p.endIdx+2};grid-row:${p.laneIdx+1};background:${bg};border-color:${border}"
+        onclick="openScheduleModal('${p.ev.id}')">${p.contLeft?'◂ ':''}${escapeHtml(p.ev.title)}${p.contRight?' ▸':''}</div>`;
+    }).join('');
+  }
+}
+
+/* ---------------- 미니 월간 캘린더 ---------------- */
+window.shiftMiniMonth=function(dir){miniMonth=new Date(miniMonth.getFullYear(),miniMonth.getMonth()+dir,1);renderMini();};
+
+function renderMini(){
+  document.getElementById('miniLabel').textContent = `${miniMonth.getFullYear()}.${pad(miniMonth.getMonth()+1)}`;
+  const first = new Date(miniMonth.getFullYear(),miniMonth.getMonth(),1);
+  const startPad = first.getDay();
+  const gridStart = addDays(first,-startPad);
+  const today = todayStr();
+  const wkStartStr = fmtDate(weekStart), wkEndStr = fmtDate(addDays(weekStart,6));
+
+  let html = DAYS.map(d=>`<div class="sp-mini-dow">${d}</div>`).join('');
+  for(let i=0;i<42;i++){
+    const d = addDays(gridStart,i);
+    const key = fmtDate(d);
+    const dim = d.getMonth()!==miniMonth.getMonth();
+    const cls=['sp-mini-cell']; if(dim)cls.push('dim'); if(key===today)cls.push('today');
+    if(key>=wkStartStr && key<=wkEndStr && key!==today)cls.push('in-week');
+    const hasExam = examEvents.some(e=>e.date===key);
+    const hasSchedule = scheduleEvents.some(e=>key>=e.start && key<=e.end);
+    let dots='';
+    if(hasExam || hasSchedule){
+      dots = `<div class="sp-mini-dots">${hasExam?'<div class="sp-mini-dot" style="background:var(--exam-col)"></div>':''}${hasSchedule?'<div class="sp-mini-dot" style="background:var(--accent)"></div>':''}</div>`;
+    }
+    html += `<div class="${cls.join(' ')}" onclick="jumpToDate('${key}')">${d.getDate()}${dots}</div>`;
+  }
+  document.getElementById('miniGrid').innerHTML = html;
+}
+window.jumpToDate=function(key){
+  weekStart = getWeekStart(parseDate(key));
+  miniMonth = new Date(parseDate(key).getFullYear(), parseDate(key).getMonth(),1);
+  renderWeek(); renderMini();
+};
+
+/* ---------------- 사이드 시험 목록 ---------------- */
+function renderExamSide(){
+  const today = todayStr();
+  const sorted = [...examEvents].sort((a,b)=> a.date<b.date?-1:1);
+  const el = document.getElementById('examListSide');
+  if(sorted.length===0){ el.innerHTML = `<div class="sp-empty-small">등록된 시험이 없어요</div>`; return; }
+  el.innerHTML = sorted.map(e=>{
+    const overdue = !e.taken && e.date<today;
+    const badge = e.taken? `<span class="sp-badge done">인증완료</span>` : overdue? `<span class="sp-badge overdue">미인증</span>` : `<span class="sp-badge pending">예정</span>`;
+    return `<div class="sp-exam-item">
+      <div class="ei-top">
+        <div>
+          <div class="ei-title" style="cursor:pointer" onclick="openExamModal('${e.id}')">${escapeHtml(e.title)}</div>
+          <div class="ei-date">${e.date}</div>
+        </div>
+        ${badge}
+      </div>
+      <div class="ei-actions">
+        ${e.taken
+          ? `<img class="ei-thumb" src="${e.proofImg}" onclick="openLightbox('${e.proofImg}',null)">`
+          : `<button class="ei-proof-btn" onclick="uploadProof('${e.id}')">🖼 인증사진 업로드</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- 학습 일정 모달 ---------------- */
+window.openScheduleModal=function(id, start, end){
+  editingScheduleId = id||null;
+  const titleInput=document.getElementById('scheduleTitleInput');
+  const startInput=document.getElementById('scheduleStartInput');
+  const endInput=document.getElementById('scheduleEndInput');
+  const delBtn=document.getElementById('scheduleDeleteBtn');
+  if(id){
+    const ev = scheduleEvents.find(e=>e.id===id);
+    document.getElementById('scheduleModalTitle').textContent='학습 일정 수정';
+    titleInput.value = ev.title; startInput.value=ev.start; endInput.value=ev.end;
+    selectedScheduleColor = ev.color||SCHEDULE_COLORS[0];
+    delBtn.style.display='';
+  } else {
+    document.getElementById('scheduleModalTitle').textContent='학습 일정 추가';
+    titleInput.value='';
+    startInput.value = start || todayStr();
+    endInput.value = end || start || todayStr();
+    selectedScheduleColor = SCHEDULE_COLORS[0];
+    delBtn.style.display='none';
+  }
+  document.getElementById('scheduleColorRow').innerHTML = SCHEDULE_COLORS.map(c=>
+    `<div class="sp-color-dot${c===selectedScheduleColor?' sel':''}" data-color="${c}" style="background:${c}" onclick="pickScheduleColor('${c}')"></div>`
+  ).join('');
+  document.getElementById('scheduleModalBg').classList.add('open');
+};
+window.pickScheduleColor=function(c){
+  selectedScheduleColor=c;
+  document.querySelectorAll('#scheduleColorRow .sp-color-dot').forEach(el=>{
+    el.classList.toggle('sel', el.dataset.color===c);
+  });
+};
+window.saveScheduleFromModal=async function(){
+  const title=document.getElementById('scheduleTitleInput').value.trim();
+  let start=document.getElementById('scheduleStartInput').value;
+  let end=document.getElementById('scheduleEndInput').value;
+  if(!title){alert('일정 제목을 입력해주세요.');return;}
+  if(!start||!end){alert('날짜를 입력해주세요.');return;}
+  if(end<start){[start,end]=[end,start];}
+  const id = editingScheduleId || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+  const data = {title,start,end,color:selectedScheduleColor};
+  await setDoc(doc(db,'users',currentUser.uid,'studySchedule',id), data);
+  closeModal('scheduleModalBg');
+};
+window.deleteScheduleFromModal=async function(){
+  if(!editingScheduleId)return;
+  if(!confirm('이 학습 일정을 삭제할까요?'))return;
+  await deleteDoc(doc(db,'users',currentUser.uid,'studySchedule',editingScheduleId));
+  closeModal('scheduleModalBg');
+};
+
+/* ---------------- 시험 모달 ---------------- */
+window.openExamModal=function(id){
+  editingExamId=id||null;
+  const titleInput=document.getElementById('examTitleInput');
+  const dateInput=document.getElementById('examDateInput');
+  const delBtn=document.getElementById('examDeleteBtn');
+  if(id){
+    const ev=examEvents.find(e=>e.id===id);
+    document.getElementById('examModalTitle').textContent='시험 수정';
+    titleInput.value=ev.title; dateInput.value=ev.date;
+    delBtn.style.display='';
+  } else {
+    document.getElementById('examModalTitle').textContent='시험 등록';
+    titleInput.value=''; dateInput.value=todayStr();
+    delBtn.style.display='none';
+  }
+  document.getElementById('examModalBg').classList.add('open');
+};
+window.saveExamFromModal=async function(){
+  const title=document.getElementById('examTitleInput').value.trim();
+  const date=document.getElementById('examDateInput').value;
+  if(!title){alert('시험 이름을 입력해주세요.');return;}
+  if(!date){alert('날짜를 선택해주세요.');return;}
+  const id = editingExamId || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+  const existing = examEvents.find(e=>e.id===id) || {};
+  const data = {title,date,taken:existing.taken||false,proofImg:existing.proofImg||null,takenAt:existing.takenAt||null};
+  await setDoc(doc(db,'users',currentUser.uid,'studyExams',id), data);
+  closeModal('examModalBg');
+};
+window.deleteExamFromModal=async function(){
+  if(!editingExamId)return;
+  if(!confirm('이 시험을 삭제할까요? (인증 기록도 함께 사라져요)'))return;
+  await deleteDoc(doc(db,'users',currentUser.uid,'studyExams',editingExamId));
+  closeModal('examModalBg');
+};
+
+/* ---------------- 시험 인증사진 업로드 ---------------- */
+let proofTargetExamId=null;
+window.uploadProof=function(examId){
+  proofTargetExamId=examId;
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='image/*';
+  inp.onchange=async ()=>{
+    const file=inp.files[0]; if(!file)return;
+    const dataUrl = await compressImage(file,1400,0.8);
+    await setDoc(doc(db,'users',currentUser.uid,'studyExams',proofTargetExamId),
+      {taken:true,proofImg:dataUrl,takenAt:Date.now()}, {merge:true});
+    alert('인증 완료! 수고했어요 🎉');
+  };
+  inp.click();
+};
+
+/* ---------------- 시험자료 버튼 ---------------- */
+function renderMaterialBtn(){
+  const dot=document.getElementById('materialDot');
+  const label=document.getElementById('materialBtnLabel');
+  const icon=document.getElementById('materialBtnIcon');
+  const meta=document.getElementById('materialMeta');
+  if(materialDoc && materialDoc.img){
+    dot.classList.add('on');
+    icon.textContent='🗂️';
+    label.textContent='이번 주 시험자료 보기';
+    const d = materialDoc.updatedAt ? new Date(materialDoc.updatedAt) : null;
+    meta.textContent = d ? `업데이트: ${d.getMonth()+1}.${d.getDate()}` : '';
+  } else {
+    dot.classList.remove('on');
+    icon.textContent='📎';
+    label.textContent='이번 주 시험자료 올리기';
+    meta.textContent='아직 등록된 자료가 없어요';
+  }
+}
+window.onMaterialBtn=function(){
+  if(materialDoc && materialDoc.img){
+    openLightbox(materialDoc.img, 'material');
+  } else {
+    triggerMaterialUpload();
+  }
+};
+function triggerMaterialUpload(){
+  const inp=document.getElementById('materialFileInput');
+  inp.value='';
+  inp.click();
+}
+document.getElementById('materialFileInput').addEventListener('change', async (e)=>{
+  const file=e.target.files[0]; if(!file)return;
+  const dataUrl = await compressImage(file,1600,0.82);
+  await setDoc(doc(db,'users',currentUser.uid,'settings','studyMaterial'),
+    {img:dataUrl, updatedAt:Date.now()});
+});
+
+/* ---------------- 라이트박스 ---------------- */
+window.openLightbox=function(src, mode){
+  document.getElementById('lightboxImg').src=src;
+  const replaceBtn=document.getElementById('lightboxReplaceBtn');
+  if(mode==='material'){
+    replaceBtn.style.display='';
+    replaceBtn.onclick=()=>{closeLightbox();triggerMaterialUpload();};
+  } else {
+    replaceBtn.style.display='none';
+  }
+  document.getElementById('lightboxBg').classList.add('open');
+};
+window.closeLightbox=function(){document.getElementById('lightboxBg').classList.remove('open');};
+document.getElementById('lightboxBg').addEventListener('click',(e)=>{
+  if(e.target.id==='lightboxBg')closeLightbox();
+});
+
+/* ---------------- 이미지 압축 (index.html과 동일한 방식) ---------------- */
+function compressImage(file,maxDim=1400,quality=0.8){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=(e)=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        if(w>h){ if(w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;} }
+        else { if(h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;} }
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        let dataUrl=canvas.toDataURL('image/jpeg',quality);
+        if(dataUrl.length>1800000){ dataUrl=canvas.toDataURL('image/jpeg',0.5); }
+        resolve(dataUrl);
+      };
+      img.onerror=reject;
+      img.src=e.target.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.querySelectorAll('.sp-modal-bg').forEach(bg=>{
+  bg.addEventListener('click',(e)=>{ if(e.target===bg) bg.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
