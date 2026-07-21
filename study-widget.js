@@ -241,9 +241,22 @@ onAuthStateChanged(swAuth,(user)=>{
     hideLock();
     return;
   }
-  unsubExams=onSnapshot(collection(swDb,'users',user.uid,'studyExams'),(snap)=>{
-    const exams=[];
-    snap.forEach(d=>exams.push({id:d.id,...d.data()}));
-    evaluateExams(exams);
-  },(err)=>{console.error('study-widget exam 구독 실패:',err);});
+  // 시험 데이터 로드 성공 여부와 무관하게, 로그인만 되면 일단 평소 모드로 캐릭터부터 띄운다.
+  currentState={overdue:[],upcoming:null,urgentToday:false};
+  startMascot();
+  try{
+    unsubExams=onSnapshot(
+      collection(swDb,'users',user.uid,'studyExams'),
+      (snap)=>{
+        const exams=[];
+        snap.forEach(d=>exams.push({id:d.id,...d.data()}));
+        evaluateExams(exams);
+      },
+      (err)=>{
+        console.error('[study-widget] 시험 데이터 구독 실패 (캐릭터는 평소 모드로 계속 표시돼요):',err);
+      }
+    );
+  }catch(err){
+    console.error('[study-widget] onSnapshot 호출 자체가 실패했어요:',err);
+  }
 });
