@@ -131,7 +131,11 @@ body{opacity:0;transition:opacity .25s ease}
 .diary-save-hint{font-size:10.5px;color:#777;text-shadow:0 1px 2px rgba(255,255,255,.6)}
 .diary-save-btn{padding:6px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit}
 .top-memo-label{font-size:11px;color:#aaa;white-space:nowrap;padding-top:3px;flex-shrink:0}
-.top-memo-input{flex:1;border:none;outline:none;font-size:13px;color:#222;font-family:inherit;resize:vertical;line-height:1.6;background:transparent;min-height:28px;max-height:80vh;overflow-y:auto}
+.top-memo-input{flex:none;width:100%;box-sizing:border-box;border:none;outline:none;font-size:13px;color:#222;font-family:inherit;resize:none;line-height:1.6;background:transparent;min-height:28px;max-height:80vh;overflow-y:auto;display:block}
+.top-memo-input-wrap{flex:1;min-width:0;display:flex;flex-direction:column}
+.top-memo-resize-handle{width:100%;height:13px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;margin-top:2px;flex-shrink:0}
+.top-memo-resize-handle .tm-grip{width:34px;height:4px;border-radius:3px;background:#e2e2e2;transition:background .15s,width .15s}
+.top-memo-resize-handle:hover .tm-grip,.top-memo-resize-handle.dragging .tm-grip{background:var(--accent,#999);width:46px}
 
 /* 앱 레이아웃 */
 .app{display:grid;grid-template-columns:1fr 340px 215px;min-height:calc(100vh - 230px);border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1260px;box-shadow:0 4px 24px #0001}
@@ -1231,8 +1235,11 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
 <div class="top-memo-bar" id="topMemoBar">
   <span class="top-memo-label">📌 메모</span>
-  <textarea class="top-memo-input" id="topMemoInput" placeholder="빠른 메모..." rows="1" spellcheck="false"
-    oninput="autoResizeTopMemo(this)" onblur="saveTopMemo()"></textarea>
+  <div class="top-memo-input-wrap">
+    <textarea class="top-memo-input" id="topMemoInput" placeholder="빠른 메모..." rows="1" spellcheck="false"
+      oninput="autoResizeTopMemo(this)" onblur="saveTopMemo()"></textarea>
+    <div class="top-memo-resize-handle" id="topMemoResizeHandle" title="드래그해서 크기 조절"><span class="tm-grip"></span></div>
+  </div>
   <button class="diary-tab-btn" id="topMemoAutoSizeBtn" onclick="resetTopMemoAutoSize()" title="자동 크기로 되돌리기" style="display:none">⟲</button>
   <button class="diary-tab-btn" onclick="openDiaryLock()" title="">🍀</button>
 </div>
@@ -2905,7 +2912,7 @@ function loadTopMemo(){
   } else {
     autoResizeTopMemo(el);
   }
-  setupTopMemoResizeWatcher(el);
+  setupTopMemoResizeHandle();
 }
 window.autoResizeTopMemo=function(el){
   if(topMemoManualResize)return; // 사용자가 직접 크기를 조절한 뒤에는 타이핑해도 자동으로 다시 줄어들지 않게
@@ -2920,21 +2927,50 @@ window.resetTopMemoAutoSize=function(){
   el.style.height='auto';
   autoResizeTopMemo(el);
 };
-let _topMemoResizeWatcherReady=false;
-function setupTopMemoResizeWatcher(el){
-  if(_topMemoResizeWatcherReady || !el || typeof ResizeObserver==='undefined')return;
-  _topMemoResizeWatcherReady=true;
-  let lastH=el.offsetHeight;
-  const ro=new ResizeObserver(()=>{
-    const h=el.offsetHeight;
-    if(h===lastH)return;
-    lastH=h;
-    // 사용자가 우측 하단 손잡이를 드래그해 직접 높이를 바꾼 경우로 간주하고 저장
+let _topMemoHandleReady=false;
+function setupTopMemoResizeHandle(){
+  if(_topMemoHandleReady)return;
+  const handle=document.getElementById('topMemoResizeHandle');
+  const el=document.getElementById('topMemoInput');
+  if(!handle||!el)return;
+  _topMemoHandleReady=true;
+  const MIN_H=28, MAX_H=()=>Math.round(window.innerHeight*0.8);
+  let startY=0, startH=0, dragging=false;
+
+  function onMove(e){
+    if(!dragging)return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const delta = y - startY;
+    const newH = Math.max(MIN_H, Math.min(MAX_H(), startH+delta));
+    el.style.height = newH+'px';
+  }
+  function onUp(){
+    if(!dragging)return;
+    dragging=false;
+    handle.classList.remove('dragging');
+    document.body.style.userSelect='';
     topMemoManualResize=true;
-    localStorage.setItem(TOP_MEMO_HEIGHT_KEY,String(h));
+    localStorage.setItem(TOP_MEMO_HEIGHT_KEY, String(el.offsetHeight));
     document.getElementById('topMemoAutoSizeBtn').style.display='';
-  });
-  ro.observe(el);
+    window.removeEventListener('pointermove',onMove);
+    window.removeEventListener('pointerup',onUp);
+    window.removeEventListener('touchmove',onMove);
+    window.removeEventListener('touchend',onUp);
+  }
+  function onDown(e){
+    dragging=true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startH = el.offsetHeight;
+    handle.classList.add('dragging');
+    document.body.style.userSelect='none';
+    window.addEventListener('pointermove',onMove);
+    window.addEventListener('pointerup',onUp);
+    window.addEventListener('touchmove',onMove,{passive:false});
+    window.addEventListener('touchend',onUp);
+    e.preventDefault();
+  }
+  handle.addEventListener('pointerdown',onDown);
+  handle.addEventListener('touchstart',onDown,{passive:false});
 }
 window.saveTopMemo=async function(){
   if(!currentUser)return;
