@@ -1077,6 +1077,16 @@ body{opacity:0;transition:opacity .25s ease}
 }
 .memo-bottle-btn:hover .memo-bottle-close{opacity:1;pointer-events:auto}
 .memo-bottle-close:hover{background:#faeaea;color:#c0698a}
+.memo-bottle-resize-handle{
+  position:absolute;right:-7px;bottom:-7px;width:22px;height:22px;border-radius:50%;z-index:4;
+  background:#fff;border:0.5px solid #ddd;color:#999;font-size:11px;line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:nwse-resize;box-shadow:0 1px 4px #0002;
+  opacity:0;pointer-events:none;transition:opacity .15s,background .15s,color .15s;
+  touch-action:none;
+}
+.memo-bottle-btn:hover .memo-bottle-resize-handle{opacity:1;pointer-events:auto}
+.memo-bottle-resize-handle:hover,.memo-bottle-resize-handle.dragging{background:#faeaea;color:#c0698a}
+.memo-bottle-btn.resizing{animation-play-state:paused;transition:none}
 .memo-bottle-text{
   position:absolute;z-index:1;
   border:none;outline:none;background:transparent;resize:none;
@@ -1535,6 +1545,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 <!-- 메모 물약병 (파란): 이미지 위에 직접 글씨를 씀 -->
 <div class="memo-bottle-btn" id="memoBottleBtn-blue" data-color="blue" title="드래그로 이동 · 안쪽에 바로 메모">
   <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('blue')">✕</div>
+  <div class="memo-bottle-resize-handle" data-target="blue" title="드래그로 크기 조절 (더블클릭: 기본 크기로)">⤡</div>
   <img class="memo-bottle-img" src="memo-bottle.png" alt="파란 메모병">
   <textarea class="memo-bottle-text" id="memoBottleText-blue" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('blue')" onblur="saveMemoBottle('blue')"></textarea>
   <div class="memo-text-handle" data-target="blue" title="드래그로 글자 위치 옮기기">⠿</div>
@@ -1543,6 +1554,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 <!-- 메모 물약병 (핑크) -->
 <div class="memo-bottle-btn" id="memoBottleBtn-pink" data-color="pink" title="드래그로 이동 · 안쪽에 바로 메모">
   <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('pink')">✕</div>
+  <div class="memo-bottle-resize-handle" data-target="pink" title="드래그로 크기 조절 (더블클릭: 기본 크기로)">⤡</div>
   <img class="memo-bottle-img" src="memo-bottle-pink.png" alt="핑크 메모병">
   <textarea class="memo-bottle-text" id="memoBottleText-pink" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('pink')" onblur="saveMemoBottle('pink')"></textarea>
   <div class="memo-text-handle" data-target="pink" title="드래그로 글자 위치 옮기기">⠿</div>
@@ -1551,6 +1563,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 <!-- 메모 노트 (정원 그림) -->
 <div class="memo-bottle-btn" id="memoBottleBtn-garden" data-color="garden" title="드래그로 이동 · 안쪽에 바로 메모">
   <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('garden')">✕</div>
+  <div class="memo-bottle-resize-handle" data-target="garden" title="드래그로 크기 조절 (더블클릭: 기본 크기로)">⤡</div>
   <img class="memo-bottle-img" src="memo-note-garden.png" alt="정원 그림 메모">
   <textarea class="memo-bottle-text" id="memoBottleText-garden" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('garden')" onblur="saveMemoBottle('garden')"></textarea>
   <div class="memo-text-handle" data-target="garden" title="드래그로 글자 위치 옮기기">⠿</div>
@@ -1559,6 +1572,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 <!-- 메모 노트 (인물 그림) -->
 <div class="memo-bottle-btn" id="memoBottleBtn-linen" data-color="linen" title="드래그로 이동 · 안쪽에 바로 메모">
   <div class="memo-bottle-close" onclick="event.stopPropagation();hideMemoBottle('linen')">✕</div>
+  <div class="memo-bottle-resize-handle" data-target="linen" title="드래그로 크기 조절 (더블클릭: 기본 크기로)">⤡</div>
   <img class="memo-bottle-img" src="memo-note-linen.png" alt="인물 그림 메모">
   <textarea class="memo-bottle-text" id="memoBottleText-linen" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('linen')" onblur="saveMemoBottle('linen')"></textarea>
   <div class="memo-text-handle" data-target="linen" title="드래그로 글자 위치 옮기기">⠿</div>
@@ -2429,6 +2443,24 @@ function closeOtherFloatingPanels(exceptPanelId){
     applyPos(btn, dp.left, dp.top);
   }
 
+  const BASE_WIDTH=280, MIN_WIDTH=160, MAX_WIDTH=640;
+  function sizeKey(c){return 'memoBottleSize_'+c;}
+  function saveSize(color,widthPx){
+    try{localStorage.setItem(sizeKey(color),JSON.stringify({width:widthPx}));}catch(e){}
+    if(window.queueSaveAppearance)window.queueSaveAppearance();
+  }
+  function loadSizeFor(color){
+    const btn=bottles[color];if(!btn)return;
+    try{
+      const raw=localStorage.getItem(sizeKey(color));
+      if(raw){
+        const s=JSON.parse(raw);
+        if(typeof s.width==='number'){btn.style.width=clampNum(s.width,MIN_WIDTH,MAX_WIDTH)+'px';return;}
+      }
+    }catch(e){}
+    btn.style.width=BASE_WIDTH+'px';
+  }
+
   function getVisibleColors(){
     try{return JSON.parse(localStorage.getItem(VIS_KEY)||'[]');}catch(e){return [];}
   }
@@ -2465,7 +2497,7 @@ function closeOtherFloatingPanels(exceptPanelId){
       const el=document.getElementById('memoBottleText-'+color);
       if(el)el.value=bottleMemoContent[color]||'';
       btn.style.display='flex';
-      requestAnimationFrame(()=>btn.classList.add('show'));
+      requestAnimationFrame(()=>{btn.classList.add('show');if(window.__memoTextApply&&window.__memoTextApply[color])window.__memoTextApply[color]();});
       let visible=getVisibleColors();
       if(!visible.includes(color)){visible.push(color);setVisibleColors(visible);}
       updatePickerActiveState();
@@ -2488,7 +2520,7 @@ function closeOtherFloatingPanels(exceptPanelId){
     let dragging=false, moved=false, startX=0, startY=0, startLeft=0, startTop=0;
 
     btn.addEventListener('pointerdown',(e)=>{
-      if(e.target.classList.contains('memo-bottle-text')||e.target.classList.contains('memo-bottle-close')||e.target.classList.contains('memo-text-handle'))return; // 텍스트 입력·닫기 버튼·글자 위치 핸들은 병 드래그 제외
+      if(e.target.classList.contains('memo-bottle-text')||e.target.classList.contains('memo-bottle-close')||e.target.classList.contains('memo-text-handle')||e.target.classList.contains('memo-bottle-resize-handle'))return; // 텍스트 입력·닫기 버튼·글자 위치 핸들·크기 조절 핸들은 병 드래그 제외
       dragging=true;moved=false;
       const rect=btn.getBoundingClientRect();
       startX=e.clientX;startY=e.clientY;
@@ -2526,6 +2558,45 @@ function closeOtherFloatingPanels(exceptPanelId){
       if(newLeft!==rect.left||newTop!==rect.top)applyPos(btn,newLeft/window.innerWidth*100,newTop/window.innerHeight*100);
     });
     loadPosFor(color);
+    loadSizeFor(color);
+
+    // ── 크기 조절 핸들: 드래그로 노트/병 전체 크기를 키우거나 줄이기 ──
+    const resizeHandle=btn.querySelector('.memo-bottle-resize-handle');
+    if(resizeHandle){
+      let rDragging=false, rStartX=0, rStartWidth=BASE_WIDTH;
+      resizeHandle.addEventListener('pointerdown',(e)=>{
+        e.stopPropagation();e.preventDefault();
+        rDragging=true;
+        rStartX=e.clientX;
+        rStartWidth=btn.offsetWidth||BASE_WIDTH;
+        resizeHandle.classList.add('dragging');
+        btn.classList.add('resizing');
+        if(resizeHandle.setPointerCapture){try{resizeHandle.setPointerCapture(e.pointerId);}catch(err){}}
+      });
+      resizeHandle.addEventListener('pointermove',(e)=>{
+        if(!rDragging)return;
+        const dx=e.clientX-rStartX;
+        const newW=clampNum(rStartWidth+dx,MIN_WIDTH,MAX_WIDTH);
+        btn.style.width=newW+'px';
+        // 텍스트 위치/크기/글자크기도 노트 크기에 맞춰 실시간으로 같이 비율 조절
+        if(window.__memoTextApply&&window.__memoTextApply[color])window.__memoTextApply[color]();
+      });
+      function endResize(){
+        if(!rDragging)return;
+        rDragging=false;
+        resizeHandle.classList.remove('dragging');
+        btn.classList.remove('resizing');
+        saveSize(color, btn.offsetWidth);
+      }
+      resizeHandle.addEventListener('pointerup',endResize);
+      resizeHandle.addEventListener('pointercancel',endResize);
+      resizeHandle.addEventListener('dblclick',(e)=>{
+        e.stopPropagation();
+        btn.style.width=BASE_WIDTH+'px';
+        saveSize(color, BASE_WIDTH);
+        if(window.__memoTextApply&&window.__memoTextApply[color])window.__memoTextApply[color]();
+      });
+    }
   });
 
   // 팔레트 바깥 클릭하면 팔레트 닫기
@@ -2542,8 +2613,9 @@ function closeOtherFloatingPanels(exceptPanelId){
       const btn=bottles[color];if(!btn)return;
       if(visible.includes(color)){
         loadPosFor(color);
+        loadSizeFor(color);
         btn.style.display='flex';
-        requestAnimationFrame(()=>btn.classList.add('show'));
+        requestAnimationFrame(()=>{btn.classList.add('show');if(window.__memoTextApply&&window.__memoTextApply[color])window.__memoTextApply[color]();});
       } else {
         btn.classList.remove('show');
         btn.style.display='none';
@@ -2556,7 +2628,7 @@ function closeOtherFloatingPanels(exceptPanelId){
   window.refreshMemoBottleUI=restoreVisibleBottles;
 })();
 
-// ── 메모 글자 위치: 핸들을 드래그해서 내가 원하는 자리에 두기 ──
+// ── 메모 글자 위치: 핸들을 드래그해서 내가 원하는 자리에 두기 (노트 크기 조절과 비율 맞춰 함께 스케일됨) ──
 (function(){
   const DEFAULTS={
     blue:{left:73,top:111,width:134,height:124},
@@ -2564,14 +2636,16 @@ function closeOtherFloatingPanels(exceptPanelId){
     garden:{left:25,top:46,width:230,height:195},
     linen:{left:25,top:36,width:230,height:205}
   };
+  const BASE_W=280, BASE_FONT=16;
   const refreshFns=[];
+  window.__memoTextApply=window.__memoTextApply||{};
   Object.keys(DEFAULTS).forEach(color=>{
     const ta=document.getElementById('memoBottleText-'+color);
     const handle=document.querySelector('.memo-text-handle[data-target="'+color+'"]');
     const container=document.getElementById('memoBottleBtn-'+color);
     if(!ta||!handle||!container)return;
     const KEY='memoTextPos_'+color;
-    const pos=Object.assign({},DEFAULTS[color]);
+    const pos=Object.assign({},DEFAULTS[color]); // left/top/width/height 모두 "280px 기준" 좌표계(base)로 저장
     try{
       const raw=localStorage.getItem(KEY);
       if(raw){
@@ -2579,21 +2653,26 @@ function closeOtherFloatingPanels(exceptPanelId){
         if(typeof p.left==='number'&&typeof p.top==='number'){pos.left=p.left;pos.top=p.top;}
       }
     }catch(e){}
+    function getScale(){ return (container.offsetWidth||BASE_W)/BASE_W; } // 노트가 숨겨져 offsetWidth가 0이면 1배로 안전하게 처리
     function clampPos(){
-      const cw=container.offsetWidth||280, ch=container.offsetHeight||280;
+      const scale=getScale();
+      const cw=BASE_W, ch=(container.offsetHeight||BASE_W)/scale;
       pos.left=Math.min(Math.max(0,pos.left),Math.max(0,cw-pos.width));
       pos.top=Math.min(Math.max(0,pos.top),Math.max(0,ch-pos.height));
     }
     clampPos();
     function apply(){
-      ta.style.left=pos.left+'px';
-      ta.style.top=pos.top+'px';
-      ta.style.width=pos.width+'px';
-      ta.style.height=pos.height+'px';
-      handle.style.left=(pos.left-13)+'px';
-      handle.style.top=(pos.top-13)+'px';
+      const scale=getScale();
+      ta.style.left=(pos.left*scale)+'px';
+      ta.style.top=(pos.top*scale)+'px';
+      ta.style.width=(pos.width*scale)+'px';
+      ta.style.height=(pos.height*scale)+'px';
+      ta.style.fontSize=(BASE_FONT*scale)+'px';
+      handle.style.left=((pos.left*scale)-13)+'px';
+      handle.style.top=((pos.top*scale)-13)+'px';
     }
     apply();
+    window.__memoTextApply[color]=apply; // 노트 크기 조절 핸들 드래그 중 실시간으로 같이 스케일하기 위해 노출
 
     let dragging=false,startX=0,startY=0,startLeft=0,startTop=0;
     handle.addEventListener('pointerdown',(e)=>{
@@ -2605,8 +2684,9 @@ function closeOtherFloatingPanels(exceptPanelId){
     });
     handle.addEventListener('pointermove',(e)=>{
       if(!dragging)return;
-      const dx=e.clientX-startX, dy=e.clientY-startY;
-      const cw=container.offsetWidth||380, ch=container.offsetHeight||380;
+      const scale=getScale();
+      const dx=(e.clientX-startX)/scale, dy=(e.clientY-startY)/scale; // 화면상 이동량을 base 좌표계로 환산
+      const cw=BASE_W, ch=(container.offsetHeight||BASE_W)/scale;
       let newLeft=startLeft+dx, newTop=startTop+dy;
       newLeft=Math.min(Math.max(0,newLeft),Math.max(0,cw-pos.width));
       newTop=Math.min(Math.max(0,newTop),Math.max(0,ch-pos.height));
@@ -2739,11 +2819,13 @@ async function saveAppearanceNow(){
     memoBottleVisible:(()=>{try{return JSON.parse(localStorage.getItem('memoBottleVisibleColors')||'[]');}catch(e){return [];}})(),
     memoBottlePos:{},
     memoTextPos:{},
+    memoBottleSize:{},
     slimeBtnPos:(()=>{try{return JSON.parse(localStorage.getItem('rpgSlimeBtnPos')||'null');}catch(e){return null;}})()
   };
   ['blue','pink','garden','linen'].forEach(c=>{
     try{const p=localStorage.getItem('memoBottlePos_'+c);if(p)data.memoBottlePos[c]=JSON.parse(p);}catch(e){}
     try{const p=localStorage.getItem('memoTextPos_'+c);if(p)data.memoTextPos[c]=JSON.parse(p);}catch(e){}
+    try{const p=localStorage.getItem('memoBottleSize_'+c);if(p)data.memoBottleSize[c]=JSON.parse(p);}catch(e){}
   });
   try{
     await setDoc(doc(db,'users',currentUser.uid,'settings','appearance'),data);
@@ -2876,6 +2958,7 @@ async function loadAllData(){
       if(ap.slimeBtnPos)localStorage.setItem('rpgSlimeBtnPos',JSON.stringify(ap.slimeBtnPos));
       if(ap.memoBottlePos)Object.keys(ap.memoBottlePos).forEach(c=>localStorage.setItem('memoBottlePos_'+c,JSON.stringify(ap.memoBottlePos[c])));
       if(ap.memoTextPos)Object.keys(ap.memoTextPos).forEach(c=>localStorage.setItem('memoTextPos_'+c,JSON.stringify(ap.memoTextPos[c])));
+      if(ap.memoBottleSize)Object.keys(ap.memoBottleSize).forEach(c=>localStorage.setItem('memoBottleSize_'+c,JSON.stringify(ap.memoBottleSize[c])));
     }catch(e){console.error('appearance 동기화 실패:',e);}
   } else {
     // 서버에 아직 외모 설정이 한 번도 저장된 적 없는 경우(이 기능 추가 이전부터 쓰던 기기)
