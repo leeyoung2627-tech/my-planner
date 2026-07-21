@@ -131,7 +131,7 @@ body{opacity:0;transition:opacity .25s ease}
 .diary-save-hint{font-size:10.5px;color:#777;text-shadow:0 1px 2px rgba(255,255,255,.6)}
 .diary-save-btn{padding:6px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit}
 .top-memo-label{font-size:11px;color:#aaa;white-space:nowrap;padding-top:3px;flex-shrink:0}
-.top-memo-input{flex:1;border:none;outline:none;font-size:13px;color:#222;font-family:inherit;resize:none;line-height:1.6;background:transparent;min-height:72px;max-height:300px;overflow-y:auto}
+.top-memo-input{flex:1;border:none;outline:none;font-size:13px;color:#222;font-family:inherit;resize:vertical;line-height:1.6;background:transparent;min-height:28px;max-height:80vh;overflow-y:auto}
 
 /* 앱 레이아웃 */
 .app{display:grid;grid-template-columns:1fr 340px 215px;min-height:calc(100vh - 230px);border:0.5px solid #ddd;border-radius:16px;overflow:hidden;background:#fff;width:100%;max-width:1260px;box-shadow:0 4px 24px #0001}
@@ -1233,6 +1233,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <span class="top-memo-label">📌 메모</span>
   <textarea class="top-memo-input" id="topMemoInput" placeholder="빠른 메모..." rows="1" spellcheck="false"
     oninput="autoResizeTopMemo(this)" onblur="saveTopMemo()"></textarea>
+  <button class="diary-tab-btn" id="topMemoAutoSizeBtn" onclick="resetTopMemoAutoSize()" title="자동 크기로 되돌리기" style="display:none">⟲</button>
   <button class="diary-tab-btn" onclick="openDiaryLock()" title="">🍀</button>
 </div>
 
@@ -2890,8 +2891,51 @@ async function loadAllData(){
 }
 
 // ── 상단 메모 ──
-function loadTopMemo(){document.getElementById('topMemoInput').value=topMemoContent;autoResizeTopMemo(document.getElementById('topMemoInput'));}
-window.autoResizeTopMemo=function(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';};
+const TOP_MEMO_HEIGHT_KEY='topMemoManualHeight';
+let topMemoManualResize = !!localStorage.getItem(TOP_MEMO_HEIGHT_KEY);
+
+function loadTopMemo(){
+  const el=document.getElementById('topMemoInput');
+  el.value=topMemoContent;
+  const savedH=localStorage.getItem(TOP_MEMO_HEIGHT_KEY);
+  if(savedH){
+    el.style.height=savedH+'px';
+    topMemoManualResize=true;
+    document.getElementById('topMemoAutoSizeBtn').style.display='';
+  } else {
+    autoResizeTopMemo(el);
+  }
+  setupTopMemoResizeWatcher(el);
+}
+window.autoResizeTopMemo=function(el){
+  if(topMemoManualResize)return; // 사용자가 직접 크기를 조절한 뒤에는 타이핑해도 자동으로 다시 줄어들지 않게
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+};
+window.resetTopMemoAutoSize=function(){
+  topMemoManualResize=false;
+  localStorage.removeItem(TOP_MEMO_HEIGHT_KEY);
+  document.getElementById('topMemoAutoSizeBtn').style.display='none';
+  const el=document.getElementById('topMemoInput');
+  el.style.height='auto';
+  autoResizeTopMemo(el);
+};
+let _topMemoResizeWatcherReady=false;
+function setupTopMemoResizeWatcher(el){
+  if(_topMemoResizeWatcherReady || !el || typeof ResizeObserver==='undefined')return;
+  _topMemoResizeWatcherReady=true;
+  let lastH=el.offsetHeight;
+  const ro=new ResizeObserver(()=>{
+    const h=el.offsetHeight;
+    if(h===lastH)return;
+    lastH=h;
+    // 사용자가 우측 하단 손잡이를 드래그해 직접 높이를 바꾼 경우로 간주하고 저장
+    topMemoManualResize=true;
+    localStorage.setItem(TOP_MEMO_HEIGHT_KEY,String(h));
+    document.getElementById('topMemoAutoSizeBtn').style.display='';
+  });
+  ro.observe(el);
+}
 window.saveTopMemo=async function(){
   if(!currentUser)return;
   const text=document.getElementById('topMemoInput').value;
