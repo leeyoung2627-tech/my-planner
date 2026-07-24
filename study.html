@@ -449,6 +449,7 @@ const SECTIONS = {
     itemCollection:'studyExams',
     materialDocId:'studyMaterial',
     hasMaterial:true,
+    hasProof:true, // 시험은 인증사진 업로드로 완료 처리
     scheduleLabel:'학습 일정',
     itemLabel:'시험',
     itemTitlePlaceholder:'예: 중간고사',
@@ -468,6 +469,7 @@ const SECTIONS = {
     scheduleCollection:'commissionSchedule',
     itemCollection:'commissionItems',
     hasMaterial:false, // 커미션은 자료 업로드 대신 크레페/포스타입 링크 버튼을 씀
+    hasProof:false, // 커미션 마감은 파일 업로드 없이 버튼 클릭만으로 완료 처리
     scheduleLabel:'커미션 일정',
     itemLabel:'마감',
     itemTitlePlaceholder:'예: OO님 캐릭터 커미션',
@@ -695,7 +697,19 @@ function renderListSide(key){
   if(sorted.length===0){ el.innerHTML = `<div class="sp-empty-small">등록된 ${S.itemLabel} 항목이 없어요</div>`; return; }
   el.innerHTML = sorted.map(e=>{
     const overdue = !e.taken && e.date<today;
-    const badge = e.taken? `<span class="sp-badge done">인증완료</span>` : overdue? `<span class="sp-badge overdue">미인증</span>` : `<span class="sp-badge pending">예정</span>`;
+    const doneLabel = S.hasProof ? '인증완료' : '전달완료';
+    const pendingLabel = S.hasProof ? '미인증' : '미완료';
+    const badge = e.taken? `<span class="sp-badge done">${doneLabel}</span>` : overdue? `<span class="sp-badge overdue">${pendingLabel}</span>` : `<span class="sp-badge pending">예정</span>`;
+    let actionsHtml;
+    if(e.taken){
+      actionsHtml = (S.hasProof && e.proofImg)
+        ? `<img class="ei-thumb" src="${e.proofImg}" onclick="openLightbox('${e.proofImg}',null)">`
+        : `<button class="ei-proof-btn" style="background:#9BA0A6" onclick="undoDone('${key}','${e.id}')">↩ 완료 취소</button>`;
+    } else if(S.hasProof){
+      actionsHtml = `<button class="ei-proof-btn" onclick="uploadProof('${key}','${e.id}')">🖼 ${S.proofLabel} 업로드</button>`;
+    } else {
+      actionsHtml = `<button class="ei-proof-btn" onclick="markDone('${key}','${e.id}')">✅ 완성본 전달 완료</button>`;
+    }
     return `<div class="sp-exam-item">
       <div class="ei-top">
         <div>
@@ -704,11 +718,7 @@ function renderListSide(key){
         </div>
         ${badge}
       </div>
-      <div class="ei-actions">
-        ${e.taken
-          ? `<img class="ei-thumb" src="${e.proofImg}" onclick="openLightbox('${e.proofImg}',null)">`
-          : `<button class="ei-proof-btn" onclick="uploadProof('${key}','${e.id}')">🖼 ${S.proofLabel} 업로드</button>`}
-      </div>
+      <div class="ei-actions">${actionsHtml}</div>
     </div>`;
   }).join('');
 }
@@ -823,6 +833,17 @@ window.uploadProof=function(key, itemId){
     alert('인증 완료! 수고했어요 🎉');
   };
   inp.click();
+};
+
+window.markDone=async function(key, itemId){
+  const S = SECTIONS[key];
+  await setDoc(doc(db,'users',currentUser.uid,S.itemCollection,itemId),
+    {taken:true,proofImg:null,takenAt:Date.now()}, {merge:true});
+};
+window.undoDone=async function(key, itemId){
+  const S = SECTIONS[key];
+  await setDoc(doc(db,'users',currentUser.uid,S.itemCollection,itemId),
+    {taken:false,proofImg:null,takenAt:null}, {merge:true});
 };
 
 /* ---------------- 자료 버튼(시험자료/커미션자료 공용) ---------------- */
