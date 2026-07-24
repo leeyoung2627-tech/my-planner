@@ -14,6 +14,31 @@
     const saved=localStorage.getItem('planner_theme_v2');
     if(saved){const t=JSON.parse(saved);if(t.pagebg)document.documentElement.style.setProperty('--page-bg',t.pagebg);}
   }catch(e){}
+  // study.html 자체 색상 테마(웜그레이/세이지/피치 등)를 서버(Firestore) 응답을 기다리지 않고
+  // 캐시된 값으로 즉시 적용해서, 페이지 진입 시 기본 테마가 잠깐 보였다가 바뀌는 깜빡임을 없앰
+  try{
+    const THEME_PRESETS_CACHE = {
+      warmgray: {accent:'#8C7B6B', accentLight:'#EFEAE3', pageBg:'#F7F5F2', border:'#E4DED4', colBg:'#FBFAF8', todayBg:'#F1EBE3', examCol:'#C1553B', examLight:'#F7E6E0'},
+      sage:     {accent:'#5B7A5B', accentLight:'#E6EEE3', pageBg:'#F4F7F2', border:'#DCE6D8', colBg:'#F9FBF7', todayBg:'#E9F1E6', examCol:'#BE6A2E', examLight:'#F6E9DC'},
+      peach:    {accent:'#D97C5A', accentLight:'#FBE7DD', pageBg:'#FDF6F2', border:'#F3DCCF', colBg:'#FFFAF7', todayBg:'#FCEBE0', examCol:'#4A6FA5', examLight:'#E5EDF7'},
+      mono:     {accent:'#3A3A3E', accentLight:'#E9E9EB', pageBg:'#F6F6F7', border:'#DEDEE1', colBg:'#FAFAFB', todayBg:'#EDEDEF', examCol:'#B23A48', examLight:'#F5E1E3'},
+      navy:     {accent:'#33507A', accentLight:'#E4EAF2', pageBg:'#F5F7FA', border:'#DAE2EC', colBg:'#FAFBFD', todayBg:'#E9EEF5', examCol:'#C4571F', examLight:'#F7E7DA'},
+      lavender: {accent:'#534AB7', accentLight:'#EEEDFE', pageBg:'#f5f4ff', border:'#e3e1f5', colBg:'#FAFAFE', todayBg:'#F3F1FD', examCol:'#E4572E', examLight:'#FDEAE3'}
+    };
+    const cachedTheme=localStorage.getItem('studyThemeCache');
+    const t=THEME_PRESETS_CACHE[cachedTheme];
+    if(t){
+      const r=document.documentElement.style;
+      r.setProperty('--accent',t.accent);
+      r.setProperty('--accent-light',t.accentLight);
+      r.setProperty('--page-bg',t.pageBg);
+      r.setProperty('--border-col',t.border);
+      r.setProperty('--col-bg',t.colBg);
+      r.setProperty('--today-bg',t.todayBg);
+      r.setProperty('--exam-col',t.examCol);
+      r.setProperty('--exam-light',t.examLight);
+    }
+  }catch(e){}
 })();
 </script>
 <style>
@@ -536,6 +561,7 @@ onAuthStateChanged(auth, async (user)=>{
   const setSnap = await getDoc(doc(db,'users',currentUser.uid,'settings','studySettings'));
   studySettings = setSnap.exists()? setSnap.data() : {};
   applyTheme(studySettings.theme || 'warmgray');
+  try{localStorage.setItem('studyThemeCache', studySettings.theme || 'warmgray');}catch(e){}
 
   await Promise.all(Object.keys(SECTIONS).map(loadAllFor));
   Object.keys(SECTIONS).forEach(renderAllFor);
@@ -561,6 +587,7 @@ onAuthStateChanged(auth, async (user)=>{
   onSnapshot(doc(db,'users',currentUser.uid,'settings','studySettings'),(snap)=>{
     studySettings = snap.exists()? snap.data() : {};
     applyTheme(studySettings.theme || 'warmgray');
+    try{localStorage.setItem('studyThemeCache', studySettings.theme || 'warmgray');}catch(e){}
   });
 });
 
@@ -984,6 +1011,7 @@ window.resetMascotImage=function(){
 
 window.cancelSettingsModal=function(){
   applyTheme(studySettings.theme || 'warmgray');
+  try{localStorage.setItem('studyThemeCache', studySettings.theme || 'warmgray');}catch(e){}
   closeModal('settingsModalBg');
 };
 
@@ -1005,6 +1033,7 @@ window.saveSettingsFromModal=async function(){
 
   await setDoc(doc(db,'users',currentUser.uid,'settings','studySettings'), data);
   applyTheme(selectedTheme);
+  try{localStorage.setItem('studyThemeCache', selectedTheme);}catch(e){}
   closeModal('settingsModalBg');
 };
 </script>
