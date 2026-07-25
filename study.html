@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preload" href="./MemomentKkukkukk.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 <title>공부 &amp; 커미션 일정 — 두목의 플래너</title>
 <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
 <script>
@@ -48,6 +49,13 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
   min-height:100vh;padding:18px 18px 60px;display:flex;flex-direction:column;align-items:center;gap:20px}
 
 .sp-topbar{width:100%;max-width:1180px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+.sp-loading-overlay{position:fixed;inset:0;z-index:99999;background:var(--page-bg);display:flex;
+  align-items:center;justify-content:center;transition:opacity .25s ease}
+.sp-loading-overlay.hide{opacity:0;pointer-events:none}
+.sp-loading-spinner{width:32px;height:32px;border-radius:50%;border:3px solid var(--border-col);
+  border-top-color:var(--accent);animation:sp-spin .8s linear infinite}
+@keyframes sp-spin{to{transform:rotate(360deg)}}
 .sp-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:#777;text-decoration:none;padding:7px 12px;
   border-radius:20px;background:#fff;border:1px solid var(--border-col);transition:.15s}
 .sp-back:hover{color:var(--accent);border-color:var(--accent)}
@@ -225,6 +233,8 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
 </style>
 </head>
 <body>
+
+<div class="sp-loading-overlay" id="pageLoadingOverlay"><div class="sp-loading-spinner"></div></div>
 
 <div class="sp-topbar">
   <a class="sp-back" href="index.html">← 플래너로 돌아가기</a>
@@ -599,6 +609,14 @@ window.addPaletteColor=function(){
 
 window.closeModal=function(id){document.getElementById(id).classList.remove('open');};
 
+function hidePageLoading(){
+  const el = document.getElementById('pageLoadingOverlay');
+  if(!el || el.classList.contains('hide')) return;
+  el.classList.add('hide');
+  setTimeout(()=>{ el.style.display='none'; }, 300);
+}
+setTimeout(hidePageLoading, 6000); // 혹시 데이터 로드가 오래 걸리거나 실패해도 화면이 계속 가려지지 않도록 하는 안전장치
+
 /* ---------------- 인증 & 데이터 로드 ---------------- */
 onAuthStateChanged(auth, async (user)=>{
   if(!user){ location.href='index.html'; return; }
@@ -612,6 +630,7 @@ onAuthStateChanged(auth, async (user)=>{
 
   await Promise.all(Object.keys(SECTIONS).map(loadAllFor));
   Object.keys(SECTIONS).forEach(renderAllFor);
+  hidePageLoading();
 
   Object.keys(SECTIONS).forEach(key=>{
     const S=SECTIONS[key];
