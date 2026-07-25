@@ -622,13 +622,15 @@ onAuthStateChanged(auth, async (user)=>{
   if(!user){ location.href='index.html'; return; }
   currentUser = user;
 
-  const setSnap = await getDoc(doc(db,'users',currentUser.uid,'settings','studySettings'));
+  const [setSnap] = await Promise.all([
+    getDoc(doc(db,'users',currentUser.uid,'settings','studySettings')),
+    Promise.all(Object.keys(SECTIONS).map(loadAllFor))
+  ]);
   studySettings = setSnap.exists()? setSnap.data() : {};
   applyCustomColors(studySettings.colors);
   SCHEDULE_COLORS = (studySettings.scheduleColors && studySettings.scheduleColors.length) ? studySettings.scheduleColors : SCHEDULE_COLORS;
   cacheColorsToLocalStorage(studySettings.colors, SCHEDULE_COLORS);
 
-  await Promise.all(Object.keys(SECTIONS).map(loadAllFor));
   Object.keys(SECTIONS).forEach(renderAllFor);
   hidePageLoading();
 
