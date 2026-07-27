@@ -174,6 +174,13 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
 .ei-proof-btn{font-size:11px;background:var(--exam-col);color:#fff;border:none;border-radius:7px;padding:5px 9px;cursor:pointer}
 .ei-thumb{width:34px;height:34px;border-radius:6px;object-fit:cover;cursor:pointer;border:1px solid var(--border-col)}
 .sp-empty-small{color:#bbb;font-size:11.5px;text-align:center;padding:10px 0}
+.ei-top-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ei-del-btn{background:none;border:none;cursor:pointer;font-size:12px;color:#bbb;padding:2px;line-height:1;border-radius:5px}
+.ei-del-btn:hover{color:#E4572E;background:#fbeceb}
+.sp-done-toggle{display:flex;align-items:center;margin-top:10px;padding:7px 2px;font-size:11.5px;font-weight:700;
+  color:#999;cursor:pointer;border-top:1px dashed var(--border-col)}
+.sp-done-toggle:hover{color:var(--accent)}
+.sp-done-list{display:flex;flex-direction:column;gap:8px;opacity:.75}
 
 /* 모달 */
 .sp-modal-bg{display:none;position:fixed;inset:0;background:rgba(30,20,50,.4);z-index:9000;align-items:center;justify-content:center;padding:20px}
@@ -788,10 +795,27 @@ window.jumpToDate=function(key,k){
 function renderListSide(key){
   const S=SECTIONS[key], st=S.state, d=S.dom;
   const today = todayStr();
-  const sorted = [...st.items].sort((a,b)=> a.date<b.date?-1:1);
+  const now = Date.now();
+  const THIRTY_DAYS = 30*24*60*60*1000;
+
+  // 완료(인증/전달) 후 30일이 지난 항목은 목록에서 자동으로 숨김
+  // (데이터가 삭제되는 건 아니라서, 30일 안이면 '완료 취소'로 되돌릴 수 있어요)
+  const visible = st.items.filter(e=>{
+    if(!e.taken) return true;
+    const takenAt = e.takenAt || parseDate(e.date).getTime();
+    return (now - takenAt) < THIRTY_DAYS;
+  });
+
+  const pending = visible.filter(e=>!e.taken).sort((a,b)=> a.date<b.date?-1:1);
+  const done = visible.filter(e=>e.taken).sort((a,b)=> (b.takenAt||0)-(a.takenAt||0));
+
   const el = document.getElementById(d.listSide);
-  if(sorted.length===0){ el.innerHTML = `<div class="sp-empty-small">등록된 ${S.itemLabel} 항목이 없어요</div>`; return; }
-  el.innerHTML = sorted.map(e=>{
+  if(pending.length===0 && done.length===0){
+    el.innerHTML = `<div class="sp-empty-small">등록된 ${S.itemLabel} 항목이 없어요</div>`;
+    return;
+  }
+
+  const renderItem = (e)=>{
     const overdue = !e.taken && e.date<today;
     const doneLabel = S.hasProof ? '인증완료' : '전달완료';
     const pendingLabel = S.hasProof ? '미인증' : '미완료';
@@ -812,12 +836,36 @@ function renderListSide(key){
           <div class="ei-title" style="cursor:pointer" onclick="openItemModal('${key}','${e.id}')">${escapeHtml(e.title)}</div>
           <div class="ei-date">${e.date}</div>
         </div>
-        ${badge}
+        <div class="ei-top-right">
+          ${badge}
+          <button type="button" class="ei-del-btn" title="삭제" onclick="deleteItemQuick('${key}','${e.id}')">🗑</button>
+        </div>
       </div>
       <div class="ei-actions">${actionsHtml}</div>
     </div>`;
-  }).join('');
+  };
+
+  let html = pending.map(renderItem).join('');
+
+  if(done.length){
+    const open = !!st.doneOpen;
+    html += `<div class="sp-done-toggle" onclick="toggleDoneSection('${key}')">${open?'▾':'▸'}&nbsp; 완료한 ${S.itemLabel} (${done.length})</div>`;
+    if(open) html += `<div class="sp-done-list">${done.map(renderItem).join('')}</div>`;
+  }
+
+  el.innerHTML = html || `<div class="sp-empty-small">등록된 ${S.itemLabel} 항목이 없어요</div>`;
 }
+
+window.toggleDoneSection=function(key){
+  SECTIONS[key].state.doneOpen = !SECTIONS[key].state.doneOpen;
+  renderListSide(key);
+};
+
+window.deleteItemQuick=async function(key,id){
+  const S = SECTIONS[key];
+  if(!confirm('삭제할까요? (인증 기록도 함께 사라져요)'))return;
+  await deleteDoc(doc(db,'users',currentUser.uid,S.itemCollection,id));
+};
 
 /* ---------------- 학습/커미션 일정 모달 (공용) ---------------- */
 window.openScheduleModal=function(key, id, start, end){
