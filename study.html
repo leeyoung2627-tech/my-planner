@@ -237,6 +237,39 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
 .sp-msg-textarea{width:100%;min-height:88px;border:1px solid var(--border-col);border-radius:8px;padding:8px 10px;
   font-size:12.5px;font-family:inherit;resize:vertical;line-height:1.6}
 .sp-msg-textarea:focus{outline:none;border-color:var(--accent)}
+
+/* ---------------- 전체 레이아웃: 왼쪽 기존 구성 + 오른쪽 협업/외주 월간 캘린더 ---------------- */
+.sp-page-layout{width:100%;max-width:1560px;display:grid;grid-template-columns:1fr 560px;gap:20px;align-items:start}
+@media (max-width:1180px){.sp-page-layout{grid-template-columns:1fr}}
+.sp-left-col{display:flex;flex-direction:column;gap:20px;min-width:0}
+.sp-right-col{position:sticky;top:18px;min-width:0}
+
+/* ---------------- 협업 & 외주 월간 캘린더 ---------------- */
+.sp-collab-card{display:flex;flex-direction:column;gap:12px}
+.sp-collab-dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.sp-collab-dow{text-align:center;font-size:12px;font-weight:700;color:#999;padding:2px 0 4px}
+.sp-collab-dow.sun{color:#E4572E}
+.sp-collab-dow.sat{color:#3B6FE0}
+.sp-collab-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.sp-collab-daycell{background:var(--col-bg);border-radius:10px;padding:7px 6px;min-height:150px;
+  display:flex;flex-direction:column;gap:5px;cursor:pointer;transition:.12s;border:1px solid transparent}
+.sp-collab-daycell:hover{background:var(--accent-light);border-color:var(--accent)}
+.sp-collab-daycell.today{background:var(--today-bg);border-color:var(--accent)}
+.sp-collab-daycell.dim{opacity:.4}
+.sp-collab-daynum{font-size:12px;font-weight:800;color:var(--text-main)}
+.sp-collab-daynum.sun{color:#E4572E}
+.sp-collab-daynum.sat{color:#3B6FE0}
+.sp-collab-chips{display:flex;flex-direction:column;gap:4px}
+.sp-collab-chip{border-radius:7px;padding:4px 7px;font-size:11.5px;font-weight:700;color:#2b2b2b;cursor:pointer;
+  line-height:1.35;word-break:keep-all;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.sp-collab-chip:hover{filter:brightness(.96)}
+.sp-collab-empty-cell{color:#ccc}
+
+/* 마우스오버 말풍선 툴팁 (제목 + 메모) */
+.sp-tooltip{position:fixed;z-index:10000;max-width:250px;background:#fff;border:1px solid var(--border-col);
+  border-radius:10px;padding:10px 13px;box-shadow:0 10px 28px rgba(0,0,0,.16);pointer-events:none;display:none}
+.sp-tooltip .tt-title{font-size:13px;font-weight:800;color:var(--text-main);margin-bottom:3px;word-break:keep-all}
+.sp-tooltip .tt-memo{font-size:12px;color:#777;white-space:pre-wrap;line-height:1.5;word-break:keep-all}
 </style>
 </head>
 <body>
@@ -248,6 +281,9 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
   <div class="sp-title">공부 &amp; 커미션 일정</div>
   <button class="sp-gear-btn" onclick="openSettingsModal()" title="캐릭터 & 캘린더 설정">⚙️ 설정</button>
 </div>
+
+<div class="sp-page-layout">
+<div class="sp-left-col">
 
 <!-- ══════════ 섹션: 공부 & 시험 ══════════ -->
 <div class="sp-section" id="section-study">
@@ -288,19 +324,9 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
       </div>
     </div>
 
-    <div class="sp-sidebar-row">
-      <div class="sp-card sp-mini-card">
-        <div class="sp-mini-nav">
-          <button class="sp-nav-btn" onclick="shiftMiniMonth('study',-1)">‹</button>
-          <div class="sp-mini-label" id="miniLabel"></div>
-          <button class="sp-nav-btn" onclick="shiftMiniMonth('study',1)">›</button>
-        </div>
-        <div class="sp-mini-grid" id="miniGrid"></div>
-      </div>
-      <div class="sp-card sp-list-card">
-        <div class="sp-list-card-title">🎯 시험 목록</div>
-        <div class="sp-exam-list" id="examListSide"></div>
-      </div>
+    <div class="sp-card sp-list-card">
+      <div class="sp-list-card-title">🎯 시험 목록</div>
+      <div class="sp-exam-list" id="examListSide"></div>
     </div>
   </div>
 </div>
@@ -338,19 +364,60 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
       </div>
     </div>
 
-    <div class="sp-sidebar-row">
-      <div class="sp-card sp-mini-card">
-        <div class="sp-mini-nav">
-          <button class="sp-nav-btn" onclick="shiftMiniMonth('commission',-1)">‹</button>
-          <div class="sp-mini-label" id="miniLabelC"></div>
-          <button class="sp-nav-btn" onclick="shiftMiniMonth('commission',1)">›</button>
-        </div>
-        <div class="sp-mini-grid" id="miniGridC"></div>
+    <div class="sp-card sp-list-card">
+      <div class="sp-list-card-title">✏️ 커미션 목록</div>
+      <div class="sp-exam-list" id="examListSideC"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.sp-left-col -->
+
+<div class="sp-right-col">
+  <div class="sp-card sp-collab-card">
+    <div class="sp-section-head"><div class="sp-section-title">🤝 협업 &amp; 외주 일정</div><div class="sp-section-line"></div></div>
+    <div class="sp-week-nav">
+      <div class="sp-week-nav-left">
+        <button class="sp-nav-btn" onclick="shiftCollabMonth(-1)">‹</button>
+        <div class="sp-week-label" id="collabMonthLabel"></div>
+        <button class="sp-nav-btn" onclick="shiftCollabMonth(1)">›</button>
+        <button class="sp-today-btn" onclick="collabGoToday()">오늘</button>
       </div>
-      <div class="sp-card sp-list-card">
-        <div class="sp-list-card-title">✏️ 커미션 목록</div>
-        <div class="sp-exam-list" id="examListSideC"></div>
+      <div class="sp-add-group">
+        <button class="sp-add-btn study" onclick="openCollabModal()">+ 일정 추가</button>
       </div>
+    </div>
+    <div class="sp-collab-dow-row" id="collabDowRow"></div>
+    <div class="sp-collab-month-grid" id="collabMonthGrid"></div>
+  </div>
+</div><!-- /.sp-right-col -->
+
+</div><!-- /.sp-page-layout -->
+
+<div class="sp-tooltip" id="collabTooltip">
+  <div class="tt-title" id="collabTooltipTitle"></div>
+  <div class="tt-memo" id="collabTooltipMemo"></div>
+</div>
+
+<!-- 협업/외주 일정 모달 -->
+<div class="sp-modal-bg" id="collabModalBg">
+  <div class="sp-modal">
+    <h3 id="collabModalTitle">협업 &amp; 외주 일정 추가</h3>
+    <div class="sp-field"><label>제목</label><input type="text" id="collabTitleInput" placeholder="예: OO 브랜드 협업"></div>
+    <div class="sp-date-row">
+      <div class="sp-field"><label>시작일</label><input type="date" id="collabStartInput"></div>
+      <div class="sp-field"><label>종료일</label><input type="date" id="collabEndInput"></div>
+    </div>
+    <div class="sp-field"><label>메모</label><textarea class="sp-msg-textarea" id="collabMemoInput" placeholder="세부 내용, 단가, 연락처 등 자유롭게 메모하세요"></textarea></div>
+    <div class="sp-field">
+      <label>글씨 배경색</label>
+      <div class="sp-color-row" id="collabColorRow"></div>
+    </div>
+    <div class="sp-modal-actions">
+      <button class="sp-btn danger" id="collabDeleteBtn" style="display:none" onclick="deleteCollabFromModal()">삭제</button>
+      <div style="flex:1"></div>
+      <button class="sp-btn ghost" onclick="closeModal('collabModalBg')">취소</button>
+      <button class="sp-btn primary" onclick="saveCollabFromModal()">저장</button>
     </div>
   </div>
 </div>
@@ -549,6 +616,11 @@ let selectedScheduleColor = SCHEDULE_COLORS[0];
 let activeSectionKey = 'study';       // 지금 열려있는 일정/시험 모달이 어느 섹션 것인지
 let materialUploadTargetKey = 'study'; // 자료 업로드 파일선택창이 어느 섹션을 향하는지
 
+/* ---------------- 협업 & 외주 월간 캘린더 상태 ---------------- */
+const collabState = { month: (()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),1);})(), events: [] };
+let editingCollabId = null;
+let selectedCollabColor = SCHEDULE_COLORS[0];
+
 function pad(n){return String(n).padStart(2,'0');}
 function fmtDate(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 function parseDate(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
@@ -629,17 +701,26 @@ onAuthStateChanged(auth, async (user)=>{
   if(!user){ location.href='index.html'; return; }
   currentUser = user;
 
-  const [setSnap] = await Promise.all([
+  const [setSnap, collabSnap] = await Promise.all([
     getDoc(doc(db,'users',currentUser.uid,'settings','studySettings')),
+    getDocs(collection(db,'users',currentUser.uid,'collabSchedule')),
     Promise.all(Object.keys(SECTIONS).map(loadAllFor))
   ]);
   studySettings = setSnap.exists()? setSnap.data() : {};
   applyCustomColors(studySettings.colors);
   SCHEDULE_COLORS = (studySettings.scheduleColors && studySettings.scheduleColors.length) ? studySettings.scheduleColors : SCHEDULE_COLORS;
   cacheColorsToLocalStorage(studySettings.colors, SCHEDULE_COLORS);
+  collabState.events = collabSnap.docs.map(d=>({id:d.id,...d.data()}));
+  selectedCollabColor = SCHEDULE_COLORS[0];
 
   Object.keys(SECTIONS).forEach(renderAllFor);
+  renderCollabMonth();
   hidePageLoading();
+
+  onSnapshot(collection(db,'users',currentUser.uid,'collabSchedule'),(snap)=>{
+    collabState.events = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderCollabMonth();
+  });
 
   Object.keys(SECTIONS).forEach(key=>{
     const S=SECTIONS[key];
@@ -679,6 +760,139 @@ async function loadAllFor(key){
   S.state.materialDoc = (S.hasMaterial && matSnap && matSnap.exists())? matSnap.data() : null;
 }
 function renderAllFor(key){ renderWeek(key); renderMini(key); renderListSide(key); if(SECTIONS[key].hasMaterial)renderMaterialBtn(key); }
+
+/* ---------------- 협업 & 외주 월간 캘린더 ---------------- */
+window.shiftCollabMonth=function(dir){
+  collabState.month = new Date(collabState.month.getFullYear(), collabState.month.getMonth()+dir, 1);
+  renderCollabMonth();
+};
+window.collabGoToday=function(){
+  const n = new Date();
+  collabState.month = new Date(n.getFullYear(), n.getMonth(), 1);
+  renderCollabMonth();
+};
+
+function renderCollabMonth(){
+  const grid = document.getElementById('collabMonthGrid');
+  if(!grid) return; // 아직 DOM이 준비되지 않았으면 스킵
+  const m = collabState.month;
+  document.getElementById('collabMonthLabel').textContent = `${m.getFullYear()}. ${m.getMonth()+1}`;
+
+  document.getElementById('collabDowRow').innerHTML = DAYS.map((dname,i)=>
+    `<div class="sp-collab-dow ${i===0?'sun':i===6?'sat':''}">${dname}</div>`
+  ).join('');
+
+  const first = new Date(m.getFullYear(), m.getMonth(), 1);
+  const last = new Date(m.getFullYear(), m.getMonth()+1, 0);
+  const startGrid = addDays(first, -first.getDay());
+  const totalDaysNeeded = diffDays(startGrid, last) + 1;
+  const weeks = Math.ceil(totalDaysNeeded/7);
+  const cellCount = weeks*7;
+  const today = todayStr();
+
+  let html = '';
+  for(let i=0;i<cellCount;i++){
+    const dt = addDays(startGrid, i);
+    const dstr = fmtDate(dt);
+    const inMonth = dt.getMonth()===m.getMonth();
+    const dow = dt.getDay();
+    const dayEvents = collabState.events
+      .filter(e=> e.start && dstr>=e.start && dstr<=(e.end||e.start))
+      .sort((a,b)=> a.start<b.start? -1 : a.start>b.start? 1 : 0);
+    const chipsHtml = dayEvents.map(e=>{
+      const bg = e.color || SCHEDULE_COLORS[0];
+      const safeId = escapeHtml(e.id);
+      return `<div class="sp-collab-chip" style="background:${bg}" onclick="event.stopPropagation();openCollabModal('${safeId}')"
+        onmouseenter="showCollabTooltip(event,'${safeId}')" onmousemove="moveCollabTooltip(event)" onmouseleave="hideCollabTooltip()">${escapeHtml(e.title)}</div>`;
+    }).join('');
+    html += `<div class="sp-collab-daycell ${inMonth?'':'dim'} ${dstr===today?'today':''}" onclick="openCollabModal(null,'${dstr}')">
+      <div class="sp-collab-daynum ${dow===0?'sun':dow===6?'sat':''}">${dt.getDate()}</div>
+      <div class="sp-collab-chips">${chipsHtml}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderCollabColorRow(){
+  document.getElementById('collabColorRow').innerHTML = SCHEDULE_COLORS.map(c=>
+    `<div class="sp-color-dot ${c===selectedCollabColor?'sel':''}" style="background:${c}" onclick="selectCollabColor('${c}')"></div>`
+  ).join('');
+}
+window.selectCollabColor=function(c){ selectedCollabColor=c; renderCollabColorRow(); };
+
+window.openCollabModal=function(id, dateStr){
+  editingCollabId = id || null;
+  document.getElementById('collabModalTitle').textContent = id ? '협업 & 외주 일정 수정' : '협업 & 외주 일정 추가';
+  document.getElementById('collabDeleteBtn').style.display = id ? '' : 'none';
+  if(id){
+    const e = collabState.events.find(x=>x.id===id);
+    if(!e) return;
+    document.getElementById('collabTitleInput').value = e.title || '';
+    document.getElementById('collabMemoInput').value = e.memo || '';
+    document.getElementById('collabStartInput').value = e.start || todayStr();
+    document.getElementById('collabEndInput').value = e.end || e.start || todayStr();
+    selectedCollabColor = e.color || SCHEDULE_COLORS[0];
+  } else {
+    document.getElementById('collabTitleInput').value = '';
+    document.getElementById('collabMemoInput').value = '';
+    const d = dateStr || todayStr();
+    document.getElementById('collabStartInput').value = d;
+    document.getElementById('collabEndInput').value = d;
+    selectedCollabColor = SCHEDULE_COLORS[0];
+  }
+  renderCollabColorRow();
+  document.getElementById('collabModalBg').classList.add('open');
+};
+
+window.saveCollabFromModal=async function(){
+  const title = document.getElementById('collabTitleInput').value.trim();
+  if(!title){ alert('제목을 입력해주세요.'); return; }
+  let start = document.getElementById('collabStartInput').value;
+  let end = document.getElementById('collabEndInput').value || start;
+  if(!start){ alert('시작일을 입력해주세요.'); return; }
+  if(end < start){ const tmp=start; start=end; end=tmp; }
+  const memo = document.getElementById('collabMemoInput').value.trim();
+  const data = { title, memo, start, end, color: selectedCollabColor };
+  if(editingCollabId){
+    await setDoc(doc(db,'users',currentUser.uid,'collabSchedule',editingCollabId), data);
+  } else {
+    await setDoc(doc(collection(db,'users',currentUser.uid,'collabSchedule')), data);
+  }
+  closeModal('collabModalBg');
+};
+
+window.deleteCollabFromModal=async function(){
+  if(!editingCollabId) return;
+  await deleteDoc(doc(db,'users',currentUser.uid,'collabSchedule',editingCollabId));
+  closeModal('collabModalBg');
+};
+
+/* 마우스오버 말풍선 툴팁 */
+window.showCollabTooltip=function(ev, id){
+  const e = collabState.events.find(x=>x.id===id);
+  if(!e) return;
+  const tt = document.getElementById('collabTooltip');
+  document.getElementById('collabTooltipTitle').textContent = e.title || '';
+  const memoEl = document.getElementById('collabTooltipMemo');
+  if(e.memo){ memoEl.textContent = e.memo; memoEl.style.display=''; }
+  else { memoEl.textContent=''; memoEl.style.display='none'; }
+  tt.style.display = 'block';
+  moveCollabTooltip(ev);
+};
+window.moveCollabTooltip=function(ev){
+  const tt = document.getElementById('collabTooltip');
+  if(tt.style.display !== 'block') return;
+  const pad = 14;
+  const rect = tt.getBoundingClientRect();
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if(x + rect.width > window.innerWidth - 8) x = ev.clientX - rect.width - pad;
+  if(y + rect.height > window.innerHeight - 8) y = ev.clientY - rect.height - pad;
+  tt.style.left = x + 'px';
+  tt.style.top = y + 'px';
+};
+window.hideCollabTooltip=function(){
+  document.getElementById('collabTooltip').style.display = 'none';
+};
 
 /* ---------------- 주간 캘린더 ---------------- */
 window.shiftWeek=function(key,dir){ const st=SECTIONS[key].state; st.weekStart=addDays(st.weekStart,dir*7); renderWeek(key); renderMini(key); };
@@ -760,6 +974,7 @@ window.shiftMiniMonth=function(key,dir){
 
 function renderMini(key){
   const S=SECTIONS[key], st=S.state, d=S.dom;
+  if(!document.getElementById(d.miniLabel)) return; // 미니 캘린더 UI를 제거했으므로 조용히 스킵
   document.getElementById(d.miniLabel).textContent = `${st.miniMonth.getFullYear()}.${pad(st.miniMonth.getMonth()+1)}`;
   const first = new Date(st.miniMonth.getFullYear(),st.miniMonth.getMonth(),1);
   const startPad = first.getDay();
