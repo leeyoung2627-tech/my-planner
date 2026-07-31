@@ -906,17 +906,6 @@ window.toggleCollabComplete=async function(id){
    - 반대로 오른쪽 월간캘린더에 직접 추가한 일정은 왼쪽 주간에 반영되지 않음(단방향 동기화) */
 function collabMirrorId(sourceType, key, id){ return `sync_${sourceType}_${key}_${id}`; }
 
-async function syncScheduleToCollab(key, id, data){
-  if(!currentUser) return;
-  const icon = key==='study' ? '📚' : '✏️';
-  const mid = collabMirrorId('schedule', key, id);
-  await setDoc(doc(db,'users',currentUser.uid,'collabSchedule',mid), {
-    title: `${icon} ${data.title}`, memo:'', start:data.start, end:data.end,
-    color:data.color||SCHEDULE_COLORS[0], completed:false,
-    source:key, sourceType:'schedule', sourceId:id
-  });
-}
-
 async function syncItemToCollab(key, id, data){
   if(!currentUser) return;
   const S = SECTIONS[key];
@@ -940,12 +929,21 @@ async function setCollabMirrorCompleted(key, id, completed){
   await setDoc(doc(db,'users',currentUser.uid,'collabSchedule',collabMirrorId('item',key,id)), {completed}, {merge:true}).catch(()=>{});
 }
 
-// 기존에 등록해둔 학습/커미션 일정·시험·마감을 처음 한 번 오른쪽 월간캘린더로 채워 넣음(이후엔 실시간 반영)
+// 기존에 등록해둔 시험/마감을 처음 한 번 오른쪽 월간캘린더로 채워 넣음(이후엔 실시간 반영). 일정(기간 항목)은 반영하지 않음
 async function backfillCollabMirrors(){
   for(const key of Object.keys(SECTIONS)){
     const S = SECTIONS[key];
-    for(const ev of S.state.scheduleEvents){ await syncScheduleToCollab(key, ev.id, ev); }
     for(const it of S.state.items){ await syncItemToCollab(key, it.id, it); }
+  }
+  await cleanupScheduleMirrors(); // 이전 버전에서 이미 반영됐던 '일정' 항목들 정리
+}
+
+// 이전에 주간 '일정'까지 오른쪽에 반영했던 흔적이 있으면 지워서, 이제부터는 마감/시험만 남도록 함
+async function cleanupScheduleMirrors(){
+  if(!currentUser) return;
+  const toRemove = collabState.events.filter(e=>e.sourceType==='schedule');
+  for(const e of toRemove){
+    await deleteDoc(doc(db,'users',currentUser.uid,'collabSchedule',e.id)).catch(()=>{});
   }
 }
 
@@ -1210,7 +1208,6 @@ window.saveScheduleFromModal=async function(){
   const id = editingScheduleId || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
   const data = {title,start,end,color:selectedScheduleColor};
   await setDoc(doc(db,'users',currentUser.uid,S.scheduleCollection,id), data);
-  await syncScheduleToCollab(activeSectionKey, id, data);
   closeModal('scheduleModalBg');
 };
 window.deleteScheduleFromModal=async function(){
@@ -1218,7 +1215,6 @@ window.deleteScheduleFromModal=async function(){
   if(!editingScheduleId)return;
   if(!confirm('이 일정을 삭제할까요?'))return;
   await deleteDoc(doc(db,'users',currentUser.uid,S.scheduleCollection,editingScheduleId));
-  await removeCollabMirror('schedule', activeSectionKey, editingScheduleId);
   closeModal('scheduleModalBg');
 };
 
