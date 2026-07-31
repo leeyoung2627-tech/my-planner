@@ -263,6 +263,9 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
 .sp-collab-chip{border-radius:7px;padding:4px 7px;font-size:11.5px;font-weight:700;color:#2b2b2b;cursor:pointer;
   line-height:1.35;word-break:keep-all;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .sp-collab-chip:hover{filter:brightness(.96)}
+.sp-collab-chip-done{opacity:.55;text-decoration:line-through}
+.sp-collab-check{margin-right:3px;cursor:pointer}
+.sp-collab-check-mirror{margin-right:3px}
 .sp-collab-empty-cell{color:#ccc}
 
 /* 마우스오버 말풍선 툴팁 (제목 + 메모) */
@@ -412,6 +415,10 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
     <div class="sp-field">
       <label>글씨 배경색</label>
       <div class="sp-color-row" id="collabColorRow"></div>
+    </div>
+    <div class="sp-field" style="flex-direction:row;align-items:center;gap:6px">
+      <input type="checkbox" id="collabCompletedInput" style="width:16px;height:16px">
+      <label style="margin:0" for="collabCompletedInput">완료로 표시</label>
     </div>
     <div class="sp-modal-actions">
       <button class="sp-btn danger" id="collabDeleteBtn" style="display:none" onclick="deleteCollabFromModal()">삭제</button>
@@ -716,6 +723,7 @@ onAuthStateChanged(auth, async (user)=>{
   Object.keys(SECTIONS).forEach(renderAllFor);
   renderCollabMonth();
   hidePageLoading();
+  backfillCollabMirrors().catch(()=>{}); // 기존에 등록해둔 일정들을 오른쪽 월간캘린더로 최초 1회 채워 넣음
 
   onSnapshot(collection(db,'users',currentUser.uid,'collabSchedule'),(snap)=>{
     collabState.events = snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -802,8 +810,13 @@ function renderCollabMonth(){
     const chipsHtml = dayEvents.map(e=>{
       const bg = e.color || SCHEDULE_COLORS[0];
       const safeId = escapeHtml(e.id);
-      return `<div class="sp-collab-chip" style="background:${bg}" onclick="event.stopPropagation();openCollabModal('${safeId}')"
-        onmouseenter="showCollabTooltip(event,'${safeId}')" onmousemove="moveCollabTooltip(event)" onmouseleave="hideCollabTooltip()">${escapeHtml(e.title)}</div>`;
+      const isMirror = !!e.sourceType;
+      const doneCls = e.completed ? ' sp-collab-chip-done' : '';
+      const check = isMirror
+        ? (e.completed ? `<span class="sp-collab-check-mirror">✅</span>` : '')
+        : `<span class="sp-collab-check" onclick="event.stopPropagation();toggleCollabComplete('${safeId}')">${e.completed?'☑':'☐'}</span>`;
+      return `<div class="sp-collab-chip${doneCls}" style="background:${bg}" onclick="event.stopPropagation();openCollabModal('${safeId}')"
+        onmouseenter="showCollabTooltip(event,'${safeId}')" onmousemove="moveCollabTooltip(event)" onmouseleave="hideCollabTooltip()">${check}${escapeHtml(e.title)}</div>`;
     }).join('');
     html += `<div class="sp-collab-daycell ${inMonth?'':'dim'} ${dstr===today?'today':''}" onclick="openCollabModal(null,'${dstr}')">
       <div class="sp-collab-daynum ${dow===0?'sun':dow===6?'sat':''}">${dt.getDate()}</div>
@@ -821,6 +834,16 @@ function renderCollabColorRow(){
 window.selectCollabColor=function(c){ selectedCollabColor=c; renderCollabColorRow(); };
 
 window.openCollabModal=function(id, dateStr){
+  // 주간캘린더에서 자동으로 반영된(동기화된) 일정은 이 모달에서 직접 수정하지 않고,
+  // 원본(공부/커미션 쪽) 수정 화면으로 바로 이동시켜서 데이터가 두 군데로 갈라지지 않게 함
+  if(id){
+    const src = collabState.events.find(x=>x.id===id);
+    if(src && src.sourceType){
+      if(src.sourceType==='schedule') openScheduleModal(src.source, src.sourceId);
+      else openItemModal(src.source, src.sourceId);
+      return;
+    }
+  }
   editingCollabId = id || null;
   document.getElementById('collabModalTitle').textContent = id ? '협업 & 외주 일정 수정' : '협업 & 외주 일정 추가';
   document.getElementById('collabDeleteBtn').style.display = id ? '' : 'none';
@@ -831,6 +854,7 @@ window.openCollabModal=function(id, dateStr){
     document.getElementById('collabMemoInput').value = e.memo || '';
     document.getElementById('collabStartInput').value = e.start || todayStr();
     document.getElementById('collabEndInput').value = e.end || e.start || todayStr();
+    document.getElementById('collabCompletedInput').checked = !!e.completed;
     selectedCollabColor = e.color || SCHEDULE_COLORS[0];
   } else {
     document.getElementById('collabTitleInput').value = '';
@@ -838,6 +862,7 @@ window.openCollabModal=function(id, dateStr){
     const d = dateStr || todayStr();
     document.getElementById('collabStartInput').value = d;
     document.getElementById('collabEndInput').value = d;
+    document.getElementById('collabCompletedInput').checked = false;
     selectedCollabColor = SCHEDULE_COLORS[0];
   }
   renderCollabColorRow();
@@ -852,7 +877,8 @@ window.saveCollabFromModal=async function(){
   if(!start){ alert('시작일을 입력해주세요.'); return; }
   if(end < start){ const tmp=start; start=end; end=tmp; }
   const memo = document.getElementById('collabMemoInput').value.trim();
-  const data = { title, memo, start, end, color: selectedCollabColor };
+  const completed = document.getElementById('collabCompletedInput').checked;
+  const data = { title, memo, start, end, color: selectedCollabColor, completed, source:null, sourceType:null, sourceId:null };
   if(editingCollabId){
     await setDoc(doc(db,'users',currentUser.uid,'collabSchedule',editingCollabId), data);
   } else {
@@ -866,6 +892,62 @@ window.deleteCollabFromModal=async function(){
   await deleteDoc(doc(db,'users',currentUser.uid,'collabSchedule',editingCollabId));
   closeModal('collabModalBg');
 };
+
+// 월간 캘린더에 '직접 입력한' 일정만 이 체크로 완료 처리 가능
+// (주간에서 자동 반영된 일정은 원본 쪽에서 완료 처리하면 자동으로 여기도 체크됨)
+window.toggleCollabComplete=async function(id){
+  const e = collabState.events.find(x=>x.id===id);
+  if(!e || e.sourceType) return;
+  await setDoc(doc(db,'users',currentUser.uid,'collabSchedule',id), {completed: !e.completed}, {merge:true});
+};
+
+/* ---------------- 주간(공부/커미션) → 월간(협업&외주) 자동 반영 ----------------
+   - 왼쪽 주간캘린더에 일정/시험/마감을 등록·수정·삭제·완료처리하면 오른쪽 월간캘린더에 자동으로 반영됨
+   - 반대로 오른쪽 월간캘린더에 직접 추가한 일정은 왼쪽 주간에 반영되지 않음(단방향 동기화) */
+function collabMirrorId(sourceType, key, id){ return `sync_${sourceType}_${key}_${id}`; }
+
+async function syncScheduleToCollab(key, id, data){
+  if(!currentUser) return;
+  const icon = key==='study' ? '📚' : '✏️';
+  const mid = collabMirrorId('schedule', key, id);
+  await setDoc(doc(db,'users',currentUser.uid,'collabSchedule',mid), {
+    title: `${icon} ${data.title}`, memo:'', start:data.start, end:data.end,
+    color:data.color||SCHEDULE_COLORS[0], completed:false,
+    source:key, sourceType:'schedule', sourceId:id
+  });
+}
+
+async function syncItemToCollab(key, id, data){
+  if(!currentUser) return;
+  const S = SECTIONS[key];
+  const icon = key==='study' ? '🎯' : '📌';
+  const markColor = (getComputedStyle(document.documentElement).getPropertyValue('--exam-col')||'').trim() || '#C1553B';
+  const mid = collabMirrorId('item', key, id);
+  await setDoc(doc(db,'users',currentUser.uid,'collabSchedule',mid), {
+    title: `${icon} [${S.itemLabel}] ${data.title}`, memo:'', start:data.date, end:data.date,
+    color:markColor, completed: !!data.taken,
+    source:key, sourceType:'item', sourceId:id
+  });
+}
+
+async function removeCollabMirror(sourceType, key, id){
+  if(!currentUser) return;
+  await deleteDoc(doc(db,'users',currentUser.uid,'collabSchedule',collabMirrorId(sourceType,key,id))).catch(()=>{});
+}
+
+async function setCollabMirrorCompleted(key, id, completed){
+  if(!currentUser) return;
+  await setDoc(doc(db,'users',currentUser.uid,'collabSchedule',collabMirrorId('item',key,id)), {completed}, {merge:true}).catch(()=>{});
+}
+
+// 기존에 등록해둔 학습/커미션 일정·시험·마감을 처음 한 번 오른쪽 월간캘린더로 채워 넣음(이후엔 실시간 반영)
+async function backfillCollabMirrors(){
+  for(const key of Object.keys(SECTIONS)){
+    const S = SECTIONS[key];
+    for(const ev of S.state.scheduleEvents){ await syncScheduleToCollab(key, ev.id, ev); }
+    for(const it of S.state.items){ await syncItemToCollab(key, it.id, it); }
+  }
+}
 
 /* 마우스오버 말풍선 툴팁 */
 window.showCollabTooltip=function(ev, id){
@@ -1080,6 +1162,7 @@ window.deleteItemQuick=async function(key,id){
   const S = SECTIONS[key];
   if(!confirm('삭제할까요? (인증 기록도 함께 사라져요)'))return;
   await deleteDoc(doc(db,'users',currentUser.uid,S.itemCollection,id));
+  await removeCollabMirror('item', key, id);
 };
 
 /* ---------------- 학습/커미션 일정 모달 (공용) ---------------- */
@@ -1127,6 +1210,7 @@ window.saveScheduleFromModal=async function(){
   const id = editingScheduleId || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
   const data = {title,start,end,color:selectedScheduleColor};
   await setDoc(doc(db,'users',currentUser.uid,S.scheduleCollection,id), data);
+  await syncScheduleToCollab(activeSectionKey, id, data);
   closeModal('scheduleModalBg');
 };
 window.deleteScheduleFromModal=async function(){
@@ -1134,6 +1218,7 @@ window.deleteScheduleFromModal=async function(){
   if(!editingScheduleId)return;
   if(!confirm('이 일정을 삭제할까요?'))return;
   await deleteDoc(doc(db,'users',currentUser.uid,S.scheduleCollection,editingScheduleId));
+  await removeCollabMirror('schedule', activeSectionKey, editingScheduleId);
   closeModal('scheduleModalBg');
 };
 
@@ -1169,6 +1254,7 @@ window.saveItemFromModal=async function(){
   const existing = S.state.items.find(e=>e.id===id) || {};
   const data = {title,date,taken:existing.taken||false,proofImg:existing.proofImg||null,takenAt:existing.takenAt||null};
   await setDoc(doc(db,'users',currentUser.uid,S.itemCollection,id), data);
+  await syncItemToCollab(activeSectionKey, id, data);
   closeModal('itemModalBg');
 };
 window.deleteItemFromModal=async function(){
@@ -1176,6 +1262,7 @@ window.deleteItemFromModal=async function(){
   if(!editingItemId)return;
   if(!confirm('삭제할까요? (인증 기록도 함께 사라져요)'))return;
   await deleteDoc(doc(db,'users',currentUser.uid,S.itemCollection,editingItemId));
+  await removeCollabMirror('item', activeSectionKey, editingItemId);
   closeModal('itemModalBg');
 };
 
@@ -1189,6 +1276,7 @@ window.uploadProof=function(key, itemId){
     const dataUrl = await compressImage(file,1400,0.8);
     await setDoc(doc(db,'users',currentUser.uid,S.itemCollection,itemId),
       {taken:true,proofImg:dataUrl,takenAt:Date.now()}, {merge:true});
+    await setCollabMirrorCompleted(key, itemId, true);
     alert('인증 완료! 수고했어요 🎉');
   };
   inp.click();
@@ -1198,11 +1286,13 @@ window.markDone=async function(key, itemId){
   const S = SECTIONS[key];
   await setDoc(doc(db,'users',currentUser.uid,S.itemCollection,itemId),
     {taken:true,proofImg:null,takenAt:Date.now()}, {merge:true});
+  await setCollabMirrorCompleted(key, itemId, true);
 };
 window.undoDone=async function(key, itemId){
   const S = SECTIONS[key];
   await setDoc(doc(db,'users',currentUser.uid,S.itemCollection,itemId),
     {taken:false,proofImg:null,takenAt:null}, {merge:true});
+  await setCollabMirrorCompleted(key, itemId, false);
 };
 
 /* ---------------- 자료 버튼(시험자료/커미션자료 공용) ---------------- */
