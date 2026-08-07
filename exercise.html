@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>운동일지</title>
+<link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
+<style>
+:root{
+  --accent:#3E8E5A;
+  --accent-light:#E7F5EC;
+  --app-bg:#ffffff;
+  --page-bg:#f5faf6;
+  --text-main:#222222;
+  --border-col:#ddd;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+button,input,textarea,select{font-family:inherit}
+body{
+  font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  background:var(--page-bg);
+  display:flex;flex-direction:column;align-items:center;
+  padding:24px 16px 90px;min-height:100vh;gap:16px;
+  opacity:0;transition:opacity .25s ease;
+}
+
+/* ── 로그인 화면 ── */
+.login-wrap{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;width:100%}
+.login-box{background:#fff;border-radius:16px;padding:40px;width:300px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 4px 24px #0001;border:.5px solid #eee}
+.login-title{font-size:19px;font-weight:700;color:#222}
+.login-sub{font-size:12px;color:#aaa;text-align:center}
+.google-btn{display:flex;align-items:center;gap:10px;padding:10px 20px;border-radius:8px;border:.5px solid #ddd;background:#fff;cursor:pointer;font-size:14px;color:#222;width:100%;justify-content:center}
+.google-btn:hover{background:#f5f5f5}
+.google-btn img{width:20px;height:20px}
+
+/* ── 메인 ── */
+.main{display:none;flex-direction:column;align-items:center;gap:18px;width:100%;max-width:520px}
+
+.topbar{width:100%;display:flex;align-items:center;justify-content:space-between}
+.topbar-title{font-size:20px;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:8px}
+.topbar-back{font-size:12px;color:#999;text-decoration:none;border:.5px solid #ddd;border-radius:8px;padding:6px 12px;background:#fff}
+.topbar-back:hover{background:#f2f2f2}
+
+/* 카드 공통 */
+.card{width:100%;background:#fff;border-radius:16px;border:.5px solid #e6e6e6;box-shadow:0 3px 14px #0000000d;padding:16px;}
+
+/* 미니 월간 캘린더 */
+.cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cal-nav .cn-btn{background:none;border:none;cursor:pointer;font-size:16px;color:#777;padding:2px 10px;border-radius:6px}
+.cal-nav .cn-btn:hover{background:#f2f2f2}
+.cal-nav .cn-label{flex:1;text-align:center;font-size:14px;font-weight:700;color:#222}
+.dow-row{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
+.dow{text-align:center;font-size:10.5px;color:#999;padding:2px 0}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.day-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;font-size:12px;color:#444;position:relative;gap:2px}
+.day-cell.other{visibility:hidden}
+.day-cell .dn{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.day-cell.today .dn{border:1.5px solid var(--accent);font-weight:700;color:var(--accent)}
+.day-cell.done .dn{background:var(--accent);color:#fff;font-weight:700}
+.day-cell .mark{font-size:9px;line-height:1}
+
+/* 루틴 설정 */
+.section-title{font-size:13px;font-weight:700;color:#333;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.step-card{border:1.5px solid #eee;border-radius:12px;padding:10px 11px;margin-bottom:8px;background:#fafffb;display:flex;flex-direction:column;gap:8px}
+.step-top{display:flex;align-items:center;gap:6px}
+.step-num{font-size:11px;color:#aaa;font-weight:700;width:16px;flex-shrink:0;text-align:center}
+.step-name{flex:1;min-width:0;font-size:13px;padding:8px 9px;border-radius:7px;border:.5px solid #ddd;background:#fff}
+.step-arrow,.step-del{font-size:13px;cursor:pointer;padding:3px 6px;border-radius:5px;color:#888;flex-shrink:0}
+.step-arrow:hover{background:#eee}
+.step-del{color:#D85A30}
+.step-del:hover{background:#FAECE7}
+.step-setrow{display:flex;gap:8px;align-items:center;padding-left:22px}
+.step-setrow label{font-size:11px;color:#999;display:flex;align-items:center;gap:4px}
+.step-setrow input{width:52px;font-size:12px;padding:6px 7px;border-radius:6px;border:.5px solid #ddd;background:#fff;text-align:center}
+.add-step-btn{width:100%;padding:9px 0;border-radius:10px;border:1.5px dashed var(--accent);color:var(--accent);background:#fff;font-size:12.5px;cursor:pointer;font-weight:600;margin-top:2px}
+.save-row{display:flex;gap:8px;margin-top:12px}
+.save-btn{flex:1;padding:11px 0;border-radius:10px;border:none;background:#f0f0f0;color:#555;font-size:13px;font-weight:700;cursor:pointer}
+.start-btn{flex:1.3;padding:11px 0;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:800;cursor:pointer}
+.start-btn:disabled{background:#ccc;cursor:default}
+.empty-hint{font-size:12px;color:#bbb;text-align:center;padding:18px 0}
+
+/* 루틴 실행 바 */
+.runner-bar{
+  position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:200;
+  display:none;align-items:center;gap:10px;
+  background:#222;color:#fff;border-radius:16px;padding:12px 18px;
+  box-shadow:0 6px 24px #0004;max-width:92vw;
+}
+.runner-bar.show{display:flex}
+.runner-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.runner-step{font-size:9.5px;color:#bbb;letter-spacing:.03em}
+.runner-label{font-size:14px;font-weight:700;white-space:normal;word-break:keep-all;max-width:min(50vw,260px)}
+.runner-sub{font-size:11px;color:#9fd6b5}
+.runner-btn{padding:8px 13px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer}
+.runner-btn.next{background:var(--accent);color:#fff}
+.runner-btn.prev{background:#444;color:#ccc}
+.runner-btn.exit{background:transparent;color:#888;font-weight:400}
+
+/* 완료 축하 토스트 */
+.done-toast{
+  position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);
+  background:#fff;border:2px solid var(--accent);border-radius:14px;
+  padding:12px 20px;font-size:13px;font-weight:700;color:var(--accent);
+  box-shadow:0 6px 20px #0002;z-index:210;opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;
+}
+.done-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-title">🏋️ 운동일지</div>
+    <div class="login-sub">로그인하고 나만의 운동 루틴을<br/>기록해보세요</div>
+    <button class="google-btn" onclick="loginWithGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="google"/>
+      Google로 로그인
+    </button>
+  </div>
+</div>
+
+<div class="main" id="mainWrap">
+  <div class="topbar">
+    <div class="topbar-title">🏋️ 운동일지</div>
+    <a class="topbar-back" href="/">← 플래너로</a>
+  </div>
+
+  <!-- 미니 월간 캘린더 -->
+  <div class="card">
+    <div class="cal-nav">
+      <button class="cn-btn" onclick="moveMonth(-1)">‹</button>
+      <div class="cn-label" id="calLabel"></div>
+      <button class="cn-btn" onclick="moveMonth(1)">›</button>
+    </div>
+    <div class="dow-row">
+      <div class="dow">일</div><div class="dow">월</div><div class="dow">화</div><div class="dow">수</div><div class="dow">목</div><div class="dow">금</div><div class="dow">토</div>
+    </div>
+    <div class="month-grid" id="monthGrid"></div>
+  </div>
+
+  <!-- 루틴 설정 -->
+  <div class="card">
+    <div class="section-title">💪 오늘의 루틴 설정</div>
+    <div id="stepsWrap"></div>
+    <div id="emptyHint" class="empty-hint" style="display:none">아직 등록된 운동이 없어요.<br/>아래 버튼으로 추가해보세요.</div>
+    <button class="add-step-btn" onclick="addStep()">＋ 운동 추가</button>
+    <div class="save-row">
+      <button class="save-btn" onclick="saveRoutine()">저장</button>
+      <button class="start-btn" id="startBtn" onclick="startRoutine()">▶ 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- 루틴 실행 바 -->
+<div class="runner-bar" id="runnerBar">
+  <div class="runner-info">
+    <span class="runner-step" id="runnerStep"></span>
+    <span class="runner-label" id="runnerLabel"></span>
+    <span class="runner-sub" id="runnerSub"></span>
+  </div>
+  <button class="runner-btn prev" onclick="prevStep()">◀ 이전</button>
+  <button class="runner-btn next" id="runnerNextBtn" onclick="nextStep()">다음 ▶</button>
+  <button class="runner-btn exit" onclick="exitRun()">종료</button>
+</div>
+
+<div class="done-toast" id="doneToast">🎉 오늘의 운동 완료! 수고했어요</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "179812397978",
+  appId: "1:179812397978:web:3525714542291e818e0023"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser=null;
+let cur=new Date(); cur=new Date(cur.getFullYear(),cur.getMonth(),1);
+let steps=[]; // {name, sets, reps}
+let doneDates={}; // {'YYYY-M-D':true}
+let running=false, runIdx=0;
+
+function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+window.loginWithGoogle=async()=>{try{await signInWithPopup(auth,provider);}catch(e){alert('로그인 실패: '+e.message);}};
+
+onAuthStateChanged(auth,async user=>{
+  if(user){
+    currentUser=user;
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('mainWrap').style.display='flex';
+    await loadData();
+    renderCalendar();
+    renderSteps();
+    document.body.style.opacity='1';
+  }else{
+    currentUser=null;
+    document.getElementById('loginWrap').style.display='flex';
+    document.getElementById('mainWrap').style.display='none';
+    document.body.style.opacity='1';
+  }
+});
+
+async function loadData(){
+  try{
+    const rSnap=await getDoc(doc(db,'users',currentUser.uid,'exercise','routine'));
+    if(rSnap.exists()&&Array.isArray(rSnap.data().steps))steps=rSnap.data().steps;
+  }catch(e){console.error(e);}
+  try{
+    const lSnap=await getDoc(doc(db,'users',currentUser.uid,'exercise','log'));
+    if(lSnap.exists()&&lSnap.data().dates)doneDates=lSnap.data().dates;
+  }catch(e){console.error(e);}
+}
+async function saveSteps(){
+  if(!currentUser)return;
+  try{await setDoc(doc(db,'users',currentUser.uid,'exercise','routine'),{steps});}catch(e){console.error(e);}
+}
+async function saveLog(){
+  if(!currentUser)return;
+  try{await setDoc(doc(db,'users',currentUser.uid,'exercise','log'),{dates:doneDates});}catch(e){console.error(e);}
+}
+
+/* ── 미니 캘린더 ── */
+window.moveMonth=function(dir){
+  cur=new Date(cur.getFullYear(),cur.getMonth()+dir,1);
+  renderCalendar();
+};
+function renderCalendar(){
+  document.getElementById('calLabel').textContent=cur.getFullYear()+'년 '+(cur.getMonth()+1)+'월';
+  const start=new Date(cur.getFullYear(),cur.getMonth(),1).getDay();
+  const total=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
+  const today=new Date();
+  let html='';
+  for(let i=0;i<start;i++)html+='<div class="day-cell other"><span class="dn"></span></div>';
+  for(let d=1;d<=total;d++){
+    const dt=new Date(cur.getFullYear(),cur.getMonth(),d);
+    const key=fmt(dt);
+    const isToday=fmt(dt)===fmt(today);
+    const isDone=!!doneDates[key];
+    html+=`<div class="day-cell${isToday?' today':''}${isDone?' done':''}">
+      <span class="dn">${d}</span>
+      <span class="mark">${isDone?'✅':''}</span>
+    </div>`;
+  }
+  document.getElementById('monthGrid').innerHTML=html;
+}
+
+/* ── 루틴 설정 ── */
+window.addStep=function(){
+  steps.push({name:'',sets:1,reps:10});
+  renderSteps();
+};
+window.removeStep=function(i){
+  steps.splice(i,1);
+  renderSteps();
+};
+window.moveStep=function(i,dir){
+  const j=i+dir;
+  if(j<0||j>=steps.length)return;
+  [steps[i],steps[j]]=[steps[j],steps[i]];
+  renderSteps();
+};
+window.onStepField=function(i,field,val){
+  if(!steps[i])return;
+  if(field==='name')steps[i].name=val;
+  else steps[i][field]=Math.max(1,parseInt(val)||1);
+};
+function renderSteps(){
+  const wrap=document.getElementById('stepsWrap');
+  const emptyHint=document.getElementById('emptyHint');
+  wrap.innerHTML='';
+  emptyHint.style.display=steps.length?'none':'block';
+  document.getElementById('startBtn').disabled=steps.length===0;
+  steps.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.className='step-card';
+    card.innerHTML=`
+      <div class="step-top">
+        <span class="step-num">${i+1}</span>
+        <input class="step-name" placeholder="예: 스쿼트" value="${escapeHtml(s.name||'')}" oninput="onStepField(${i},'name',this.value)"/>
+        <span class="step-arrow" onclick="moveStep(${i},-1)" title="위로">▲</span>
+        <span class="step-arrow" onclick="moveStep(${i},1)" title="아래로">▼</span>
+        <span class="step-del" onclick="removeStep(${i})" title="삭제">✕</span>
+      </div>
+      <div class="step-setrow">
+        <label>세트 <input type="number" min="1" value="${s.sets||1}" onchange="onStepField(${i},'sets',this.value)"/></label>
+        <label>횟수 <input type="number" min="1" value="${s.reps||10}" onchange="onStepField(${i},'reps',this.value)"/></label>
+      </div>`;
+    wrap.appendChild(card);
+  });
+}
+window.saveRoutine=async function(){
+  await saveSteps();
+  const btn=event?event.target:null;
+  if(btn){const old=btn.textContent;btn.textContent='저장됨 ✓';setTimeout(()=>btn.textContent=old,1200);}
+};
+
+/* ── 루틴 실행 ── */
+window.startRoutine=function(){
+  if(!steps.length)return;
+  running=true;runIdx=0;
+  document.getElementById('runnerBar').classList.add('show');
+  renderRunner();
+};
+function renderRunner(){
+  const s=steps[runIdx];
+  document.getElementById('runnerStep').textContent=`${runIdx+1} / ${steps.length}`;
+  document.getElementById('runnerLabel').textContent=s.name||'(이름 없는 운동)';
+  document.getElementById('runnerSub').textContent=`${s.sets||1}세트 × ${s.reps||10}회`;
+  document.getElementById('runnerNextBtn').textContent=(runIdx===steps.length-1)?'완료 ✓':'다음 ▶';
+}
+window.prevStep=function(){
+  if(runIdx>0){runIdx--;renderRunner();}
+};
+window.nextStep=function(){
+  if(runIdx<steps.length-1){runIdx++;renderRunner();}
+  else{finishRoutine();}
+};
+window.exitRun=function(){
+  running=false;
+  document.getElementById('runnerBar').classList.remove('show');
+};
+async function finishRoutine(){
+  running=false;
+  document.getElementById('runnerBar').classList.remove('show');
+  const key=fmt(new Date());
+  doneDates[key]=true;
+  await saveLog();
+  renderCalendar();
+  showToast();
+}
+function showToast(){
+  const t=document.getElementById('doneToast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+</script>
+</body>
+</html>
