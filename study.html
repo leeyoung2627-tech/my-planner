@@ -162,6 +162,14 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
 /* 목록(시험/마감) 카드 */
 .sp-list-card-title{font-size:13px;font-weight:800;margin-bottom:8px}
 .sp-exam-list{display:flex;flex-direction:column;gap:8px}
+
+/* 이번주 과제 메모장 */
+.sp-memo-textarea{width:100%;min-height:260px;border:1px solid var(--border-col);border-radius:10px;
+  padding:10px 11px;font-family:inherit;font-size:12.5px;line-height:1.6;resize:vertical;
+  background:#FFFEFC;color:var(--text-main);outline:none;transition:.15s}
+.sp-memo-textarea:focus{border-color:var(--accent)}
+.sp-memo-textarea::placeholder{color:#B7B0A5}
+.sp-memo-meta{font-size:10.5px;color:#AAA;text-align:right;margin-top:6px;min-height:14px}
 .sp-exam-item{border:1px solid var(--border-col);border-radius:10px;padding:9px 10px;font-size:12px}
 .sp-exam-item .ei-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
 .sp-exam-item .ei-title{font-weight:700;color:#333}
@@ -293,13 +301,18 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
   <div class="sp-section-head"><div class="sp-section-title">📚 공부 &amp; 시험 일정</div><div class="sp-section-line"></div></div>
 
   <div class="sp-material-wrap">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-      <button class="sp-material-btn" id="materialBtn" onclick="onMaterialBtn('study')">
-        <span id="materialBtnIcon">📎</span>
-        <span id="materialBtnLabel">이번 주 시험자료 올리기</span>
-        <span class="sp-material-dot" id="materialDot"></span>
-      </button>
-      <div class="sp-material-meta" id="materialMeta"></div>
+    <div style="display:flex;gap:10px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+        <button class="sp-material-btn" id="materialBtn" onclick="onMaterialBtn('study')">
+          <span id="materialBtnIcon">📎</span>
+          <span id="materialBtnLabel">이번 주 시험자료 올리기</span>
+          <span class="sp-material-dot" id="materialDot"></span>
+        </button>
+        <div class="sp-material-meta" id="materialMeta"></div>
+      </div>
+      <a class="sp-material-btn" href="study-plan-2026.html" target="_blank" rel="noopener" style="text-decoration:none">
+        <span>📅</span><span>2026 공부계획</span>
+      </a>
     </div>
   </div>
 
@@ -328,8 +341,9 @@ body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-s
     </div>
 
     <div class="sp-card sp-list-card">
-      <div class="sp-list-card-title">🎯 시험 목록</div>
-      <div class="sp-exam-list" id="examListSide"></div>
+      <div class="sp-list-card-title">📝 이번주 과제</div>
+      <textarea class="sp-memo-textarea" id="studyMemoText" placeholder="이번주에 해야 할 과제나 할 일을 메모해보세요."></textarea>
+      <div class="sp-memo-meta" id="studyMemoMeta"></div>
     </div>
   </div>
 </div>
@@ -723,6 +737,7 @@ onAuthStateChanged(auth, async (user)=>{
 
   Object.keys(SECTIONS).forEach(renderAllFor);
   renderCollabMonth();
+  await initStudyMemo();
   hidePageLoading();
   backfillCollabMirrors().catch(()=>{}); // 기존에 등록해둔 일정들을 오른쪽 월간캘린더로 최초 1회 채워 넣음
 
@@ -739,7 +754,7 @@ onAuthStateChanged(auth, async (user)=>{
     });
     onSnapshot(collection(db,'users',currentUser.uid,S.itemCollection),(snap)=>{
       S.state.items = snap.docs.map(d=>({id:d.id,...d.data()}));
-      renderWeek(key); renderMini(key); renderListSide(key);
+      renderWeek(key); renderMini(key); if(key!=='study') renderListSide(key);
     });
     if(S.hasMaterial){
       onSnapshot(doc(db,'users',currentUser.uid,'settings',S.materialDocId),(snap)=>{
@@ -768,7 +783,54 @@ async function loadAllFor(key){
   S.state.items = itemSnap.docs.map(d=>({id:d.id,...d.data()}));
   S.state.materialDoc = (S.hasMaterial && matSnap && matSnap.exists())? matSnap.data() : null;
 }
-function renderAllFor(key){ renderWeek(key); renderMini(key); renderListSide(key); if(SECTIONS[key].hasMaterial)renderMaterialBtn(key); }
+function renderAllFor(key){ renderWeek(key); renderMini(key); if(key!=='study') renderListSide(key); if(SECTIONS[key].hasMaterial)renderMaterialBtn(key); }
+
+/* ---------------- 이번주 과제 메모장 (공부 섹션 사이드) ---------------- */
+let studyMemoFocused = false;
+let studyMemoSaveTimer = null;
+const studyMemoDocRef = ()=> doc(db,'users',currentUser.uid,'settings','studyWeeklyMemo');
+
+async function initStudyMemo(){
+  const el = document.getElementById('studyMemoText');
+  if(!el) return;
+  try{
+    const snap = await getDoc(studyMemoDocRef());
+    if(snap.exists()) el.value = snap.data().text || '';
+    renderStudyMemoMeta(snap.exists()? snap.data().updatedAt : null);
+  }catch(e){}
+
+  el.addEventListener('focus', ()=>{ studyMemoFocused = true; });
+  el.addEventListener('blur', ()=>{ studyMemoFocused = false; });
+  el.addEventListener('input', ()=>{
+    document.getElementById('studyMemoMeta').textContent = '저장 중…';
+    clearTimeout(studyMemoSaveTimer);
+    studyMemoSaveTimer = setTimeout(saveStudyMemo, 600);
+  });
+
+  onSnapshot(studyMemoDocRef(), (snap)=>{
+    if(studyMemoFocused) return; // 입력 중에는 실시간 동기화로 덮어쓰지 않음
+    const data = snap.exists()? snap.data() : null;
+    el.value = data ? (data.text || '') : '';
+    renderStudyMemoMeta(data ? data.updatedAt : null);
+  });
+}
+
+async function saveStudyMemo(){
+  const el = document.getElementById('studyMemoText');
+  if(!el || !currentUser) return;
+  try{
+    await setDoc(studyMemoDocRef(), { text: el.value, updatedAt: Date.now() });
+    renderStudyMemoMeta(Date.now());
+  }catch(e){
+    document.getElementById('studyMemoMeta').textContent = '저장 실패 (다시 시도해주세요)';
+  }
+}
+
+function renderStudyMemoMeta(updatedAt){
+  const meta = document.getElementById('studyMemoMeta');
+  if(!meta) return;
+  meta.textContent = updatedAt ? `저장됨 · ${new Date(updatedAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}` : '';
+}
 
 /* ---------------- 협업 & 외주 월간 캘린더 ---------------- */
 window.shiftCollabMonth=function(dir){

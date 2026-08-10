@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preload" href="./MemomentKkukkukk.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+<title>2026 공부계획 — 두목의 플래너</title>
+<link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
+<script>
+(function(){
+  try{
+    const saved=localStorage.getItem('planner_theme_v2');
+    if(saved){const t=JSON.parse(saved);if(t.pagebg)document.documentElement.style.setProperty('--page-bg',t.pagebg);}
+  }catch(e){}
+  try{
+    const map={pageBg:'--page-bg',colBg:'--col-bg',borderCol:'--border-col',accent:'--accent',accentLight:'--accent-light',todayBg:'--today-bg',textMain:'--text-main',examCol:'--exam-col',examLight:'--exam-light'};
+    const cached=JSON.parse(localStorage.getItem('studyColorsCache')||'null');
+    if(cached){
+      const r=document.documentElement.style;
+      Object.keys(map).forEach(k=>{ if(cached[k]) r.setProperty(map[k],cached[k]); });
+    }
+  }catch(e){}
+})();
+</script>
+<style>
+@font-face{
+  font-family:'MemomentKkukkukk';
+  src:url('./MemomentKkukkukk.ttf') format('truetype');
+  font-weight:normal;
+  font-style:normal;
+  font-display:swap;
+}
+:root{
+  --accent:#8C7B6B;
+  --accent-light:#EFEAE3;
+  --page-bg:#F7F5F2;
+  --text-main:#222;
+  --border-col:#E4DED4;
+  --exam-col:#C1553B;
+  --exam-light:#F7E6E0;
+  --col-bg:#FBFAF8;
+  --today-bg:#F1EBE3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+textarea,input{font-family:inherit}
+body{font-family:'MemomentKkukkukk','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);color:var(--text-main);
+  min-height:100vh;padding:18px 18px 60px;display:flex;flex-direction:column;align-items:center;gap:20px}
+
+.sp-loading-overlay{position:fixed;inset:0;z-index:99999;background:var(--page-bg);display:flex;
+  align-items:center;justify-content:center;transition:opacity .25s ease}
+.sp-loading-overlay.hide{opacity:0;pointer-events:none}
+.sp-loading-spinner{width:32px;height:32px;border-radius:50%;border:3px solid var(--border-col);
+  border-top-color:var(--accent);animation:sp-spin .8s linear infinite}
+@keyframes sp-spin{to{transform:rotate(360deg)}}
+
+.sp-topbar{width:100%;max-width:820px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sp-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:#777;text-decoration:none;padding:7px 12px;
+  border-radius:20px;background:#fff;border:1px solid var(--border-col);transition:.15s}
+.sp-back:hover{color:var(--accent);border-color:var(--accent)}
+.sp-title{font-size:21px;font-weight:700;color:var(--accent);letter-spacing:-.3px}
+.sp-save-status{font-size:11.5px;color:#AAA;min-width:70px;text-align:right}
+
+.plan-wrap{width:100%;max-width:820px;display:flex;flex-direction:column;gap:16px}
+
+/* ── 상단 히어로: 전체 남은 기간 ── */
+.plan-hero{background:#fff;border:1px solid var(--border-col);border-radius:20px;box-shadow:0 2px 12px rgba(80,60,160,.06);
+  padding:26px 24px;text-align:center;display:flex;flex-direction:column;gap:8px}
+.plan-hero-label{font-size:12.5px;color:#999;font-weight:700}
+.plan-hero-days{font-size:44px;font-weight:800;color:var(--accent);letter-spacing:-1px;line-height:1.1}
+.plan-hero-sub{font-size:12.5px;color:#888}
+.plan-bar-track{width:100%;height:12px;border-radius:999px;background:var(--accent-light);overflow:hidden;border:1px solid var(--border-col);margin-top:4px}
+.plan-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .6s ease}
+.plan-bar-meta{display:flex;justify-content:space-between;font-size:11px;color:#999}
+
+/* ── 월 카드 ── */
+.month-card{background:#fff;border:1px solid var(--border-col);border-radius:18px;box-shadow:0 2px 12px rgba(80,60,160,.05);
+  padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px}
+.month-card.is-past{opacity:.62}
+.month-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.month-name{font-size:18px;font-weight:800;color:var(--text-main)}
+.month-name .now-tag{font-size:10.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:20px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+.month-progress-txt{font-size:11.5px;color:#999}
+
+.month-goal-textarea{width:100%;min-height:52px;border:1px solid var(--border-col);border-radius:10px;
+  padding:9px 11px;font-size:13px;line-height:1.55;resize:vertical;background:#FFFEFC;color:var(--text-main);outline:none;transition:.15s}
+.month-goal-textarea:focus{border-color:var(--accent)}
+.month-goal-textarea::placeholder{color:#B7B0A5}
+
+.week-list{display:flex;flex-direction:column;gap:8px}
+.week-row{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--border-col);border-radius:12px;padding:8px 10px;background:#FDFCFA}
+.week-row.is-current{border-color:var(--accent);background:var(--today-bg)}
+
+.week-tiles{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;flex-shrink:0;width:130px}
+.day-tile{aspect-ratio:1/1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700}
+.day-tile.pad{background:transparent;color:transparent}
+.day-tile.future{background:#fff;border:1px solid var(--border-col);color:#BBB}
+.day-tile.past{background:var(--accent);opacity:.45;color:#fff}
+.day-tile.today{background:var(--accent);color:#fff;box-shadow:0 0 0 2px var(--accent-light)}
+
+.week-mid{display:flex;flex-direction:column;gap:2px;flex-shrink:0;width:78px;padding-top:2px}
+.week-range{font-size:10.5px;color:#999;font-weight:700;white-space:nowrap}
+.week-left-txt{font-size:10px;color:#BBB}
+
+.week-goal-input{flex:1;min-width:0;border:1px solid var(--border-col);border-radius:8px;padding:6px 9px;
+  font-size:12.5px;line-height:1.5;resize:none;background:#fff;color:var(--text-main);outline:none;overflow:hidden;min-height:34px;transition:.15s}
+.week-goal-input:focus{border-color:var(--accent)}
+.week-goal-input::placeholder{color:#C4BDB2}
+
+@media (max-width:560px){
+  .week-row{flex-wrap:wrap}
+  .week-tiles{width:110px}
+  .week-goal-input{width:100%}
+}
+
+.plan-note{font-size:11.5px;color:#AAA;text-align:center;line-height:1.6;padding:4px 10px 0}
+</style>
+</head>
+<body>
+
+<div class="sp-loading-overlay" id="pageLoadingOverlay"><div class="sp-loading-spinner"></div></div>
+
+<div class="sp-topbar">
+  <a class="sp-back" href="study.html">← 공부 &amp; 시험 일정으로 돌아가기</a>
+  <div class="sp-title">2026 공부계획</div>
+  <div class="sp-save-status" id="saveStatus"></div>
+</div>
+
+<div class="plan-wrap">
+  <div class="plan-hero">
+    <div class="plan-hero-label">8월 ~ 12월 남은 기간</div>
+    <div class="plan-hero-days" id="heroDays">-</div>
+    <div class="plan-hero-sub" id="heroSub"></div>
+    <div class="plan-bar-track"><div class="plan-bar-fill" id="yearBarFill" style="width:0%"></div></div>
+    <div class="plan-bar-meta">
+      <span id="barPercentLeft">0% 지남</span>
+      <span id="barPercentRight">0% 남음</span>
+    </div>
+  </div>
+
+  <div id="monthsContainer" style="display:flex;flex-direction:column;gap:14px"></div>
+
+  <div class="plan-note">매달 목표와 매주 계획은 입력하면 자동으로 저장돼요. 오늘 날짜가 지날수록 타일이 하나씩 채워져요.</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "179812397978",
+  appId: "1:179812397978:web:3525714542291e818e0023"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const YEAR = 2026;
+const MONTHS = [8,9,10,11,12]; // 8월~12월만 표시
+const DOW = ['일','월','화','수','목','금','토'];
+
+let currentUser = null;
+const planDocRef = ()=> doc(db,'users',currentUser.uid,'settings','studyPlan2026');
+let planData = {};
+let focusedKey = null;
+const saveTimers = {};
+
+function hidePageLoading(){
+  const el = document.getElementById('pageLoadingOverlay');
+  if(!el || el.classList.contains('hide')) return;
+  el.classList.add('hide');
+  setTimeout(()=>{ el.style.display='none'; }, 300);
+}
+setTimeout(hidePageLoading, 6000);
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+function isoDate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function stripTime(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+
+function renderHero(){
+  const now = new Date();
+  const planStart = new Date(YEAR,7,1);       // 8월 1일
+  const planEndExcl = new Date(YEAR,12,1);     // 다음해 1월 1일 (12월 31일까지 포함)
+  const totalDays = Math.round((planEndExcl - planStart) / 86400000);
+  const clampedNow = now < planStart ? planStart : (now >= planEndExcl ? planEndExcl : now);
+  const elapsedDays = Math.round((clampedNow - planStart) / 86400000);
+  const remainingDays = totalDays - elapsedDays;
+  const pctElapsed = Math.round((elapsedDays/totalDays)*100);
+  const pctRemain = 100 - pctElapsed;
+
+  document.getElementById('heroDays').textContent = now >= planEndExcl ? '기간 종료' : `D-${remainingDays}`;
+  document.getElementById('heroSub').textContent = now >= planEndExcl
+    ? '12월 31일까지의 계획 기간이 모두 지났어요'
+    : `12월 31일까지 ${remainingDays}일 남았어요`;
+  document.getElementById('yearBarFill').style.width = pctElapsed + '%';
+  document.getElementById('barPercentLeft').textContent = `${pctElapsed}% 지남`;
+  document.getElementById('barPercentRight').textContent = `${pctRemain}% 남음`;
+}
+
+function buildWeeksOfMonth(m){
+  // m: 1~12 (해당 월), YEAR 기준. 일요일 시작 캘린더 행 단위로 주차를 나눔.
+  const firstOfMonth = new Date(YEAR, m-1, 1);
+  const lastOfMonth = new Date(YEAR, m, 0);
+  let weekStart = new Date(firstOfMonth);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const weeks = [];
+  while(weekStart <= lastOfMonth){
+    const days = [];
+    for(let i=0;i<7;i++){
+      const d = new Date(weekStart);
+      d.setDate(d.getDate()+i);
+      days.push(d);
+    }
+    weeks.push({ start: new Date(weekStart), days });
+    weekStart = new Date(weekStart);
+    weekStart.setDate(weekStart.getDate()+7);
+  }
+  return weeks;
+}
+
+function dayTileHtml(d, monthIdx, today){
+  const inMonth = d.getMonth() === monthIdx;
+  if(!inMonth) return `<div class="day-tile pad">${d.getDate()}</div>`;
+  const dd = stripTime(d), tt = stripTime(today);
+  let cls = 'future';
+  if(sameDay(dd,tt)) cls='today';
+  else if(dd < tt) cls='past';
+  return `<div class="day-tile ${cls}">${d.getDate()}</div>`;
+}
+
+function autoResize(el){
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight) + 'px';
+}
+
+function attachAutosave(el, key){
+  el.addEventListener('focus', ()=>{ focusedKey = key; });
+  el.addEventListener('blur', ()=>{ if(focusedKey===key) focusedKey=null; });
+  el.addEventListener('input', ()=>{
+    if(el.tagName==='TEXTAREA') autoResize(el);
+    const status = document.getElementById('saveStatus');
+    status.textContent = '저장 중…';
+    clearTimeout(saveTimers[key]);
+    saveTimers[key] = setTimeout(()=>saveField(key, el.value), 600);
+  });
+}
+
+async function saveField(key, value){
+  if(!currentUser) return;
+  try{
+    await setDoc(planDocRef(), { [key]: value }, { merge:true });
+    planData[key] = value;
+    document.getElementById('saveStatus').textContent = `저장됨 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`;
+  }catch(e){
+    document.getElementById('saveStatus').textContent = '저장 실패';
+  }
+}
+
+function renderMonths(){
+  const today = new Date();
+  const container = document.getElementById('monthsContainer');
+  container.innerHTML = '';
+
+  MONTHS.forEach(m=>{
+    const monthIdx = m-1;
+    const daysInMonth = new Date(YEAR, monthIdx+1, 0).getDate();
+    const isCurrentMonth = today.getFullYear()===YEAR && today.getMonth()===monthIdx;
+    const isPastMonth = new Date(YEAR, monthIdx+1, 1) <= today;
+
+    let progressTxt;
+    if(isCurrentMonth){
+      const elapsed = today.getDate();
+      progressTxt = `${elapsed}/${daysInMonth}일 지남 · ${daysInMonth-elapsed}일 남음`;
+    } else if(isPastMonth){
+      progressTxt = '지난 달';
+    } else {
+      progressTxt = `${daysInMonth}일`;
+    }
+
+    const monthKey = `month_${YEAR}-${pad2(m)}`;
+    const card = document.createElement('div');
+    card.className = 'month-card' + (isPastMonth ? ' is-past' : '');
+    card.innerHTML = `
+      <div class="month-head">
+        <div class="month-name">${m}월${isCurrentMonth ? '<span class="now-tag">이번 달</span>' : ''}</div>
+        <div class="month-progress-txt">${progressTxt}</div>
+      </div>
+      <textarea class="month-goal-textarea" data-field="${monthKey}" rows="2" placeholder="이번 달 전체 목표를 적어보세요. 예: 인체 드로잉 기초 다지기, 파일럿 3화 콘티 완성"></textarea>
+      <div class="week-list"></div>
+    `;
+    container.appendChild(card);
+
+    const weekList = card.querySelector('.week-list');
+    const weeks = buildWeeksOfMonth(m);
+    weeks.forEach(w=>{
+      const weekKey = `week_${isoDate(w.start)}`;
+      const rangeStart = w.days[0], rangeEnd = w.days[6];
+      const rangeLabel = `${rangeStart.getMonth()+1}/${rangeStart.getDate()} - ${rangeEnd.getMonth()+1}/${rangeEnd.getDate()}`;
+
+      const weekEndExcl = new Date(rangeEnd); weekEndExcl.setDate(weekEndExcl.getDate()+1);
+      const isCurrentWeek = today >= stripTime(rangeStart) && today < weekEndExcl;
+      let leftTxt = '';
+      if(isCurrentWeek){
+        const daysLeft = Math.round((stripTime(weekEndExcl) - stripTime(today))/86400000);
+        leftTxt = `${daysLeft}일 남음`;
+      } else if(weekEndExcl <= today){
+        leftTxt = '지남';
+      }
+
+      const tilesHtml = w.days.map(d=>dayTileHtml(d, monthIdx, today)).join('');
+
+      const row = document.createElement('div');
+      row.className = 'week-row' + (isCurrentWeek ? ' is-current' : '');
+      row.innerHTML = `
+        <div class="week-tiles">${tilesHtml}</div>
+        <div class="week-mid">
+          <div class="week-range">${rangeLabel}</div>
+          <div class="week-left-txt">${leftTxt}</div>
+        </div>
+        <textarea class="week-goal-input" data-field="${weekKey}" rows="1" placeholder="이번 주 계획"></textarea>
+      `;
+      weekList.appendChild(row);
+    });
+  });
+}
+
+function applyDataToFields(){
+  document.querySelectorAll('[data-field]').forEach(el=>{
+    const key = el.dataset.field;
+    if(focusedKey === key) return; // 입력 중인 필드는 덮어쓰지 않음
+    const val = planData[key] || '';
+    if(el.value !== val){
+      el.value = val;
+      if(el.tagName==='TEXTAREA') autoResize(el);
+    }
+  });
+}
+
+function attachAllAutosave(){
+  document.querySelectorAll('[data-field]').forEach(el=>{
+    attachAutosave(el, el.dataset.field);
+  });
+}
+
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){ location.href='index.html'; return; }
+  currentUser = user;
+
+  renderHero();
+  renderMonths();
+  attachAllAutosave();
+
+  try{
+    const snap = await getDoc(planDocRef());
+    planData = snap.exists() ? snap.data() : {};
+  }catch(e){ planData = {}; }
+  applyDataToFields();
+
+  hidePageLoading();
+
+  onSnapshot(planDocRef(), (snap)=>{
+    planData = snap.exists() ? snap.data() : {};
+    applyDataToFields();
+  });
+});
+</script>
+</body>
+</html>
