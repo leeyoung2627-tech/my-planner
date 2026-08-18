@@ -567,6 +567,31 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* 왼쪽 */
 .left{display:flex;flex-direction:column;min-width:0;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;overflow:hidden;min-height:calc(100vh - 230px)}
+.mind-bar{background:var(--accent,#4472B8);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;line-height:1.4;margin:.85rem .85rem 0;outline:none;cursor:text}
+.mind-bar:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.75)}
+/* 일정 카테고리 범례 */
+.legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:.7rem .85rem 0}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#666}
+.legend-swatch{width:12px;height:12px;min-width:12px;border-radius:50%;cursor:pointer;border:1px solid #00000014;flex:0 0 12px}
+.legend-label{outline:none;border-bottom:1px dashed transparent;cursor:text;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend-label:hover{border-bottom-color:#ccc}
+.legend-label:focus{border-bottom-color:var(--accent,#7ec8e3);color:#222}
+.legend-del{font-size:10px;color:#ccc;cursor:pointer;opacity:0;transition:opacity .15s;margin-left:-2px}
+.legend-item:hover .legend-del{opacity:1}
+.legend-del:hover{color:#e09090}
+.legend-add-btn{width:18px;height:18px;border-radius:50%;background:#f2f2f2;color:#999;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;cursor:pointer;line-height:1;flex-shrink:0}
+.legend-add-btn:hover{background:var(--accent-light,#eee);color:var(--accent,#666)}
+.color-popover{display:none;position:fixed;z-index:960;width:176px;background:#fff;border:0.5px solid #ddd;border-radius:12px;padding:10px;box-shadow:0 10px 24px #00000030}
+.color-popover.open{display:block}
+.color-popover-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:10px}
+.color-swatch-option{width:20px;height:20px;border-radius:50%;cursor:pointer;border:1px solid #0000001a;transition:transform .1s}
+.color-swatch-option:hover{transform:scale(1.15)}
+.color-popover-custom{display:flex;align-items:center;justify-content:space-between;border-top:0.5px solid #eee;padding-top:9px;font-size:11px;color:#888}
+.color-popover-custom input[type="color"]{width:26px;height:26px;border:none;background:none;cursor:pointer;padding:0}
+/* 일정/할일 카테고리 표시 및 선택 */
+.ev-cat-dot{width:7px;height:7px;min-width:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
+.cat-select{flex-shrink:0;max-width:88px;border:0.5px solid #e4e4e4;border-radius:20px;padding:8px 8px;font-size:12px;color:#888;background:#fafafa;outline:none;font-family:inherit;cursor:pointer}
+.cat-select:focus{border-color:var(--accent,#7ec8e3)}
 .top-nav{display:flex;align-items:center;gap:6px;padding:.65rem .85rem;border-bottom:0.5px solid #eee;flex-shrink:0}
 .nav-btn{background:none;border:none;cursor:pointer;color:#666;padding:2px 6px;border-radius:4px;font-size:17px;line-height:1}
 .nav-btn:hover{background:#f0f0f0}
@@ -1330,6 +1355,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
 <div class="app" id="mainApp">
   <div class="left">
+    <div class="mind-bar" id="mindBar" contenteditable="true" spellcheck="false" data-placeholder="오늘의 마음가짐을 적어보세요" onblur="saveMindBar()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></div>
     <div class="top-nav">
       <button class="nav-btn" id="leftBackBtn" onclick="handleLeftBack()" style="display:none">←</button>
       <button class="nav-btn" id="navPrev" onclick="movePeriod(-1)">‹</button>
@@ -1339,18 +1365,20 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <button class="vbtn active" id="btnMonth" onclick="switchView('month')">월</button>
         <button class="vbtn" id="btnWeek" onclick="switchView('week')">주</button>
         <button class="vbtn" id="btnAnniv" onclick="switchView('anniv')">🎂</button>
-        <button class="vbtn" id="btnDaily" onclick="switchView('daily')" title="하루 계획표">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px">
-            <path d="M8 8 C8 5,5 3,3.5 5 C2 7,4 9,8 8Z" fill="currentColor"/>
-            <path d="M8 8 C11 8,13 5,11 3.5 C9 2,7 4,8 8Z" fill="currentColor"/>
-            <path d="M8 8 C8 11,11 13,12.5 11 C14 9,12 7,8 8Z" fill="currentColor"/>
-            <path d="M8 8 C5 8,3 11,5 12.5 C7 14,9 12,8 8Z" fill="currentColor"/>
-          </svg>
-        </button>
       </div>
       <div class="user-area">
         <span class="user-name" id="userName"></span>
         <button class="logout-btn" onclick="logoutUser()">로그아웃</button>
+      </div>
+    </div>
+    <div class="legend" id="legendRow">
+      <span class="legend-add-btn" id="legendAddBtn" onclick="addScheduleCategory()" title="카테고리 추가">＋</span>
+    </div>
+    <div class="color-popover" id="colorPopover">
+      <div class="color-popover-grid" id="colorPopoverGrid"></div>
+      <div class="color-popover-custom">
+        <span>직접 선택</span>
+        <input type="color" id="colorPopoverCustom"/>
       </div>
     </div>
     <div class="left-view" id="leftView">
@@ -1400,6 +1428,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <div id="schedulePane">
         <div id="schedule-list"></div>
         <div class="inline-add-row">
+          <select id="scheduleInlineCat" class="cat-select" onchange="updateCatSelectColor(this)"><option value="">카테고리</option></select>
           <input type="text" id="scheduleInlineInput" placeholder="오늘 일정 추가" onkeydown="if(event.key==='Enter'){addScheduleInline();}">
           <span class="inline-add-btn" onclick="addScheduleInline()" title="추가">＋</span>
         </div>
@@ -1408,6 +1437,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <div id="todoPane" style="display:none">
         <div id="todo-list"></div>
         <div class="inline-add-row">
+          <select id="todoInlineCat" class="cat-select" onchange="updateCatSelectColor(this)"><option value="">카테고리</option></select>
           <input type="text" id="todoInlineInput" placeholder="할일 추가" onkeydown="if(event.key==='Enter'){addTodoInline();}">
           <span class="inline-add-btn" onclick="addTodoInline()" title="추가">＋</span>
         </div>
@@ -2192,6 +2222,8 @@ body.memo-edit-on .memo-text-handle{display:flex}
     <input id="sche-name" placeholder="일정 이름"/>
     <div class="modal-label">시간 (선택)</div>
     <input id="sche-time" type="text" inputmode="numeric" placeholder="예: 930, 9:30, 1430 (비우면 시간 없음)" maxlength="7"/>
+    <div class="modal-label">카테고리 (선택)</div>
+    <select id="sche-cat" class="cat-select" style="width:100%;max-width:none" onchange="updateCatSelectColor(this)"></select>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('scheduleEditModal')">취소</button>
       <button class="mbtn ok" onclick="confirmScheduleEdit()">저장</button>
@@ -2325,6 +2357,14 @@ let fastingHours=16;
 let moneyMemoData={};
 let ddayList=[];
 let generalTodos=[];
+let mindBarText='';
+let scheduleCategories=[];
+const DEFAULT_SCHEDULE_CATEGORIES=[
+  {id:'navy',label:'마감',color:'#6B8FC4'},
+  {id:'steel',label:'작업',color:'#7FA8CC'},
+  {id:'mist',label:'외출/약속',color:'#B8CFE0'},
+  {id:'slate',label:'베르 케어',color:'#9AA3AD'}
+];
 let budgetData={};
 let anniversaries=[];
 let folders=[],currentFolderId=null,editingDdayId=null,editingScheduleKey=null,editingScheduleIdx=null,editingHabitNameId=null;
@@ -2865,6 +2905,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
+    loadMindBar();renderCategoryLegend();
     renderRoutineList();checkRoutineReminders();
     renderTipList();
     runFixedCostAutoRecord();
@@ -2967,7 +3008,7 @@ async function saveAppearanceNow(){
 window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -2997,6 +3038,8 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','loans')),
     getDoc(doc(db,'users',currentUser.uid,'settings','fastingConfig')),
     getDoc(doc(db,'users',currentUser.uid,'settings','generalTodos')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','mindBar')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','scheduleCategories')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -3012,6 +3055,8 @@ async function loadAllData(){
   fastingData={};fsS.forEach(d=>{fastingData[d.id]=d.data().done||false;});
   fastingHours=(fhS.exists()&&fhS.data().hours)?fhS.data().hours:16;
   generalTodos=(gtS.exists()&&gtS.data().items)?gtS.data().items:[];
+  mindBarText=mbS.exists()?(mbS.data().text||''):'';
+  scheduleCategories=(scS.exists()&&scS.data().items)?scS.data().items:DEFAULT_SCHEDULE_CATEGORIES.slice();
   moneyMemoData={};mmS.forEach(d=>{moneyMemoData[d.id]={text:d.data().text||'',pending:d.data().pending||false};});
   ddayList=[];ddS.forEach(d=>{ddayList.push({id:d.id,...d.data()});});
   ddayList.sort((a,b)=>(a.order??new Date(a.date).getTime())-(b.order??new Date(b.date).getTime()));
@@ -3208,6 +3253,12 @@ function setLeftMode(mode){
   document.getElementById('viewToggle').style.display=(mode==='cal'||mode==='anniv'||mode==='daily')?'':'none';
   document.getElementById('leftBackBtn').style.display=isCalMode?'none':'';
 
+  // 카테고리 범례는 월/주 캘린더(cal) 모드에서만 표시
+  const legendEl=document.getElementById('legendRow');
+  const colorPopEl=document.getElementById('colorPopover');
+  if(legendEl)legendEl.style.display=mode==='cal'?'':'none';
+  if(colorPopEl && mode!=='cal')colorPopEl.classList.remove('open');
+
   // daily 모드: 오른쪽 일정탭에 dp섹션 표시 여부
   const dpSec=document.getElementById('dpScheduleSection');
   const schTabs=document.getElementById('scheduleMiniTabs');
@@ -3249,7 +3300,7 @@ function setLeftMode(mode){
     const dv=document.getElementById('dailyView');
     dv.style.display='flex';
     document.getElementById('periodLabel').textContent='하루 계획표';
-    document.getElementById('btnDaily').classList.add('active');
+    document.getElementById('btnDaily')?.classList.add('active');
     document.getElementById('btnMonth').classList.remove('active');
     document.getElementById('btnWeek').classList.remove('active');
     document.getElementById('btnAnniv').classList.remove('active');
@@ -3849,7 +3900,7 @@ function renderMonth(){
     const dnColor=holiday||isSun?'color:#D85A30':isSat?'color:var(--accent)':'';
     // 일정 텍스트 (최대 3개, 나머지는 +N)
     const maxShow=3;
-    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map((ev,idx)=>{const done=ev.startsWith('[✓] ');const txt=done?ev.slice(4):ev;return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${idx})" ondragend="dragEnd(event)"${done?' style="text-decoration:line-through;opacity:.5"':''}>${evTimeHTML(txt)}</div>`;}).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
+    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map((ev,idx)=>{const p=stripEvPrefixes(ev);return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${idx})" ondragend="dragEnd(event)"${p.done?' style="text-decoration:line-through;opacity:.5"':''}>${catDotHtml(p.cat)}${evTimeHTML(p.rest)}</div>`;}).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
     html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
@@ -3943,12 +3994,12 @@ function renderWeek(){
       ondragleave="this.classList.remove('drag-over')"
       ondrop="dropEvent(event,'${key}')">`;
     evs.forEach((ev,idx)=>{
-      const done=ev.startsWith('[✓] ');const txt=done?ev.slice(4):ev;
+      const p=stripEvPrefixes(ev);
       bH+=`<div class="week-event-item" draggable="true"
         ondragstart="dragStart(event,'${key}',${idx})"
         ondragend="dragEnd(event)"
         onclick="event.stopPropagation();editWeekEvent('${key}',${idx})"
-        style="${done?'text-decoration:line-through;opacity:.5':''}">${evTimeHTML(txt)}</div>`;
+        style="${p.done?'text-decoration:line-through;opacity:.5':''}">${catDotHtml(p.cat)}${evTimeHTML(p.rest)}</div>`;
     });
     bH+=`<div class="week-add-btn" onclick="event.stopPropagation();addWeekEvent('${key}')">＋</div></div>`;
   }
@@ -4045,6 +4096,32 @@ function splitEvTime(txt){
   if(m)return {time:m[1],text:m[2]};
   return {time:'',text:txt};
 }
+// 일정 문자열 형식: "[✓] " (완료, 선택) + "[c:카테고리ID] " (카테고리, 선택) + "[HH:MM] " (시간, 선택) + 내용
+function stripEvPrefixes(raw){
+  let s=raw||'';
+  let done=false;
+  if(s.startsWith('[✓] ')){done=true;s=s.slice(4);}
+  let cat='';
+  const cm=s.match(/^\[c:([a-zA-Z0-9_]+)\] ([\s\S]*)$/);
+  if(cm){cat=cm[1];s=cm[2];}
+  return {done,cat,rest:s};
+}
+function buildEvString({done,cat,time,text}){
+  let s='';
+  if(done)s+='[✓] ';
+  if(cat)s+=`[c:${cat}] `;
+  if(time)s+=`[${time}] `;
+  s+=text;
+  return s;
+}
+function getScheduleCategory(id){
+  return (scheduleCategories||[]).find(c=>c.id===id);
+}
+function catDotHtml(catId){
+  const cat=getScheduleCategory(catId);
+  if(!cat)return '';
+  return `<span class="ev-cat-dot" style="background:${cat.color}" title="${escapeHtml(cat.label)}"></span>`;
+}
 const DAY_END_HOUR=3; // 하루 기준: 아침에 시작해서 다음날 새벽 3시까지
 function evDateTime(time){
   const m=time.match(/^(\d{2}):(\d{2})$/);if(!m)return null;
@@ -4062,9 +4139,9 @@ function renderSchedule(){
     return;
   }
   const parsed=evs.map(ev=>{
-    const isDone=ev.startsWith('[✓] ');
-    const displayText=isDone?ev.slice(4):ev;
-    return splitEvTime(displayText);
+    const p=stripEvPrefixes(ev);
+    const st=splitEvTime(p.rest);
+    return {cat:p.cat,time:st.time,text:st.text};
   });
   // 시간이 적힌 항목 중 이미 지난 가장 아래(마지막) 항목의 위치를 찾고,
   // 그 위쪽(시간 없는 항목 포함) 전체를 지난 것으로 간주
@@ -4075,7 +4152,7 @@ function renderSchedule(){
     if(dt&&dt.getTime()<=Date.now())lastPastIdx=i;
   });
   parsed.forEach((p,idx)=>{
-    const {time,text}=p;
+    const {time,text,cat}=p;
     const past=idx<=lastPastIdx;
     const row=document.createElement('div');
     row.className='item-row'+(past?' past-time':'');
@@ -4084,6 +4161,7 @@ function renderSchedule(){
     row.style.cursor='grab';
     row.innerHTML=`
       <span class="drag-dots" style="font-size:14px;color:#ccc;cursor:grab;padding-top:2px;user-select:none">⠿</span>
+      ${catDotHtml(cat)}
       <span class="item-row-time">${time?`<span class="ev-time-badge">${time}</span>`:''}</span>
       <span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})">${text}</span>
       <span style="font-size:11px;color:#ccc;cursor:pointer;padding-top:3px" onclick="deleteScheduleItem('${key}',${idx})">✕</span>`;
@@ -4140,21 +4218,22 @@ window.openScheduleModal=function(){
 };
 window.openScheduleEditModal=function(key,idx){
   editingScheduleKey=key;editingScheduleIdx=idx;
-  let ev=weekEvents[key]?.[idx]||'';
-  if(ev.startsWith('[✓] '))ev=ev.slice(4);
-  const timeMatch=ev.match(/^\[(\d{2}:\d{2})\] (.*)/);
-  document.getElementById('sche-name').value=timeMatch?timeMatch[2]:ev;
-  document.getElementById('sche-time').value=timeMatch?timeMatch[1]:'';
+  const raw=weekEvents[key]?.[idx]||'';
+  const p=stripEvPrefixes(raw);
+  const st=splitEvTime(p.rest);
+  document.getElementById('sche-name').value=st.text;
+  document.getElementById('sche-time').value=st.time;
+  populateCatSelect('sche-cat',p.cat);
   document.getElementById('scheduleEditModal').style.display='flex';
 };
 window.confirmScheduleEdit=async function(){
   const name=document.getElementById('sche-name').value.trim();if(!name)return;
   const time=parseTimeInput(document.getElementById('sche-time').value);
   if(time===null){alert('시간 형식을 확인해주세요 (예: 930, 9:30, 1430)');return;}
+  const cat=document.getElementById('sche-cat')?.value||'';
   const prev=weekEvents[editingScheduleKey][editingScheduleIdx]||'';
-  const wasDone=prev.startsWith('[✓] ');
-  const newVal=time?`[${time}] ${name}`:name;
-  weekEvents[editingScheduleKey][editingScheduleIdx]=wasDone?'[✓] '+newVal:newVal;
+  const wasDone=stripEvPrefixes(prev).done;
+  weekEvents[editingScheduleKey][editingScheduleIdx]=buildEvString({done:wasDone,cat,time,text:name});
   await saveData('events',editingScheduleKey,{items:weekEvents[editingScheduleKey]});
   closeModal('scheduleEditModal');renderSchedule();
   if(curView==='week')renderWeek();else renderMonth();
@@ -4165,7 +4244,7 @@ window.confirmSchedule=async function(){
   if(time===null){alert('시간 형식을 확인해주세요 (예: 930, 9:30, 1430)');return;}
   const key=fmt(selDate);
   if(!weekEvents[key])weekEvents[key]=[];
-  weekEvents[key].push(time?`[${time}] ${name}`:name);
+  weekEvents[key].push(buildEvString({time,text:name}));
   await saveData('events',key,{items:weekEvents[key]});
   closeModal('scheduleModal');renderSchedule();
   if(curView==='week')renderWeek();else renderMonth();
@@ -4184,11 +4263,14 @@ window.addScheduleInline=async function(){
     if(t){time=t;name=m[2].trim();}
   }
   if(!name){inp.value='';return;}
+  const catSel=document.getElementById('scheduleInlineCat');
+  const cat=catSel?catSel.value:'';
   const key=fmt(selDate);
   if(!weekEvents[key])weekEvents[key]=[];
-  weekEvents[key].push(time?`[${time}] ${name}`:name);
+  weekEvents[key].push(buildEvString({cat,time,text:name}));
   await saveData('events',key,{items:weekEvents[key]});
   inp.value='';
+  if(catSel){catSel.value='';updateCatSelectColor(catSel);}
   renderSchedule();
   if(curView==='week')renderWeek();else renderMonth();
   inp.focus();
@@ -4217,6 +4299,7 @@ function renderTodoList(){
     row.className='todo-item-row'+(item.done?' done':'');
     row.innerHTML=`
       <span class="todo-check${item.done?' done':''}" onclick="toggleTodoInline('${item.id}')">${item.done?'✓':''}</span>
+      ${catDotHtml(item.cat)}
       <span class="todo-text" contenteditable="true" spellcheck="false" onblur="editTodoInline('${item.id}',this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${item.text.replace(/</g,'&lt;')}</span>
       <span class="todo-del" onclick="deleteTodoInline('${item.id}')">✕</span>`;
     list.appendChild(row);
@@ -4236,9 +4319,12 @@ window.addTodoInline=async function(){
   if(!inp)return;
   const text=inp.value.trim();
   if(!text)return;
+  const catSel=document.getElementById('todoInlineCat');
+  const cat=catSel?catSel.value:'';
   if(!generalTodos)generalTodos=[];
-  generalTodos.push({id:Date.now().toString(),text,done:false});
+  generalTodos.push({id:Date.now().toString(),text,done:false,cat});
   inp.value='';
+  if(catSel){catSel.value='';updateCatSelectColor(catSel);}
   renderTodoList();
   await saveGeneralTodos();
   showSaving();
@@ -4265,6 +4351,153 @@ window.deleteTodoInline=async function(id){
   renderTodoList();
   await saveGeneralTodos();
 };
+
+// ── 오늘의 마음가짐 (마인드바) ──
+function loadMindBar(){
+  const el=document.getElementById('mindBar');
+  if(el)el.textContent=mindBarText||'';
+}
+window.saveMindBar=async function(){
+  const el=document.getElementById('mindBar');
+  if(!el||!currentUser)return;
+  const text=el.textContent.trim();
+  if(text===mindBarText)return;
+  mindBarText=text;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','mindBar'),{text});
+  showSaving();
+};
+
+// ── 일정 카테고리 (범례 + 색상 지정) ──
+const CAT_PRESET_COLORS=['#FDE2E4','#FAD2E1','#BEE1E6','#DFE7FD','#CDEAC0','#FFF1C9',
+  '#FFADAD','#FFD6A5','#CAFFBF','#9BF6FF','#A0C4FF','#BDB2FF','#FFC6FF',
+  '#6B8FC4','#7FA8CC','#B8CFE0','#9AA3AD','#D4572A','#2D7A4F'];
+let pickingCatId=null;
+function newCategoryId(){return 'cat'+Date.now().toString(36)+Math.floor(Math.random()*1000);}
+async function saveScheduleCategories(){
+  await setDoc(doc(db,'users',currentUser.uid,'settings','scheduleCategories'),{items:scheduleCategories});
+}
+function renderCategoryLegend(){
+  const row=document.getElementById('legendRow');
+  const addBtn=document.getElementById('legendAddBtn');
+  if(!row||!addBtn)return;
+  row.querySelectorAll('.legend-item').forEach(el=>el.remove());
+  (scheduleCategories||[]).forEach(cat=>{
+    const item=document.createElement('div');
+    item.className='legend-item';
+    item.innerHTML=`
+      <span class="legend-swatch" style="background:${cat.color}" onclick="openCatColorPopover(event,'${cat.id}')"></span>
+      <span class="legend-label" contenteditable="true" spellcheck="false" onblur="renameScheduleCategory('${cat.id}',this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${escapeHtml(cat.label)}</span>
+      <span class="legend-del" title="카테고리 삭제" onclick="deleteScheduleCategory('${cat.id}')">✕</span>`;
+    row.insertBefore(item,addBtn);
+  });
+  refreshAllCatSelects();
+}
+window.addScheduleCategory=async function(){
+  const name=prompt('새 카테고리 이름을 입력해주세요.');
+  if(!name||!name.trim())return;
+  const color=CAT_PRESET_COLORS[(scheduleCategories.length)%CAT_PRESET_COLORS.length];
+  scheduleCategories.push({id:newCategoryId(),label:name.trim(),color});
+  renderCategoryLegend();
+  await saveScheduleCategories();
+  showSaving();
+};
+window.renameScheduleCategory=async function(id,text){
+  const cat=getScheduleCategory(id);if(!cat)return;
+  const t=(text||'').trim();
+  if(!t){renderCategoryLegend();return;} // 빈 값이면 원래대로 되돌림
+  if(cat.label===t)return;
+  cat.label=t;
+  refreshAllCatSelects();
+  await saveScheduleCategories();
+};
+window.deleteScheduleCategory=async function(id){
+  if(!confirm('이 카테고리를 삭제할까요? (이미 등록된 일정/할일에서는 카테고리 표시만 사라져요)'))return;
+  scheduleCategories=(scheduleCategories||[]).filter(c=>c.id!==id);
+  renderCategoryLegend();
+  renderSchedule();renderTodoList();
+  if(curView==='week')renderWeek();else renderMonth();
+  await saveScheduleCategories();
+};
+window.openCatColorPopover=function(e,catId){
+  e.stopPropagation();
+  pickingCatId=catId;
+  const pop=document.getElementById('colorPopover');
+  const grid=document.getElementById('colorPopoverGrid');
+  const customInput=document.getElementById('colorPopoverCustom');
+  if(!pop||!grid)return;
+  grid.innerHTML='';
+  CAT_PRESET_COLORS.forEach(c=>{
+    const opt=document.createElement('div');
+    opt.className='color-swatch-option';
+    opt.style.background=c;
+    opt.title=c;
+    opt.onclick=()=>{applyPickedCatColor(c);closeCatColorPopover();};
+    grid.appendChild(opt);
+  });
+  const cat=getScheduleCategory(catId);
+  if(customInput)customInput.value=cat?cat.color:'#888888';
+  pop.classList.add('open');
+  const rect=e.target.getBoundingClientRect();
+  let left=rect.left,top=rect.bottom+6;
+  pop.style.left=left+'px';pop.style.top=top+'px';
+  requestAnimationFrame(()=>{
+    const pw=pop.offsetWidth,ph=pop.offsetHeight;
+    const vw=window.innerWidth,vh=window.innerHeight;
+    if(left+pw>vw-8)left=Math.max(8,vw-pw-8);
+    if(top+ph>vh-8)top=rect.top-ph-6;
+    pop.style.left=left+'px';pop.style.top=top+'px';
+  });
+};
+function closeCatColorPopover(){
+  const pop=document.getElementById('colorPopover');
+  if(pop)pop.classList.remove('open');
+  pickingCatId=null;
+}
+async function applyPickedCatColor(color){
+  if(!pickingCatId)return;
+  const cat=getScheduleCategory(pickingCatId);
+  if(!cat)return;
+  cat.color=color;
+  renderCategoryLegend();
+  renderSchedule();renderTodoList();
+  if(curView==='week')renderWeek();else renderMonth();
+  await saveScheduleCategories();
+  showSaving();
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const customInput=document.getElementById('colorPopoverCustom');
+  if(customInput){
+    customInput.addEventListener('input',()=>applyPickedCatColor(customInput.value));
+    customInput.addEventListener('change',()=>closeCatColorPopover());
+  }
+  document.addEventListener('click',(e)=>{
+    const pop=document.getElementById('colorPopover');
+    if(!pop||!pop.classList.contains('open'))return;
+    if(pop.contains(e.target)||e.target.classList.contains('legend-swatch'))return;
+    closeCatColorPopover();
+  });
+});
+// 카테고리 선택 <select> 채우기 (일정/할일 즉시추가 행, 일정 수정 모달 등에서 공용 사용)
+function populateCatSelect(elId,selected){
+  const sel=document.getElementById(elId);
+  if(!sel)return;
+  const cur=selected!==undefined?selected:sel.value;
+  sel.innerHTML='<option value="">카테고리</option>'+(scheduleCategories||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.label)}</option>`).join('');
+  if((scheduleCategories||[]).some(c=>c.id===cur))sel.value=cur;else sel.value='';
+  updateCatSelectColor(sel);
+}
+window.updateCatSelectColor=function(sel){
+  if(!sel)return;
+  const cat=getScheduleCategory(sel.value);
+  sel.style.borderLeft=cat?`4px solid ${cat.color}`:'';
+  sel.style.color=cat?'#222':'#888';
+};
+function refreshAllCatSelects(){
+  ['scheduleInlineCat','todoInlineCat','sche-cat'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(sel)populateCatSelect(id,sel.value);
+  });
+}
 
 // ── 무지출 ──
 function renderNoSpend(){
@@ -6488,9 +6721,9 @@ function applyTheme(){
   root.style.setProperty('--border-col', t.bordercol||'#ddd');
   document.body.style.backgroundColor=t.pagebg;
   document.body.style.color=t.text;
-  // 앱 배경
+  // 앱 배경 (개별 카드가 각자 배경을 가지므로, 바깥 그리드 자체는 투명하게 유지해 페이지 배경이 비치도록 함)
   const app=document.getElementById('mainApp');
-  if(app){app.style.backgroundColor=t.appbg;app.style.color=t.text;}
+  if(app){app.style.backgroundColor='transparent';app.style.color=t.text;}
   const diaryScreen=document.getElementById('diaryScreen');
   if(diaryScreen)diaryScreen.style.backgroundColor=t.pagebg;
 
