@@ -610,11 +610,11 @@ body{opacity:0;transition:opacity .25s ease}
 /* 일정 달력 */
 .cal-wrap{padding:.75rem 1rem 1rem;background:var(--app-bg,#fff)}
 .dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px}
-.dow{text-align:center;font-size:13.5px;font-weight:700;color:var(--accent,#666);padding:6px 0;background:var(--accent-light,#f0f0f0);border-radius:8px}
+.dow{text-align:center;font-size:13.5px;font-weight:700;color:var(--accent,#666);padding:6px 0}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 
 /* 날짜 칸 2배 높이 */
-.day-cell{height:130px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--app-bg,#fff)}
+.day-cell{height:100px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--app-bg,#fff)}
 .day-cell-events{display:flex;flex-direction:column;gap:1px;width:100%;align-items:stretch;margin-top:2px;overflow:hidden}
 .day-cell-ev{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0;cursor:grab}
 .day-cell-ev.dragging{opacity:.4}
@@ -1454,7 +1454,6 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <div id="todoPane" style="display:none">
         <div id="todo-list"></div>
         <div class="inline-add-row">
-          <select id="todoInlineCat" class="cat-select" onchange="updateCatSelectColor(this)"><option value="">카테고리</option></select>
           <input type="text" id="todoInlineInput" placeholder="할일 추가" onkeydown="if(event.key==='Enter'){addTodoInline();}">
           <span class="inline-add-btn" onclick="addTodoInline()" title="추가"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span>
         </div>
@@ -3933,9 +3932,10 @@ function renderMonth(){
     const annivs=getAnnivForDate(dt);
     const evs=weekEvents[key]||[];
     const dnColor=holiday||isSun?'color:#D85A30':isSat?'color:var(--accent)':'';
-    // 일정 텍스트 (최대 3개, 나머지는 +N)
+    // 일정 텍스트 (최대 3개, 나머지는 +N) — 카테고리를 지정한 일정만 달력에 표시
     const maxShow=3;
-    const evHtml=evs.length>0?`<div class="day-cell-events">${evs.slice(0,maxShow).map((ev,idx)=>{const p=stripEvPrefixes(ev);return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${idx})" ondragend="dragEnd(event)"${p.done?' style="text-decoration:line-through;opacity:.5"':''}>${catDotHtml(p.cat)}${evTimeHTML(p.rest)}</div>`;}).join('')}${evs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${evs.length-maxShow}</div>`:''}</div>`:'';
+    const catEvs=evs.map((ev,i)=>({ev,i})).filter(o=>stripEvPrefixes(o.ev).cat);
+    const evHtml=catEvs.length>0?`<div class="day-cell-events">${catEvs.slice(0,maxShow).map(({ev,i})=>{const p=stripEvPrefixes(ev);return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${i})" ondragend="dragEnd(event)"${p.done?' style="text-decoration:line-through;opacity:.5"':''}>${catDotHtml(p.cat)}${evTimeHTML(p.rest)}</div>`;}).join('')}${catEvs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${catEvs.length-maxShow}</div>`:''}</div>`:'';
     html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
@@ -4030,6 +4030,7 @@ function renderWeek(){
       ondrop="dropEvent(event,'${key}')">`;
     evs.forEach((ev,idx)=>{
       const p=stripEvPrefixes(ev);
+      if(!p.cat)return; // 카테고리를 지정하지 않은 일정은 달력(주간뷰)에 표시하지 않음
       bH+=`<div class="week-event-item" draggable="true"
         ondragstart="dragStart(event,'${key}',${idx})"
         ondragend="dragEnd(event)"
@@ -4343,7 +4344,6 @@ function renderTodoList(){
     row.className='todo-item-row'+(item.done?' done':'');
     row.innerHTML=`
       <span class="todo-check${item.done?' done':''}" onclick="toggleTodoInline('${item.id}')">${item.done?'✓':''}</span>
-      ${catDotHtml(item.cat)}
       <span class="todo-text" contenteditable="true" spellcheck="false" onblur="editTodoInline('${item.id}',this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${item.text.replace(/</g,'&lt;')}</span>
       <span class="todo-del" onclick="deleteTodoInline('${item.id}')"><svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg></span>`;
     list.appendChild(row);
@@ -4363,12 +4363,9 @@ window.addTodoInline=async function(){
   if(!inp)return;
   const text=inp.value.trim();
   if(!text)return;
-  const catSel=document.getElementById('todoInlineCat');
-  const cat=catSel?catSel.value:'';
   if(!generalTodos)generalTodos=[];
-  generalTodos.push({id:Date.now().toString(),text,done:false,cat});
+  generalTodos.push({id:Date.now().toString(),text,done:false});
   inp.value='';
-  if(catSel){catSel.value='';updateCatSelectColor(catSel);}
   renderTodoList();
   await saveGeneralTodos();
   showSaving();
@@ -4537,7 +4534,7 @@ window.updateCatSelectColor=function(sel){
   sel.style.color=cat?'#222':'#888';
 };
 function refreshAllCatSelects(){
-  ['scheduleInlineCat','todoInlineCat','sche-cat'].forEach(id=>{
+  ['scheduleInlineCat','sche-cat'].forEach(id=>{
     const sel=document.getElementById(id);
     if(sel)populateCatSelect(id,sel.value);
   });
@@ -7201,6 +7198,11 @@ function applyFont(fontKey){
 const _origFontSizeCache=new WeakMap();
 function _scaleElementFont(el,scale,bodyFamily){
   if(!el||el.nodeType!==1)return;
+  // 테마/폰트 설정 패널 자체는 글자 크기 설정과 무관하게 항상 고정 크기로 유지 (설정 UI가 같이 커지면 헷갈림)
+  if(el.closest&&el.closest('#bgPanel')){
+    if(_origFontSizeCache.has(el)){el.style.fontSize='';_origFontSizeCache.delete(el);}
+    return;
+  }
   const cs=getComputedStyle(el);
   if(bodyFamily&&cs.fontFamily!==bodyFamily){
     // 이 요소는 자기만의 font-family를 강제로 쓰고 있어서(= 설정한 폰트가 적용되지 않는 곳) 크기 배율에서 제외
