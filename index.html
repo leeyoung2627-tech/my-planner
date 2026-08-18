@@ -1122,7 +1122,7 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* ── 메모 물약병: 숨겨져 있다가 필요할 때만 꺼내 쓰는 메모장 (이미지 위에 직접 씀) ── */
 .memo-bottle-toggle{
-  position:fixed;right:0;top:62%;z-index:70;
+  position:fixed;right:0;bottom:16px;z-index:70;
   width:30px;height:64px;
   background:rgba(255,255,255,.85);
   border:0.5px solid #ddd;border-right:none;
@@ -1137,7 +1137,7 @@ body{opacity:0;transition:opacity .25s ease}
 .memo-bottle-toggle.on{color:#c0698a;opacity:.85}
 
 .memo-bottle-picker{
-  position:fixed;right:34px;top:62%;transform:translateY(-50%);z-index:90;
+  position:fixed;right:4px;bottom:86px;z-index:90;
   display:none;flex-direction:column;gap:8px;
   background:rgba(255,255,255,.95);border:0.5px solid #eee;border-radius:16px;
   padding:10px;box-shadow:0 4px 16px #0002;
@@ -1232,7 +1232,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
 /* ── 루틴 (Routine) ── */
 .routine-toggle{
-  position:fixed;right:0;top:calc(62% - 74px);z-index:70;
+  position:fixed;right:0;bottom:90px;z-index:70;
   width:30px;height:64px;
   background:rgba(255,255,255,.85);
   border:0.5px solid #ddd;border-right:none;
@@ -1288,7 +1288,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
 /* ── TIP (행동 패턴 정리) ── */
 .tip-toggle{
-  position:fixed;right:0;top:calc(62% - 148px);z-index:70;
+  position:fixed;right:0;bottom:164px;z-index:70;
   width:30px;height:64px;
   background:rgba(255,255,255,.85);
   border:0.5px solid #ddd;border-right:none;
@@ -3396,25 +3396,17 @@ function positionFloatingPanel(btnId,panelId){
   const btn=document.getElementById(btnId);
   const p=document.getElementById(panelId);
   const r=btn.getBoundingClientRect();
-  const pw=270,gap=6;
-  // 버튼이 화면 오른쪽 절반에 있으면 패널은 왼쪽으로, 아니면 오른쪽으로
-  const openLeft=(r.left+r.width/2)>window.innerWidth/2;
-  let left=openLeft?(r.left-gap-pw):(r.right+gap);
-  left=Math.max(6,Math.min(left,window.innerWidth-pw-6));
-  p.style.left=left+'px';
-  p.style.right='auto';
-  p.style.bottom='auto';
-  // 실제 렌더된 높이를 기준으로 잡아야 정확하므로, 화면에 그려진 다음 프레임에 위치를 보정
-  const maxH=window.innerHeight-12;
+  const gap=6;
+  // 패널을 버튼과 같은 오른쪽 기준선에 맞추고, 버튼 위쪽에 간격을 두고 배치.
+  // bottom 기준으로 놓으면 내용이 많아져도 패널이 항상 버튼 위쪽으로(=위로) 펼쳐진다.
+  const rightOffset=Math.max(6,window.innerWidth-r.right);
+  p.style.right=rightOffset+'px';
+  p.style.left='auto';
+  p.style.top='auto';
+  const bottomOffset=Math.max(6,window.innerHeight-r.top+gap);
+  p.style.bottom=bottomOffset+'px';
+  const maxH=window.innerHeight-bottomOffset-12;
   p.style.maxHeight=maxH+'px';
-  p.style.top='6px'; // 측정 전 임시 위치 (화면 밖으로 안 튀어나가게)
-  requestAnimationFrame(()=>{
-    const btnCenter=r.top+r.height/2;
-    const ph=Math.min(p.offsetHeight,maxH);
-    let top=btnCenter-ph/2;
-    top=Math.max(6,Math.min(top,window.innerHeight-ph-6));
-    p.style.top=top+'px';
-  });
 }
 function positionRoutinePanel(){positionFloatingPanel('routineToggle','routinePanel');}
 window.addEventListener('resize',()=>{
