@@ -614,7 +614,8 @@ body{opacity:0;transition:opacity .25s ease}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 
 /* 날짜 칸 2배 높이 */
-.day-cell{height:100px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--app-bg,#fff)}
+.day-cell{height:100px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--app-bg,#fff)}
+.dn{color:#b8b8b8;font-weight:500}
 .day-cell-events{display:flex;flex-direction:column;gap:1px;width:100%;align-items:stretch;margin-top:2px;overflow:hidden}
 .day-cell-ev{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0;cursor:grab}
 .day-cell-ev.dragging{opacity:.4}
@@ -763,7 +764,7 @@ body{opacity:0;transition:opacity .25s ease}
   font-family:var(--time-font,ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace);
   font-weight:700;font-size:10px;letter-spacing:0.3px;
   padding:1px 5px;border-radius:5px;
-  background:#fff;border:1px solid #eee;color:var(--accent);
+  background:var(--accent);border:1px solid var(--accent);color:#fff;
   margin-right:6px;vertical-align:middle;
 }
 .day-cell-ev .ev-time-badge{font-size:9.5px;padding:1px 4px;margin-right:4px}
@@ -3935,7 +3936,7 @@ function renderMonth(){
     // 일정 텍스트 (최대 3개, 나머지는 +N) — 카테고리를 지정한 일정만 달력에 표시
     const maxShow=3;
     const catEvs=evs.map((ev,i)=>({ev,i})).filter(o=>stripEvPrefixes(o.ev).cat);
-    const evHtml=catEvs.length>0?`<div class="day-cell-events">${catEvs.slice(0,maxShow).map(({ev,i})=>{const p=stripEvPrefixes(ev);return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${i})" ondragend="dragEnd(event)"${p.done?' style="text-decoration:line-through;opacity:.5"':''}>${catDotHtml(p.cat)}${evTimeHTML(p.rest)}</div>`;}).join('')}${catEvs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${catEvs.length-maxShow}</div>`:''}</div>`:'';
+    const evHtml=catEvs.length>0?`<div class="day-cell-events">${catEvs.slice(0,maxShow).map(({ev,i})=>{const p=stripEvPrefixes(ev);const chipStyle=catChipStyle(p.cat)+(p.done?'text-decoration:line-through;opacity:.5;':'');return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${i})" ondragend="dragEnd(event)" style="${chipStyle}">${evTimeHTML(p.rest)}</div>`;}).join('')}${catEvs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${catEvs.length-maxShow}</div>`:''}</div>`:'';
     html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
@@ -4031,11 +4032,12 @@ function renderWeek(){
     evs.forEach((ev,idx)=>{
       const p=stripEvPrefixes(ev);
       if(!p.cat)return; // 카테고리를 지정하지 않은 일정은 달력(주간뷰)에 표시하지 않음
+      const chipStyle=catChipStyle(p.cat)+(p.done?'text-decoration:line-through;opacity:.5;':'');
       bH+=`<div class="week-event-item" draggable="true"
         ondragstart="dragStart(event,'${key}',${idx})"
         ondragend="dragEnd(event)"
         onclick="event.stopPropagation();editWeekEvent('${key}',${idx})"
-        style="${p.done?'text-decoration:line-through;opacity:.5':''}">${catDotHtml(p.cat)}${evTimeHTML(p.rest)}</div>`;
+        style="${chipStyle}">${evTimeHTML(p.rest)}</div>`;
     });
     bH+=`<div class="week-add-btn" onclick="event.stopPropagation();addWeekEvent('${key}')">＋</div></div>`;
   }
@@ -4167,6 +4169,13 @@ function catDotHtml(catId){
   if(!cat)return '';
   return `<span class="ev-cat-dot" style="background:${cat.color}" title="${escapeHtml(cat.label)}"></span>`;
 }
+function catChipStyle(catId){
+  // 달력에 표시되는 일정 칸의 배경을 카테고리 색으로 (동그라미 없이, 배경/글자색 대비 자동 계산)
+  const cat=getScheduleCategory(catId);
+  if(!cat)return '';
+  const textColor=isColorDark(cat.color)?'#fff':'#222';
+  return `background:${cat.color};color:${textColor};`;
+}
 const DAY_END_HOUR=3; // 하루 기준: 아침에 시작해서 다음날 새벽 3시까지
 function evDateTime(time){
   const m=time.match(/^(\d{2}):(\d{2})$/);if(!m)return null;
@@ -4206,7 +4215,6 @@ function renderSchedule(){
     row.style.cursor='grab';
     row.innerHTML=`
       <span class="drag-dots" style="font-size:14px;color:#ccc;cursor:grab;padding-top:2px;user-select:none">⠿</span>
-      ${catDotHtml(cat)}
       <span class="item-row-time">${time?`<span class="ev-time-badge">${time}</span>`:''}</span>
       <span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})">${text}</span>
       <span style="font-size:11px;color:#ccc;cursor:pointer;display:inline-flex;align-items:center;padding-top:3px" onclick="deleteScheduleItem('${key}',${idx})"><svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg></span>`;
@@ -4529,9 +4537,9 @@ function populateCatSelect(elId,selected){
 }
 window.updateCatSelectColor=function(sel){
   if(!sel)return;
-  const cat=getScheduleCategory(sel.value);
-  sel.style.borderLeft=cat?`4px solid ${cat.color}`:'';
-  sel.style.color=cat?'#222':'#888';
+  // 카테고리 색은 달력에만 표시하고, 선택 UI 자체에는 색을 넣지 않음
+  sel.style.borderLeft='';
+  sel.style.color=sel.value?'#222':'#888';
 };
 function refreshAllCatSelects(){
   ['scheduleInlineCat','sche-cat'].forEach(id=>{
