@@ -572,7 +572,7 @@ body{opacity:0;transition:opacity .25s ease}
 .legend-label{outline:none;border-bottom:1px dashed transparent;cursor:text;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .legend-label:hover{border-bottom-color:#ccc}
 .legend-label:focus{border-bottom-color:var(--accent,#7ec8e3);color:#222}
-.legend-del{font-size:10px;color:#ccc;cursor:pointer;opacity:0;transition:opacity .15s;margin-left:-2px}
+.legend-del{font-size:10px;color:#ccc;cursor:pointer;opacity:0;transition:opacity .15s;margin-left:-2px;display:inline-flex;align-items:center;justify-content:center}
 .legend-item:hover .legend-del{opacity:1}
 .legend-del:hover{color:#e09090}
 .legend-add-btn{width:18px;height:18px;border-radius:50%;background:#f2f2f2;color:#999;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;cursor:pointer;line-height:1;flex-shrink:0}
@@ -588,17 +588,18 @@ body{opacity:0;transition:opacity .25s ease}
 .ev-cat-dot{width:7px;height:7px;min-width:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
 .cat-select{flex-shrink:0;max-width:88px;border:0.5px solid #e4e4e4;border-radius:20px;padding:8px 8px;font-size:12px;color:#888;background:#fafafa;outline:none;font-family:inherit;cursor:pointer}
 .cat-select:focus{border-color:var(--accent,#7ec8e3)}
-.top-nav{display:flex;align-items:center;gap:8px;padding:.7rem 1rem;border-bottom:0.5px solid #eee;flex-shrink:0}
-.nav-btn{background:none;border:0.5px solid #e2e2e2;cursor:pointer;color:#888;width:26px;height:26px;border-radius:50%;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.top-nav{display:flex;align-items:center;gap:10px;padding:.7rem 1rem;border-bottom:0.5px solid #eee;flex-shrink:0}
+.nav-btn{background:none;border:0.5px solid #e2e2e2;cursor:pointer;color:#888;width:26px;height:26px;border-radius:50%;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
 .nav-btn:hover{background:#f5f5f5}
 .today-btn{padding:5px 14px;border-radius:20px;border:0.5px solid #ddd;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#666;flex-shrink:0}
 .today-btn:hover{background:#f5f5f5}
 .period-label{font-size:22px;font-weight:500;letter-spacing:-.3px;color:#222;flex:1}
 .view-toggle{display:flex;align-items:center;gap:2px;background:transparent}
-.vbtn{padding:5px 14px;border-radius:20px;border:none;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#999}
+.vbtn{padding:5px 14px;border-radius:20px;border:none;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#999;display:flex;align-items:center;justify-content:center;line-height:1}
 .vbtn.active{background:var(--accent);color:#fff}
 .vbtn.icon-vbtn{padding:5px 8px;font-size:14px}
 .nav-group{display:flex;align-items:center;gap:6px}
+.icon-group{display:flex;align-items:center;gap:6px}
 .user-area{display:flex;align-items:center;gap:6px;margin-left:6px;padding-left:10px;border-left:0.5px solid #eee}
 .user-name{font-size:11px;color:#888}
 .logout-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:inherit}
@@ -760,8 +761,8 @@ body{opacity:0;transition:opacity .25s ease}
 .ev-time-badge{
   display:inline-block;flex-shrink:0;
   font-family:var(--time-font,ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace);
-  font-weight:800;font-size:12.5px;letter-spacing:0.5px;
-  padding:2px 7px;border-radius:5px;
+  font-weight:700;font-size:10px;letter-spacing:0.3px;
+  padding:1px 5px;border-radius:5px;
   background:#fff;border:1px solid #eee;color:var(--accent);
   margin-right:6px;vertical-align:middle;
 }
@@ -785,7 +786,7 @@ body{opacity:0;transition:opacity .25s ease}
 .todo-item-row .todo-check.done{background:var(--accent,#7ec8e3);border-color:var(--accent,#7ec8e3)}
 .todo-item-row .todo-text{flex:1;min-width:0;font-size:13px;color:#222;outline:none;word-break:break-word}
 .todo-item-row.done .todo-text{color:#bbb;text-decoration:line-through}
-.todo-item-row .todo-del{font-size:11px;color:#ccc;cursor:pointer;opacity:0;transition:opacity .15s;padding:2px}
+.todo-item-row .todo-del{font-size:11px;color:#ccc;cursor:pointer;opacity:0;transition:opacity .15s;padding:2px;display:inline-flex;align-items:center;justify-content:center}
 .todo-item-row:hover .todo-del{opacity:1}
 .todo-item-row .todo-del:hover{color:#e09090}
 .add-btn:hover{color:#666}
@@ -960,7 +961,7 @@ body{opacity:0;transition:opacity .25s ease}
 .dday-badge{font-size:12px;font-weight:700;padding:4px 12px;border-radius:14px;white-space:nowrap;background:var(--accent-light,#EEF3FC);color:var(--accent,#4472B8)}
 .dday-badge.today{background:#DCF3E8;color:#1D9E75}
 .dday-badge.past{background:#FBE7E0;color:#D85A30}
-.dday-item-del{font-size:11px;color:#ccc;background:none;border:none;cursor:pointer;padding:2px;font-family:inherit}
+.dday-item-del{font-size:11px;color:#ccc;background:none;border:none;cursor:pointer;padding:2px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center}
 .dday-item-del:hover{color:#D85A30}
 
 /* 주요 디데이 카드 (일정 탭 상단) */
@@ -1358,24 +1359,28 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <div class="left">
     <div class="mind-bar" id="mindBar" contenteditable="true" spellcheck="false" data-placeholder="오늘의 마음가짐을 적어보세요" onblur="saveMindBar()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></div>
     <div class="top-nav">
-      <button class="nav-btn" id="leftBackBtn" onclick="handleLeftBack()" style="display:none">←</button>
+      <button class="nav-btn" id="leftBackBtn" onclick="handleLeftBack()" style="display:none"><svg width="12" height="11" viewBox="0 0 12 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5.5H1M5.5 1L1 5.5l4.5 4.5"/></svg></button>
       <span class="period-label" id="periodLabel"></span>
       <div class="view-toggle" id="viewToggle">
         <button class="vbtn active" id="btnMonth" onclick="switchView('month')">월</button>
         <button class="vbtn" id="btnWeek" onclick="switchView('week')">주</button>
       </div>
-      <button class="nav-btn" id="navPrev" onclick="movePeriod(-1)">‹</button>
-      <button class="today-btn" id="todayBtn" onclick="goToToday()">오늘</button>
-      <button class="nav-btn" id="navNext" onclick="movePeriod(1)">›</button>
-      <button class="vbtn icon-vbtn" id="btnAnniv" onclick="switchView('anniv')" title="기념일">🎂</button>
-      <button class="vbtn icon-vbtn" onclick="openDiaryLock()" title="일기장">🍀</button>
+      <div class="nav-group">
+        <button class="nav-btn" id="navPrev" onclick="movePeriod(-1)"><svg width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 1L1 6l5 5"/></svg></button>
+        <button class="today-btn" id="todayBtn" onclick="goToToday()">오늘</button>
+        <button class="nav-btn" id="navNext" onclick="movePeriod(1)"><svg width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l5 5-5 5"/></svg></button>
+      </div>
+      <div class="icon-group">
+        <button class="vbtn icon-vbtn" id="btnAnniv" onclick="switchView('anniv')" title="기념일">🎂</button>
+        <button class="vbtn icon-vbtn" onclick="openDiaryLock()" title="일기장">🍀</button>
+      </div>
       <div class="user-area">
         <span class="user-name" id="userName"></span>
         <button class="logout-btn" onclick="logoutUser()">로그아웃</button>
       </div>
     </div>
     <div class="legend" id="legendRow">
-      <span class="legend-add-btn" id="legendAddBtn" onclick="addScheduleCategory()" title="카테고리 추가">＋</span>
+      <span class="legend-add-btn" id="legendAddBtn" onclick="addScheduleCategory()" title="카테고리 추가"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span>
     </div>
     <div class="color-popover" id="colorPopover">
       <div class="color-popover-grid" id="colorPopoverGrid"></div>
@@ -1442,7 +1447,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <div class="inline-add-row">
           <select id="scheduleInlineCat" class="cat-select" onchange="updateCatSelectColor(this)"><option value="">카테고리</option></select>
           <input type="text" id="scheduleInlineInput" placeholder="오늘 일정 추가" onkeydown="if(event.key==='Enter'){addScheduleInline();}">
-          <span class="inline-add-btn" onclick="addScheduleInline()" title="추가">＋</span>
+          <span class="inline-add-btn" onclick="addScheduleInline()" title="추가"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span>
         </div>
       </div>
       <!-- 할일 목록: 날짜에 매이지 않는 체크리스트 -->
@@ -1451,7 +1456,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <div class="inline-add-row">
           <select id="todoInlineCat" class="cat-select" onchange="updateCatSelectColor(this)"><option value="">카테고리</option></select>
           <input type="text" id="todoInlineInput" placeholder="할일 추가" onkeydown="if(event.key==='Enter'){addTodoInline();}">
-          <span class="inline-add-btn" onclick="addTodoInline()" title="추가">＋</span>
+          <span class="inline-add-btn" onclick="addTodoInline()" title="추가"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></span>
         </div>
       </div>
     </div>
@@ -1538,7 +1543,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <div class="dday-sidebar">
     <div class="dday-header-row">
       <div class="dday-header">D-DAY</div>
-      <button class="dday-add-circle" id="ddayAddBtn" onclick="openDdayModal()" title="디데이 추가">＋</button>
+      <button class="dday-add-circle" id="ddayAddBtn" onclick="openDdayModal()" title="디데이 추가"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 1v10M1 6h10"/></svg></button>
     </div>
     <div id="ddayList"></div>
   </div>
@@ -4203,7 +4208,7 @@ function renderSchedule(){
       ${catDotHtml(cat)}
       <span class="item-row-time">${time?`<span class="ev-time-badge">${time}</span>`:''}</span>
       <span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})">${text}</span>
-      <span style="font-size:11px;color:#ccc;cursor:pointer;padding-top:3px" onclick="deleteScheduleItem('${key}',${idx})">✕</span>`;
+      <span style="font-size:11px;color:#ccc;cursor:pointer;display:inline-flex;align-items:center;padding-top:3px" onclick="deleteScheduleItem('${key}',${idx})"><svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg></span>`;
     // 드래그 이벤트
     row.addEventListener('dragstart',e=>{
       e.dataTransfer.effectAllowed='move';
@@ -4340,7 +4345,7 @@ function renderTodoList(){
       <span class="todo-check${item.done?' done':''}" onclick="toggleTodoInline('${item.id}')">${item.done?'✓':''}</span>
       ${catDotHtml(item.cat)}
       <span class="todo-text" contenteditable="true" spellcheck="false" onblur="editTodoInline('${item.id}',this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${item.text.replace(/</g,'&lt;')}</span>
-      <span class="todo-del" onclick="deleteTodoInline('${item.id}')">✕</span>`;
+      <span class="todo-del" onclick="deleteTodoInline('${item.id}')"><svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg></span>`;
     list.appendChild(row);
   });
   const countEl=document.getElementById('todoCount');
@@ -4426,7 +4431,7 @@ function renderCategoryLegend(){
     item.innerHTML=`
       <span class="legend-swatch" style="background:${cat.color}" onclick="openCatColorPopover(event,'${cat.id}')"></span>
       <span class="legend-label" contenteditable="true" spellcheck="false" onblur="renameScheduleCategory('${cat.id}',this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${escapeHtml(cat.label)}</span>
-      <span class="legend-del" title="카테고리 삭제" onclick="deleteScheduleCategory('${cat.id}')">✕</span>`;
+      <span class="legend-del" title="카테고리 삭제" onclick="deleteScheduleCategory('${cat.id}')"><svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg></span>`;
     row.insertBefore(item,addBtn);
   });
   refreshAllCatSelects();
@@ -6383,7 +6388,7 @@ function renderDdays(){
       </div>
       <div class="dday-item-right">
         <span class="dday-badge${badgeClass?' '+badgeClass:''}">${badgeText}</span>
-        <button class="dday-item-del" onclick="deleteDday('${dd.id}')">✕</button>
+        <button class="dday-item-del" onclick="deleteDday('${dd.id}')"><svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg></button>
       </div>`;
     row.addEventListener('dragstart',e=>{
       e.dataTransfer.effectAllowed='move';
@@ -6753,11 +6758,10 @@ const THEMES=[
 ];
 const FONTS={
   system:"'Apple SD Gothic Neo','Malgun Gothic',sans-serif",
-  serif:"'Noto Serif KR',Georgia,serif",
-  mono:"'Nanum Gothic Coding','D2Coding','Courier New',monospace",
   nanum:"'Nanum Gothic',sans-serif",
+  gowun:"'Gowun Dodum','Apple SD Gothic Neo',sans-serif",
 };
-const BUILTIN_GFONTS=['Noto Serif KR','Nanum Gothic Coding','Nanum Gothic'];
+const BUILTIN_GFONTS=['Nanum Gothic','Gowun Dodum'];
 
 let currentTheme={...THEMES[0]};
 let currentPattern='none';
@@ -6776,7 +6780,7 @@ function loadTheme(){
   const cf=localStorage.getItem('planner_custom_fonts');
   if(cf){try{customFonts=JSON.parse(cf);}catch(e){customFonts=[];}}
   // 이전에 추천했던 폰트(꾹꾹체/북크고딕/프로슬림)가 저장돼 있으면 시스템 폰트로 정리
-  const removedKeys=['memoment','bookk','cafe24slim'];
+  const removedKeys=['memoment','bookk','cafe24slim','serif','mono'];
   if(removedKeys.includes(currentFont)){
     currentFont='system';
     localStorage.setItem('planner_font','system');
@@ -6929,7 +6933,7 @@ function updateBgImagePreview(){
 }
 function renderFontButtons(){
   const wrap=document.getElementById('fontBtnsWrap');if(!wrap)return;
-  const builtins=[['system','시스템'],['serif','명조'],['mono','모노'],['nanum','나눔']];
+  const builtins=[['system','시스템'],['nanum','나눔'],['gowun','고운돋움']];
   let html=builtins.map(([k,l])=>`<button class="font-btn${currentFont===k?' active':''}" onclick="setFont('${k}',this)">${l}</button>`).join('');
   html+=customFonts.map(f=>{
     const fam=f.type==='file'?f.family:f.google;
@@ -7191,13 +7195,20 @@ function applyFont(fontKey){
 // ── 글자 크기 (일부 폰트는 같은 font-size에도 훨씬 작게 보여서, 글자만 커지거나 작아지게 함) ──
 // 주의: zoom/transform으로 전체를 확대하면 레이아웃까지 통째로 커져버리므로,
 // 요소마다 원래(CSS 기본) font-size를 한 번만 측정해 캐싱해두고, 그 값에만 배율을 곱해서 글자 크기만 바꾼다.
+// 또한 시간표시(모노스페이스), 특정 버튼처럼 "설정한 폰트"가 실제로 적용되지 않는 곳(자기만의 font-family를
+// 강제 지정해둔 곳)은 이 폰트 크기 설정과 무관하므로 배율 대상에서 제외한다.
 // 달력/일정 등은 새로고침될 때마다 DOM이 새로 만들어지므로, MutationObserver로 새로 추가되는 요소도 자동으로 스케일을 적용한다.
 const _origFontSizeCache=new WeakMap();
-function _scaleElementFont(el,scale){
+function _scaleElementFont(el,scale,bodyFamily){
   if(!el||el.nodeType!==1)return;
+  const cs=getComputedStyle(el);
+  if(bodyFamily&&cs.fontFamily!==bodyFamily){
+    // 이 요소는 자기만의 font-family를 강제로 쓰고 있어서(= 설정한 폰트가 적용되지 않는 곳) 크기 배율에서 제외
+    if(_origFontSizeCache.has(el)){el.style.fontSize='';_origFontSizeCache.delete(el);}
+    return;
+  }
   let orig=_origFontSizeCache.get(el);
   if(orig===undefined){
-    const cs=getComputedStyle(el);
     orig=parseFloat(cs.fontSize)||null;
     _origFontSizeCache.set(el,orig);
   }
@@ -7206,9 +7217,10 @@ function _scaleElementFont(el,scale){
   else{el.style.fontSize=(orig*scale)+'px';}
 }
 function _scaleSubtreeFont(root,scale){
-  _scaleElementFont(root,scale);
+  const bodyFamily=getComputedStyle(document.body).fontFamily;
+  _scaleElementFont(root,scale,root===document.body?null:bodyFamily);
   if(root.querySelectorAll){
-    root.querySelectorAll('*').forEach(el=>_scaleElementFont(el,scale));
+    root.querySelectorAll('*').forEach(el=>_scaleElementFont(el,scale,bodyFamily));
   }
 }
 let _fontScaleObserver=null;
