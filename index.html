@@ -7385,20 +7385,18 @@ function positionMissionTracker(){
   if(!app||!tracker)return;
   const rect=app.getBoundingClientRect();
 
-  const pageEdge=16; // body 여백과 동일 (양쪽 끝에 닿도록)
-  const gap=20; // 달력 카드와의 간격은 유지
+  const gap=20; // 달력 카드와의 간격만 유지, 나머지는 화면 끝까지 꽉 채움
 
-  // 트래커 너비: 페이지 왼쪽 끝부터 달력 카드 앞(gap)까지 남는 공간을 꽉 채움
-  const trackerW=Math.min(460,Math.max(120, rect.left-gap-pageEdge));
+  // 트래커 너비: 화면 맨 왼쪽부터 달력 카드 앞(gap)까지 남는 공간을 꽉 채움
+  const trackerW=Math.min(460,Math.max(120, rect.left-gap));
   tracker.style.width=trackerW+'px';
-  tracker.style.left=pageEdge+'px';
-  // 위쪽도 페이지 맨 위(여백)에 닿게
-  tracker.style.top=pageEdge+'px';
+  tracker.style.left='0px';
+  // 위쪽도 화면 맨 위에 딱 닿게
+  tracker.style.top='0px';
 
-  // 이미지 박스 높이: 페이지 위쪽 끝부터 아래쪽까지 최대한 길게 (기존 하단 채움 방식과 동일)
+  // 이미지 박스 높이: 화면 위~아래 끝까지 꽉 채움 (상하좌 모두 화면 끝에 닿도록)
   if(wrap){
-    const availH=Math.max(300, window.innerHeight-pageEdge-16);
-    wrap.style.height=Math.max(rect.height, availH)+'px';
+    wrap.style.height=Math.max(rect.height, window.innerHeight)+'px';
   }
 
   // 노트 버튼: 메인창 오른쪽 끝에서 gap만큼 오른쪽, 상단 맞춤
@@ -7409,6 +7407,7 @@ function positionMissionTracker(){
   }
 }
 window.addEventListener('resize',positionMissionTracker);
+window.addEventListener('load',positionMissionTracker);
 
 // 목록 렌더링 — 내용이 항상 보이는 카드 목록, 우측 끝에 작은 체크(하트) 버튼
 function renderMissionSvg(){
