@@ -968,7 +968,7 @@ body{opacity:0;transition:opacity .25s ease}
 .dday-item-del:hover{color:#D85A30}
 
 /* 주요 디데이 카드 (일정 탭 상단) */
-.dday-hero-card{background:var(--accent,#4472B8);border-radius:14px;padding:14px 16px;margin-bottom:12px;color:#fff}
+.dday-hero-card{background:var(--accent,#4472B8);border-radius:14px;padding:14px 16px;margin:.75rem 1rem;color:#fff}
 .dday-hero-title-input{width:100%;background:transparent;border:none;color:#fff;font-size:15px;font-weight:700;padding:2px 0 12px;outline:none;font-family:inherit}
 .dday-hero-title-input::placeholder{color:rgba(255,255,255,.65)}
 .dday-hero-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -1416,6 +1416,14 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
   <div class="right">
     <div class="right-date" id="rightDate"></div>
+    <!-- 주요 디데이 (완결/마감 등 하나만 크게 표시) — 일정/가계부/식단/메모 탭과 무관하게 항상 보임 -->
+    <div class="dday-hero-card" id="ddayHeroCard">
+      <input type="text" id="ddayHeroTitle" class="dday-hero-title-input" placeholder="주요 디데이 이름 (예: 완결까지)" onblur="saveDdayHero()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+      <div class="dday-hero-row">
+        <input type="date" id="ddayHeroDate" class="dday-hero-date-input" onchange="updateDdayHero();saveDdayHero()">
+        <div class="dday-hero-badge" id="ddayHeroBadge">D-DAY</div>
+      </div>
+    </div>
     <div class="tabs">
       <div class="tab active" onclick="switchTab('schedule',this)">📅 일정</div>
       <div class="tab" onclick="switchTab('money',this)">💰 가계부</div>
@@ -1424,14 +1432,6 @@ body.memo-edit-on .memo-text-handle{display:flex}
     </div>
 
     <div id="tab-schedule" class="tab-content active">
-      <!-- 주요 디데이 (완결/마감 등 하나만 크게 표시) -->
-      <div class="dday-hero-card" id="ddayHeroCard">
-        <input type="text" id="ddayHeroTitle" class="dday-hero-title-input" placeholder="주요 디데이 이름 (예: 완결까지)" onblur="saveDdayHero()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
-        <div class="dday-hero-row">
-          <input type="date" id="ddayHeroDate" class="dday-hero-date-input" onchange="updateDdayHero();saveDdayHero()">
-          <div class="dday-hero-badge" id="ddayHeroBadge">D-DAY</div>
-        </div>
-      </div>
       <!-- 하루계획표 모드일 때만 보이는 먼슬리 체크리스트 -->
       <div id="dpScheduleSection" style="display:none;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:4px;border-bottom:0.5px solid #EEF1F8">
@@ -6831,20 +6831,20 @@ function applyTheme(){
     if(ddAdd){ddAdd.style.background=nb?'rgba(255,255,255,.18)':'';ddAdd.style.color=nb?nt:'';}
   }
 
-  // 상단 네비 (달력 헤더)
+  // 상단 네비 (달력 헤더) — 네비 바만 따로 칠하지 않고 달력 몸체와 배경을 통일
   const topNav=document.querySelector('.top-nav');
   if(topNav){
-    topNav.style.background=nb||'';
-    topNav.style.borderBottomColor=nb?'transparent':bc;
+    topNav.style.background='';
+    topNav.style.borderBottomColor=bc;
     // 네비 버튼들
-    topNav.querySelectorAll('.nav-btn').forEach(b=>b.style.color=nb?nt:'');
-    topNav.querySelectorAll('.vbtn:not(.active)').forEach(b=>{b.style.color=nb?nt+'99':'';b.style.borderColor=nb?nt+'33':''});
+    topNav.querySelectorAll('.nav-btn').forEach(b=>b.style.color='');
+    topNav.querySelectorAll('.vbtn:not(.active)').forEach(b=>{b.style.color='';b.style.borderColor='';});
     const pl=topNav.querySelector('.period-label');
-    if(pl)pl.style.color=nb?nt:t.text;
+    if(pl)pl.style.color=t.text;
     const un=topNav.querySelector('.user-name');
-    if(un)un.style.color=nb?nt+'88':'';
+    if(un)un.style.color='';
     const lo=topNav.querySelector('.logout-btn');
-    if(lo){lo.style.color=nb?nt+'77':'';lo.style.borderColor=nb?nt+'33':'';}
+    if(lo){lo.style.color='';lo.style.borderColor='';}
   }
 
   // 노트 버튼 — 테두리는 상단바/사이드바 색(navbg, 없으면 테두리 기본색), 글자는 포인트색(accent)
