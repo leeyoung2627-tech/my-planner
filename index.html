@@ -139,6 +139,7 @@ body{opacity:0;transition:opacity .25s ease}
   position:fixed;z-index:40;
   display:none;flex-direction:column;gap:0;
   width:230px;
+  background:var(--page-bg);
   filter:drop-shadow(0 4px 18px #0000001a);
 }
 #missionTracker.visible{display:flex}
@@ -147,12 +148,12 @@ body{opacity:0;transition:opacity .25s ease}
   position:relative;width:100%;height:900px;
   border-radius:0;
   border:2px dashed #d8d8d8;
-  background:#f7f7f8;
+  background:var(--app-bg,#f7f7f8);
   overflow:hidden;cursor:default;
   display:flex;align-items:center;justify-content:center;
   transition:border-color .15s;
 }
-.mt-char-wrap.has-image{border-style:solid;border-color:#e4e4e4;background:#fff}
+.mt-char-wrap.has-image{border-style:solid;border-color:#e4e4e4;background:var(--app-bg,#fff)}
 .mt-char-wrap:hover{border-color:var(--accent,#7ec8e3)}
 .mt-char-empty{
   position:absolute;inset:0;
@@ -7549,8 +7550,8 @@ function positionMissionTracker(){
   if(!app||!tracker)return;
 
   const gap=20;
-  const desiredW=520; // 이미지 패널 목표 너비 (더 넓게)
-  const rightReserve=260; // 오른쪽 노트 버튼 등을 위해 남겨둘 최소 공간
+  const desiredW=650; // 이미지 패널 목표 너비 (더 넓게)
+  const rightReserve=240; // 오른쪽 노트 버튼 등을 위해 남겨둘 최소 공간
 
   // 1) 먼저 마진을 초기화해서 원래(가운데 정렬) 위치를 측정
   app.style.marginLeft='';
