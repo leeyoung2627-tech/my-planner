@@ -156,9 +156,9 @@ body{opacity:0;transition:opacity .25s ease}
   filter:drop-shadow(0 4px 18px #0000001a);
 }
 #missionTracker.visible{display:flex}
-/* 세로로 긴 이미지 박스 (플래너28 상단 배너를 세로형으로 응용) */
+/* 세로로 긴 이미지 박스 (플래너28 상단 배너를 세로형으로 응용) - 너비/높이는 JS가 남는 공간에 맞춰 채움 */
 .mt-char-wrap{
-  position:relative;width:230px;height:900px;
+  position:relative;width:100%;height:900px;
   border-radius:18px;
   border:2px dashed #d8d8d8;
   background:#f7f7f8;
@@ -567,12 +567,12 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* 왼쪽 */
 .left{display:flex;flex-direction:column;min-width:0;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;overflow:hidden;min-height:calc(100vh - 230px)}
-.mind-bar{background:var(--accent,#4472B8);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;line-height:1.4;margin:.85rem .85rem 0;outline:none;cursor:text}
+.mind-bar{background:var(--accent,#4472B8);color:#fff;border-radius:12px;padding:11px 16px;font-size:13px;line-height:1.5;margin:1rem 1rem 0;outline:none;cursor:text}
 .mind-bar:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.75)}
 /* 일정 카테고리 범례 */
-.legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:.7rem .85rem 0}
-.legend-item{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#666}
-.legend-swatch{width:12px;height:12px;min-width:12px;border-radius:50%;cursor:pointer;border:1px solid #00000014;flex:0 0 12px}
+.legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:.75rem 1rem .25rem}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#666}
+.legend-swatch{width:14px;height:14px;min-width:14px;border-radius:50%;cursor:pointer;border:1px solid #00000014;flex:0 0 14px}
 .legend-label{outline:none;border-bottom:1px dashed transparent;cursor:text;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .legend-label:hover{border-bottom-color:#ccc}
 .legend-label:focus{border-bottom-color:var(--accent,#7ec8e3);color:#222}
@@ -592,7 +592,7 @@ body{opacity:0;transition:opacity .25s ease}
 .ev-cat-dot{width:7px;height:7px;min-width:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
 .cat-select{flex-shrink:0;max-width:88px;border:0.5px solid #e4e4e4;border-radius:20px;padding:8px 8px;font-size:12px;color:#888;background:#fafafa;outline:none;font-family:inherit;cursor:pointer}
 .cat-select:focus{border-color:var(--accent,#7ec8e3)}
-.top-nav{display:flex;align-items:center;gap:8px;padding:.65rem .85rem;border-bottom:0.5px solid #eee;flex-shrink:0}
+.top-nav{display:flex;align-items:center;gap:8px;padding:.7rem 1rem;border-bottom:0.5px solid #eee;flex-shrink:0}
 .nav-btn{background:none;border:0.5px solid #e2e2e2;cursor:pointer;color:#888;width:26px;height:26px;border-radius:50%;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .nav-btn:hover{background:#f5f5f5}
 .today-btn{padding:5px 14px;border-radius:20px;border:0.5px solid #ddd;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#666;flex-shrink:0}
@@ -611,10 +611,10 @@ body{opacity:0;transition:opacity .25s ease}
 .left-view{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column}
 
 /* 일정 달력 */
-.cal-wrap{padding:.65rem .85rem;background:var(--app-bg,#fff)}
-.dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+.cal-wrap{padding:.5rem 1rem 1rem;background:var(--app-bg,#fff)}
+.dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px}
 .dow{text-align:center;font-size:11px;color:#aaa;padding:2px 0}
-.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 
 /* 날짜 칸 2배 높이 */
 .day-cell{height:130px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--app-bg,#fff)}
@@ -968,7 +968,8 @@ body{opacity:0;transition:opacity .25s ease}
 .dday-item-del:hover{color:#D85A30}
 
 /* 주요 디데이 카드 (일정 탭 상단) */
-.dday-hero-card{background:var(--accent,#4472B8);border-radius:14px;padding:14px 16px;margin:.75rem 1rem;color:#fff}
+.middle-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.dday-hero-card{background:var(--accent,#4472B8);border-radius:16px;padding:16px 18px;color:#fff;box-shadow:0 2px 14px #0000000a}
 .dday-hero-title-input{width:100%;background:transparent;border:none;color:#fff;font-size:15px;font-weight:700;padding:2px 0 12px;outline:none;font-family:inherit}
 .dday-hero-title-input::placeholder{color:rgba(255,255,255,.65)}
 .dday-hero-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -1414,16 +1415,17 @@ body.memo-edit-on .memo-text-handle{display:flex}
     </div>
   </div>
 
+  <div class="middle-col">
+  <!-- 주요 디데이 (완결/마감 등 하나만 크게 표시) — 일정칸과 분리된 독립 카드, 일정/가계부/식단/메모 탭과 무관하게 항상 보임 -->
+  <div class="dday-hero-card" id="ddayHeroCard">
+    <input type="text" id="ddayHeroTitle" class="dday-hero-title-input" placeholder="주요 디데이 이름 (예: 완결까지)" onblur="saveDdayHero()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+    <div class="dday-hero-row">
+      <input type="date" id="ddayHeroDate" class="dday-hero-date-input" onchange="updateDdayHero();saveDdayHero()">
+      <div class="dday-hero-badge" id="ddayHeroBadge">D-DAY</div>
+    </div>
+  </div>
   <div class="right">
     <div class="right-date" id="rightDate"></div>
-    <!-- 주요 디데이 (완결/마감 등 하나만 크게 표시) — 일정/가계부/식단/메모 탭과 무관하게 항상 보임 -->
-    <div class="dday-hero-card" id="ddayHeroCard">
-      <input type="text" id="ddayHeroTitle" class="dday-hero-title-input" placeholder="주요 디데이 이름 (예: 완결까지)" onblur="saveDdayHero()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
-      <div class="dday-hero-row">
-        <input type="date" id="ddayHeroDate" class="dday-hero-date-input" onchange="updateDdayHero();saveDdayHero()">
-        <div class="dday-hero-badge" id="ddayHeroBadge">D-DAY</div>
-      </div>
-    </div>
     <div class="tabs">
       <div class="tab active" onclick="switchTab('schedule',this)">📅 일정</div>
       <div class="tab" onclick="switchTab('money',this)">💰 가계부</div>
@@ -1544,6 +1546,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
       </div>
     </div>
 
+  </div>
   </div>
 
   <div class="dday-sidebar">
@@ -7382,17 +7385,20 @@ function positionMissionTracker(){
   if(!app||!tracker)return;
   const rect=app.getBoundingClientRect();
 
-  const trackerW=230;
-  const gap=20;
+  const pageEdge=16; // body 여백과 동일 (양쪽 끝에 닿도록)
+  const gap=20; // 달력 카드와의 간격은 유지
 
-  // 트래커: 메인창 왼쪽 끝에서 gap만큼 왼쪽
-  tracker.style.left = Math.max(8, rect.left - trackerW - gap) + 'px';
-  tracker.style.top = rect.top + 'px';
+  // 트래커 너비: 페이지 왼쪽 끝부터 달력 카드 앞(gap)까지 남는 공간을 꽉 채움
+  const trackerW=Math.min(460,Math.max(120, rect.left-gap-pageEdge));
+  tracker.style.width=trackerW+'px';
+  tracker.style.left=pageEdge+'px';
+  // 위쪽도 페이지 맨 위(여백)에 닿게
+  tracker.style.top=pageEdge+'px';
 
-  // 이미지 박스 높이를 메인 캘린더 높이에 맞춰 최대한 길게
+  // 이미지 박스 높이: 페이지 위쪽 끝부터 아래쪽까지 최대한 길게 (기존 하단 채움 방식과 동일)
   if(wrap){
-    const availH = Math.max(300, window.innerHeight - rect.top - 16);
-    wrap.style.height = Math.max(rect.height, availH>0?availH:rect.height) + 'px';
+    const availH=Math.max(300, window.innerHeight-pageEdge-16);
+    wrap.style.height=Math.max(rect.height, availH)+'px';
   }
 
   // 노트 버튼: 메인창 오른쪽 끝에서 gap만큼 오른쪽, 상단 맞춤
