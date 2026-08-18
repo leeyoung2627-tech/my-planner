@@ -128,7 +128,7 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* 노트 버튼 */
 .note-buttons{position:fixed;top:0;display:flex;flex-direction:column;gap:10px;z-index:40}
-.note-btn{width:68px;height:68px;background:#fff;border:1.5px solid #1558CC;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:12px;font-weight:600;color:#1558CC;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:6px}
+.note-btn{width:68px;height:68px;background:#fff;border:1.5px solid #1558CC;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:12px;font-weight:600;color:#1558CC;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:6px}
 .note-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 13%,transparent)}
 .note-btn:active{transform:scale(.97)}
 .note-btn-secondary{border-color:#b8e0c4;color:#2d7a4f}
@@ -614,7 +614,7 @@ body{opacity:0;transition:opacity .25s ease}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 
 /* 날짜 칸 2배 높이 */
-.day-cell{height:100px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--app-bg,#fff)}
+.day-cell{height:112px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--app-bg,#fff)}
 .dn{color:#b8b8b8;font-weight:500}
 .day-cell-events{display:flex;flex-direction:column;gap:1px;width:100%;align-items:stretch;margin-top:2px;overflow:hidden}
 .day-cell-ev{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0;cursor:grab}
@@ -3936,7 +3936,7 @@ function renderMonth(){
     // 일정 텍스트 (최대 3개, 나머지는 +N) — 카테고리를 지정한 일정만 달력에 표시
     const maxShow=3;
     const catEvs=evs.map((ev,i)=>({ev,i})).filter(o=>stripEvPrefixes(o.ev).cat);
-    const evHtml=catEvs.length>0?`<div class="day-cell-events">${catEvs.slice(0,maxShow).map(({ev,i})=>{const p=stripEvPrefixes(ev);const chipStyle=catChipStyle(p.cat)+(p.done?'text-decoration:line-through;opacity:.5;':'');return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${i})" ondragend="dragEnd(event)" style="${chipStyle}">${evTimeHTML(p.rest)}</div>`;}).join('')}${catEvs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${catEvs.length-maxShow}</div>`:''}</div>`:'';
+    const evHtml=catEvs.length>0?`<div class="day-cell-events">${catEvs.slice(0,maxShow).map(({ev,i})=>{const p=stripEvPrefixes(ev);const chipStyle=catChipStyle(p.cat)+(p.done?'text-decoration:line-through;opacity:.5;':'');return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${i})" ondragend="dragEnd(event)" style="${chipStyle}">${escapeHtml(splitEvTime(p.rest).text)}</div>`;}).join('')}${catEvs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${catEvs.length-maxShow}</div>`:''}</div>`:'';
     html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
@@ -4037,7 +4037,7 @@ function renderWeek(){
         ondragstart="dragStart(event,'${key}',${idx})"
         ondragend="dragEnd(event)"
         onclick="event.stopPropagation();editWeekEvent('${key}',${idx})"
-        style="${chipStyle}">${evTimeHTML(p.rest)}</div>`;
+        style="${chipStyle}">${escapeHtml(splitEvTime(p.rest).text)}</div>`;
     });
     bH+=`<div class="week-add-btn" onclick="event.stopPropagation();addWeekEvent('${key}')">＋</div></div>`;
   }
