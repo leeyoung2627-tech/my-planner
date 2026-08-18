@@ -592,14 +592,18 @@ body{opacity:0;transition:opacity .25s ease}
 .ev-cat-dot{width:7px;height:7px;min-width:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
 .cat-select{flex-shrink:0;max-width:88px;border:0.5px solid #e4e4e4;border-radius:20px;padding:8px 8px;font-size:12px;color:#888;background:#fafafa;outline:none;font-family:inherit;cursor:pointer}
 .cat-select:focus{border-color:var(--accent,#7ec8e3)}
-.top-nav{display:flex;align-items:center;gap:6px;padding:.65rem .85rem;border-bottom:0.5px solid #eee;flex-shrink:0}
-.nav-btn{background:none;border:none;cursor:pointer;color:#666;padding:2px 6px;border-radius:4px;font-size:17px;line-height:1}
-.nav-btn:hover{background:#f0f0f0}
+.top-nav{display:flex;align-items:center;gap:8px;padding:.65rem .85rem;border-bottom:0.5px solid #eee;flex-shrink:0}
+.nav-btn{background:none;border:0.5px solid #e2e2e2;cursor:pointer;color:#888;width:26px;height:26px;border-radius:50%;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-btn:hover{background:#f5f5f5}
+.today-btn{padding:5px 14px;border-radius:20px;border:0.5px solid #ddd;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#666;flex-shrink:0}
+.today-btn:hover{background:#f5f5f5}
 .period-label{font-size:14px;font-weight:600;color:#222;flex:1}
-.view-toggle{display:flex;gap:4px}
-.vbtn{padding:3px 9px;border-radius:8px;border:0.5px solid #ddd;font-size:12px;cursor:pointer;background:transparent;color:#888}
-.vbtn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
-.user-area{display:flex;align-items:center;gap:6px}
+.view-toggle{display:flex;align-items:center;gap:2px;background:transparent}
+.vbtn{padding:5px 14px;border-radius:20px;border:none;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#999}
+.vbtn.active{background:var(--accent);color:#fff}
+.vbtn.icon-vbtn{padding:5px 8px;font-size:14px}
+.nav-group{display:flex;align-items:center;gap:6px}
+.user-area{display:flex;align-items:center;gap:6px;margin-left:6px;padding-left:10px;border-left:0.5px solid #eee}
 .user-name{font-size:11px;color:#888}
 .logout-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:inherit}
 .logout-btn:hover{background:#f5f5f5}
@@ -945,20 +949,31 @@ body{opacity:0;transition:opacity .25s ease}
 .day-cell-anniv{font-size:9px;color:var(--accent);text-align:center;line-height:1.2;word-break:keep-all}
 
 /* 디데이 */
-.dday-sidebar{display:flex;flex-direction:column;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;padding:.75rem .65rem;gap:8px;overflow-y:auto}
-.dday-header{font-size:11px;font-weight:600;color:#aaa;letter-spacing:.04em;padding-bottom:4px;border-bottom:0.5px solid #eee}
-.dday-card{background:#fff;border:0.5px solid #eee;border-radius:10px;padding:9px 10px;display:flex;flex-direction:column;gap:3px;position:relative}
-.dday-title{font-size:12px;font-weight:600;color:#222;white-space:normal;word-break:keep-all;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;padding-right:16px;line-height:1.4}
-.dday-date{font-size:10px;color:#aaa}
-.dday-num{font-size:18px;font-weight:700;line-height:1.1}
-.dday-num.future{color:var(--accent)}
-.dday-num.today{color:#1D9E75}
-.dday-num.past{color:#D85A30}
-.dday-sub{font-size:10px;color:#aaa}
-.dday-del{position:absolute;top:6px;right:6px;font-size:10px;color:#ddd;background:none;border:none;cursor:pointer;padding:1px 3px;border-radius:3px;font-family:inherit}
-.dday-del:hover{color:#D85A30}
-.dday-add-btn{display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer;padding:6px;background:#fff;border:0.5px dashed #ddd;border-radius:10px;font-family:inherit}
-.dday-add-btn:hover{color:var(--accent);border-color:var(--accent)}
+.dday-sidebar{display:flex;flex-direction:column;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;padding:.85rem .75rem;gap:2px;overflow-y:auto}
+.dday-header-row{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;margin-bottom:4px;border-bottom:0.5px solid #eee}
+.dday-header{font-size:14px;font-weight:700;color:#222}
+.dday-add-circle{width:22px;height:22px;border-radius:50%;background:var(--accent-light,#eef3fc);color:var(--accent,#4472B8);display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;cursor:pointer;border:none;font-family:inherit;flex-shrink:0}
+.dday-add-circle:hover{background:var(--accent,#4472B8);color:#fff}
+.dday-item-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:10px 2px;border-bottom:0.5px solid #f2f2f2;position:relative}
+.dday-item-row:last-child{border-bottom:none}
+.dday-item-main{flex:1;min-width:0}
+.dday-item-title{font-size:12.5px;font-weight:600;color:#222;word-break:keep-all;line-height:1.4;cursor:pointer}
+.dday-item-title:hover{color:var(--accent)}
+.dday-item-sub{font-size:10.5px;color:#aaa;margin-top:3px}
+.dday-item-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.dday-badge{font-size:12px;font-weight:700;padding:4px 12px;border-radius:14px;white-space:nowrap;background:var(--accent-light,#EEF3FC);color:var(--accent,#4472B8)}
+.dday-badge.today{background:#DCF3E8;color:#1D9E75}
+.dday-badge.past{background:#FBE7E0;color:#D85A30}
+.dday-item-del{font-size:11px;color:#ccc;background:none;border:none;cursor:pointer;padding:2px;font-family:inherit}
+.dday-item-del:hover{color:#D85A30}
+
+/* 주요 디데이 카드 (일정 탭 상단) */
+.dday-hero-card{background:var(--accent,#4472B8);border-radius:14px;padding:14px 16px;margin-bottom:12px;color:#fff}
+.dday-hero-title-input{width:100%;background:transparent;border:none;color:#fff;font-size:15px;font-weight:700;padding:2px 0 12px;outline:none;font-family:inherit}
+.dday-hero-title-input::placeholder{color:rgba(255,255,255,.65)}
+.dday-hero-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dday-hero-date-input{background:rgba(255,255,255,.18);border:none;border-radius:8px;color:#fff;font-size:12px;padding:6px 9px;color-scheme:dark;font-family:inherit;flex:1;min-width:0}
+.dday-hero-badge{font-size:14px;font-weight:700;color:#fff;background:rgba(255,255,255,.22);padding:5px 13px;border-radius:14px;white-space:nowrap;flex-shrink:0}
 
 .saving-indicator{position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;display:none;z-index:999}
 
@@ -1358,14 +1373,15 @@ body.memo-edit-on .memo-text-handle{display:flex}
     <div class="mind-bar" id="mindBar" contenteditable="true" spellcheck="false" data-placeholder="오늘의 마음가짐을 적어보세요" onblur="saveMindBar()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></div>
     <div class="top-nav">
       <button class="nav-btn" id="leftBackBtn" onclick="handleLeftBack()" style="display:none">←</button>
-      <button class="nav-btn" id="navPrev" onclick="movePeriod(-1)">‹</button>
       <span class="period-label" id="periodLabel"></span>
-      <button class="nav-btn" id="navNext" onclick="movePeriod(1)">›</button>
       <div class="view-toggle" id="viewToggle">
         <button class="vbtn active" id="btnMonth" onclick="switchView('month')">월</button>
         <button class="vbtn" id="btnWeek" onclick="switchView('week')">주</button>
-        <button class="vbtn" id="btnAnniv" onclick="switchView('anniv')">🎂</button>
       </div>
+      <button class="nav-btn" id="navPrev" onclick="movePeriod(-1)">‹</button>
+      <button class="today-btn" id="todayBtn" onclick="goToToday()">오늘</button>
+      <button class="nav-btn" id="navNext" onclick="movePeriod(1)">›</button>
+      <button class="vbtn icon-vbtn" id="btnAnniv" onclick="switchView('anniv')" title="기념일">🎂</button>
       <div class="user-area">
         <span class="user-name" id="userName"></span>
         <button class="logout-btn" onclick="logoutUser()">로그아웃</button>
@@ -1408,6 +1424,14 @@ body.memo-edit-on .memo-text-handle{display:flex}
     </div>
 
     <div id="tab-schedule" class="tab-content active">
+      <!-- 주요 디데이 (완결/마감 등 하나만 크게 표시) -->
+      <div class="dday-hero-card" id="ddayHeroCard">
+        <input type="text" id="ddayHeroTitle" class="dday-hero-title-input" placeholder="주요 디데이 이름 (예: 완결까지)" onblur="saveDdayHero()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+        <div class="dday-hero-row">
+          <input type="date" id="ddayHeroDate" class="dday-hero-date-input" onchange="updateDdayHero();saveDdayHero()">
+          <div class="dday-hero-badge" id="ddayHeroBadge">D-DAY</div>
+        </div>
+      </div>
       <!-- 하루계획표 모드일 때만 보이는 먼슬리 체크리스트 -->
       <div id="dpScheduleSection" style="display:none;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:4px;border-bottom:0.5px solid #EEF1F8">
@@ -1523,9 +1547,11 @@ body.memo-edit-on .memo-text-handle{display:flex}
   </div>
 
   <div class="dday-sidebar">
-    <div class="dday-header">D-DAY</div>
+    <div class="dday-header-row">
+      <div class="dday-header">D-DAY</div>
+      <button class="dday-add-circle" id="ddayAddBtn" onclick="openDdayModal()" title="디데이 추가">＋</button>
+    </div>
     <div id="ddayList"></div>
-    <button class="dday-add-btn" id="ddayAddBtn" onclick="openDdayModal()">＋ 추가</button>
   </div>
 </div>
 
@@ -2356,6 +2382,7 @@ let fastingData={};
 let fastingHours=16;
 let moneyMemoData={};
 let ddayList=[];
+let ddayHero={title:'',date:''};
 let generalTodos=[];
 let mindBarText='';
 let scheduleCategories=[];
@@ -2905,7 +2932,7 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadTopMemo();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
-    loadMindBar();renderCategoryLegend();
+    loadMindBar();renderCategoryLegend();loadDdayHero();
     renderRoutineList();checkRoutineReminders();
     renderTipList();
     runFixedCostAutoRecord();
@@ -3008,7 +3035,7 @@ async function saveAppearanceNow(){
 window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -3040,6 +3067,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','generalTodos')),
     getDoc(doc(db,'users',currentUser.uid,'settings','mindBar')),
     getDoc(doc(db,'users',currentUser.uid,'settings','scheduleCategories')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','ddayHero')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
@@ -3057,6 +3085,7 @@ async function loadAllData(){
   generalTodos=(gtS.exists()&&gtS.data().items)?gtS.data().items:[];
   mindBarText=mbS.exists()?(mbS.data().text||''):'';
   scheduleCategories=(scS.exists()&&scS.data().items)?scS.data().items:DEFAULT_SCHEDULE_CATEGORIES.slice();
+  ddayHero=dhS.exists()?{title:dhS.data().title||'',date:dhS.data().date||''}:{title:'',date:''};
   moneyMemoData={};mmS.forEach(d=>{moneyMemoData[d.id]={text:d.data().text||'',pending:d.data().pending||false};});
   ddayList=[];ddS.forEach(d=>{ddayList.push({id:d.id,...d.data()});});
   ddayList.sort((a,b)=>(a.order??new Date(a.date).getTime())-(b.order??new Date(b.date).getTime()));
@@ -3250,6 +3279,7 @@ function setLeftMode(mode){
   const isCalMode=mode==='cal'||mode==='money-cal'||mode==='meal-cal';
   document.getElementById('navPrev').style.display=isCalMode?'':'none';
   document.getElementById('navNext').style.display=isCalMode?'':'none';
+  document.getElementById('todayBtn').style.display=isCalMode?'':'none';
   document.getElementById('viewToggle').style.display=(mode==='cal'||mode==='anniv'||mode==='daily')?'':'none';
   document.getElementById('leftBackBtn').style.display=isCalMode?'none':'';
 
@@ -4049,6 +4079,15 @@ window.selectDay=function(d){
   }
 };
 window.selectDayFromWeek=function(y,m,d){selDate=new Date(y,m,d);renderWeek();updateRightDate();renderSchedule();renderMoney();renderMeal();renderNoSpend();renderFasting();};
+window.goToToday=function(){
+  cur=new Date(today.getFullYear(),today.getMonth(),1);
+  selDate=new Date(today);
+  if(leftMode==='money-cal')renderMoneyCal();
+  else if(leftMode==='meal-cal')renderMealCal();
+  else if(curView==='week')renderWeek();
+  else renderMonth();
+  updateRightDate();renderSchedule();renderMoney();renderMeal();renderNoSpend();renderFasting();
+};
 function updateRightDate(){document.getElementById('rightDate').textContent=selDate.getFullYear()+'년 '+(selDate.getMonth()+1)+'월 '+selDate.getDate()+'일 '+DAYS[selDate.getDay()]+'요일';}
 window.addWeekEvent=async function(key){
   const name=prompt('일정 입력:');if(!name||!name.trim())return;
@@ -6287,34 +6326,72 @@ function calcDday(dateStr){
   const now=new Date();now.setHours(0,0,0,0);
   return Math.round((target-now)/(1000*60*60*24));
 }
+// ── 주요 디데이 (일정 탭 상단에 크게 표시되는 대표 디데이 1개) ──
+function loadDdayHero(){
+  const t=document.getElementById('ddayHeroTitle');
+  const d=document.getElementById('ddayHeroDate');
+  if(t)t.value=ddayHero.title||'';
+  if(d)d.value=ddayHero.date||'';
+  updateDdayHeroBadge();
+}
+function updateDdayHeroBadge(){
+  const badge=document.getElementById('ddayHeroBadge');
+  const dateEl=document.getElementById('ddayHeroDate');
+  if(!badge)return;
+  const dateVal=dateEl?dateEl.value:'';
+  if(!dateVal){badge.textContent='D-DAY';return;}
+  const diff=calcDday(dateVal);
+  badge.textContent=diff===0?'D-DAY':(diff>0?`D-${diff}`:`D+${Math.abs(diff)}`);
+}
+window.updateDdayHero=function(){updateDdayHeroBadge();};
+window.saveDdayHero=async function(){
+  if(!currentUser)return;
+  const t=document.getElementById('ddayHeroTitle');
+  const d=document.getElementById('ddayHeroDate');
+  const title=t?t.value.trim():'';
+  const date=d?d.value:'';
+  if(ddayHero.title===title&&ddayHero.date===date)return;
+  ddayHero={title,date};
+  await setDoc(doc(db,'users',currentUser.uid,'settings','ddayHero'),ddayHero);
+  showSaving();
+};
 function renderDdays(){
   const list=document.getElementById('ddayList');list.innerHTML='';
+  if(ddayList.length===0){
+    list.innerHTML='<div class="empty-hint">등록된 디데이가 없어요.</div>';
+    return;
+  }
   ddayList.forEach((dd,idx)=>{
     const diff=calcDday(dd.date);
-    let numText,numClass,subText;
-    if(diff>0){numText='D-'+diff;numClass='future';subText=dd.date+' 까지';}
-    else if(diff===0){numText='D-Day';numClass='today';subText='오늘!';}
-    else{numText='D+'+Math.abs(diff);numClass='past';subText=dd.date+' 지남';}
-    const card=document.createElement('div');
-    card.className='dday-card';
-    card.draggable=true;
-    card.dataset.idx=idx;
-    card.innerHTML=`
-      <span class="drag-dots" style="position:absolute;top:7px;left:7px;font-size:12px;color:#ddd;cursor:grab;user-select:none">⠿</span>
-      <button class="dday-del" onclick="deleteDday('${dd.id}')">✕</button>
-      <div class="dday-title editable-title" style="padding-left:16px" onclick="openDdayEditModal('${dd.id}')">${dd.name}</div>
-      <div class="dday-num ${numClass}">${numText}</div>
-      <div class="dday-sub">${subText}</div>`;
-    card.addEventListener('dragstart',e=>{
+    const dt=new Date(dd.date);
+    const mmdd=String(dt.getMonth()+1).padStart(2,'0')+'.'+String(dt.getDate()).padStart(2,'0');
+    let badgeText,badgeClass,subText;
+    if(diff>0){badgeText='D-'+diff;badgeClass='';subText=mmdd+' 까지';}
+    else if(diff===0){badgeText='D-DAY';badgeClass='today';subText='오늘!';}
+    else{badgeText='D+'+Math.abs(diff);badgeClass='past';subText=mmdd+' 지남';}
+    const row=document.createElement('div');
+    row.className='dday-item-row';
+    row.draggable=true;
+    row.dataset.idx=idx;
+    row.innerHTML=`
+      <div class="dday-item-main">
+        <div class="dday-item-title editable-title" onclick="openDdayEditModal('${dd.id}')">${escapeHtml(dd.name)}</div>
+        <div class="dday-item-sub">${subText}</div>
+      </div>
+      <div class="dday-item-right">
+        <span class="dday-badge${badgeClass?' '+badgeClass:''}">${badgeText}</span>
+        <button class="dday-item-del" onclick="deleteDday('${dd.id}')">✕</button>
+      </div>`;
+    row.addEventListener('dragstart',e=>{
       e.dataTransfer.effectAllowed='move';
       e.dataTransfer.setData('dday-idx',String(idx));
-      card.style.opacity='.4';
+      row.style.opacity='.4';
     });
-    card.addEventListener('dragend',()=>{card.style.opacity='1';});
-    card.addEventListener('dragover',e=>{e.preventDefault();card.style.outline='1.5px solid var(--accent)';});
-    card.addEventListener('dragleave',()=>{card.style.outline='';});
-    card.addEventListener('drop',async e=>{
-      e.preventDefault();card.style.outline='';
+    row.addEventListener('dragend',()=>{row.style.opacity='1';});
+    row.addEventListener('dragover',e=>{e.preventDefault();row.style.background='var(--accent-light)';});
+    row.addEventListener('dragleave',()=>{row.style.background='';});
+    row.addEventListener('drop',async e=>{
+      e.preventDefault();row.style.background='';
       const from=parseInt(e.dataTransfer.getData('dday-idx'));
       const to=idx;
       if(from===to||isNaN(from))return;
@@ -6324,9 +6401,8 @@ function renderDdays(){
       await Promise.all(ddayList.map((d,order)=>saveData('ddays',d.id,{name:d.name,date:d.date,order})));
       renderDdays();
     });
-    list.appendChild(card);
+    list.appendChild(row);
   });
-  document.getElementById('ddayAddBtn').style.display=ddayList.length>=5?'none':'flex';
 }
 window.openDdayModal=function(){
   document.getElementById('dd-name').value='';document.getElementById('dd-date').value='';
@@ -6346,7 +6422,6 @@ window.confirmDdayEdit=async function(){
   closeModal('ddayEditModal');renderDdays();
 };
 window.confirmDday=async function(){
-  if(ddayList.length>=5)return alert('최대 5개까지 추가할 수 있어요');
   const name=document.getElementById('dd-name').value.trim();if(!name)return;
   const date=document.getElementById('dd-date').value;if(!date)return;
   const id='d_'+Date.now();
@@ -6752,8 +6827,8 @@ function applyTheme(){
     const ddHead=ddaySb.querySelector('.dday-header');
     if(ddHead)ddHead.style.color=nb?nt+'99':'';
     // 추가 버튼
-    const ddAdd=ddaySb.querySelector('.dday-add-btn');
-    if(ddAdd){ddAdd.style.background=nb?'transparent':'';ddAdd.style.borderColor=nb?nt+'44':'';}
+    const ddAdd=ddaySb.querySelector('.dday-add-circle');
+    if(ddAdd){ddAdd.style.background=nb?'rgba(255,255,255,.18)':'';ddAdd.style.color=nb?nt:'';}
   }
 
   // 상단 네비 (달력 헤더)
