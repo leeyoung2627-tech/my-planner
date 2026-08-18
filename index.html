@@ -6199,6 +6199,11 @@ function _compressImage(file,maxDim=1000,quality=0.72,sizeLimit=350000){
         const canvas=document.createElement('canvas');
         canvas.width=w;canvas.height=h;
         const ctx=canvas.getContext('2d');
+        // JPEG는 투명도를 지원하지 않아서, 투명 배경 그림(PNG 등)을 그냥 그리면
+        // 캔버스의 기본값 때문에 투명했던 부분이 검은색으로 바뀌어버림.
+        // 그리기 전에 흰색으로 미리 채워서, 투명했던 부분이 흰 배경이 되도록 함.
+        ctx.fillStyle='#ffffff';
+        ctx.fillRect(0,0,w,h);
         ctx.drawImage(img,0,0,w,h);
         let dataUrl=canvas.toDataURL('image/jpeg',quality);
         // 압축해도 여전히 너무 크면(sizeLimit 이상, base64 기준) 품질을 낮춰 재시도
