@@ -159,7 +159,7 @@ body{opacity:0;transition:opacity .25s ease}
 /* 세로로 긴 이미지 박스 (플래너28 상단 배너를 세로형으로 응용) - 너비/높이는 JS가 남는 공간에 맞춰 채움 */
 .mt-char-wrap{
   position:relative;width:100%;height:900px;
-  border-radius:18px;
+  border-radius:0;
   border:2px dashed #d8d8d8;
   background:#f7f7f8;
   overflow:hidden;cursor:pointer;
@@ -433,6 +433,12 @@ body{opacity:0;transition:opacity .25s ease}
 .bg-panel::-webkit-scrollbar{width:4px}
 .bg-panel::-webkit-scrollbar-thumb{background:#eee;border-radius:2px}
 .bg-panel-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.04em;text-transform:uppercase}
+.theme-preset-row{display:flex;gap:12px;flex-wrap:wrap}
+.theme-preset-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:52px}
+.theme-preset-dot{width:26px;height:26px;border-radius:50%;border:2px solid transparent;box-shadow:0 0 0 1px #00000014 inset;transition:transform .1s,border-color .1s}
+.theme-preset-item:hover .theme-preset-dot{transform:scale(1.08)}
+.theme-preset-item.active .theme-preset-dot{border-color:#333}
+.theme-preset-label{font-size:9.5px;color:#999;text-align:center;line-height:1.3;word-break:keep-all}
 .bg-panel-section{display:flex;flex-direction:column;gap:6px}
 
 /* 커스텀 컬러 */
@@ -446,6 +452,10 @@ body{opacity:0;transition:opacity .25s ease}
 /* 폰트 */
 .font-btns{display:flex;gap:5px;flex-wrap:wrap}
 .font-btn{padding:4px 10px;border-radius:6px;border:1px solid #eee;font-size:12px;cursor:pointer;background:#fafafa;color:#555;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.font-scale-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.font-scale-label-txt{font-size:11.5px;color:#888;flex-shrink:0}
+.font-scale-row input[type="range"]{flex:1;accent-color:var(--accent,#7ec8e3)}
+.font-scale-value{font-size:11.5px;font-weight:700;color:#666;min-width:34px;text-align:right;flex-shrink:0}
 .font-btn:hover,.font-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
 .font-btn.font-add-btn{border-style:dashed;color:#aaa}
 .font-btn.font-add-btn:hover{border-color:var(--accent);color:var(--accent);background:#fafafa}
@@ -1906,6 +1916,10 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
 <button class="bg-setting-btn" onclick="toggleBgPanel()" title="테마 설정">🎨</button>
 <div class="bg-panel" id="bgPanel">
+  <div class="bg-panel-title">빠른 테마</div>
+  <div class="theme-preset-row" id="themePresetRow"></div>
+
+  <hr class="theme-divider"/>
   <div class="bg-panel-title">세부 설정</div>
 
   <div class="bg-panel-section">
@@ -2010,6 +2024,12 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <hr class="theme-divider"/>
   <div class="bg-panel-title">폰트</div>
   <div class="font-btns" id="fontBtnsWrap"></div>
+  <div class="font-scale-row">
+    <span class="font-scale-label-txt">글자 크기</span>
+    <input type="range" id="fontScaleSlider" min="80" max="140" step="5" value="100" oninput="onFontScaleInput(this.value)"/>
+    <span class="font-scale-value" id="fontScaleLabel">100%</span>
+  </div>
+  <div style="font-size:10.5px;color:#aaa;line-height:1.5">일부 폰트는 같은 크기여도 유난히 작게 보여요. 이 슬라이더로 화면 전체 글자 크기를 조절할 수 있어요.</div>
 
   <hr class="theme-divider"/>
   <button class="theme-reset-btn" onclick="resetTheme()">↺ 기본값으로 초기화</button>
@@ -3016,6 +3036,7 @@ async function saveAppearanceNow(){
     theme:currentTheme,
     pattern:currentPattern,
     font:currentFont,
+    fontScale:currentFontScale,
     patternColor:patternColor,
     // 파일 업로드 폰트(용량이 커서 기기별로만 유지되는 폰트)는 제외하고, Google 폰트만 동기화
     customFonts:customFonts.filter(f=>f.google&&f.type!=='file'),
@@ -3157,6 +3178,7 @@ async function loadAllData(){
       if(ap.theme){currentTheme=ap.theme;localStorage.setItem('planner_theme_v2',JSON.stringify(ap.theme));}
       if(ap.pattern){currentPattern=ap.pattern;localStorage.setItem('planner_pattern',ap.pattern);}
       if(ap.font){currentFont=ap.font;localStorage.setItem('planner_font',ap.font);}
+      if(ap.fontScale){currentFontScale=ap.fontScale;localStorage.setItem('planner_font_scale',String(ap.fontScale));}
       if(ap.patternColor){patternColor=ap.patternColor;localStorage.setItem('planner_pattern_color',ap.patternColor);}
       if(ap.customFonts){
         // 파일 업로드 폰트(이 기기에만 있는 대용량 폰트)는 유지하고, 서버의 Google 폰트 목록으로 나머지를 덮어씀
@@ -3180,6 +3202,7 @@ async function loadAllData(){
       if(savedTheme)currentTheme=JSON.parse(savedTheme);
       const p=localStorage.getItem('planner_pattern');if(p)currentPattern=p;
       const f=localStorage.getItem('planner_font');if(f)currentFont=f;
+      const fs=localStorage.getItem('planner_font_scale');if(fs)currentFontScale=parseFloat(fs)||1;
       const pc=localStorage.getItem('planner_pattern_color');if(pc)patternColor=pc;
       const cf=localStorage.getItem('planner_custom_fonts');
       if(cf){try{customFonts=JSON.parse(cf);}catch(e){}}
@@ -6177,7 +6200,7 @@ document.getElementById('memoImgLightbox').addEventListener('wheel',e=>{
 })();
 function renderMemoImgPreview(){}// 하위 호환 빈 함수
 // 이미지 리사이즈+압축 (Firestore 1MB 문서 한도 대응)
-function _compressImage(file,maxDim=1000,quality=0.72){
+function _compressImage(file,maxDim=1000,quality=0.72,sizeLimit=350000){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
     reader.onload=e=>{
@@ -6193,8 +6216,11 @@ function _compressImage(file,maxDim=1000,quality=0.72){
         const ctx=canvas.getContext('2d');
         ctx.drawImage(img,0,0,w,h);
         let dataUrl=canvas.toDataURL('image/jpeg',quality);
-        // 압축해도 여전히 너무 크면(약 350KB 이상, base64 기준) 품질을 더 낮춰 재시도
-        if(dataUrl.length>350000&&quality>0.4){
+        // 압축해도 여전히 너무 크면(sizeLimit 이상, base64 기준) 품질을 낮춰 재시도
+        if(dataUrl.length>sizeLimit&&quality>0.6){
+          dataUrl=canvas.toDataURL('image/jpeg',0.6);
+        }
+        if(dataUrl.length>sizeLimit&&quality>0.4){
           dataUrl=canvas.toDataURL('image/jpeg',0.4);
         }
         resolve(dataUrl);
@@ -6742,6 +6768,14 @@ const THEMES=[
   {name:'다크 레드',accent:'#f87171',accentLight:'#7f1d1d',appbg:'#1c1010',pagebg:'#140a0a',text:'#fee2e2'},
   {name:'미드나잇',accent:'#60a5fa',accentLight:'#1e3a5f',appbg:'#0f172a',pagebg:'#080f1e',text:'#e2e8f0'},
   {name:'오닉스',accent:'#a3a3a3',accentLight:'#262626',appbg:'#171717',pagebg:'#0f0f0f',text:'#e5e5e5'},
+  // ── 플래너 디자인 파일에서 그대로 가져온 색조합 ──
+  {name:'플래너 블루그레이',accent:'#3E6FA8',accentLight:'#C7DAEF',appbg:'#FFFFFF',pagebg:'#F1F2F5',text:'#2C323A',bordercol:'#DDE1E7'},
+  {name:'플래너 페리윙클',accent:'#7B93E0',accentLight:'#CDDAFD',appbg:'#FFFFFF',pagebg:'#F5F7FE',text:'#3A4152',bordercol:'#E3E9FA'},
+  {name:'플래너 라벤더',accent:'#B18AE8',accentLight:'#F1DDFF',appbg:'#FFFFFF',pagebg:'#F8F6FB',text:'#3E374C',bordercol:'#E5E1F0'},
+  {name:'플래너 피치',accent:'#F0976B',accentLight:'#F4E1D6',appbg:'#FFFFFF',pagebg:'#FDF8F4',text:'#4A362A',bordercol:'#F2E3D6'},
+  {name:'플래너 민트',accent:'#4FBF95',accentLight:'#D1E6D3',appbg:'#FFFFFF',pagebg:'#F5FAF6',text:'#33453B',bordercol:'#DEEBE3'},
+  {name:'플래너 로즈',accent:'#F080A0',accentLight:'#FDE2E4',appbg:'#FFFFFF',pagebg:'#FDF6F7',text:'#4A3237',bordercol:'#F5DEE2'},
+  {name:'플래너 무지개',accent:'#5F7DB8',accentLight:'#AEDBF7',appbg:'#FFFFFF',pagebg:'#EAE8E2',text:'#3A4152',bordercol:'#E3E6E0'},
 ];
 const FONTS={
   system:"'Apple SD Gothic Neo','Malgun Gothic',sans-serif",
@@ -6754,6 +6788,7 @@ const BUILTIN_GFONTS=['Noto Serif KR','Nanum Gothic Coding','Nanum Gothic'];
 let currentTheme={...THEMES[0]};
 let currentPattern='none';
 let currentFont='system';
+let currentFontScale=1;
 let patternColor='#000000';
 let customFonts=[];
 
@@ -6762,6 +6797,7 @@ function loadTheme(){
   if(saved){try{currentTheme=JSON.parse(saved);}catch(e){}}
   const p=localStorage.getItem('planner_pattern');if(p)currentPattern=p;
   const f=localStorage.getItem('planner_font');if(f)currentFont=f;
+  const fs=localStorage.getItem('planner_font_scale');if(fs)currentFontScale=parseFloat(fs)||1;
   const pc=localStorage.getItem('planner_pattern_color');if(pc)patternColor=pc;
   const cf=localStorage.getItem('planner_custom_fonts');
   if(cf){try{customFonts=JSON.parse(cf);}catch(e){customFonts=[];}}
@@ -6775,12 +6811,18 @@ function loadTheme(){
   localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
   BUILTIN_GFONTS.forEach(g=>loadGoogleFont(g));
   customFonts.forEach(f=>{
-    if(f.type==='file'&&f.dataUrl)registerFileFont(f.family,f.dataUrl);
+    if(f.type==='file'){
+      // 폰트 원본은 IndexedDB에 저장돼 있으므로 비동기로 불러와 등록
+      idbGetFont(f.key).then(dataUrl=>{
+        if(dataUrl)registerFileFont(f.family,dataUrl);
+      });
+    }
     else if(f.google)loadGoogleFont(f.google);
   });
   applyTheme();
   applyPattern(currentPattern);
   applyFont(currentFont);
+  applyFontScale(currentFontScale);
   try{
     const bgImg=localStorage.getItem('planner_bgImage');
     if(bgImg)applyBgImage(bgImg);
@@ -6904,6 +6946,10 @@ function updatePanelPreviews(){
   const bcInp=document.getElementById('inp-bordercol');if(bcInp)bcInp.value=t.bordercol||'#dddddd';
   const pInp=document.getElementById('inp-pattern');
   if(pInp)pInp.value=patternColor;
+  const fsSlider=document.getElementById('fontScaleSlider');
+  const fsLabel=document.getElementById('fontScaleLabel');
+  if(fsSlider)fsSlider.value=Math.round(currentFontScale*100);
+  if(fsLabel)fsLabel.textContent=Math.round(currentFontScale*100)+'%';
   updateBgImagePreview();
 }
 function updateBgImagePreview(){
@@ -6955,9 +7001,9 @@ window.addCustomFont=function(){
 window.handleFontFileUpload=function(e){
   const file=e.target.files&&e.target.files[0];
   if(!file){return;}
-  const MAX=4*1024*1024;
+  const MAX=15*1024*1024;
   if(file.size>MAX){
-    alert('폰트 파일이 너무 커요(4MB 초과). 브라우저에 저장할 수 없어서 추가하지 못했어요.\n가능하면 .woff2 형식(용량이 훨씨 작아요)으로 준비해주세요.');
+    alert('폰트 파일이 너무 커요(15MB 초과). 추가하지 못했어요.\n가능하면 .woff2 형식(용량이 훨씬 작아요)으로 준비해주세요.');
     e.target.value='';
     return;
   }
@@ -6968,18 +7014,29 @@ window.handleFontFileUpload=function(e){
     const dataUrl=ev.target.result;
     const key='customfile_'+Date.now();
     const family='cf_'+key;
-    registerFileFont(family,dataUrl).then(ok=>{
+    registerFileFont(family,dataUrl).then(async ok=>{
       if(!ok){
         alert('폰트 파일을 불러오지 못했어요. 파일 형식(ttf/otf/woff/woff2)을 확인해주세요.');
         e.target.value='';
         return;
       }
-      customFonts.push({key,name,type:'file',family,dataUrl});
+      customFonts.push({key,name,type:'file',family});
       try{
         localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
       }catch(err){
         customFonts.pop();
-        alert('폰트 파일이 너무 커서 저장 공간이 부족해요. 이 폰트는 새로고침하면 사라져요.\n더 작은 용량(.woff2 권장)의 파일을 써보시거나, 기존에 추가한 파일 폰트를 하나 삭제해주세요.');
+        alert('폰트 정보를 저장하지 못했어요. 다시 시도해주세요.');
+        e.target.value='';
+        return;
+      }
+      const saved=await idbSaveFont(key,dataUrl);
+      if(!saved){
+        customFonts=customFonts.filter(f=>f.key!==key);
+        localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
+        alert('폰트 파일을 저장하지 못했어요. 브라우저 저장 공간이 부족할 수 있어요.\n다른 파일 폰트를 하나 삭제한 뒤 다시 시도해주세요.');
+        renderFontButtons();
+        e.target.value='';
+        return;
       }
       renderFontButtons();
       setFont(key,document.querySelector(`.font-btn[data-key="${key}"]`));
@@ -6992,6 +7049,54 @@ window.handleFontFileUpload=function(e){
   };
   reader.readAsDataURL(file);
 };
+// ── 파일 업로드 폰트 저장소 (IndexedDB) ──
+// localStorage는 용량이 작아(브라우저마다 보통 5~10MB) 큰 폰트 파일을 저장하면 저장 공간 초과로
+// 새로고침 시 사라지는 문제가 있었음. IndexedDB는 훨씬 큰 용량을 다룰 수 있어 폰트 파일 원본은
+// 여기에 저장하고, localStorage/서버에는 폰트 이름 등 가벼운 정보만 남긴다.
+function _fontIdbOpen(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open('planner_fonts_db',1);
+    req.onupgradeneeded=()=>{
+      const dbi=req.result;
+      if(!dbi.objectStoreNames.contains('fonts'))dbi.createObjectStore('fonts');
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbSaveFont(key,dataUrl){
+  try{
+    const dbi=await _fontIdbOpen();
+    return new Promise((resolve,reject)=>{
+      const tx=dbi.transaction('fonts','readwrite');
+      tx.objectStore('fonts').put(dataUrl,key);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error);
+    });
+  }catch(e){return false;}
+}
+async function idbGetFont(key){
+  try{
+    const dbi=await _fontIdbOpen();
+    return new Promise((resolve,reject)=>{
+      const tx=dbi.transaction('fonts','readonly');
+      const req=tx.objectStore('fonts').get(key);
+      req.onsuccess=()=>resolve(req.result||null);
+      req.onerror=()=>reject(req.error);
+    });
+  }catch(e){return null;}
+}
+async function idbDeleteFont(key){
+  try{
+    const dbi=await _fontIdbOpen();
+    return new Promise((resolve)=>{
+      const tx=dbi.transaction('fonts','readwrite');
+      tx.objectStore('fonts').delete(key);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>resolve(false);
+    });
+  }catch(e){return false;}
+}
 function registerFileFont(family,dataUrl){
   try{
     const fontFace=new FontFace(family,`url(${dataUrl})`);
@@ -7004,6 +7109,7 @@ function registerFileFont(family,dataUrl){
 window.deleteCustomFont=function(key){
   customFonts=customFonts.filter(f=>f.key!==key);
   localStorage.setItem('planner_custom_fonts',JSON.stringify(customFonts));
+  idbDeleteFont(key);
   if(currentFont===key){
     currentFont='system';
     localStorage.setItem('planner_font','system');
@@ -7028,7 +7134,26 @@ window.toggleBgPanel=function(){
   const panel=document.getElementById('bgPanel');
   const isOpen=panel.style.display==='flex';
   panel.style.display=isOpen?'none':'flex';
-  if(!isOpen){renderFontButtons();updatePanelPreviews();}
+  if(!isOpen){renderFontButtons();updatePanelPreviews();renderThemePresets();}
+};
+function renderThemePresets(){
+  const row=document.getElementById('themePresetRow');
+  if(!row)return;
+  row.innerHTML=THEMES.map((t,i)=>{
+    const active=currentTheme.name===t.name?' active':'';
+    return `<div class="theme-preset-item${active}" onclick="applyThemePreset(${i})" title="${escapeHtml(t.name)}">
+      <span class="theme-preset-dot" style="background:${t.accent}"></span>
+      <span class="theme-preset-label">${escapeHtml(t.name.replace('★ ','').replace('플래너 ',''))}</span>
+    </div>`;
+  }).join('');
+}
+window.applyThemePreset=function(idx){
+  const t=THEMES[idx];
+  if(!t)return;
+  currentTheme={...t};
+  applyTheme();
+  updatePanelPreviews();
+  renderThemePresets();
 };
 window.onCustomColor=function(key,val){
   currentTheme[key]=val;
@@ -7100,12 +7225,30 @@ function applyFont(fontKey){
   }
   document.body.style.fontFamily=FONTS[fontKey]||FONTS.system;
 }
+// ── 글자 크기 (일부 폰트는 같은 font-size에도 훨씬 작게 보여서, 전체적으로 키우거나 줄일 수 있게 함) ──
+function applyFontScale(scale){
+  currentFontScale=scale;
+  document.body.style.zoom=String(scale);
+  const label=document.getElementById('fontScaleLabel');
+  if(label)label.textContent=Math.round(scale*100)+'%';
+  const slider=document.getElementById('fontScaleSlider');
+  if(slider)slider.value=Math.round(scale*100);
+  // 배율이 바뀌면 화면 크기 기준으로 위치를 계산하는 왼쪽 이미지 패널 등도 다시 맞춰줌
+  if(window.positionMissionTracker)positionMissionTracker();
+}
+window.onFontScaleInput=function(val){
+  const scale=parseInt(val,10)/100;
+  applyFontScale(scale);
+  localStorage.setItem('planner_font_scale',String(scale));
+  if(window.queueSaveAppearance)window.queueSaveAppearance();
+};
 window.resetTheme=function(){
   currentTheme={...THEMES[0]};currentPattern='none';currentFont='system';patternColor='#000000';
-  applyTheme();applyPattern('none');applyFont('system');
+  applyTheme();applyPattern('none');applyFont('system');applyFontScale(1);
   localStorage.removeItem('planner_theme_v2');
   localStorage.removeItem('planner_pattern');
   localStorage.removeItem('planner_font');
+  localStorage.removeItem('planner_font_scale');
   localStorage.removeItem('planner_pattern_color');
   renderFontButtons();updatePanelPreviews();
   document.querySelectorAll('.bg-pattern').forEach(b=>b.classList.remove('active'));
@@ -7362,7 +7505,7 @@ window.onMtCharImageUpload=async function(event){
   if(!file)return;
   if(!file.type.startsWith('image/')){alert('이미지 파일만 선택할 수 있어요');event.target.value='';return;}
   try{
-    const dataUrl=await _compressImage(file,600,0.85);
+    const dataUrl=await _compressImage(file,1400,0.85,900000);
     missionData.charImg=dataUrl;
     const img=document.getElementById('mtCharImg');
     const wrap=document.getElementById('mtCharWrap');
@@ -7383,12 +7526,29 @@ function positionMissionTracker(){
   const wrap=document.getElementById('mtCharWrap');
   const btns=document.querySelector('.note-buttons');
   if(!app||!tracker)return;
-  const rect=app.getBoundingClientRect();
 
-  const gap=20; // 달력 카드와의 간격만 유지, 나머지는 화면 끝까지 꽉 채움
+  const gap=20;
+  const desiredW=520; // 이미지 패널 목표 너비 (더 넓게)
+  const rightReserve=260; // 오른쪽 노트 버튼 등을 위해 남겨둘 최소 공간
+
+  // 1) 먼저 마진을 초기화해서 원래(가운데 정렬) 위치를 측정
+  app.style.marginLeft='';
+  let rect=app.getBoundingClientRect();
+
+  // 2) 목표 너비만큼 왼쪽 공간이 부족하면, 달력/메뉴 전체를 오른쪽으로 밀어서 공간을 확보
+  //    (가운데 정렬 특성상 margin 변화는 절반만 반영되므로 필요량의 2배를 적용)
+  const needed=desiredW+gap-rect.left;
+  if(needed>0){
+    const maxShift=Math.max(0, window.innerWidth-rect.width-desiredW-gap*2-rightReserve);
+    const shift=Math.min(needed, maxShift);
+    if(shift>0){
+      app.style.marginLeft=(shift*2)+'px';
+      rect=app.getBoundingClientRect();
+    }
+  }
 
   // 트래커 너비: 화면 맨 왼쪽부터 달력 카드 앞(gap)까지 남는 공간을 꽉 채움
-  const trackerW=Math.min(460,Math.max(120, rect.left-gap));
+  const trackerW=Math.min(desiredW,Math.max(120, rect.left-gap));
   tracker.style.width=trackerW+'px';
   tracker.style.left='0px';
   // 위쪽도 화면 맨 위에 딱 닿게
