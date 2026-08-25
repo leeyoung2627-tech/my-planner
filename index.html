@@ -162,7 +162,7 @@ body{opacity:0;transition:opacity .25s ease}
 }
 .mt-char-wrap.has-image .mt-char-empty{display:none}
 .mt-char-img{
-  width:100%;height:100%;object-fit:cover;display:none;
+  width:100%;height:100%;object-fit:contain;display:none;
   transform-origin:center center;
   touch-action:none;
 }
@@ -188,25 +188,26 @@ body{opacity:0;transition:opacity .25s ease}
 .mt-char-wrap.adjusting{cursor:grab}
 .mt-char-wrap.adjusting.mt-dragging{cursor:grabbing}
 .mt-char-adjust-panel{
-  position:absolute;left:10px;right:10px;bottom:10px;z-index:6;
+  position:fixed;left:16px;right:auto;bottom:16px;z-index:9999;
+  width:280px;max-width:calc(100vw - 32px);
   display:none;align-items:center;gap:8px;
-  background:rgba(255,255,255,.92);border:1px solid #ddd;border-radius:12px;
-  padding:8px 10px;box-shadow:0 2px 10px #0002;
+  background:rgba(255,255,255,.97);border:1px solid #ddd;border-radius:12px;
+  padding:9px 11px;box-shadow:0 4px 18px #0003;
 }
-.mt-char-wrap.adjusting .mt-char-adjust-panel{display:flex}
+.mt-char-adjust-panel.mt-open{display:flex}
 .mt-char-adjust-panel .mt-zoom-label{font-size:11px;color:#777;white-space:nowrap}
 .mt-char-adjust-panel input[type=range]{flex:1;accent-color:var(--accent,#7ec8e3);cursor:pointer}
 .mt-char-adjust-done{
   background:var(--accent,#7ec8e3);color:#fff;border:none;border-radius:8px;
-  font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;white-space:nowrap;
+  font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer;white-space:nowrap;
 }
 .mt-char-adjust-hint{
-  position:absolute;top:10px;left:10px;z-index:6;
+  position:fixed;top:16px;left:16px;z-index:9999;
   display:none;
-  background:rgba(0,0,0,.55);color:#fff;font-size:11px;
-  padding:5px 10px;border-radius:14px;pointer-events:none;
+  background:rgba(0,0,0,.6);color:#fff;font-size:11px;
+  padding:6px 12px;border-radius:14px;pointer-events:none;
 }
-.mt-char-wrap.adjusting .mt-char-adjust-hint{display:block}
+.mt-char-adjust-hint.mt-open{display:block}
 /* 말풍선 */
 .mt-speech-bubble{
   position:absolute;
@@ -1810,11 +1811,11 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <div class="mt-char-adjust-btn" id="mtCharAdjustBtn" onclick="event.stopPropagation();toggleMtCharAdjustMode()">배치수정</div>
       <div class="mt-char-upload-btn" id="mtCharUploadBtn" onclick="event.stopPropagation();document.getElementById('mtCharImgInput').click()">이미지 변경</div>
     </div>
-    <div class="mt-char-adjust-hint">드래그로 이동 · 휠로 확대/축소</div>
-    <div class="mt-char-adjust-panel">
+    <div class="mt-char-adjust-hint" id="mtCharAdjustHint">드래그로 이동 · 휠로 확대/축소</div>
+    <div class="mt-char-adjust-panel" id="mtCharAdjustPanel">
       <span class="mt-zoom-label">크기</span>
       <input type="range" id="mtCharZoomSlider" min="100" max="400" value="100" oninput="setMtCharZoom(this.value)"/>
-      <button class="mt-char-adjust-done" onclick="toggleMtCharAdjustMode()">완료</button>
+      <button class="mt-char-adjust-done" onclick="toggleMtCharAdjustMode()">완료 (저장)</button>
     </div>
     <input type="file" id="mtCharImgInput" accept="image/*" style="display:none" onchange="onMtCharImageUpload(event)"/>
   </div>
@@ -7599,11 +7600,23 @@ window.applyMtCharTransform=applyMtCharTransform;
 
 let _mtCharAdjusting=false;
 let _mtCharDrag=null; // {startX,startY,startXp,startYp,w,h}
+function _mtCharMovePanelToBody(){
+  // #missionTracker에 filter가 걸려있어 그 안에서는 position:fixed가 화면 기준이 아니라
+  // missionTracker 기준으로 동작해버림(예: 아주 긴 이미지 박스 맨 아래로 버튼이 밀려남).
+  // 그래서 패널/힌트를 body 바로 아래로 옮겨서 항상 화면에 고정되게 함.
+  const panel=document.getElementById('mtCharAdjustPanel');
+  const hint=document.getElementById('mtCharAdjustHint');
+  if(panel&&panel.parentElement!==document.body)document.body.appendChild(panel);
+  if(hint&&hint.parentElement!==document.body)document.body.appendChild(hint);
+}
 window.toggleMtCharAdjustMode=function(){
   const wrap=document.getElementById('mtCharWrap');
   if(!wrap||!wrap.classList.contains('has-image'))return;
+  _mtCharMovePanelToBody();
   _mtCharAdjusting=!_mtCharAdjusting;
   wrap.classList.toggle('adjusting',_mtCharAdjusting);
+  document.getElementById('mtCharAdjustPanel')?.classList.toggle('mt-open',_mtCharAdjusting);
+  document.getElementById('mtCharAdjustHint')?.classList.toggle('mt-open',_mtCharAdjusting);
   const slider=document.getElementById('mtCharZoomSlider');
   if(slider)slider.value=Math.round((missionData.charImgPos?.scale||1)*100);
   if(!_mtCharAdjusting)saveMtCharPos();
@@ -7662,6 +7675,9 @@ function scheduleMtCharPosSave(){
   clearTimeout(_mtCharPosSaveTimer);
   _mtCharPosSaveTimer=setTimeout(saveMtCharPos,600);
 }
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&_mtCharAdjusting)window.toggleMtCharAdjustMode();
+});
 async function saveMtCharPos(){
   if(!currentUser||!missionData.charImgPos)return;
   try{
