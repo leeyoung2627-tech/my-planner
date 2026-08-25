@@ -163,19 +163,50 @@ body{opacity:0;transition:opacity .25s ease}
 .mt-char-wrap.has-image .mt-char-empty{display:none}
 .mt-char-img{
   width:100%;height:100%;object-fit:cover;display:none;
+  transform-origin:center center;
+  touch-action:none;
 }
 .mt-char-wrap.has-image .mt-char-img{display:block}
-/* 이미지 변경 버튼 - 이 버튼을 통해서만 이미지를 바꿀 수 있음 (박스 클릭으로는 안 바뀜), 호버 시에만 나타남 */
-.mt-char-upload-btn{
+/* 이미지 변경/배치수정 버튼 묶음 - 호버 시에만 나타남 */
+.mt-char-btn-row{
   position:absolute;top:10px;right:10px;z-index:5;
-  background:rgba(255,255,255,.9);border:1px solid #ddd;border-radius:16px;
-  font-size:11px;font-weight:700;color:#666;padding:5px 11px;
-  cursor:pointer;user-select:none;
+  display:flex;gap:6px;
   opacity:0;pointer-events:none;
   transition:opacity .15s;
 }
-.mt-char-wrap:hover .mt-char-upload-btn{opacity:1;pointer-events:auto}
-.mt-char-upload-btn:hover{background:#fff;color:var(--accent,#333)}
+.mt-char-wrap:hover .mt-char-btn-row{opacity:1;pointer-events:auto}
+.mt-char-wrap.adjusting .mt-char-btn-row{display:none}
+.mt-char-upload-btn,.mt-char-adjust-btn{
+  background:rgba(255,255,255,.9);border:1px solid #ddd;border-radius:16px;
+  font-size:11px;font-weight:700;color:#666;padding:5px 11px;
+  cursor:pointer;user-select:none;white-space:nowrap;
+}
+.mt-char-upload-btn:hover,.mt-char-adjust-btn:hover{background:#fff;color:var(--accent,#333)}
+.mt-char-adjust-btn{display:none}
+.mt-char-wrap.has-image .mt-char-adjust-btn{display:inline-block}
+/* 배치수정 모드 */
+.mt-char-wrap.adjusting{cursor:grab}
+.mt-char-wrap.adjusting.mt-dragging{cursor:grabbing}
+.mt-char-adjust-panel{
+  position:absolute;left:10px;right:10px;bottom:10px;z-index:6;
+  display:none;align-items:center;gap:8px;
+  background:rgba(255,255,255,.92);border:1px solid #ddd;border-radius:12px;
+  padding:8px 10px;box-shadow:0 2px 10px #0002;
+}
+.mt-char-wrap.adjusting .mt-char-adjust-panel{display:flex}
+.mt-char-adjust-panel .mt-zoom-label{font-size:11px;color:#777;white-space:nowrap}
+.mt-char-adjust-panel input[type=range]{flex:1;accent-color:var(--accent,#7ec8e3);cursor:pointer}
+.mt-char-adjust-done{
+  background:var(--accent,#7ec8e3);color:#fff;border:none;border-radius:8px;
+  font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;white-space:nowrap;
+}
+.mt-char-adjust-hint{
+  position:absolute;top:10px;left:10px;z-index:6;
+  display:none;
+  background:rgba(0,0,0,.55);color:#fff;font-size:11px;
+  padding:5px 10px;border-radius:14px;pointer-events:none;
+}
+.mt-char-wrap.adjusting .mt-char-adjust-hint{display:block}
 /* 말풍선 */
 .mt-speech-bubble{
   position:absolute;
@@ -1775,7 +1806,16 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <div>이미지</div>
     </div>
     <img class="mt-char-img" id="mtCharImg" alt="이미지"/>
-    <div class="mt-char-upload-btn" id="mtCharUploadBtn" onclick="document.getElementById('mtCharImgInput').click()">이미지 변경</div>
+    <div class="mt-char-btn-row">
+      <div class="mt-char-adjust-btn" id="mtCharAdjustBtn" onclick="event.stopPropagation();toggleMtCharAdjustMode()">배치수정</div>
+      <div class="mt-char-upload-btn" id="mtCharUploadBtn" onclick="event.stopPropagation();document.getElementById('mtCharImgInput').click()">이미지 변경</div>
+    </div>
+    <div class="mt-char-adjust-hint">드래그로 이동 · 휠로 확대/축소</div>
+    <div class="mt-char-adjust-panel">
+      <span class="mt-zoom-label">크기</span>
+      <input type="range" id="mtCharZoomSlider" min="100" max="400" value="100" oninput="setMtCharZoom(this.value)"/>
+      <button class="mt-char-adjust-done" onclick="toggleMtCharAdjustMode()">완료</button>
+    </div>
     <input type="file" id="mtCharImgInput" accept="image/*" style="display:none" onchange="onMtCharImageUpload(event)"/>
   </div>
   <!-- 기존 하트 체크 미션 트래커 UI는 사용하지 않지만, 다른 스크립트 호환을 위해 숨겨서 유지 -->
@@ -3126,7 +3166,7 @@ async function loadAllData(){
   // 미션 트래커
   if(msS.exists()){
     const md=msS.data();
-    missionData={title:md.title||'',nodes:md.nodes||[],color:md.color||'#7ec8e3',bubbleColor:md.bubbleColor||'#333',boxColor:md.boxColor||'#ffffff',charImg:md.charImg||null};
+    missionData={title:md.title||'',nodes:md.nodes||[],color:md.color||'#7ec8e3',bubbleColor:md.bubbleColor||'#333',boxColor:md.boxColor||'#ffffff',charImg:md.charImg||null,charImgPos:md.charImgPos||{xp:0,yp:0,scale:1}};
     document.documentElement.style.setProperty('--mt-bubble-color', missionData.bubbleColor);
   }
   // 일기장
@@ -7369,7 +7409,7 @@ window.addEventListener('resize',positionNoteButtons);
 // ══════════════════════════════════════════
 //  미션 트래커
 // ══════════════════════════════════════════
-let missionData={title:'',nodes:[],color:'#7ec8e3',bubbleColor:'#333',boxColor:'#ffffff',charImg:null};
+let missionData={title:'',nodes:[],color:'#7ec8e3',bubbleColor:'#333',boxColor:'#ffffff',charImg:null,charImgPos:{xp:0,yp:0,scale:1}};
 let _mtEditingIdx=null;
 
 // ── 트래커 색상 프리셋
@@ -7518,6 +7558,7 @@ function renderMtCharImg(){
   }else if(wrap){
     wrap.classList.remove('has-image');
   }
+  applyMtCharTransform();
 }
 window.onMtCharImageUpload=async function(event){
   const file=event.target.files&&event.target.files[0];
@@ -7526,11 +7567,15 @@ window.onMtCharImageUpload=async function(event){
   try{
     const dataUrl=await _compressImage(file,1400,0.85,900000);
     missionData.charImg=dataUrl;
+    missionData.charImgPos={xp:0,yp:0,scale:1}; // 새 이미지는 배치를 초기화
     const img=document.getElementById('mtCharImg');
     const wrap=document.getElementById('mtCharWrap');
     if(img)img.src=dataUrl;
     if(wrap)wrap.classList.add('has-image');
-    await setDoc(doc(db,'users',currentUser.uid,'settings','mission'),{charImg:dataUrl},{merge:true});
+    applyMtCharTransform();
+    const zoomSlider=document.getElementById('mtCharZoomSlider');
+    if(zoomSlider)zoomSlider.value=100;
+    await setDoc(doc(db,'users',currentUser.uid,'settings','mission'),{charImg:dataUrl,charImgPos:missionData.charImgPos},{merge:true});
     showSaving();
   }catch(err){
     alert('이미지를 적용하지 못했어요. 다른 이미지로 시도해주세요.\\n('+(err&&err.message?err.message:err)+')');
@@ -7538,6 +7583,92 @@ window.onMtCharImageUpload=async function(event){
     event.target.value='';
   }
 };
+
+/* ── 이미지 배치수정(위치/크기 조절) ── */
+function applyMtCharTransform(){
+  const wrap=document.getElementById('mtCharWrap');
+  const img=document.getElementById('mtCharImg');
+  if(!wrap||!img)return;
+  const pos=missionData.charImgPos||{xp:0,yp:0,scale:1};
+  const w=wrap.clientWidth||1, h=wrap.clientHeight||1;
+  const xpx=(pos.xp/100)*w;
+  const ypx=(pos.yp/100)*h;
+  img.style.transform=`translate(${xpx}px, ${ypx}px) scale(${pos.scale||1})`;
+}
+window.applyMtCharTransform=applyMtCharTransform;
+
+let _mtCharAdjusting=false;
+let _mtCharDrag=null; // {startX,startY,startXp,startYp,w,h}
+window.toggleMtCharAdjustMode=function(){
+  const wrap=document.getElementById('mtCharWrap');
+  if(!wrap||!wrap.classList.contains('has-image'))return;
+  _mtCharAdjusting=!_mtCharAdjusting;
+  wrap.classList.toggle('adjusting',_mtCharAdjusting);
+  const slider=document.getElementById('mtCharZoomSlider');
+  if(slider)slider.value=Math.round((missionData.charImgPos?.scale||1)*100);
+  if(!_mtCharAdjusting)saveMtCharPos();
+};
+window.setMtCharZoom=function(val){
+  if(!missionData.charImgPos)missionData.charImgPos={xp:0,yp:0,scale:1};
+  missionData.charImgPos.scale=Math.max(1,Math.min(4,Number(val)/100));
+  applyMtCharTransform();
+  scheduleMtCharPosSave();
+};
+(function(){
+  const wrap=document.getElementById('mtCharWrap');
+  const img=document.getElementById('mtCharImg');
+  if(!wrap||!img)return;
+  img.addEventListener('pointerdown',e=>{
+    if(!_mtCharAdjusting)return;
+    e.preventDefault();
+    if(!missionData.charImgPos)missionData.charImgPos={xp:0,yp:0,scale:1};
+    const w=wrap.clientWidth||1,h=wrap.clientHeight||1;
+    _mtCharDrag={startX:e.clientX,startY:e.clientY,startXp:missionData.charImgPos.xp,startYp:missionData.charImgPos.yp,w,h};
+    wrap.classList.add('mt-dragging');
+    img.setPointerCapture(e.pointerId);
+  });
+  img.addEventListener('pointermove',e=>{
+    if(!_mtCharDrag)return;
+    const dxp=((e.clientX-_mtCharDrag.startX)/_mtCharDrag.w)*100;
+    const dyp=((e.clientY-_mtCharDrag.startY)/_mtCharDrag.h)*100;
+    missionData.charImgPos.xp=Math.max(-100,Math.min(100,_mtCharDrag.startXp+dxp));
+    missionData.charImgPos.yp=Math.max(-100,Math.min(100,_mtCharDrag.startYp+dyp));
+    applyMtCharTransform();
+  });
+  function endDrag(e){
+    if(!_mtCharDrag)return;
+    wrap.classList.remove('mt-dragging');
+    try{img.releasePointerCapture(e.pointerId);}catch(err){}
+    _mtCharDrag=null;
+    scheduleMtCharPosSave();
+  }
+  img.addEventListener('pointerup',endDrag);
+  img.addEventListener('pointercancel',endDrag);
+  wrap.addEventListener('wheel',e=>{
+    if(!_mtCharAdjusting)return;
+    e.preventDefault();
+    if(!missionData.charImgPos)missionData.charImgPos={xp:0,yp:0,scale:1};
+    const cur=missionData.charImgPos.scale||1;
+    const next=Math.max(1,Math.min(4,cur+(e.deltaY<0?0.1:-0.1)));
+    missionData.charImgPos.scale=next;
+    const slider=document.getElementById('mtCharZoomSlider');
+    if(slider)slider.value=Math.round(next*100);
+    applyMtCharTransform();
+    scheduleMtCharPosSave();
+  },{passive:false});
+})();
+let _mtCharPosSaveTimer=null;
+function scheduleMtCharPosSave(){
+  clearTimeout(_mtCharPosSaveTimer);
+  _mtCharPosSaveTimer=setTimeout(saveMtCharPos,600);
+}
+async function saveMtCharPos(){
+  if(!currentUser||!missionData.charImgPos)return;
+  try{
+    await setDoc(doc(db,'users',currentUser.uid,'settings','mission'),{charImgPos:missionData.charImgPos},{merge:true});
+    showSaving();
+  }catch(err){}
+}
 
 function positionMissionTracker(){
   const app=document.getElementById('mainApp');
@@ -7589,6 +7720,7 @@ function positionMissionTracker(){
   if(wrap){
     wrap.style.height=Math.max(rect.height, window.innerHeight)+'px';
   }
+  if(window.applyMtCharTransform)window.applyMtCharTransform();
 
   // 노트 버튼: 메인창 오른쪽 끝에서 gap만큼 오른쪽, 상단 맞춤
   if(btns){
@@ -8667,7 +8799,8 @@ window.saveMission=async function(){
     color:missionData.color||'#7ec8e3',
     bubbleColor:missionData.bubbleColor||'#333',
     boxColor:missionData.boxColor||'#ffffff',
-    charImg:missionData.charImg||null
+    charImg:missionData.charImg||null,
+    charImgPos:missionData.charImgPos||{xp:0,yp:0,scale:1}
   });
   showSaving();
 };
