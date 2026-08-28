@@ -599,26 +599,25 @@ body{opacity:0;transition:opacity .25s ease}
 .left{display:flex;flex-direction:row;align-items:stretch;min-width:0;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;overflow:hidden;min-height:calc(100vh - 230px)}
 .left-inner{flex:1;display:flex;flex-direction:column;min-width:0}
 /* 달력 오른쪽 벽 — 탭별 독립 달력 스트립 */
-.cal-board-strip{width:34px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border-left:0.5px solid var(--border-col,#eee);background:var(--app-bg,#fff);overflow-y:auto}
-.cal-board-tab{writing-mode:vertical-rl;text-orientation:mixed;padding:10px 5px;border-radius:8px;font-size:12px;font-weight:600;color:#999;cursor:pointer;letter-spacing:.02em;white-space:nowrap;user-select:none;transition:background .15s,color .15s;max-height:150px;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
-.cal-board-tab:hover{background:var(--accent-light);color:var(--accent)}
-.cal-board-tab.active{background:var(--accent);color:var(--accent-contrast,#fff)}
+.cal-board-strip{width:34px;flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:10px 0;background:transparent;overflow-y:auto}
+.cal-board-tab{writing-mode:vertical-rl;text-orientation:mixed;padding:10px 7px 10px 5px;font-size:12px;font-weight:600;color:#aaa;cursor:pointer;letter-spacing:.02em;white-space:nowrap;user-select:none;transition:color .15s,border-color .15s;max-height:150px;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;background:transparent;border-left:3px solid transparent}
+.cal-board-tab:hover{color:var(--accent)}
+.cal-board-tab.active{color:var(--accent);border-left-color:var(--accent);font-weight:800}
 .cal-board-tab[draggable="true"]{cursor:grab}
 .cal-board-tab.dragging-tab{opacity:.35}
 .cal-board-tab.drag-over-tab{outline:2px dashed var(--accent);outline-offset:-2px}
-.cal-board-tab-add{width:24px;height:24px;min-height:24px;border-radius:50%;background:#f2f2f2;color:#999;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;cursor:pointer;flex-shrink:0;margin-top:2px}
+.cal-board-tab-add{width:22px;height:22px;min-height:22px;border-radius:50%;background:transparent;border:1px solid #ddd;color:#aaa;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;margin:4px auto 0;align-self:center}
 .cal-board-tab-add:hover{background:var(--accent-light);color:var(--accent)}
 /* 탭별 독립 달력 — 일정이 칸을 가득 채우도록 강조 표시 */
 .board-cal-wrap{padding:.75rem 1rem 1rem;background:var(--app-bg,#fff)}
-.board-day-cell{height:112px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--app-bg,#fff)}
+.board-day-cell{height:112px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--app-bg,#fff);padding:3px}
 .board-day-cell.other{opacity:.4;cursor:default}
 .board-day-cell:hover{border-color:var(--accent)}
 .board-day-cell.selected{border-color:var(--accent)}
 .board-day-cell .bdn{position:absolute;top:4px;left:6px;font-size:11px;font-weight:600;color:#b8b8b8;z-index:2;background:rgba(255,255,255,.72);border-radius:4px;padding:0 3px;line-height:1.5}
 .board-day-cell.today .bdn{background:var(--accent);color:var(--accent-contrast,#fff)!important;border-radius:50%;width:18px;height:18px;padding:0;display:flex;align-items:center;justify-content:center;top:3px;left:3px}
-.board-day-cell .board-ev-fill{flex:1;display:flex;flex-direction:column}
-.board-day-cell .board-ev-block{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10.5px;font-weight:600;line-height:1.3;padding:4px 5px 3px;overflow:hidden;word-break:break-all;border-bottom:1px solid rgba(255,255,255,.5)}
-.board-day-cell .board-ev-block:last-child{border-bottom:none}
+.board-day-cell .board-ev-fill{flex:1;display:flex;flex-direction:column;gap:3px}
+.board-day-cell .board-ev-block{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10.5px;font-weight:600;line-height:1.3;padding:4px 5px 3px;overflow:hidden;word-break:break-all;border-radius:6px}
 .board-day-cell .board-ev-block.empty-fill{background:transparent}
 .mind-bar{background:var(--accent,#4472B8);color:#fff;border-radius:12px;padding:11px 16px;font-size:13px;line-height:1.5;margin:1rem 1rem 0;outline:none;cursor:text}
 .mind-bar:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.75)}
@@ -712,6 +711,11 @@ body{opacity:0;transition:opacity .25s ease}
 .mdn-row{display:flex;align-items:center;gap:3px}
 .money-day-out{font-size:10px;color:#D85A30;line-height:1.3}
 .money-day-in{font-size:10px;color:#1D9E75;line-height:1.3}
+.money-day-item{font-size:10px;line-height:1.3;cursor:grab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.money-day-item.out{color:#D85A30}
+.money-day-item.in{color:#1D9E75}
+.money-day-item.dragging{opacity:.4}
+.money-day-cell.drag-over{background:color-mix(in srgb,var(--accent-light) 60%,transparent);outline:1.5px solid var(--accent);outline-offset:-1.5px}
 .money-day-ns{font-size:11px;line-height:1}
 
 /* 주간 */
@@ -2479,6 +2483,7 @@ let bottleMemoContent={blue:'',pink:'',garden:'',linen:''};
 let bottleMemoSaveTimer={blue:null,pink:null,garden:null,linen:null};
 let mealSaveTimers={};
 let dragSrcKey=null,dragSrcIdx=null;
+let dragMoneySrcKey=null,dragMoneySrcIdx=null;
 // ── 일기장 상태 ──
 let diaryEntries={}; // {YYYY-M-D: {mood, result, text}}
 let diaryCur=new Date();
@@ -3991,6 +3996,7 @@ window.movePeriod=function(dir){
     else if(leftMode==='meal-cal')renderMealCal();
     else if(leftMode==='cal'&&activeBoardId)renderBoardCal();
     else renderMonth();
+    renderCalBoardTabs();
   } else {
     selDate=new Date(selDate);selDate.setDate(selDate.getDate()+dir*7);renderWeek();updateRightDate();
   }
@@ -4046,7 +4052,7 @@ function evSaveKey(key){return activeBoardId?(activeBoardId+'__'+key):key;}
 function renderCalBoardTabs(){
   const strip=document.getElementById('calBoardStrip');
   if(!strip)return;
-  let html=`<div class="cal-board-tab${activeBoardId===''?' active':''}" onclick="switchCalBoard('')" title="기본 일정 달력">📅 일정</div>`;
+  let html=`<div class="cal-board-tab${activeBoardId===''?' active':''}" onclick="switchCalBoard('')" title="기본 일정 달력">${cur.getFullYear()}</div>`;
   calBoards.forEach(b=>{
     html+=`<div class="cal-board-tab${activeBoardId===b.id?' active':''}" draggable="true"
       onclick="switchCalBoard('${b.id}')"
@@ -4163,14 +4169,20 @@ function renderMoneyCal(){
     let dayOut=0,dayIn=0;
     items.forEach(item=>{if(item.type==='out')dayOut+=item.amount;else dayIn+=item.amount;});
     const ns=noSpendData[key];
-    const outHtml=dayOut>0?`<div class="money-day-out">-${dayOut.toLocaleString()}</div>`:'';
-    const inHtml=dayIn>0?`<div class="money-day-in">+${dayIn.toLocaleString()}</div>`:'';
+    const maxShow=3;
+    const itemsHtml=items.length>0?`<div class="money-day-items">${items.slice(0,maxShow).map((item,i)=>{
+      const sign=item.type==='out'?'-':'+';
+      return `<div class="money-day-item ${item.type}" draggable="true" ondragstart="event.stopPropagation();dragMoneyStart(event,'${key}',${i})" ondragend="dragEnd(event)">${item.name?escapeHtml(item.name)+' ':''}${sign}${item.amount.toLocaleString()}</div>`;
+    }).join('')}${items.length>maxShow?`<div class="money-day-item" style="color:#999">+${items.length-maxShow}건</div>`:''}</div>`:'';
     const nsHtml=ns?`<div class="money-day-ns">💚</div>`:'';
     const memo=moneyMemoData[key];
     const memoBtn=`<span class="money-day-memo-btn" onclick="event.stopPropagation();openMoneyMemoModal('${key}')" title="날짜 메모">📝</span>`;
     const memoHtml=(memo&&memo.text)?`<div class="money-day-memo-text${memo.pending?' pending':''}">${memo.pending?'💸 ':''}${escapeHtml(memo.text)}</div>`:'';
     const cellClasses=`money-day-cell${isToday?' today':''}${isSel?' selected':''}${memo&&memo.pending?' refund-pending':''}${memo&&memo.text?' has-memo':''}`;
-    html+=`<div class="${cellClasses}" onclick="selectDay(${d})">${memoBtn}<div class="mdn-row"><span class="mdn">${d}</span>${nsHtml}</div>${outHtml}${inHtml}${memoHtml}</div>`;
+    html+=`<div class="${cellClasses}" onclick="selectDay(${d})"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="event.stopPropagation();dropMoneyMonth(event,'${key}')">${memoBtn}<div class="mdn-row"><span class="mdn">${d}</span>${nsHtml}</div>${itemsHtml}${memoHtml}</div>`;
   }
   const rem=(7-(start+total)%7)%7;
   for(let i=1;i<=rem&&rem<7;i++)html+=`<div class="money-day-cell other"><span class="mdn">${i}</span></div>`;
@@ -4240,7 +4252,7 @@ function renderWeek(){
 
 // ── 드래그 앤 드롭 ──
 window.dragStart=function(e,key,idx){dragSrcKey=key;dragSrcIdx=idx;e.target.classList.add('dragging');};
-window.dragEnd=function(e){e.target.classList.remove('dragging');document.querySelectorAll('.day-col,.day-cell').forEach(c=>c.classList.remove('drag-over'));};
+window.dragEnd=function(e){e.target.classList.remove('dragging');document.querySelectorAll('.day-col,.day-cell,.money-day-cell').forEach(c=>c.classList.remove('drag-over'));};
 window.dropEvent=async function(e,targetKey){
   e.preventDefault();
   document.querySelectorAll('.day-col').forEach(c=>c.classList.remove('drag-over'));
@@ -4267,6 +4279,20 @@ window.dropEventMonth=async function(e,targetKey){
   dragSrcKey=null;dragSrcIdx=null;
   renderMonth();renderSchedule();
 };
+window.dragMoneyStart=function(e,key,idx){dragMoneySrcKey=key;dragMoneySrcIdx=idx;e.target.classList.add('dragging');};
+window.dropMoneyMonth=async function(e,targetKey){
+  e.preventDefault();
+  document.querySelectorAll('.money-day-cell').forEach(c=>c.classList.remove('drag-over'));
+  if(!dragMoneySrcKey||dragMoneySrcIdx===null||dragMoneySrcKey===targetKey){dragMoneySrcKey=null;dragMoneySrcIdx=null;return;}
+  const item=moneyData[dragMoneySrcKey]?.[dragMoneySrcIdx];if(!item){dragMoneySrcKey=null;dragMoneySrcIdx=null;return;}
+  moneyData[dragMoneySrcKey].splice(dragMoneySrcIdx,1);
+  if(!moneyData[targetKey])moneyData[targetKey]=[];
+  moneyData[targetKey].push(item);
+  await saveData('money',dragMoneySrcKey,{items:moneyData[dragMoneySrcKey]});
+  await saveData('money',targetKey,{items:moneyData[targetKey]});
+  dragMoneySrcKey=null;dragMoneySrcIdx=null;
+  renderMoneyCal();renderMoney();
+};
 
 window.selectDay=function(d){
   selDate=new Date(cur.getFullYear(),cur.getMonth(),d);
@@ -4290,6 +4316,7 @@ window.goToToday=function(){
   else if(curView==='week')renderWeek();
   else if(leftMode==='cal'&&activeBoardId)renderBoardCal();
   else renderMonth();
+  renderCalBoardTabs();
   updateRightDate();renderSchedule();renderMoney();renderMeal();renderNoSpend();renderFasting();
 };
 function updateRightDate(){document.getElementById('rightDate').textContent=selDate.getFullYear()+'년 '+(selDate.getMonth()+1)+'월 '+selDate.getDate()+'일 '+DAYS[selDate.getDay()]+'요일';}
