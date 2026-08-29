@@ -8044,7 +8044,7 @@ function positionMissionTracker(){
   }
 
   // 트래커 너비: 화면 맨 왼쪽부터 달력 카드 앞(gap)까지 남는 공간을 꽉 채움
-  const trackerW=Math.min(desiredW,Math.max(120, rect.left-gap));
+  const trackerW=Math.min(desiredW,Math.max(0, rect.left-gap));
   tracker.style.width=trackerW+'px';
   tracker.style.left='0px';
   // 위쪽도 화면 맨 위에 딱 닿게
