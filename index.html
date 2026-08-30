@@ -139,7 +139,7 @@ body{opacity:0;transition:opacity .25s ease}
 #missionTracker{
   position:fixed;z-index:40;
   display:none;flex-direction:column;gap:0;
-  width:230px;
+  width:190px;
   background:var(--page-bg);
   filter:drop-shadow(0 4px 18px #0000001a);
 }
@@ -8149,7 +8149,7 @@ function positionMissionTracker(){
   if(!app||!tracker)return;
 
   const gap=20;
-  const desiredW=490; // 이미지 패널 목표 너비
+  const desiredW=400; // 이미지 패널 목표 너비 (기존 490에서 축소)
   const rightReserve=100; // 오른쪽 노트 버튼(약 68px) 등을 위해 남겨둘 최소 공간
   const minAppWidth=900; // 달력/일정/디데이 3칸이 이 폭 아래로는 너무 좁아지지 않게 하는 최소값
 
