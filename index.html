@@ -447,11 +447,8 @@ body{opacity:0;transition:opacity .25s ease}
 .bg-setting-btn{position:fixed;bottom:20px;left:20px;width:36px;height:36px;border-radius:50%;background:#fff;border:0.5px solid #ddd;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #0002;z-index:50}
 .bg-setting-btn:hover{background:#f5f4ff}
 
-/* 빠른 링크 버튼 (팔레트 버튼 옆) — 좌클릭: 링크 목록 열기 / 우클릭: 링크 수정 */
-.quicklink-btn{position:fixed;bottom:20px;left:64px;width:36px;height:36px;border-radius:50%;background:var(--accent,#534AB7);color:var(--accent-contrast,#fff);border:0.5px solid var(--accent,#534AB7);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #0002;z-index:50;transition:transform .12s}
-.quicklink-btn:hover{transform:scale(1.07)}
-.quicklink-btn:active{transform:scale(.95)}
-.quicklink-panel{position:fixed;bottom:64px;left:64px;background:#fff;border:0.5px solid #ddd;border-radius:14px;padding:10px;width:190px;box-shadow:0 6px 24px #0002;z-index:55;display:none;flex-direction:column;gap:6px}
+/* 빠른 링크 버튼은 상단 icon-group의 .vbtn.icon-vbtn 스타일을 그대로 사용 */
+.quicklink-panel{position:fixed;background:#fff;border:0.5px solid #ddd;border-radius:14px;padding:10px;width:190px;box-shadow:0 6px 24px #0002;z-index:55;display:none;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto}
 .quicklink-panel.open{display:flex}
 .quicklink-panel-title{font-size:10px;font-weight:700;color:#bbb;letter-spacing:.04em;padding:0 2px}
 .quicklink-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:9px;background:var(--accent-light,#EEEDFE);color:var(--accent,#534AB7);font-size:12.5px;font-weight:700;text-decoration:none;transition:background .15s,color .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -460,13 +457,17 @@ body{opacity:0;transition:opacity .25s ease}
 .quicklink-hint{font-size:9.5px;color:#bbb;text-align:center;padding-top:2px}
 
 /* 빠른 링크 수정 패널 (버튼 우클릭 시) */
-.quicklink-edit-panel{position:fixed;bottom:64px;left:64px;background:#fff;border:0.5px solid #ddd;border-radius:14px;padding:14px;width:250px;box-shadow:0 6px 24px #0002;z-index:60;display:none;flex-direction:column;gap:10px}
+.quicklink-edit-panel{position:fixed;background:#fff;border:0.5px solid #ddd;border-radius:14px;padding:14px;width:250px;box-shadow:0 6px 24px #0002;z-index:60;display:none;flex-direction:column;gap:10px;max-height:70vh;overflow-y:auto}
 .quicklink-edit-panel.open{display:flex}
 .quicklink-edit-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.04em;text-transform:uppercase}
 .quicklink-edit-row{display:flex;flex-direction:column;gap:4px;padding-bottom:6px;border-bottom:0.5px solid #f0f0f0}
 .quicklink-edit-row:last-of-type{border-bottom:none}
 .quicklink-edit-row input{width:100%;padding:6px 8px;border:0.5px solid #ddd;border-radius:7px;font-size:12px;font-family:inherit;outline:none;box-sizing:border-box}
 .quicklink-edit-row input:focus{border-color:var(--accent,#534AB7)}
+.quicklink-edit-row .ql-del{font-size:12px;color:#ccc;cursor:pointer;flex-shrink:0;padding:2px 4px;line-height:1}
+.quicklink-edit-row .ql-del:hover{color:#e66}
+.quicklink-add-btn{padding:7px;border-radius:8px;border:1px dashed #ddd;background:#fafafa;color:#aaa;font-size:12px;cursor:pointer;font-family:inherit}
+.quicklink-add-btn:hover{border-color:var(--accent,#534AB7);color:var(--accent,#534AB7);background:var(--accent-light,#EEEDFE)}
 .quicklink-edit-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:2px}
 .quicklink-edit-btn{padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;border:none;font-family:inherit}
 .quicklink-edit-btn.save{background:var(--accent,#534AB7);color:var(--accent-contrast,#fff)}
@@ -1477,6 +1478,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <div class="icon-group">
         <button class="vbtn icon-vbtn" id="btnAnniv" onclick="switchView('anniv')" title="기념일">🎂</button>
         <button class="vbtn icon-vbtn" onclick="openDiaryLock()" title="일기장">🍀</button>
+        <button class="vbtn icon-vbtn" id="quickLinkBtn" onclick="toggleQuickLinkPanel(event)" oncontextmenu="openQuickLinkEdit(event)" title="빠른 링크 (우클릭: 수정)">🔗</button>
       </div>
       <div class="user-area">
         <span class="user-name" id="userName"></span>
@@ -2134,8 +2136,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <button class="theme-reset-btn" onclick="resetTheme()">↺ 기본값으로 초기화</button>
 </div>
 
-<!-- 빠른 링크 버튼 (팔레트 버튼 옆) -->
-<button class="quicklink-btn" id="quickLinkBtn" onclick="toggleQuickLinkPanel(event)" oncontextmenu="openQuickLinkEdit(event)" title="빠른 링크 (우클릭: 수정)">🔗</button>
+<!-- 빠른 링크 목록/수정 패널 (상단 🔗 버튼에서 열림) -->
 <div class="quicklink-panel" id="quickLinkPanel">
   <div class="quicklink-panel-title">빠른 링크</div>
   <div id="quickLinkList"></div>
@@ -2143,18 +2144,8 @@ body.memo-edit-on .memo-text-handle{display:flex}
 </div>
 <div class="quicklink-edit-panel" id="quickLinkEditPanel">
   <div class="quicklink-edit-title">빠른 링크 수정</div>
-  <div class="quicklink-edit-row">
-    <input type="text" id="qlEditLabel0" placeholder="이름 (예: 노션)" maxlength="12"/>
-    <input type="text" id="qlEditUrl0" placeholder="https://..."/>
-  </div>
-  <div class="quicklink-edit-row">
-    <input type="text" id="qlEditLabel1" placeholder="이름 (예: 노션)" maxlength="12"/>
-    <input type="text" id="qlEditUrl1" placeholder="https://..."/>
-  </div>
-  <div class="quicklink-edit-row">
-    <input type="text" id="qlEditLabel2" placeholder="이름 (예: 노션)" maxlength="12"/>
-    <input type="text" id="qlEditUrl2" placeholder="https://..."/>
-  </div>
+  <div id="qlEditRows"></div>
+  <button class="quicklink-add-btn" onclick="addQuickLinkRow()">+ 링크 추가</button>
   <div class="quicklink-edit-actions">
     <button class="quicklink-edit-btn cancel" onclick="closeQuickLinkEdit()">취소</button>
     <button class="quicklink-edit-btn save" onclick="saveQuickLinksFromEdit()">저장</button>
@@ -5121,11 +5112,24 @@ window.confirmMoneyMemo=async function(){
   if(leftMode==='money-cal')renderMoneyCal();
 };
 
-// ── 예산 ──
+// ── 예산 (설정을 바꾸지 않으면 이전 달 설정이 계속 이어짐) ──
 function getBudgetKey(){return cur.getFullYear()+'-'+( cur.getMonth()+1);}
+// 해당 월에 직접 설정한 예산이 없으면, 그 이전 달 중 가장 최근에 설정된 예산을 그대로 이어받음
+function getEffectiveBudget(bKey){
+  if(budgetData[bKey])return budgetData[bKey];
+  const [ty,tm]=bKey.split('-').map(Number);
+  const targetNum=ty*12+tm;
+  let best=null,bestNum=-Infinity;
+  Object.keys(budgetData).forEach(k=>{
+    const [y,m]=k.split('-').map(Number);
+    const num=y*12+m;
+    if(num<=targetNum&&num>bestNum){bestNum=num;best=budgetData[k];}
+  });
+  return best||{amount:0,tags:[]};
+}
 function renderBudget(){
   const bKey=selDate.getFullYear()+'-'+(selDate.getMonth()+1);
-  const bd=budgetData[bKey]||{amount:0,tags:[]};
+  const bd=getEffectiveBudget(bKey);
   const budget=bd.amount||0;
   const tags=bd.tags||[];
   let monthOut=0;
@@ -5155,7 +5159,7 @@ window.toggleBudgetTag=function(tag){
 };
 window.openBudgetModal=function(){
   const bKey=selDate.getFullYear()+'-'+(selDate.getMonth()+1);
-  const bd=budgetData[bKey]||{amount:0,tags:[]};
+  const bd=getEffectiveBudget(bKey);
   document.getElementById('budget-amount').value=bd.amount||'';
   selectedBudgetTags=[...(bd.tags||[])];
   renderBudgetTagChips();
@@ -7621,25 +7625,40 @@ window.toggleBgPanel=function(){
   if(!isOpen){renderFontButtons();updatePanelPreviews();renderThemePresets();}
 };
 
-// ── 빠른 링크 (팔레트 버튼 옆 🔗) ──
+// ── 빠른 링크 (상단 툴바 🔗, 개수 제한 없이 추가 가능) ──
 let quickLinks=[{label:'',url:''},{label:'',url:''},{label:'',url:''}];
+function positionQuickLinkPanel(panel,anchorBtn){
+  if(!panel||!anchorBtn)return;
+  const rect=anchorBtn.getBoundingClientRect();
+  let left=rect.left,top=rect.bottom+8;
+  panel.style.left=left+'px';panel.style.top=top+'px';
+  requestAnimationFrame(()=>{
+    const pw=panel.offsetWidth,ph=panel.offsetHeight;
+    const vw=window.innerWidth,vh=window.innerHeight;
+    if(left+pw>vw-8)left=Math.max(8,vw-pw-8);
+    if(top+ph>vh-8)top=Math.max(8,rect.top-ph-8);
+    panel.style.left=left+'px';panel.style.top=top+'px';
+  });
+}
 function renderQuickLinks(){
   const wrap=document.getElementById('quickLinkList');
   if(!wrap)return;
-  wrap.innerHTML=quickLinks.map(l=>{
-    if(l.url){
-      const safeUrl=escapeHtml(l.url);
-      const label=escapeHtml(l.label||l.url);
-      return `<a class="quicklink-item" href="${safeUrl}" target="_blank" rel="noopener" title="${safeUrl}">${label}</a>`;
-    }
-    return `<div class="quicklink-item empty">비어있음</div>`;
+  const filled=quickLinks.filter(l=>l.url);
+  if(filled.length===0){
+    wrap.innerHTML=`<div class="quicklink-item empty">등록된 링크가 없어요</div>`;
+    return;
+  }
+  wrap.innerHTML=filled.map(l=>{
+    const safeUrl=escapeHtml(l.url);
+    const label=escapeHtml(l.label||l.url);
+    return `<a class="quicklink-item" href="${safeUrl}" target="_blank" rel="noopener" title="${safeUrl}">${label}</a>`;
   }).join('');
 }
 function loadQuickLinksLocal(){
   try{
     const saved=JSON.parse(localStorage.getItem('quickLinks3')||'null');
-    if(saved&&Array.isArray(saved)){
-      quickLinks=[0,1,2].map(i=>saved[i]||{label:'',url:''});
+    if(saved&&Array.isArray(saved)&&saved.length){
+      quickLinks=saved.map(l=>({label:l?.label||'',url:l?.url||''}));
     }
   }catch(e){}
   renderQuickLinks();
@@ -7650,8 +7669,8 @@ async function loadQuickLinksCloud(){
     const snap=await getDoc(doc(db,'users',currentUser.uid,'settings','quickLinks'));
     if(snap.exists()){
       const data=snap.data();
-      if(Array.isArray(data.links)){
-        quickLinks=[0,1,2].map(i=>data.links[i]||{label:'',url:''});
+      if(Array.isArray(data.links)&&data.links.length){
+        quickLinks=data.links.map(l=>({label:l?.label||'',url:l?.url||''}));
         try{localStorage.setItem('quickLinks3',JSON.stringify(quickLinks));}catch(e){}
         renderQuickLinks();
       }
@@ -7663,29 +7682,54 @@ window.toggleQuickLinkPanel=function(e){
   document.getElementById('quickLinkEditPanel')?.classList.remove('open');
   const p=document.getElementById('quickLinkPanel');
   const isOpen=p.classList.contains('open');
-  if(!isOpen)renderQuickLinks();
+  if(!isOpen){
+    renderQuickLinks();
+    positionQuickLinkPanel(p,document.getElementById('quickLinkBtn'));
+  }
   p.classList.toggle('open',!isOpen);
+};
+function buildQlEditRow(label,url){
+  const row=document.createElement('div');
+  row.className='quicklink-edit-row';
+  row.innerHTML=`
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="text" class="ql-edit-label" placeholder="이름 (예: 노션)" maxlength="12" value="${escapeHtml(label||'')}"/>
+      <span class="ql-del" title="이 링크 삭제" onclick="this.closest('.quicklink-edit-row').remove()">✕</span>
+    </div>
+    <input type="text" class="ql-edit-url" placeholder="https://..." value="${escapeHtml(url||'')}"/>`;
+  return row;
+}
+window.addQuickLinkRow=function(){
+  const wrap=document.getElementById('qlEditRows');
+  if(!wrap)return;
+  wrap.appendChild(buildQlEditRow('',''));
+  wrap.scrollTop=wrap.scrollHeight;
 };
 window.openQuickLinkEdit=function(e){
   e.preventDefault();
   e.stopPropagation();
   document.getElementById('quickLinkPanel')?.classList.remove('open');
-  [0,1,2].forEach(i=>{
-    document.getElementById('qlEditLabel'+i).value=quickLinks[i]?.label||'';
-    document.getElementById('qlEditUrl'+i).value=quickLinks[i]?.url||'';
-  });
-  document.getElementById('quickLinkEditPanel')?.classList.add('open');
+  const wrap=document.getElementById('qlEditRows');
+  if(wrap){
+    wrap.innerHTML='';
+    const base=quickLinks.length?quickLinks:[{label:'',url:''},{label:'',url:''},{label:'',url:''}];
+    base.forEach(l=>wrap.appendChild(buildQlEditRow(l.label,l.url)));
+  }
+  const panel=document.getElementById('quickLinkEditPanel');
+  positionQuickLinkPanel(panel,document.getElementById('quickLinkBtn'));
+  panel?.classList.add('open');
 };
 window.closeQuickLinkEdit=function(){
   document.getElementById('quickLinkEditPanel')?.classList.remove('open');
 };
 window.saveQuickLinksFromEdit=function(){
-  quickLinks=[0,1,2].map(i=>{
-    let url=document.getElementById('qlEditUrl'+i).value.trim();
-    const label=document.getElementById('qlEditLabel'+i).value.trim();
+  const rows=[...document.querySelectorAll('#qlEditRows .quicklink-edit-row')];
+  quickLinks=rows.map(row=>{
+    let url=row.querySelector('.ql-edit-url').value.trim();
+    const label=row.querySelector('.ql-edit-label').value.trim();
     if(url&&!/^https?:\/\//i.test(url))url='https://'+url;
     return {label,url};
-  });
+  }).filter(l=>l.url||l.label);
   try{localStorage.setItem('quickLinks3',JSON.stringify(quickLinks));}catch(e){}
   if(currentUser)saveData('settings','quickLinks',{links:quickLinks});
   renderQuickLinks();
