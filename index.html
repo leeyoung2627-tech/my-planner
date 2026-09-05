@@ -1432,21 +1432,11 @@ body.memo-edit-on .memo-text-handle{display:flex}
 .routine-runner-btn.prev{background:#444;color:#ccc}
 .routine-runner-btn.exit{background:transparent;color:#888;font-weight:400}
 
-/* 루틴 리마인더 배너 */
-.routine-reminder-banner{
-  position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:150;
-  display:none;align-items:center;gap:10px;
-  background:#fff;border:1.5px solid var(--accent);border-radius:14px;
-  padding:9px 14px;box-shadow:0 4px 16px #0002;max-width:92vw;
-}
-.routine-reminder-banner.show{display:flex}
-.routine-reminder-text{font-size:12px;color:#333;font-weight:600}
-.routine-reminder-btn{padding:5px 10px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer}
-.routine-reminder-close{font-size:13px;color:#bbb;cursor:pointer;padding:2px 4px}
+
 
 /* 루틴 알림 시간 팝업 (NPC 캐릭터 + 큰 시작 버튼) — 이미지가 카드 안에 온전히 들어가도록 구성 */
 .routine-alarm-card{position:relative;background:#fff;border-radius:22px;padding:26px 28px;width:460px;max-width:92vw;display:flex;flex-direction:row;align-items:center;gap:18px;border:0.5px solid #eee;box-shadow:0 12px 40px #0003}
-.routine-alarm-npc{width:150px;max-width:38%;height:auto;flex-shrink:0;filter:drop-shadow(0 4px 10px rgba(0,0,0,.15))}
+.routine-alarm-npc{width:150px;max-width:38%;height:auto;flex-shrink:0}
 .routine-alarm-close{position:absolute;top:12px;right:14px;font-size:13px;color:#ccc;cursor:pointer;padding:3px}
 .routine-alarm-close:hover{color:#999}
 .routine-alarm-content{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
@@ -1678,13 +1668,6 @@ body.memo-edit-on .memo-text-handle{display:flex}
 </div>
 
 <div class="saving-indicator" id="savingIndicator">저장 중...</div>
-
-<!-- 루틴 리마인더 배너 -->
-<div class="routine-reminder-banner" id="routineReminderBanner">
-  <span class="routine-reminder-text" id="routineReminderText"></span>
-  <button class="routine-reminder-btn" id="routineReminderStartBtn">▶ 시작</button>
-  <span class="routine-reminder-close" onclick="dismissRoutineReminder()">✕</span>
-</div>
 
 <!-- 루틴 알림 시간 도달 시 뜨는 큰 팝업 (NPC 캐릭터 + 시작 버튼) -->
 <div class="modal-bg" id="routineAlarmModal" style="display:none">
@@ -3243,7 +3226,7 @@ onAuthStateChanged(auth,async user=>{
     renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
     loadMindBar();renderCategoryLegend();loadDdayHero();
     renderCalBoardTabs();
-    renderRoutineList();checkRoutineReminders();checkRoutineAlarms();
+    renderRoutineList();checkRoutineAlarms();
     renderTipList();
     runFixedCostAutoRecord();
     if(!window._fixedCostAutoTimer){
@@ -3920,7 +3903,6 @@ window.startRoutine=function(id){
   activeRoutine=r;activeStepIdx=0;
   document.getElementById('routinePanel').classList.remove('show');
   document.getElementById('routineToggle').classList.remove('on');
-  document.getElementById('routineReminderBanner').classList.remove('show');
   renderRoutineRunner();
   goToRoutineStep(0);
 };
@@ -3996,51 +3978,26 @@ async function finishRoutineRun(){
   renderRoutineList();
 }
 
-// ── 루틴 리마인더 배너: 시간대가 됐는데 오늘 아직 안 한 루틴 알려주기 ──
-let dismissedReminderIds=[];
-let currentReminderId=null;
-window.dismissRoutineReminder=function(){
-  if(currentReminderId)dismissedReminderIds.push(currentReminderId);
-  document.getElementById('routineReminderBanner').classList.remove('show');
-};
-function checkRoutineReminders(){
-  if(!routines.length)return;
-  const hour=new Date().getHours();
-  const t=todayStr();
-  const threshold={morning:6,afternoon:12,evening:18};
-  const candidate=routines.find(r=>{
-    if(r.lastDoneDate===t)return false;
-    if(dismissedReminderIds.includes(r.id))return false;
-    const th=threshold[r.type];
-    if(th==null)return false;
-    return hour>=th;
-  });
-  if(!candidate){currentReminderId=null;return;}
-  currentReminderId=candidate.id;
-  document.getElementById('routineReminderText').textContent=
-    `${candidate.icon||'🏁'} 아직 오늘의 '${candidate.name}'을(를) 안 했어요`;
-  const btn=document.getElementById('routineReminderStartBtn');
-  btn.onclick=()=>startRoutine(candidate.id);
-  document.getElementById('routineReminderBanner').classList.add('show');
-}
-
-// ── 루틴 알림 시간(정각) 팝업: 설정해둔 시간이 되면 큰 팝업 + NPC로 바로 시작 유도 ──
-let routineAlarmFiredKeys={}; // routineId -> 마지막으로 팝업을 띄운 "YYYY-MM-DD HH:MM" (같은 분에 중복으로 안 뜨게)
+// ── 루틴 알림 시간(정각) 팝업: 설정해둔 시간이 되면 큰 팝업 + NPC로 바로 시작 유도
+//    루틴을 시작하지 않고 넘어가면 완료할 때까지 10분 간격으로 다시 뜸 ──
+let routineAlarmState={}; // routineId -> {date:'YYYY-MM-DD', nextFireAt:timestamp}
+const ROUTINE_ALARM_REPEAT_MS=10*60*1000; // 10분마다 재알림
 function checkRoutineAlarms(){
   if(!routines.length)return;
   if(document.getElementById('routineAlarmModal').style.display==='flex')return; // 이미 떠 있으면 대기
   const now=new Date();
   const nowHM=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   const t=todayStr();
-  const key=t+' '+nowHM;
+  const ts=now.getTime();
   const candidate=routines.find(r=>{
-    if(!r.alarmTime||r.alarmTime!==nowHM)return false;
+    if(!r.alarmTime)return false;
     if(r.lastDoneDate===t)return false; // 오늘 이미 완료함
-    if(routineAlarmFiredKeys[r.id]===key)return false; // 이 분에 이미 띄웠음
-    return true;
+    const st=routineAlarmState[r.id];
+    if(st&&st.date===t)return ts>=st.nextFireAt; // 오늘 한번 떴었으면, 재알림 예정 시각이 됐는지 확인
+    return r.alarmTime===nowHM; // 오늘 아직 안 떴으면, 설정해둔 시각과 정확히 일치할 때 첫 알림
   });
   if(!candidate)return;
-  routineAlarmFiredKeys[candidate.id]=key;
+  routineAlarmState[candidate.id]={date:t,nextFireAt:ts+ROUTINE_ALARM_REPEAT_MS};
   showRoutineAlarm(candidate);
 }
 function showRoutineAlarm(r){
@@ -4048,7 +4005,6 @@ function showRoutineAlarm(r){
   document.getElementById('routineAlarmTitle').textContent=`${r.icon||'🏁'} ${r.name}`;
   const btn=document.getElementById('routineAlarmStartBtn');
   btn.onclick=()=>{closeRoutineAlarm();startRoutine(r.id);};
-  document.getElementById('routineReminderBanner').classList.remove('show');
   document.getElementById('routineAlarmModal').style.display='flex';
 }
 function closeRoutineAlarm(){
@@ -4413,7 +4369,7 @@ function renderBoardCal(){
         const bgStyle=(p.bg||p.cat?evChipStyle(p):'background:var(--accent-light);color:var(--accent);')+(p.done?'text-decoration:line-through;opacity:.5;':'');
         const timeTxt=st.time?st.time+' ':'';
         const stampHtml=p.done?`<img class="ev-stamp" src="${EV_STAMP_IMG}" alt="완료"/>`:'';
-        return `<div class="board-ev-block" onclick="event.stopPropagation();toggleEventDone('${key}',${i})" oncontextmenu="openEventColorPopover(event,'${key}',${i})" title="클릭: 완료 표시 · 우클릭: 색 설정"><div class="board-ev-block-bg" style="${bgStyle}"><span class="board-ev-block-text">${escapeHtml(timeTxt+st.text)}</span></div>${stampHtml}</div>`;
+        return `<div class="board-ev-block" onclick="event.stopPropagation();selectDay(${d});toggleEventDone('${key}',${i})" oncontextmenu="openEventColorPopover(event,'${key}',${i})" title="클릭: 완료 표시 · 우클릭: 색 설정"><div class="board-ev-block-bg" style="${bgStyle}"><span class="board-ev-block-text">${escapeHtml(timeTxt+st.text)}</span></div>${stampHtml}</div>`;
       }).join('')+'</div>';
     }
     html+=`<div class="board-day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><span class="bdn">${d}</span>${fillHtml}</div>`;
