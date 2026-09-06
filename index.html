@@ -3978,10 +3978,10 @@ async function finishRoutineRun(){
   renderRoutineList();
 }
 
-// ── 루틴 알림 시간(정각) 팝업: 설정해둔 시간이 되면 큰 팝업 + NPC로 바로 시작 유도
-//    루틴을 시작하지 않고 넘어가면 완료할 때까지 10분 간격으로 다시 뜸 ──
+// ── 루틴 알림 시간 팝업: 설정해둔 시간이 지나면 큰 팝업 + NPC로 바로 시작 유도
+//    늦게 들어와도(예: 9시 알람인데 10시에 접속) 바로 뜨고, 완료할 때까지 5분 간격으로 계속 다시 뜸 ──
 let routineAlarmState={}; // routineId -> {date:'YYYY-MM-DD', nextFireAt:timestamp}
-const ROUTINE_ALARM_REPEAT_MS=10*60*1000; // 10분마다 재알림
+const ROUTINE_ALARM_REPEAT_MS=5*60*1000; // 5분마다 재알림
 function checkRoutineAlarms(){
   if(!routines.length)return;
   if(document.getElementById('routineAlarmModal').style.display==='flex')return; // 이미 떠 있으면 대기
@@ -3994,7 +3994,7 @@ function checkRoutineAlarms(){
     if(r.lastDoneDate===t)return false; // 오늘 이미 완료함
     const st=routineAlarmState[r.id];
     if(st&&st.date===t)return ts>=st.nextFireAt; // 오늘 한번 떴었으면, 재알림 예정 시각이 됐는지 확인
-    return r.alarmTime===nowHM; // 오늘 아직 안 떴으면, 설정해둔 시각과 정확히 일치할 때 첫 알림
+    return nowHM>=r.alarmTime; // 오늘 아직 안 떴으면, 설정 시각이 이미 지났으면(늦게 접속해도) 바로 첫 알림
   });
   if(!candidate)return;
   routineAlarmState[candidate.id]={date:t,nextFireAt:ts+ROUTINE_ALARM_REPEAT_MS};
