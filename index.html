@@ -3992,6 +3992,7 @@ function checkRoutineAlarms(){
   const candidate=routines.find(r=>{
     if(!r.alarmTime)return false;
     if(r.lastDoneDate===t)return false; // 오늘 이미 완료함
+    if(activeRoutine&&activeRoutine.id===r.id)return false; // 지금 이 루틴을 진행 중이면(하단 바 표시 중) 알림 안 띄움
     const st=routineAlarmState[r.id];
     if(st&&st.date===t)return ts>=st.nextFireAt; // 오늘 한번 떴었으면, 재알림 예정 시각이 됐는지 확인
     return nowHM>=r.alarmTime; // 오늘 아직 안 떴으면, 설정 시각이 이미 지났으면(늦게 접속해도) 바로 첫 알림
