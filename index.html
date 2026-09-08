@@ -2856,7 +2856,7 @@ window.saveMemoBottle=async function(color){
   const text=el.value;
   if(text===bottleMemoContent[color])return;
   bottleMemoContent[color]=text;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo'),bottleMemoContent);
+  await setDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo'),bottleMemoContent,{merge:true});
   showSaving();
 };
 
@@ -3282,7 +3282,9 @@ async function saveData(type,key,value){
   if(!currentUser)return;
   showSaving();
   try{
-    await setDoc(doc(db,'users',currentUser.uid,type,key),value);
+    // merge:true — 이 항목의 다른 필드(예: 루틴 알림시간처럼 이 저장 호출에 포함 안 된 값)가
+    // 지워지지 않고 그대로 남아있도록 병합 저장한다. (예전엔 통째로 덮어써서 일부 값이 사라지는 버그가 있었음)
+    await setDoc(doc(db,'users',currentUser.uid,type,key),value,{merge:true});
   }catch(err){
     console.error('saveData 실패:',err);
     if(err?.message?.includes('exceeds maximum size')||err?.code==='invalid-argument'){
@@ -3325,7 +3327,7 @@ async function saveAppearanceNow(){
     try{const p=localStorage.getItem('memoBottleSize_'+c);if(p)data.memoBottleSize[c]=JSON.parse(p);}catch(e){}
   });
   try{
-    await setDoc(doc(db,'users',currentUser.uid,'settings','appearance'),data);
+    await setDoc(doc(db,'users',currentUser.uid,'settings','appearance'),data,{merge:true});
   }catch(err){console.error('appearance 저장 실패:',err);}
 }
 window.queueSaveAppearance=queueSaveAppearance;
@@ -3415,7 +3417,7 @@ async function loadAllData(){
     });
   });
   if(fcNeedsSave){
-    try{await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);}catch(e){console.error('fixedCosts 마이그레이션 저장 실패:',e);}
+    try{await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts,{merge:true});}catch(e){console.error('fixedCosts 마이그레이션 저장 실패:',e);}
   }
   if(ctS.exists()){
     const ct=ctS.data();
@@ -3575,7 +3577,7 @@ window.saveTopMemo=async function(){
   if(!currentUser)return;
   const text=document.getElementById('topMemoInput').value;
   if(text===topMemoContent)return;topMemoContent=text;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','topMemo'),{text});showSaving();
+  await setDoc(doc(db,'users',currentUser.uid,'settings','topMemo'),{text},{merge:true});showSaving();
 };
 
 // ── 왼쪽 모드 전환 ──
@@ -3786,7 +3788,7 @@ function bindRoutineDrag(){
       renderRoutineList();
       await Promise.all(routines.map(r=>saveData('routines',r.id,{
         name:r.name,icon:r.icon,type:r.type,steps:r.steps,order:r.order,
-        streak:r.streak||0,lastDoneDate:r.lastDoneDate||null
+        streak:r.streak||0,lastDoneDate:r.lastDoneDate||null,alarmTime:r.alarmTime||null
       })));
     });
   });
@@ -3970,7 +3972,7 @@ async function finishRoutineRun(){
       const yStr=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
       r.streak=(r.lastDoneDate===yStr)?(r.streak||0)+1:1;
       r.lastDoneDate=t;
-      await saveData('routines',r.id,{name:r.name,icon:r.icon,type:r.type,steps:r.steps,order:r.order,streak:r.streak,lastDoneDate:r.lastDoneDate});
+      await saveData('routines',r.id,{name:r.name,icon:r.icon,type:r.type,steps:r.steps,order:r.order,streak:r.streak,lastDoneDate:r.lastDoneDate,alarmTime:r.alarmTime||null});
     }
   }
   activeRoutine=null;activeStepIdx=0;
@@ -4292,7 +4294,7 @@ function renderCalBoardTabs(){
 }
 async function saveCalBoards(){
   if(!currentUser)return;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','calBoards'),{items:calBoards});
+  await setDoc(doc(db,'users',currentUser.uid,'settings','calBoards'),{items:calBoards},{merge:true});
 }
 window.addCalBoard=async function(){
   const name=prompt('새 달력 탭 이름 (예: 커미션, 공부)');
@@ -4848,7 +4850,7 @@ function renderTodoList(){
   }
 }
 async function saveGeneralTodos(){
-  await setDoc(doc(db,'users',currentUser.uid,'settings','generalTodos'),{items:generalTodos||[]});
+  await setDoc(doc(db,'users',currentUser.uid,'settings','generalTodos'),{items:generalTodos||[]},{merge:true});
 }
 window.addTodoInline=async function(){
   const inp=document.getElementById('todoInlineInput');
@@ -4896,7 +4898,7 @@ window.saveMindBar=async function(){
   const text=el.textContent.trim();
   if(text===mindBarText)return;
   mindBarText=text;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','mindBar'),{text});
+  await setDoc(doc(db,'users',currentUser.uid,'settings','mindBar'),{text},{merge:true});
   showSaving();
 };
 
@@ -4908,7 +4910,7 @@ let pickingCatId=null;
 let pickingEventKey=null,pickingEventIdx=null; // 추가 달력 일정 개별 색상 지정용
 function newCategoryId(){return 'cat'+Date.now().toString(36)+Math.floor(Math.random()*1000);}
 async function saveScheduleCategories(){
-  await setDoc(doc(db,'users',currentUser.uid,'settings','scheduleCategories'),{items:scheduleCategories});
+  await setDoc(doc(db,'users',currentUser.uid,'settings','scheduleCategories'),{items:scheduleCategories},{merge:true});
 }
 function renderCategoryLegend(){
   const row=document.getElementById('legendRow');
@@ -5119,7 +5121,7 @@ window.saveFastingHours=async function(el){
   if(val===fastingHours)return;
   fastingHours=val;
   if(!currentUser)return;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','fastingConfig'),{hours:fastingHours});
+  await setDoc(doc(db,'users',currentUser.uid,'settings','fastingConfig'),{hours:fastingHours},{merge:true});
   showSaving();
   if(leftMode==='meal-cal')renderMealCal();
 };
@@ -5529,7 +5531,7 @@ let MEMO_CATS=['정체성','할일','아이디어','기타'];
 let MEMO_CAT_EMOJI={'정체성':'🌟','할일':'✅','아이디어':'💡','기타':'📌'};
 async function saveCustomTags(){
   if(!currentUser)return;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','customTags'),{out:OUT_TAGS,in:IN_TAGS,memo:MEMO_CATS,memoEmoji:MEMO_CAT_EMOJI});
+  await setDoc(doc(db,'users',currentUser.uid,'settings','customTags'),{out:OUT_TAGS,in:IN_TAGS,memo:MEMO_CATS,memoEmoji:MEMO_CAT_EMOJI},{merge:true});
 }
 let selectedTag='';
 window.updateTagsByType=function(){
@@ -6076,7 +6078,7 @@ window.toggleSavingDetail=function(id,row){
 };
 async function saveSavingBaseline(){
   if(!currentUser)return;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline'),{items:savingBaseline,order:savingOrder});
+  await setDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline'),{items:savingBaseline,order:savingOrder},{merge:true});
 }
 window.editSavingBaseline=async function(tag){
   const cur=savingBaseline[tag]||0;
@@ -6163,7 +6165,7 @@ window.toggleLoanDetail=function(id,row){
 };
 async function saveLoans(){
   if(!currentUser)return;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','loans'),{items:loans});
+  await setDoc(doc(db,'users',currentUser.uid,'settings','loans'),{items:loans},{merge:true});
 }
 window.addLoan=async function(){
   const name=prompt('대출 이름을 입력해주세요 (예: 디딤돌대출, 보금자리론)');
@@ -6330,7 +6332,7 @@ window.confirmFixedSave=async function(){
   }else{
     fixedCosts[type][editingFixedIdx]={...fixedCosts[type][editingFixedIdx],name,amount,cycle,month,day,method};
   }
-  await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);
+  await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts,{merge:true});
   showSaving();
   closeModal('fixedEditModal');
   renderFixedCosts();
@@ -6338,7 +6340,7 @@ window.confirmFixedSave=async function(){
 window.deleteFixedRow=async function(type,idx){
   if(!confirm('이 항목을 삭제할까요?'))return;
   fixedCosts[type].splice(idx,1);
-  await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);
+  await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts,{merge:true});
   renderFixedCosts();
 };
 let dragFixed=null; // {type, idx}
@@ -6364,7 +6366,7 @@ window.fixedDrop=async function(e,type,targetIdx){
   const [moved]=arr.splice(dragFixed.idx,1);
   arr.splice(targetIdx,0,moved);
   dragFixed=null;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts);
+  await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts,{merge:true});
   renderFixedCosts();
 };
 window.fixedDragEnd=function(e){
@@ -6430,7 +6432,7 @@ window.saveMealPlanNote=async function(){
   const text=el.innerHTML;
   if(text===window._mealPlanNoteContent)return;
   window._mealPlanNoteContent=text;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote'),{text});showSaving();
+  await setDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote'),{text},{merge:true});showSaving();
 };
 window.mealInput=function(el,dateKey,mealKey){
   if(!mealData[dateKey])mealData[dateKey]={};mealData[dateKey][mealKey]=el.innerText;
@@ -6916,7 +6918,7 @@ window.saveDdayHero=async function(){
   const date=d?d.value:'';
   if(ddayHero.title===title&&ddayHero.date===date)return;
   ddayHero={title,date};
-  await setDoc(doc(db,'users',currentUser.uid,'settings','ddayHero'),ddayHero);
+  await setDoc(doc(db,'users',currentUser.uid,'settings','ddayHero'),ddayHero,{merge:true});
   showSaving();
 };
 function renderDdays(){
@@ -7259,7 +7261,7 @@ window.saveHabitPostit=async function(){
   const text=el.value;
   if(text===habitPostitContent)return;
   habitPostitContent=text;
-  await setDoc(doc(db,'users',currentUser.uid,'settings','habitPostit'),{text});showSaving();
+  await setDoc(doc(db,'users',currentUser.uid,'settings','habitPostit'),{text},{merge:true});showSaving();
 };
 
 // ── 배경 설정 ──
@@ -8582,7 +8584,7 @@ window.saveDailyData = async function(){
     stickers:dailyData.stickers||[],
     cells:dailyData.cells||{},
     checks:dailyData.checks||[]
-  });
+  },{merge:true});
   showSaving();
 };
 
@@ -9455,7 +9457,7 @@ window.saveMission=async function(){
     boxColor:missionData.boxColor||'#ffffff',
     charImg:missionData.charImg||null,
     charImgPos:missionData.charImgPos||{xp:0,yp:0,scale:1}
-  });
+  },{merge:true});
   showSaving();
 };
 // 테마 패널 외부 클릭 닫기
@@ -9520,7 +9522,7 @@ window.confirmDiaryLock=async function(){
     }
     const hash=await _sha256(val);
     diaryPasswordHash=hash;
-    await setDoc(doc(db,'users',currentUser.uid,'settings','diaryLock'),{hash});
+    await setDoc(doc(db,'users',currentUser.uid,'settings','diaryLock'),{hash},{merge:true});
     diaryUnlocked=true;
     closeDiaryLock();
     openDiaryScreen();
