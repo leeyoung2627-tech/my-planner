@@ -14,6 +14,7 @@
     --ink-dim: #767267;
     --line: #E7E4DD;
     --accent: #C4622D;
+    --sidebar-text: #1C1C1C;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
@@ -40,15 +41,15 @@
   .gear-btn{
     width: 30px; height: 30px; border-radius: 6px;
     display:flex; align-items:center; justify-content:center;
-    cursor:pointer; color: var(--ink-dim); font-size:15px;
+    cursor:pointer; color: color-mix(in srgb, var(--sidebar-text) 65%, transparent); font-size:15px;
   }
-  .gear-btn:hover{ background: #EFECE4; color: var(--ink); }
+  .gear-btn:hover{ background: #EFECE4; color: var(--sidebar-text); }
   .save-btn{
     width: 30px; height: 30px; border-radius: 6px;
     display:flex; align-items:center; justify-content:center;
-    cursor:pointer; color: var(--ink-dim); font-size:14px; margin-left:6px;
+    cursor:pointer; color: color-mix(in srgb, var(--sidebar-text) 65%, transparent); font-size:14px; margin-left:6px;
   }
-  .save-btn:hover{ background: #EFECE4; color: var(--ink); }
+  .save-btn:hover{ background: #EFECE4; color: var(--sidebar-text); }
   .sidebar-settings input[type="color"]{
     position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;
   }
@@ -58,23 +59,24 @@
   .sidebar .name{
     font-size:16px; font-weight:600; padding: 0 24px 24px;
     border-bottom: 1px solid var(--line); margin-bottom: 12px;
+    color: var(--sidebar-text);
   }
   .nav-item{
     display:flex; justify-content:space-between; align-items:center;
-    padding: 11px 24px; font-size:14px; cursor:pointer; color: var(--ink);
+    padding: 11px 24px; font-size:14px; cursor:pointer; color: var(--sidebar-text);
     font-weight: 500;
   }
   .nav-item:hover{ background: #EFECE4; }
   .nav-item.active{ color: var(--accent); }
-  .nav-item .arrow{ font-size:11px; color: var(--ink-dim); transition: transform 0.15s; }
+  .nav-item .arrow{ font-size:11px; color: color-mix(in srgb, var(--sidebar-text) 60%, transparent); transition: transform 0.15s; }
   .nav-item.open .arrow{ transform: rotate(90deg); }
 
   .submenu{ display:none; padding: 2px 0 10px; }
   .submenu.open{ display:block; }
   .sub-item{
-    padding: 8px 24px 8px 38px; font-size:13px; color: var(--ink-dim); cursor:pointer;
+    padding: 8px 24px 8px 38px; font-size:13px; color: color-mix(in srgb, var(--sidebar-text) 65%, transparent); cursor:pointer;
   }
-  .sub-item:hover{ color: var(--ink); }
+  .sub-item:hover{ color: var(--sidebar-text); }
   .sub-item.active{ color: var(--accent); font-weight:500; }
 
   /* ---- Editable text ---- */
@@ -175,8 +177,10 @@
 
     <div class="sidebar-settings">
       <div class="gear-btn" id="login-btn" title="관리자 로그인">🔒</div>
-      <label for="sidebar-color" class="gear-btn owner-only" id="gear-btn" title="사이드바 색상">⚙</label>
+      <label for="sidebar-color" class="gear-btn owner-only" id="gear-btn" title="사이드바 배경색">⚙</label>
       <input type="color" id="sidebar-color" value="#F7F6F4">
+      <label for="sidebar-text-color" class="gear-btn owner-only" title="사이드바 글자색" style="font-weight:700;">A</label>
+      <input type="color" id="sidebar-text-color" value="#1C1C1C">
       <div class="save-btn owner-only" id="save-btn" title="Firestore에 저장">☁</div>
     </div>
   </aside>
@@ -332,9 +336,14 @@
   webtoonToggle.classList.add('open');
   webtoonSubmenu.classList.add('open');
 
-  // 사이드바 색상 변경
+  // 사이드바 배경색 변경
   document.getElementById('sidebar-color').addEventListener('input', (e) => {
     document.documentElement.style.setProperty('--sidebar', e.target.value);
+  });
+
+  // 사이드바 글자색 변경
+  document.getElementById('sidebar-text-color').addEventListener('input', (e) => {
+    document.documentElement.style.setProperty('--sidebar-text', e.target.value);
   });
 
   // 텍스트 더블클릭으로 수정 (관리자로 로그인했을 때만 동작)
@@ -411,6 +420,10 @@
       document.documentElement.style.setProperty('--sidebar', data.sidebarColor);
       document.getElementById('sidebar-color').value = data.sidebarColor;
     }
+    if(data.sidebarTextColor){
+      document.documentElement.style.setProperty('--sidebar-text', data.sidebarTextColor);
+      document.getElementById('sidebar-text-color').value = data.sidebarTextColor;
+    }
   }, (err) => {
     console.error('[portfolio] 콘텐츠 불러오기 실패:', err.code || err);
   });
@@ -438,6 +451,7 @@
       if(el) data[field] = el.textContent.trim();
     });
     data.sidebarColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar').trim();
+    data.sidebarTextColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-text').trim();
     try{
       await setDoc(CONTENT_DOC, data, { merge: true });
       showToast('저장되었습니다.');
