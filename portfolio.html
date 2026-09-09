@@ -1182,10 +1182,14 @@
   }
 
   // 파일명에 포함된 숫자를 순서 값으로 사용 (001, 002 ... 형태를 위에서 아래로 정렬)
-  function extractOrderNumber(filename, fallbackIndex){
-    const match = filename.match(/(\d+)/);
-    if(match) return parseInt(match[1], 10);
-    return 1000000 + fallbackIndex;
+  // 파일명 안의 모든 숫자를 순서대로 뽑아서 정렬 키로 사용
+  // ("76화 이미지_1", "76화 이미지_2" 처럼 여러 숫자가 있어도 마지막 숫자(페이지 번호)까지 반영됨)
+  function extractOrderKey(filename, fallbackIndex){
+    const nums = (filename.match(/\d+/g) || []).map(n => n.padStart(6, '0'));
+    if(nums.length === 0){
+      return 'zzz_' + String(fallbackIndex).padStart(6, '0');
+    }
+    return nums.join('_');
   }
 
   // file.type이 비어있는 드문 경우(일부 브라우저/도구에서 내보낸 PNG 등)에도
@@ -1278,7 +1282,11 @@
     Object.keys(imagesByPage).forEach(k => delete imagesByPage[k]);
     Object.assign(imagesByPage, grouped);
     Object.keys(imagesByPage).forEach(p => {
-      imagesByPage[p].sort((a, b) => (a.order || 0) - (b.order || 0));
+      imagesByPage[p].sort((a, b) => {
+        const ao = String(a.order ?? '');
+        const bo = String(b.order ?? '');
+        return ao < bo ? -1 : ao > bo ? 1 : 0;
+      });
       renderPageImages(p);
     });
   }, (err) => {
@@ -1295,7 +1303,7 @@
         const dataUrl = webtoon
           ? await compressImageOriginal(file, 0.85, 700000)
           : await compressImage(file, 1400, 0.82, 500000);
-        const order = extractOrderNumber(file.name, i);
+        const order = extractOrderKey(file.name, i);
         await addDoc(IMAGES_COLL, { page, src: dataUrl, order, filename: file.name });
       }catch(err){
         console.error(err);
