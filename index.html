@@ -4687,7 +4687,6 @@ function renderSchedule(){
     if(activeBoardId)row.style.borderLeft=bg?`3px solid ${bg}`:'3px solid transparent';
     row.innerHTML=`
       ${checkHtml}
-      <span class="drag-dots" style="font-size:14px;color:#ccc;cursor:grab;padding-top:2px;user-select:none">⠿</span>
       <span class="item-row-time">${time?`<span class="ev-time-badge">${time}</span>`:''}</span>
       <span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})">${text}</span>
       <span style="font-size:11px;color:#ccc;cursor:pointer;display:inline-flex;align-items:center;padding-top:3px" onclick="deleteScheduleItem('${key}',${idx})"><svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg></span>`;
