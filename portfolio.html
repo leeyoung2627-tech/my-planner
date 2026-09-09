@@ -52,6 +52,9 @@
   .sidebar-settings input[type="color"]{
     position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;
   }
+  .owner-only{ display:none; }
+  body.is-owner .owner-only{ display:flex; }
+  body.is-owner #login-btn{ display:none; }
   .sidebar .name{
     font-size:16px; font-weight:600; padding: 0 24px 24px;
     border-bottom: 1px solid var(--line); margin-bottom: 12px;
@@ -151,29 +154,30 @@
 
   <!-- ================= SIDEBAR ================= -->
   <aside class="sidebar">
-    <div class="name editable">두목</div>
+    <div class="name editable" data-field="sidebarName">두목</div>
 
     <div class="sidebar-nav">
-      <div class="nav-item active" data-view="about"><span class="editable">소개</span></div>
+      <div class="nav-item active" data-view="about"><span class="editable" data-field="navAbout">소개</span></div>
 
       <div class="nav-item" id="webtoon-toggle">
-        <span class="editable">웹툰 작업</span> <span class="arrow">▸</span>
+        <span class="editable" data-field="navWebtoon">웹툰 작업</span> <span class="arrow">▸</span>
       </div>
       <div class="submenu" id="webtoon-submenu">
-        <div class="sub-item" data-view="webtoon" data-work="work1"><span class="editable">그 마을엔 축복이</span></div>
-        <div class="sub-item" data-view="webtoon" data-work="work2"><span class="editable">이시하 · 유봄</span></div>
-        <div class="sub-item" data-view="webtoon" data-work="work3"><span class="editable">작품 3</span></div>
+        <div class="sub-item" data-view="webtoon" data-work="work1"><span class="editable" data-field="subWork1">그 마을엔 축복이</span></div>
+        <div class="sub-item" data-view="webtoon" data-work="work2"><span class="editable" data-field="subWork2">이시하 · 유봄</span></div>
+        <div class="sub-item" data-view="webtoon" data-work="work3"><span class="editable" data-field="subWork3">작품 3</span></div>
       </div>
 
-      <div class="nav-item" data-view="illust"><span class="editable">일러스트 작업</span></div>
-      <div class="nav-item" data-view="character"><span class="editable">캐릭터 작업</span></div>
-      <div class="nav-item" data-view="contact"><span class="editable">연락처</span></div>
+      <div class="nav-item" data-view="illust"><span class="editable" data-field="navIllust">일러스트 작업</span></div>
+      <div class="nav-item" data-view="character"><span class="editable" data-field="navCharacter">캐릭터 작업</span></div>
+      <div class="nav-item" data-view="contact"><span class="editable" data-field="navContact">연락처</span></div>
     </div>
 
     <div class="sidebar-settings">
-      <label for="sidebar-color" class="gear-btn" title="사이드바 색상">⚙</label>
+      <div class="gear-btn" id="login-btn" title="관리자 로그인">🔒</div>
+      <label for="sidebar-color" class="gear-btn owner-only" id="gear-btn" title="사이드바 색상">⚙</label>
       <input type="color" id="sidebar-color" value="#F7F6F4">
-      <div class="save-btn" id="save-btn" title="수정 내용 파일로 저장">⬇</div>
+      <div class="save-btn owner-only" id="save-btn" title="Firestore에 저장">☁</div>
     </div>
   </aside>
 
@@ -185,17 +189,17 @@
       <div class="hero-img">[대표 이미지]</div>
       <div class="info">
         <div class="info-top">
-          <h1 class="editable">두목</h1>
-          <div class="role editable">웹툰 작가 · 일러스트레이터</div>
-          <div class="bio editable">여기에 간단한 소개글을 적습니다.
+          <h1 class="editable" data-field="aboutName">두목</h1>
+          <div class="role editable" data-field="role">웹툰 작가 · 일러스트레이터</div>
+          <div class="bio editable" data-field="bio">여기에 간단한 소개글을 적습니다.
 예: 웹툰 3편 연재, 프리랜서 일러스트 작업 병행.</div>
         </div>
 
         <div class="career">
           <h2>경력</h2>
-          <div class="career-row"><div class="period editable">2023–2024</div><div class="editable">그 마을엔 축복이 연재</div></div>
-          <div class="career-row"><div class="period editable">2024–2025</div><div class="editable">이시하 · 유봄 연재</div></div>
-          <div class="career-row"><div class="period editable">진행중</div><div class="editable">프리랜서 일러스트 어시스트</div></div>
+          <div class="career-row"><div class="period editable" data-field="career1Period">2023–2024</div><div class="editable" data-field="career1Text">그 마을엔 축복이 연재</div></div>
+          <div class="career-row"><div class="period editable" data-field="career2Period">2024–2025</div><div class="editable" data-field="career2Text">이시하 · 유봄 연재</div></div>
+          <div class="career-row"><div class="period editable" data-field="career3Period">진행중</div><div class="editable" data-field="career3Text">프리랜서 일러스트 어시스트</div></div>
         </div>
       </div>
     </section>
@@ -203,8 +207,8 @@
     <!-- 웹툰 작업 - work1 -->
     <section class="view" data-view="webtoon" data-work="work1">
       <div class="work-header">
-        <h1 class="editable">그 마을엔 축복이</h1>
-        <div class="work-meta editable">완결 · 초자연 로맨스</div>
+        <h1 class="editable" data-field="work1Title">그 마을엔 축복이</h1>
+        <div class="work-meta editable" data-field="work1Meta">완결 · 초자연 로맨스</div>
       </div>
       <div class="panel-scroll">
         <div class="panel h1">[컷 1]</div>
@@ -218,8 +222,8 @@
     <!-- 웹툰 작업 - work2 -->
     <section class="view" data-view="webtoon" data-work="work2">
       <div class="work-header">
-        <h1 class="editable">이시하 · 유봄</h1>
-        <div class="work-meta editable">완결 · 뱀파이어 일상물</div>
+        <h1 class="editable" data-field="work2Title">이시하 · 유봄</h1>
+        <div class="work-meta editable" data-field="work2Meta">완결 · 뱀파이어 일상물</div>
       </div>
       <div class="panel-scroll">
         <div class="panel h2">[컷 1]</div>
@@ -232,8 +236,8 @@
     <!-- 웹툰 작업 - work3 -->
     <section class="view" data-view="webtoon" data-work="work3">
       <div class="work-header">
-        <h1 class="editable">작품 3</h1>
-        <div class="work-meta editable">완결</div>
+        <h1 class="editable" data-field="work3Title">작품 3</h1>
+        <div class="work-meta editable" data-field="work3Meta">완결</div>
       </div>
       <div class="panel-scroll">
         <div class="panel h1">[컷 1]</div>
@@ -245,7 +249,7 @@
     <!-- 일러스트 작업 -->
     <section class="view" data-view="illust">
       <div class="grid-view">
-        <h1 class="editable">일러스트 작업</h1>
+        <h1 class="editable" data-field="illustTitle">일러스트 작업</h1>
         <div class="illust-grid">
           <div class="item">[일러스트]</div>
           <div class="item">[일러스트]</div>
@@ -260,7 +264,7 @@
     <!-- 캐릭터 작업 -->
     <section class="view" data-view="character">
       <div class="grid-view">
-        <h1 class="editable">캐릭터 작업</h1>
+        <h1 class="editable" data-field="characterTitle">캐릭터 작업</h1>
         <div class="illust-grid">
           <div class="item">[캐릭터]</div>
           <div class="item">[캐릭터]</div>
@@ -273,8 +277,8 @@
     <!-- 연락처 -->
     <section class="view" data-view="contact">
       <div class="grid-view">
-        <h1 class="editable">연락처</h1>
-        <p class="editable" style="font-size:14px; color:var(--ink-dim); margin-top:12px;">work@example.com</p>
+        <h1 class="editable" data-field="contactTitle">연락처</h1>
+        <p class="editable" data-field="contactEmail" style="font-size:14px; color:var(--ink-dim); margin-top:12px;">work@example.com</p>
       </div>
     </section>
 
@@ -282,6 +286,8 @@
 </div>
 
 <script>
+  const OWNER_UID = "JuEfafmoqkc2PsXpMmw4rbc56t12";
+
   const navItems = document.querySelectorAll('.nav-item[data-view]');
   const subItems = document.querySelectorAll('.sub-item[data-view]');
   const views = document.querySelectorAll('.view');
@@ -331,9 +337,11 @@
     document.documentElement.style.setProperty('--sidebar', e.target.value);
   });
 
-  // 텍스트 더블클릭으로 수정
+  // 텍스트 더블클릭으로 수정 (관리자로 로그인했을 때만 동작)
+  let isOwner = false;
   document.querySelectorAll('.editable').forEach(el => {
     el.addEventListener('dblclick', (e) => {
+      if(!isOwner) return;
       e.stopPropagation();
       el.setAttribute('contenteditable', 'true');
       el.focus();
@@ -350,26 +358,93 @@
     });
   });
 
-  // 수정 내용 파일로 저장
   const toast = document.createElement('div');
   toast.className = 'edit-toast';
-  toast.textContent = '파일로 저장되었습니다. 이 파일을 열어서 계속 작업하세요.';
   document.body.appendChild(toast);
-
-  document.getElementById('save-btn').addEventListener('click', () => {
-    const clone = document.documentElement.cloneNode(true);
-    clone.querySelectorAll('.editable').forEach(el => el.removeAttribute('contenteditable'));
-    clone.querySelector('.edit-toast')?.remove();
-    const htmlContent = '<!DOCTYPE html>\n' + clone.outerHTML;
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'portfolio.html';
-    a.click();
-    URL.revokeObjectURL(url);
+  function showToast(msg){
+    toast.textContent = msg;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+</script>
+
+<script type="module">
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+  // my-planner 프로젝트와 동일한 Firebase 설정 (index.html의 firebaseConfig를 그대로 복사)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+    authDomain: "my-planner-3728c.firebaseapp.com",
+    projectId: "my-planner-3728c",
+    storageBucket: "my-planner-3728c.firebasestorage.app",
+    messagingSenderId: "179812397978",
+    appId: "1:179812397978:web:3525714542291e818e0023"
+  };
+
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  const CONTENT_DOC = doc(db, 'users', OWNER_UID, 'settings', 'portfolioContent');
+
+  const FIELD_IDS = [
+    'sidebarName','navAbout','navWebtoon','subWork1','subWork2','subWork3',
+    'navIllust','navCharacter','navContact','aboutName','role','bio',
+    'career1Period','career1Text','career2Period','career2Text','career3Period','career3Text',
+    'work1Title','work1Meta','work2Title','work2Meta','work3Title','work3Meta',
+    'illustTitle','characterTitle','contactTitle','contactEmail'
+  ];
+
+  // ---- Firestore에서 콘텐츠 불러오기 (방문자 포함 모두에게 적용) ----
+  onSnapshot(CONTENT_DOC, (snap) => {
+    if(!snap.exists()) return;
+    const data = snap.data();
+    FIELD_IDS.forEach(field => {
+      if(data[field] === undefined) return;
+      const el = document.querySelector(`[data-field="${field}"]`);
+      if(el) el.textContent = data[field];
+    });
+    if(data.sidebarColor){
+      document.documentElement.style.setProperty('--sidebar', data.sidebarColor);
+      document.getElementById('sidebar-color').value = data.sidebarColor;
+    }
+  }, (err) => {
+    console.error('[portfolio] 콘텐츠 불러오기 실패:', err.code || err);
+  });
+
+  // ---- 로그인 상태 ----
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    try{
+      await signInWithPopup(auth, provider);
+    }catch(err){
+      console.error('[portfolio] 로그인 실패:', err.code || err);
+    }
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    isOwner = !!(user && user.uid === OWNER_UID);
+    document.body.classList.toggle('is-owner', isOwner);
+  });
+
+  // ---- 저장 (관리자만 버튼이 보이고, 규칙상으로도 관리자만 쓰기 가능) ----
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    if(!isOwner) return;
+    const data = {};
+    FIELD_IDS.forEach(field => {
+      const el = document.querySelector(`[data-field="${field}"]`);
+      if(el) data[field] = el.textContent.trim();
+    });
+    data.sidebarColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar').trim();
+    try{
+      await setDoc(CONTENT_DOC, data, { merge: true });
+      showToast('저장되었습니다.');
+    }catch(err){
+      console.error('[portfolio] 저장 실패:', err.code || err);
+      showToast('저장 실패 — 콘솔을 확인해주세요.');
+    }
   });
 </script>
 
