@@ -1288,22 +1288,25 @@
   async function addImagesForPage(page, fileList){
     if(!isOwner || !fileList || !fileList.length) return;
     const webtoon = isWebtoonPage(page);
-    let i = 0;
-    for(const file of fileList){
-      if(!isImageFile(file)) continue;
+    const files = Array.from(fileList).filter(isImageFile);
+    const failed = [];
+    await Promise.all(files.map(async (file, i) => {
       try{
         const dataUrl = webtoon
           ? await compressImageOriginal(file, 0.85, 700000)
           : await compressImage(file, 1400, 0.82, 500000);
         const order = extractOrderNumber(file.name, i);
         await addDoc(IMAGES_COLL, { page, src: dataUrl, order, filename: file.name });
-        i++;
       }catch(err){
         console.error(err);
-        alert('이미지를 추가하지 못했어요: ' + file.name + (err && err.message ? ('\n' + err.message) : ''));
+        failed.push(file.name + (err && err.message ? (': ' + err.message) : ''));
       }
+    }));
+    if(failed.length){
+      alert('다음 이미지는 추가하지 못했어요:\n' + failed.join('\n'));
+    } else {
+      showToast('이미지가 추가되었습니다.');
     }
-    showToast('이미지가 추가되었습니다.');
   }
 
   // 이미지 추가(+) 버튼과 숨김 파일 입력은 동적으로 생기므로 이벤트 위임 방식으로 처리
