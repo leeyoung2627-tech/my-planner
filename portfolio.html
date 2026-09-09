@@ -632,6 +632,72 @@
 
   const CONTENT_DOC = doc(db, 'users', OWNER_UID, 'settings', 'portfolioContent');
   const IMAGES_COLL = collection(db, 'users', OWNER_UID, 'settings', 'portfolioContent', 'images');
+  const imagesByPage = {};
+
+  function isWebtoonPage(page){
+    const container = document.querySelector(`[data-page-container="${page}"]`);
+    return !!(container && container.classList.contains('panel-scroll'));
+  }
+
+  function renderPageImages(page){
+    const container = document.querySelector(`[data-page-container="${page}"]`);
+    if(!container) return;
+    container.innerHTML = '';
+    const list = imagesByPage[page] || [];
+    const isGrid = container.classList.contains('illust-grid');
+    list.forEach(item => {
+      const wrap = document.createElement('div');
+      wrap.className = isGrid ? 'img-item' : 'panel-img-wrap';
+
+      const img = document.createElement('img');
+      img.src = item.src;
+      img.alt = '';
+      if(!isGrid){
+        img.addEventListener('click', () => openLightbox(item.src));
+      }
+
+      const editBtn = document.createElement('div');
+      editBtn.className = 'img-action-btn img-edit-btn owner-only';
+      editBtn.title = '이미지 수정';
+      editBtn.textContent = '✎';
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.addEventListener('change', async (ev) => {
+          const file = ev.target.files && ev.target.files[0];
+          if(!file) return;
+          try{
+            const dataUrl = isWebtoonPage(item.page)
+              ? await compressImageByWidth(file, 1380, 0.82, 700000)
+              : await compressImage(file, 1400, 0.82, 500000);
+            await setDoc(doc(IMAGES_COLL, item.id), { src: dataUrl }, { merge: true });
+            showToast('이미지가 수정되었습니다.');
+          }catch(err){
+            console.error(err);
+            alert('이미지를 수정하지 못했어요.');
+          }
+        });
+        input.click();
+      });
+
+      const delBtn = document.createElement('div');
+      delBtn.className = 'img-action-btn img-delete-btn owner-only';
+      delBtn.title = '삭제';
+      delBtn.textContent = '×';
+      delBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try{ await deleteDoc(doc(IMAGES_COLL, item.id)); }
+        catch(err){ console.error(err); }
+      });
+
+      wrap.appendChild(img);
+      wrap.appendChild(editBtn);
+      wrap.appendChild(delBtn);
+      container.appendChild(wrap);
+    });
+  }
 
   const FIELD_IDS = [
     'sidebarName','navAbout','navWebtoon',
@@ -1047,74 +1113,7 @@
     if(e.key === 'Escape' && heroAdjusting) toggleHeroAdjustMode();
   });
 
-  // ---- 페이지별 이미지 (웹툰 작품들 + 일러스트 + 기타 작업) ----
-  const imagesByPage = {};
-
-  function isWebtoonPage(page){
-    const container = document.querySelector(`[data-page-container="${page}"]`);
-    return !!(container && container.classList.contains('panel-scroll'));
-  }
-
-  function renderPageImages(page){
-    const container = document.querySelector(`[data-page-container="${page}"]`);
-    if(!container) return;
-    container.innerHTML = '';
-    const list = imagesByPage[page] || [];
-    const isGrid = container.classList.contains('illust-grid');
-    list.forEach(item => {
-      const wrap = document.createElement('div');
-      wrap.className = isGrid ? 'img-item' : 'panel-img-wrap';
-
-      const img = document.createElement('img');
-      img.src = item.src;
-      img.alt = '';
-      if(!isGrid){
-        img.addEventListener('click', () => openLightbox(item.src));
-      }
-
-      const editBtn = document.createElement('div');
-      editBtn.className = 'img-action-btn img-edit-btn owner-only';
-      editBtn.title = '이미지 수정';
-      editBtn.textContent = '✎';
-      editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.addEventListener('change', async (ev) => {
-          const file = ev.target.files && ev.target.files[0];
-          if(!file) return;
-          try{
-            const dataUrl = isWebtoonPage(item.page)
-              ? await compressImageByWidth(file, 1380, 0.82, 700000)
-              : await compressImage(file, 1400, 0.82, 500000);
-            await setDoc(doc(IMAGES_COLL, item.id), { src: dataUrl }, { merge: true });
-            showToast('이미지가 수정되었습니다.');
-          }catch(err){
-            console.error(err);
-            alert('이미지를 수정하지 못했어요.');
-          }
-        });
-        input.click();
-      });
-
-      const delBtn = document.createElement('div');
-      delBtn.className = 'img-action-btn img-delete-btn owner-only';
-      delBtn.title = '삭제';
-      delBtn.textContent = '×';
-      delBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        try{ await deleteDoc(doc(IMAGES_COLL, item.id)); }
-        catch(err){ console.error(err); }
-      });
-
-      wrap.appendChild(img);
-      wrap.appendChild(editBtn);
-      wrap.appendChild(delBtn);
-      container.appendChild(wrap);
-    });
-  }
-
+  // ---- 페이지별 이미지 불러오기 (웹툰 작품들 + 일러스트 + 기타 작업) ----
   onSnapshot(IMAGES_COLL, (snap) => {
     const grouped = {};
     snap.forEach(d => {
