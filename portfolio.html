@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>두목 포트폴리오</title>
+<title>포트폴리오</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -277,9 +277,25 @@
     min-width:36px; text-align:center; border-radius:16px;
   }
   .lb-btn:hover{ background:rgba(255,255,255,.18); }
+
+  /* ---- 초기 로딩 화면 (깜빡임 방지) ---- */
+  .page-loader{
+    position:fixed; inset:0; background:var(--bg); z-index:100000;
+    display:flex; align-items:center; justify-content:center;
+    transition: opacity .25s ease;
+  }
+  .page-loader.hide{ opacity:0; pointer-events:none; }
+  .page-loader-spinner{
+    width:26px; height:26px; border-radius:50%;
+    border:3px solid var(--line); border-top-color:var(--accent);
+    animation: page-loader-spin 0.8s linear infinite;
+  }
+  @keyframes page-loader-spin{ to{ transform:rotate(360deg); } }
 </style>
 </head>
 <body>
+
+<div class="page-loader" id="pageLoader"><div class="page-loader-spinner"></div></div>
 
 <div class="app">
 
@@ -646,6 +662,14 @@
 
   const CONTENT_DOC = doc(db, 'users', OWNER_UID, 'settings', 'portfolioContent');
   const IMAGES_COLL = collection(db, 'users', OWNER_UID, 'settings', 'portfolioContent', 'images');
+
+  function hidePageLoader(){
+    const loader = document.getElementById('pageLoader');
+    if(!loader) return;
+    loader.classList.add('hide');
+    setTimeout(() => loader.remove(), 300);
+  }
+  setTimeout(hidePageLoader, 4000); // Firestore 응답이 너무 늦을 때를 대비한 안전장치
   const imagesByPage = {};
 
   function isWebtoonPage(page){
@@ -869,8 +893,10 @@
       heroImgPos = data.heroImgPos;
       applyHeroTransform();
     }
+    hidePageLoader();
   }, (err) => {
     console.error('[portfolio] 콘텐츠 불러오기 실패:', err.code || err);
+    hidePageLoader();
   });
 
   // ---- 로그인 상태 ----
