@@ -66,7 +66,7 @@
     padding: 11px 24px; font-size:14px; cursor:pointer; color: var(--sidebar-text);
     font-weight: 500;
   }
-  .nav-item:hover{ background: #EFECE4; }
+  .nav-item:hover{ background: color-mix(in srgb, var(--sidebar-text) 12%, transparent); }
   .nav-item.active{ color: var(--accent); }
   .nav-item .arrow{ font-size:11px; color: color-mix(in srgb, var(--sidebar-text) 60%, transparent); transition: transform 0.15s; }
   .nav-item.open .arrow{ transform: rotate(90deg); }
@@ -165,14 +165,14 @@
     font-size:12px; font-weight:700; padding:7px 14px; cursor:pointer; white-space:nowrap;
   }
 
-  .info{ max-width: 720px; margin: 0 auto; padding: 40px 48px; }
-  .info-top{ text-align:center; margin-bottom: 36px; }
+  .info{ max-width: 960px; margin: 0 auto; padding: 40px 48px; }
+  .info-top{ text-align:center; margin: 0 auto 36px; max-width: 640px; }
   .info h1{ font-size: 22px; margin-bottom: 6px; }
   .info .role{ font-size:14px; color: var(--ink-dim); margin-bottom: 24px; }
   .info .bio{ font-size:14px; line-height:1.75; color: var(--ink); white-space: pre-line; }
 
   .career-contact-row{ display:flex; gap:40px; align-items:flex-start; }
-  .career{ flex:1; min-width:0; }
+  .career{ flex:0 0 auto; }
   .career .title-row{ margin-bottom:14px; }
   .career h2{ font-size:14px; color: var(--ink-dim); font-weight:600; }
   .career .add-img-btn{ width:20px; height:20px; font-size:13px; }
@@ -180,7 +180,6 @@
   #careerRows{
     display:grid; grid-template-columns: 110px max-content 22px;
     column-gap:20px; border-bottom:1px solid var(--line);
-    overflow-x:auto; max-width:100%;
   }
   .career-row{ display:contents; }
   #careerRows .period{ color: var(--ink-dim); font-size:13px; border-top:1px solid var(--line); padding:12px 0; align-self:center; }
@@ -249,7 +248,7 @@
     position:relative; aspect-ratio: 4/5; border-radius:8px; overflow:hidden; border:1px solid var(--line);
     background: var(--placeholder);
   }
-  .illust-grid .img-item img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .illust-grid .img-item img{ width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in; }
   .illust-grid .img-item .img-delete-btn{ top:8px; right:8px; }
   .illust-grid .img-item .img-edit-btn{ top:8px; right:38px; }
   body.is-owner .illust-grid .img-item:hover .img-action-btn{ opacity:1; pointer-events:auto; }
@@ -454,9 +453,24 @@
   webtoonToggle.classList.add('open');
   webtoonSubmenu.classList.add('open');
 
-  // 사이드바 배경색 변경
+  // 사이드바 배경색 변경 — 배경이 어두우면 글자색을 밝게, 밝으면 어둡게 자동 반전
+  function relativeLuminance(hex){
+    const c = hex.replace('#', '');
+    const r = parseInt(c.substring(0, 2), 16) / 255;
+    const g = parseInt(c.substring(2, 4), 16) / 255;
+    const b = parseInt(c.substring(4, 6), 16) / 255;
+    const lin = v => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  }
+  function contrastTextColor(bgHex){
+    return relativeLuminance(bgHex) > 0.5 ? '#1C1C1C' : '#F5F4F1';
+  }
   document.getElementById('sidebar-color').addEventListener('input', (e) => {
-    document.documentElement.style.setProperty('--sidebar', e.target.value);
+    const bg = e.target.value;
+    document.documentElement.style.setProperty('--sidebar', bg);
+    const textColor = contrastTextColor(bg);
+    document.documentElement.style.setProperty('--sidebar-text', textColor);
+    document.getElementById('sidebar-text-color').value = textColor;
   });
 
   // 사이드바 글자색 변경
@@ -652,9 +666,7 @@
       const img = document.createElement('img');
       img.src = item.src;
       img.alt = '';
-      if(!isGrid){
-        img.addEventListener('click', () => openLightbox(item.src));
-      }
+      img.addEventListener('click', () => openLightbox(item.src));
 
       const editBtn = document.createElement('div');
       editBtn.className = 'img-action-btn img-edit-btn owner-only';
@@ -670,7 +682,7 @@
           if(!file) return;
           try{
             const dataUrl = isWebtoonPage(item.page)
-              ? await compressImageByWidth(file, 1380, 0.82, 700000)
+              ? await compressImageOriginal(file, 0.85, 700000)
               : await compressImage(file, 1400, 0.82, 500000);
             await setDoc(doc(IMAGES_COLL, item.id), { src: dataUrl }, { merge: true });
             showToast('이미지가 수정되었습니다.');
@@ -688,8 +700,14 @@
       delBtn.textContent = '×';
       delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        try{ await deleteDoc(doc(IMAGES_COLL, item.id)); }
-        catch(err){ console.error(err); }
+        if(!isOwner){ showToast('로그인이 필요해요.'); return; }
+        try{
+          await deleteDoc(doc(IMAGES_COLL, item.id));
+          showToast('삭제되었습니다.');
+        }catch(err){
+          console.error('[portfolio] 이미지 삭제 실패:', err);
+          showToast('삭제 실패: ' + (err.code || err.message || err));
+        }
       });
 
       wrap.appendChild(img);
@@ -1006,8 +1024,8 @@
     });
   }
 
-  // 웹툰 컷 전용: 세로로 아주 긴 이미지를 위해 '폭' 기준으로만 리사이즈 (높이는 제한하지 않음)
-  function compressImageByWidth(file, targetWidth, quality, maxBytes){
+  // 웹툰 컷 전용: 리사이즈 없이 원본 해상도를 유지하고, 용량 때문에 필요할 때만 화질만 낮춤
+  function compressImageOriginal(file, quality, maxBytes){
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onerror = () => reject(new Error('파일을 읽지 못했어요'));
@@ -1015,23 +1033,19 @@
         const img = new Image();
         img.onerror = () => reject(new Error('이미지를 열지 못했어요'));
         img.onload = () => {
-          let width = img.width, height = img.height;
-          if(width > targetWidth){
-            height = Math.round(height * targetWidth / width);
-            width = targetWidth;
-          }
-          if(height > 12000){
-            width = Math.round(width * 12000 / height);
-            height = 12000;
-          }
           const canvas = document.createElement('canvas');
-          canvas.width = width; canvas.height = height;
-          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext('2d').drawImage(img, 0, 0);
           let q = quality;
           let dataUrl = canvas.toDataURL('image/jpeg', q);
-          while(dataUrl.length > maxBytes * 1.37 && q > 0.35){
+          while(dataUrl.length > maxBytes * 1.37 && q > 0.3){
             q -= 0.1;
             dataUrl = canvas.toDataURL('image/jpeg', q);
+          }
+          if(dataUrl.length > maxBytes * 1.37){
+            reject(new Error('이미지 용량이 너무 커서 원본 해상도로 저장할 수 없어요. 파일 용량을 줄여서 다시 시도해주세요.'));
+            return;
           }
           resolve(dataUrl);
         };
@@ -1039,6 +1053,13 @@
       };
       reader.readAsDataURL(file);
     });
+  }
+
+  // 파일명에 포함된 숫자를 순서 값으로 사용 (001, 002 ... 형태를 위에서 아래로 정렬)
+  function extractOrderNumber(filename, fallbackIndex){
+    const match = filename.match(/(\d+)/);
+    if(match) return parseInt(match[1], 10);
+    return 1000000 + fallbackIndex;
   }
 
   async function handleHeroUpload(file){
@@ -1139,12 +1160,14 @@
       if(!file.type.startsWith('image/')) continue;
       try{
         const dataUrl = webtoon
-          ? await compressImageByWidth(file, 1380, 0.82, 700000)
+          ? await compressImageOriginal(file, 0.85, 700000)
           : await compressImage(file, 1400, 0.82, 500000);
-        await addDoc(IMAGES_COLL, { page, src: dataUrl, order: Date.now() + (i++) });
+        const order = extractOrderNumber(file.name, i);
+        await addDoc(IMAGES_COLL, { page, src: dataUrl, order, filename: file.name });
+        i++;
       }catch(err){
         console.error(err);
-        alert('이미지를 추가하지 못했어요: ' + file.name);
+        alert('이미지를 추가하지 못했어요: ' + file.name + (err && err.message ? ('\n' + err.message) : ''));
       }
     }
     showToast('이미지가 추가되었습니다.');
