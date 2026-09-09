@@ -78,6 +78,10 @@
   }
   .sub-item:hover{ color: var(--sidebar-text); }
   .sub-item.active{ color: var(--accent); font-weight:500; }
+  .sub-item-add{
+    padding: 8px 24px 8px 38px; font-size:14px; color: color-mix(in srgb, var(--sidebar-text) 50%, transparent); cursor:pointer;
+  }
+  .sub-item-add:hover{ color: var(--accent); }
 
   /* ---- Editable text ---- */
   .editable{ cursor: text; border-radius:3px; }
@@ -168,32 +172,32 @@
   .info .bio{ font-size:14px; line-height:1.75; color: var(--ink); white-space: pre-line; }
 
   .career-contact-row{ display:flex; gap:40px; align-items:flex-start; }
-  .career{ flex:1; }
-  .career h2{ font-size:14px; margin-bottom:14px; color: var(--ink-dim); font-weight:600; }
-  .career-row{
-    display:flex; align-items:center; gap:20px; padding: 12px 0; border-top:1px solid var(--line); font-size:14px;
+  .career{ flex:1; min-width:0; }
+  .career .title-row{ margin-bottom:14px; }
+  .career h2{ font-size:14px; color: var(--ink-dim); font-weight:600; }
+  .career .add-img-btn{ width:20px; height:20px; font-size:13px; }
+
+  #careerRows{
+    display:grid; grid-template-columns: 110px max-content 22px;
+    column-gap:20px; border-bottom:1px solid var(--line);
+    overflow-x:auto; max-width:100%;
   }
-  .career-row:last-of-type{ border-bottom: 1px solid var(--line); }
-  .career-row .period{ width: 110px; flex-shrink:0; color: var(--ink-dim); font-size:13px; }
-  .career-row .text{ flex:1; }
-  .career-del-btn{
-    opacity:0; pointer-events:none; transition:opacity .15s; cursor:pointer;
-    color: var(--ink-dim); font-size:14px; padding:2px 4px; flex-shrink:0;
+  .career-row{ display:contents; }
+  #careerRows .period{ color: var(--ink-dim); font-size:13px; border-top:1px solid var(--line); padding:12px 0; align-self:center; }
+  #careerRows .text{ font-size:14px; white-space:nowrap; border-top:1px solid var(--line); padding:12px 0; align-self:center; }
+  #careerRows .career-del-btn{
+    border-top:1px solid var(--line); padding:12px 0; align-self:center;
+    cursor:pointer; color: var(--ink-dim); font-size:14px; text-align:center;
   }
-  body.is-owner .career-row:hover .career-del-btn{ opacity:1; pointer-events:auto; }
-  .career-del-btn:hover{ color: var(--accent); }
-  .career-add-btn{
-    margin-top:10px; font-size:12px; color: var(--ink-dim);
-    border:1px dashed var(--line); border-radius:8px; padding:8px; text-align:center; cursor:pointer;
-  }
-  .career-add-btn:hover{ color: var(--accent); border-color: var(--accent); }
+  #careerRows .career-del-btn:hover{ color: var(--accent); }
 
   .contact-links{
     padding-left:40px; border-left:1px solid var(--line);
-    min-width:170px; display:flex; flex-direction:column; gap:14px;
+    min-width:170px; display:flex; flex-direction:column; gap:14px; flex-shrink:0;
   }
   .contact-links h2{ font-size:14px; color: var(--ink-dim); font-weight:600; }
   .contact-mail-row{ display:flex; align-items:center; gap:8px; font-size:13px; color: var(--ink); }
+  .mail-icon{ display:flex; align-items:center; color: var(--ink-dim); flex-shrink:0; }
   .copy-btn{
     width:26px; height:26px; border-radius:6px; border:1px solid var(--line); background:#fff;
     display:flex; align-items:center; justify-content:center; cursor:pointer; color: var(--ink-dim); flex-shrink:0;
@@ -214,7 +218,7 @@
   }
   body.is-owner .contact-icon-wrap:hover .contact-edit-btn{ opacity:1; pointer-events:auto; }
 
-  /* ---- Webtoon view (long vertical scroll) ---- */
+  /* ---- Webtoon view (long vertical scroll, 690px 고정폭) ---- */
   .work-header{
     padding: 28px 48px; border-bottom: 1px solid var(--line);
     display:flex; justify-content:space-between; align-items:center;
@@ -223,21 +227,21 @@
   .work-header h1{ font-size:17px; }
   .work-header .work-meta{ font-size:12px; color: var(--ink-dim); }
 
-  .panel-scroll{ max-width: 640px; margin: 0 auto; padding: 0 0 60px; }
+  .panel-scroll{ width: 690px; max-width: 100%; margin: 0 auto; padding: 0 0 60px; }
   .panel-img-wrap{ position:relative; border-bottom: 1px solid var(--line); }
-  .panel-img-wrap img{ width:100%; display:block; }
-  .img-delete-btn{
-    position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:50%;
+  .panel-img-wrap img{ width:100%; display:block; cursor: zoom-in; }
+  .panel-empty-hint{ padding: 60px 20px; text-align:center; color: var(--ink-dim); font-size:13px; }
+
+  .img-action-btn{
+    position:absolute; top:10px; width:26px; height:26px; border-radius:50%;
     background:rgba(0,0,0,.55); color:#fff; display:flex; align-items:center; justify-content:center;
-    font-size:14px; cursor:pointer; opacity:0; pointer-events:none; transition:opacity .15s;
+    font-size:13px; cursor:pointer; opacity:0; pointer-events:none; transition:opacity .15s;
   }
-  body.is-owner .panel-img-wrap:hover .img-delete-btn{ opacity:1; pointer-events:auto; }
+  .img-delete-btn{ right:10px; }
+  .img-edit-btn{ right:44px; }
+  body.is-owner .panel-img-wrap:hover .img-action-btn{ opacity:1; pointer-events:auto; }
 
-  .panel-empty-hint{
-    padding: 60px 20px; text-align:center; color: var(--ink-dim); font-size:13px;
-  }
-
-  /* ---- Illustration / Character view (grid) ---- */
+  /* ---- Illustration / 기타 작업 view (grid) ---- */
   .grid-view{ padding: 40px 48px; }
   .grid-view h1{ font-size:17px; }
   .illust-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top:24px; }
@@ -247,6 +251,33 @@
   }
   .illust-grid .img-item img{ width:100%; height:100%; object-fit:cover; display:block; }
   .illust-grid .img-item .img-delete-btn{ top:8px; right:8px; }
+  .illust-grid .img-item .img-edit-btn{ top:8px; right:38px; }
+  body.is-owner .illust-grid .img-item:hover .img-action-btn{ opacity:1; pointer-events:auto; }
+
+  /* ================= LIGHTBOX (웹툰 이미지 크게 보기) ================= */
+  .lightbox{
+    position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:99999;
+    display:none; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .lightbox.open{ display:flex; }
+  .lightbox-img{
+    max-width:90vw; max-height:85vh; transform-origin:center center;
+    touch-action:none; cursor:grab; user-select:none;
+  }
+  .lightbox-img.dragging{ cursor:grabbing; }
+  .lightbox-close{
+    position:absolute; top:20px; right:28px; color:#fff; font-size:30px; cursor:pointer; line-height:1;
+  }
+  .lightbox-controls{
+    position:absolute; bottom:26px; left:50%; transform:translateX(-50%);
+    display:flex; gap:6px; align-items:center; background:rgba(255,255,255,.12);
+    padding:8px 10px; border-radius:24px;
+  }
+  .lb-btn{
+    color:#fff; font-size:14px; cursor:pointer; padding:6px 12px; user-select:none;
+    min-width:36px; text-align:center; border-radius:16px;
+  }
+  .lb-btn:hover{ background:rgba(255,255,255,.18); }
 </style>
 </head>
 <body>
@@ -264,13 +295,11 @@
         <span class="editable" data-field="navWebtoon">웹툰 작업</span> <span class="arrow">▸</span>
       </div>
       <div class="submenu" id="webtoon-submenu">
-        <div class="sub-item" data-view="webtoon" data-work="work1"><span class="editable" data-field="subWork1">그 마을엔 축복이</span></div>
-        <div class="sub-item" data-view="webtoon" data-work="work2"><span class="editable" data-field="subWork2">이시하 · 유봄</span></div>
-        <div class="sub-item" data-view="webtoon" data-work="work3"><span class="editable" data-field="subWork3">작품 3</span></div>
+        <div class="sub-item-add owner-only" id="workAddBtn" title="작품 추가">＋</div>
       </div>
 
       <div class="nav-item" data-view="illust"><span class="editable" data-field="navIllust">일러스트 작업</span></div>
-      <div class="nav-item" data-view="character"><span class="editable" data-field="navCharacter">캐릭터 작업</span></div>
+      <div class="nav-item" data-view="character"><span class="editable" data-field="navCharacter">기타 작업</span></div>
     </div>
 
     <div class="sidebar-settings">
@@ -316,14 +345,19 @@
 
         <div class="career-contact-row">
           <div class="career">
-            <h2>경력</h2>
+            <div class="title-row">
+              <h2>경력</h2>
+              <div class="add-img-btn owner-only" id="careerAddBtn" title="경력 추가">+</div>
+            </div>
             <div id="careerRows"></div>
-            <div class="career-add-btn owner-only" id="careerAddBtn">+ 경력 추가</div>
           </div>
 
           <div class="contact-links">
             <h2>연락처</h2>
             <div class="contact-mail-row">
+              <span class="mail-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+              </span>
               <span class="editable" data-field="contactEmailText">work@example.com</span>
               <div class="copy-btn" id="copyEmailBtn" title="이메일 복사">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -342,44 +376,8 @@
       </div>
     </section>
 
-    <!-- 웹툰 작업 - work1 -->
-    <section class="view" data-view="webtoon" data-work="work1">
-      <div class="work-header">
-        <div class="title-row">
-          <h1 class="editable" data-field="work1Title">그 마을엔 축복이</h1>
-          <div class="add-img-btn owner-only" data-page="work1" title="이미지 추가">+</div>
-        </div>
-        <div class="work-meta editable" data-field="work1Meta">완결 · 초자연 로맨스</div>
-      </div>
-      <div class="panel-scroll" data-page-container="work1"></div>
-      <input type="file" class="img-input-hidden" data-page="work1" accept="image/*" multiple style="display:none">
-    </section>
-
-    <!-- 웹툰 작업 - work2 -->
-    <section class="view" data-view="webtoon" data-work="work2">
-      <div class="work-header">
-        <div class="title-row">
-          <h1 class="editable" data-field="work2Title">이시하 · 유봄</h1>
-          <div class="add-img-btn owner-only" data-page="work2" title="이미지 추가">+</div>
-        </div>
-        <div class="work-meta editable" data-field="work2Meta">완결 · 뱀파이어 일상물</div>
-      </div>
-      <div class="panel-scroll" data-page-container="work2"></div>
-      <input type="file" class="img-input-hidden" data-page="work2" accept="image/*" multiple style="display:none">
-    </section>
-
-    <!-- 웹툰 작업 - work3 -->
-    <section class="view" data-view="webtoon" data-work="work3">
-      <div class="work-header">
-        <div class="title-row">
-          <h1 class="editable" data-field="work3Title">작품 3</h1>
-          <div class="add-img-btn owner-only" data-page="work3" title="이미지 추가">+</div>
-        </div>
-        <div class="work-meta editable" data-field="work3Meta">완결</div>
-      </div>
-      <div class="panel-scroll" data-page-container="work3"></div>
-      <input type="file" class="img-input-hidden" data-page="work3" accept="image/*" multiple style="display:none">
-    </section>
+    <!-- 웹툰 작업 페이지들 (동적으로 생성됨) -->
+    <div id="workSectionsContainer"></div>
 
     <!-- 일러스트 작업 -->
     <section class="view" data-view="illust">
@@ -393,11 +391,11 @@
       </div>
     </section>
 
-    <!-- 캐릭터 작업 -->
+    <!-- 기타 작업 -->
     <section class="view" data-view="character">
       <div class="grid-view">
         <div class="title-row">
-          <h1 class="editable" data-field="characterTitle">캐릭터 작업</h1>
+          <h1 class="editable" data-field="characterTitle">기타 작업</h1>
           <div class="add-img-btn owner-only" data-page="character" title="이미지 추가">+</div>
         </div>
         <div class="illust-grid" data-page-container="character"></div>
@@ -408,25 +406,35 @@
   </main>
 </div>
 
+<!-- ================= LIGHTBOX ================= -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-close" id="lightboxClose">×</div>
+  <img class="lightbox-img" id="lightboxImg" alt="">
+  <div class="lightbox-controls">
+    <div class="lb-btn" id="lbZoomOut">－</div>
+    <div class="lb-btn" id="lbZoomReset">100%</div>
+    <div class="lb-btn" id="lbZoomIn">＋</div>
+  </div>
+</div>
+
 <script>
   const OWNER_UID = "JuEfafmoqkc2PsXpMmw4rbc56t12";
 
   const navItems = document.querySelectorAll('.nav-item[data-view]');
-  const subItems = document.querySelectorAll('.sub-item[data-view]');
-  const views = document.querySelectorAll('.view');
   const webtoonToggle = document.getElementById('webtoon-toggle');
   const webtoonSubmenu = document.getElementById('webtoon-submenu');
 
   function showView(viewName, work){
-    views.forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     if(viewName === 'webtoon'){
-      document.querySelector(`.view[data-view="webtoon"][data-work="${work}"]`).classList.add('active');
+      const target = document.querySelector(`.view[data-view="webtoon"][data-work="${work}"]`);
+      if(target) target.classList.add('active');
     } else {
-      document.querySelector(`.view[data-view="${viewName}"]`).classList.add('active');
+      const target = document.querySelector(`.view[data-view="${viewName}"]`);
+      if(target) target.classList.add('active');
     }
-
     navItems.forEach(n => n.classList.remove('active'));
-    subItems.forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.sub-item').forEach(s => s.classList.remove('active'));
   }
 
   navItems.forEach(item => {
@@ -434,15 +442,6 @@
       const view = item.getAttribute('data-view');
       showView(view);
       item.classList.add('active');
-    });
-  });
-
-  subItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const work = item.getAttribute('data-work');
-      showView('webtoon', work);
-      item.classList.add('active');
-      window.scrollTo(0,0);
     });
   });
 
@@ -547,6 +546,68 @@
     textEl.focus();
     document.execCommand('selectAll', false, null);
   });
+
+  // ---- 라이트박스 (웹툰 이미지 크게 보기) ----
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxClose = document.getElementById('lightboxClose');
+  let lbScale = 1, lbPos = { x: 0, y: 0 }, lbDrag = null;
+
+  function applyLbTransform(){
+    lightboxImg.style.transform = `translate(${lbPos.x}px, ${lbPos.y}px) scale(${lbScale})`;
+  }
+  function openLightbox(src){
+    lightboxImg.src = src;
+    lbScale = 1; lbPos = { x: 0, y: 0 };
+    applyLbTransform();
+    lightbox.classList.add('open');
+  }
+  function closeLightbox(){
+    lightbox.classList.remove('open');
+  }
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+  });
+  document.getElementById('lbZoomIn').addEventListener('click', () => {
+    lbScale = Math.min(4, lbScale + 0.25); applyLbTransform();
+  });
+  document.getElementById('lbZoomOut').addEventListener('click', () => {
+    lbScale = Math.max(1, lbScale - 0.25);
+    if(lbScale === 1) lbPos = { x: 0, y: 0 };
+    applyLbTransform();
+  });
+  document.getElementById('lbZoomReset').addEventListener('click', () => {
+    lbScale = 1; lbPos = { x: 0, y: 0 }; applyLbTransform();
+  });
+  lightbox.addEventListener('wheel', (e) => {
+    if(!lightbox.classList.contains('open')) return;
+    e.preventDefault();
+    lbScale = Math.max(1, Math.min(4, lbScale + (e.deltaY < 0 ? 0.2 : -0.2)));
+    if(lbScale === 1) lbPos = { x: 0, y: 0 };
+    applyLbTransform();
+  }, { passive: false });
+  lightboxImg.addEventListener('pointerdown', (e) => {
+    if(lbScale <= 1) return;
+    lbDrag = { startX: e.clientX, startY: e.clientY, startPosX: lbPos.x, startPosY: lbPos.y };
+    lightboxImg.classList.add('dragging');
+    lightboxImg.setPointerCapture(e.pointerId);
+  });
+  lightboxImg.addEventListener('pointermove', (e) => {
+    if(!lbDrag) return;
+    lbPos.x = lbDrag.startPosX + (e.clientX - lbDrag.startX);
+    lbPos.y = lbDrag.startPosY + (e.clientY - lbDrag.startY);
+    applyLbTransform();
+  });
+  function endLbDrag(e){
+    if(!lbDrag) return;
+    lightboxImg.classList.remove('dragging');
+    try{ lightboxImg.releasePointerCapture(e.pointerId); }catch(err){}
+    lbDrag = null;
+  }
+  lightboxImg.addEventListener('pointerup', endLbDrag);
+  lightboxImg.addEventListener('pointercancel', endLbDrag);
 </script>
 
 <script type="module">
@@ -573,11 +634,122 @@
   const IMAGES_COLL = collection(db, 'users', OWNER_UID, 'settings', 'portfolioContent', 'images');
 
   const FIELD_IDS = [
-    'sidebarName','navAbout','navWebtoon','subWork1','subWork2','subWork3',
+    'sidebarName','navAbout','navWebtoon',
     'navIllust','navCharacter','aboutName','role','bio',
-    'work1Title','work1Meta','work2Title','work2Meta','work3Title','work3Meta',
     'illustTitle','characterTitle','contactEmailText'
   ];
+
+  const DEFAULT_WORKS = [
+    { id: 'work1', title: '그 마을엔 축복이', meta: '완결 · 초자연 로맨스' },
+    { id: 'work2', title: '이시하 · 유봄', meta: '완결 · 뱀파이어 일상물' },
+    { id: 'work3', title: '작품 3', meta: '완결' }
+  ];
+
+  // ---- 웹툰 작품 섹션/서브메뉴 동적 생성 ----
+  const workSectionsContainer = document.getElementById('workSectionsContainer');
+  const workAddBtn = document.getElementById('workAddBtn');
+
+  function createWorkSubItem(work){
+    const item = document.createElement('div');
+    item.className = 'sub-item';
+    item.dataset.work = work.id;
+    const span = document.createElement('span');
+    span.textContent = work.title;
+    makeEditable(span);
+    item.appendChild(span);
+    item.addEventListener('click', () => {
+      showView('webtoon', work.id);
+      item.classList.add('active');
+      window.scrollTo(0, 0);
+    });
+    return item;
+  }
+
+  function createWorkSection(work){
+    const section = document.createElement('section');
+    section.className = 'view';
+    section.dataset.view = 'webtoon';
+    section.dataset.work = work.id;
+
+    const header = document.createElement('div');
+    header.className = 'work-header';
+
+    const titleRow = document.createElement('div');
+    titleRow.className = 'title-row';
+    const h1 = document.createElement('h1');
+    h1.textContent = work.title;
+    makeEditable(h1);
+    const addBtn = document.createElement('div');
+    addBtn.className = 'add-img-btn owner-only';
+    addBtn.dataset.page = work.id;
+    addBtn.title = '이미지 추가';
+    addBtn.textContent = '+';
+    titleRow.appendChild(h1);
+    titleRow.appendChild(addBtn);
+
+    const metaEl = document.createElement('div');
+    metaEl.className = 'work-meta';
+    metaEl.textContent = work.meta || '';
+    makeEditable(metaEl);
+
+    header.appendChild(titleRow);
+    header.appendChild(metaEl);
+
+    const scroll = document.createElement('div');
+    scroll.className = 'panel-scroll';
+    scroll.dataset.pageContainer = work.id;
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.className = 'img-input-hidden';
+    fileInput.dataset.page = work.id;
+    fileInput.accept = 'image/*';
+    fileInput.multiple = true;
+    fileInput.style.display = 'none';
+
+    section.appendChild(header);
+    section.appendChild(scroll);
+    section.appendChild(fileInput);
+    return section;
+  }
+
+  function renderWorks(list){
+    workSectionsContainer.querySelectorAll('.sub-item').forEach(el => el.remove());
+    webtoonSubmenu.querySelectorAll('.sub-item').forEach(el => el.remove());
+    list.forEach(work => webtoonSubmenu.insertBefore(createWorkSubItem(work), workAddBtn));
+
+    workSectionsContainer.innerHTML = '';
+    list.forEach(work => workSectionsContainer.appendChild(createWorkSection(work)));
+
+    list.forEach(work => renderPageImages(work.id));
+  }
+  renderWorks(DEFAULT_WORKS);
+
+  function getCurrentWorksFromDOM(){
+    return Array.from(webtoonSubmenu.querySelectorAll('.sub-item')).map(item => {
+      const id = item.dataset.work;
+      const titleEl = item.querySelector('.editable');
+      const metaEl = document.querySelector(`.view[data-view="webtoon"][data-work="${id}"] .work-meta`);
+      return { id, title: titleEl.textContent.trim(), meta: metaEl ? metaEl.textContent.trim() : '' };
+    });
+  }
+
+  workAddBtn.addEventListener('click', () => {
+    if(!isOwner) return;
+    const list = getCurrentWorksFromDOM();
+    const newId = 'work_' + Date.now();
+    list.push({ id: newId, title: '새 작품', meta: '' });
+    renderWorks(list);
+    showView('webtoon', newId);
+    document.querySelector(`#webtoon-submenu .sub-item[data-work="${newId}"]`)?.classList.add('active');
+    window.scrollTo(0, 0);
+    const h1 = document.querySelector(`.view[data-view="webtoon"][data-work="${newId}"] h1`);
+    if(h1){
+      h1.setAttribute('contenteditable', 'true');
+      h1.focus();
+      document.execCommand('selectAll', false, null);
+    }
+  });
 
   // ---- Firestore에서 콘텐츠 불러오기 (방문자 포함 모두에게 적용) ----
   onSnapshot(CONTENT_DOC, (snap) => {
@@ -590,6 +762,9 @@
     });
     if(Array.isArray(data.career) && data.career.length){
       renderCareerList(data.career);
+    }
+    if(Array.isArray(data.works) && data.works.length){
+      renderWorks(data.works);
     }
     if(data.sidebarColor){
       document.documentElement.style.setProperty('--sidebar', data.sidebarColor);
@@ -628,7 +803,7 @@
     document.body.classList.toggle('is-owner', isOwner);
   });
 
-  // ---- 저장 (텍스트 + 경력 + 사이드바 색상) ----
+  // ---- 저장 (텍스트 + 경력 + 작품 목록 + 사이드바 색상) ----
   async function saveAll(){
     if(!isOwner) return;
     const data = {};
@@ -640,6 +815,7 @@
       period: row.querySelector('.period').textContent.trim(),
       text: row.querySelector('.text').textContent.trim()
     }));
+    data.works = getCurrentWorksFromDOM();
     data.sidebarColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar').trim();
     data.sidebarTextColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-text').trim();
     try{
@@ -764,6 +940,41 @@
     });
   }
 
+  // 웹툰 컷 전용: 세로로 아주 긴 이미지를 위해 '폭' 기준으로만 리사이즈 (높이는 제한하지 않음)
+  function compressImageByWidth(file, targetWidth, quality, maxBytes){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('파일을 읽지 못했어요'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('이미지를 열지 못했어요'));
+        img.onload = () => {
+          let width = img.width, height = img.height;
+          if(width > targetWidth){
+            height = Math.round(height * targetWidth / width);
+            width = targetWidth;
+          }
+          if(height > 12000){
+            width = Math.round(width * 12000 / height);
+            height = 12000;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          let q = quality;
+          let dataUrl = canvas.toDataURL('image/jpeg', q);
+          while(dataUrl.length > maxBytes * 1.37 && q > 0.35){
+            q -= 0.1;
+            dataUrl = canvas.toDataURL('image/jpeg', q);
+          }
+          resolve(dataUrl);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function handleHeroUpload(file){
     if(!file) return;
     if(!file.type.startsWith('image/')){ alert('이미지 파일만 선택할 수 있어요'); return; }
@@ -836,9 +1047,13 @@
     if(e.key === 'Escape' && heroAdjusting) toggleHeroAdjustMode();
   });
 
-  // ---- 웹툰/일러스트/캐릭터 페이지별 이미지 ----
-  const IMAGE_PAGES = ['work1','work2','work3','illust','character'];
-  const imagesByPage = { work1: [], work2: [], work3: [], illust: [], character: [] };
+  // ---- 페이지별 이미지 (웹툰 작품들 + 일러스트 + 기타 작업) ----
+  const imagesByPage = {};
+
+  function isWebtoonPage(page){
+    const container = document.querySelector(`[data-page-container="${page}"]`);
+    return !!(container && container.classList.contains('panel-scroll'));
+  }
 
   function renderPageImages(page){
     const container = document.querySelector(`[data-page-container="${page}"]`);
@@ -853,29 +1068,63 @@
       const img = document.createElement('img');
       img.src = item.src;
       img.alt = '';
+      if(!isGrid){
+        img.addEventListener('click', () => openLightbox(item.src));
+      }
+
+      const editBtn = document.createElement('div');
+      editBtn.className = 'img-action-btn img-edit-btn owner-only';
+      editBtn.title = '이미지 수정';
+      editBtn.textContent = '✎';
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.addEventListener('change', async (ev) => {
+          const file = ev.target.files && ev.target.files[0];
+          if(!file) return;
+          try{
+            const dataUrl = isWebtoonPage(item.page)
+              ? await compressImageByWidth(file, 1380, 0.82, 700000)
+              : await compressImage(file, 1400, 0.82, 500000);
+            await setDoc(doc(IMAGES_COLL, item.id), { src: dataUrl }, { merge: true });
+            showToast('이미지가 수정되었습니다.');
+          }catch(err){
+            console.error(err);
+            alert('이미지를 수정하지 못했어요.');
+          }
+        });
+        input.click();
+      });
 
       const delBtn = document.createElement('div');
-      delBtn.className = 'img-delete-btn owner-only';
+      delBtn.className = 'img-action-btn img-delete-btn owner-only';
       delBtn.title = '삭제';
       delBtn.textContent = '×';
-      delBtn.addEventListener('click', async () => {
+      delBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
         try{ await deleteDoc(doc(IMAGES_COLL, item.id)); }
         catch(err){ console.error(err); }
       });
 
       wrap.appendChild(img);
+      wrap.appendChild(editBtn);
       wrap.appendChild(delBtn);
       container.appendChild(wrap);
     });
   }
 
   onSnapshot(IMAGES_COLL, (snap) => {
-    IMAGE_PAGES.forEach(p => { imagesByPage[p] = []; });
+    const grouped = {};
     snap.forEach(d => {
       const data = d.data();
-      if(imagesByPage[data.page]) imagesByPage[data.page].push({ id: d.id, ...data });
+      if(!grouped[data.page]) grouped[data.page] = [];
+      grouped[data.page].push({ id: d.id, ...data });
     });
-    IMAGE_PAGES.forEach(p => {
+    Object.keys(imagesByPage).forEach(k => delete imagesByPage[k]);
+    Object.assign(imagesByPage, grouped);
+    Object.keys(imagesByPage).forEach(p => {
       imagesByPage[p].sort((a, b) => (a.order || 0) - (b.order || 0));
       renderPageImages(p);
     });
@@ -885,11 +1134,14 @@
 
   async function addImagesForPage(page, fileList){
     if(!isOwner || !fileList || !fileList.length) return;
+    const webtoon = isWebtoonPage(page);
     let i = 0;
     for(const file of fileList){
       if(!file.type.startsWith('image/')) continue;
       try{
-        const dataUrl = await compressImage(file, 1400, 0.82, 500000);
+        const dataUrl = webtoon
+          ? await compressImageByWidth(file, 1380, 0.82, 700000)
+          : await compressImage(file, 1400, 0.82, 500000);
         await addDoc(IMAGES_COLL, { page, src: dataUrl, order: Date.now() + (i++) });
       }catch(err){
         console.error(err);
@@ -899,18 +1151,21 @@
     showToast('이미지가 추가되었습니다.');
   }
 
-  document.querySelectorAll('.add-img-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+  // 이미지 추가(+) 버튼과 숨김 파일 입력은 동적으로 생기므로 이벤트 위임 방식으로 처리
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.add-img-btn[data-page]');
+    if(btn){
       const page = btn.getAttribute('data-page');
-      document.querySelector(`.img-input-hidden[data-page="${page}"]`).click();
-    });
+      const input = document.querySelector(`.img-input-hidden[data-page="${page}"]`);
+      if(input) input.click();
+    }
   });
-  document.querySelectorAll('.img-input-hidden').forEach(input => {
-    input.addEventListener('change', (e) => {
-      const page = input.getAttribute('data-page');
+  document.addEventListener('change', (e) => {
+    if(e.target.matches && e.target.matches('.img-input-hidden')){
+      const page = e.target.getAttribute('data-page');
       addImagesForPage(page, e.target.files);
       e.target.value = '';
-    });
+    }
   });
 </script>
 
