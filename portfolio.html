@@ -1120,7 +1120,10 @@
           }
           const canvas = document.createElement('canvas');
           canvas.width = width; canvas.height = height;
-          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
           let q = quality;
           let dataUrl = canvas.toDataURL('image/jpeg', q);
           while(dataUrl.length > maxBytes * 1.37 && q > 0.4){
@@ -1156,7 +1159,10 @@
           const canvas = document.createElement('canvas');
           canvas.width = width;
           canvas.height = height;
-          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
           let q = quality;
           let dataUrl = canvas.toDataURL('image/jpeg', q);
           while(dataUrl.length > maxBytes * 1.37 && q > 0.3){
@@ -1182,9 +1188,16 @@
     return 1000000 + fallbackIndex;
   }
 
+  // file.type이 비어있는 드문 경우(일부 브라우저/도구에서 내보낸 PNG 등)에도
+  // 파일 확장자로 한 번 더 확인해서 이미지 업로드가 조용히 무시되지 않게 함
+  function isImageFile(file){
+    if(file.type && file.type.startsWith('image/')) return true;
+    return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name || '');
+  }
+
   async function handleHeroUpload(file){
     if(!file) return;
-    if(!file.type.startsWith('image/')){ alert('이미지 파일만 선택할 수 있어요'); return; }
+    if(!isImageFile(file)){ alert('이미지 파일만 선택할 수 있어요'); return; }
     try{
       const dataUrl = await compressImage(file, 1400, 0.85, 700000);
       heroImgPos = { xp: 0, yp: 0, scale: 1 };
@@ -1277,7 +1290,7 @@
     const webtoon = isWebtoonPage(page);
     let i = 0;
     for(const file of fileList){
-      if(!file.type.startsWith('image/')) continue;
+      if(!isImageFile(file)) continue;
       try{
         const dataUrl = webtoon
           ? await compressImageOriginal(file, 0.85, 700000)
