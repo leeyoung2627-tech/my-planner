@@ -379,7 +379,16 @@ onAuthStateChanged(auth, user => {
 
   /* ── 세계관 · 간이 지도 ───────────────────────── */
   .wmap-card{padding-bottom:18px}
-  .wmap-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+  .wmap-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px}
+  .wmap-draw-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .wmap-tbtn{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:6px 11px;font-size:12.5px;cursor:pointer;font-family:var(--sans)}
+  .wmap-tbtn:hover{border-color:var(--accent);color:var(--accent-ink)}
+  .wmap-tbtn.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+  .wmap-draw-extra{display:none;align-items:center;gap:8px;flex-wrap:wrap}
+  .wmap-draw-extra.show{display:flex}
+  .wmap-color-row{display:flex;gap:4px;align-items:center}
+  .wmap-color-sw{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+  .wmap-color-sw.sel{border-color:var(--ink)}
   .wmap-board{
     position:relative; width:100%; aspect-ratio:16/7; min-height:220px;
     background:
@@ -388,6 +397,8 @@ onAuthStateChanged(auth, user => {
       #EAF3E4;
     border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:crosshair;
   }
+  .wmap-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;pointer-events:none}
+  .wmap-board.draw-mode .wmap-canvas{pointer-events:auto}
   .wmap-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#5f7a54;font-size:13px;pointer-events:none}
   .wmap-pin{
     position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center;
@@ -719,10 +730,26 @@ onAuthStateChanged(auth, user => {
       <div class="eyebrow">간이 지도 <span style="font-weight:400;color:var(--muted);font-size:12px">· 선택 사항</span></div>
       <p class="hint"><span class="tip">TIP</span>마을·동네·학교처럼 공간의 대략적인 위치 관계를 표시해두면 장면을 그릴 때 헷갈리지 않아요. 지도의 빈 곳을 클릭해서 위치를 추가해보세요.</p>
       <div class="wmap-toolbar">
+        <div class="wmap-draw-tools" id="wmapDrawTools">
+          <button class="wmap-tbtn" type="button" id="wmapDrawToggle" title="지도 위에 자유롭게 그리기">✏️ 그리기</button>
+          <span class="wmap-draw-extra" id="wmapDrawExtra">
+            <span class="wmap-color-row" id="wmapColorRow">
+              <button type="button" class="wmap-color-sw sel" data-c="#3A3A42" style="background:#3A3A42" title="먹색"></button>
+              <button type="button" class="wmap-color-sw" data-c="#C0392B" style="background:#C0392B" title="빨강"></button>
+              <button type="button" class="wmap-color-sw" data-c="#2E7D5B" style="background:#2E7D5B" title="초록"></button>
+              <button type="button" class="wmap-color-sw" data-c="#2E6DA4" style="background:#2E6DA4" title="파랑"></button>
+              <button type="button" class="wmap-color-sw" data-c="#B37B32" style="background:#B37B32" title="갈색"></button>
+              <button type="button" class="wmap-color-sw" data-c="#7C6FD0" style="background:#7C6FD0" title="보라"></button>
+            </span>
+            <button class="wmap-tbtn" type="button" id="wmapEraseToggle" title="지우개">🧹 지우개</button>
+            <button class="wmap-tbtn" type="button" id="wmapUndoBtn" title="방금 그린 선 되돌리기">↩ 되돌리기</button>
+          </span>
+        </div>
         <button class="btn" type="button" id="wmapClearBtn">🗑 지도 초기화</button>
       </div>
       <div class="wmap-board" id="wmapBoard">
-        <div class="wmap-empty" id="wmapEmpty">지도가 비어있어요. 지도 위 아무 곳이나 클릭해서 첫 위치를 추가해보세요.</div>
+        <canvas id="wmapCanvas" class="wmap-canvas"></canvas>
+        <div class="wmap-empty" id="wmapEmpty">지도가 비어있어요. 지도 위 아무 곳이나 클릭해서 첫 위치를 추가하거나, 그리기 버튼으로 자유롭게 그려보세요.</div>
       </div>
     </div>
     <div class="toolbar">
@@ -1139,6 +1166,8 @@ function normalizeState(s){
   });
   s.worldMap = (s.worldMap && Array.isArray(s.worldMap.pins)) ? s.worldMap : {pins:[]};
   s.worldMap.pins = s.worldMap.pins.map(p=>({id:p.id||genId(), icon:p.icon||'📍', label:p.label||'', x:typeof p.x==='number'?p.x:50, y:typeof p.y==='number'?p.y:50}));
+  if(!Array.isArray(s.worldMap.strokes)) s.worldMap.strokes = [];
+  s.worldMap.strokes = s.worldMap.strokes.filter(st=>st && Array.isArray(st.pts) && st.pts.length>1);
   s.customEmotions = s.customEmotions || [];
   s.relations = s.relations || { nodes: {}, links: [] };
   return s;
@@ -1151,7 +1180,7 @@ const defaultState = () => ({
   timeline:[],
   cases:[],
   world:[],
-  worldMap:{pins:[]},
+  worldMap:{pins:[], strokes:[]},
   treatment:[blankEp(1),blankEp(2),blankEp(3),blankEp(4),blankEp(5)],
   characters:[blankChar('main'),blankChar('sub')],
   customEmotions:[],
@@ -1221,6 +1250,7 @@ document.getElementById('nav').addEventListener('click',e=>{
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+b.dataset.tab));
   if(b.dataset.tab==='export') renderPreview();
   if(b.dataset.tab==='relation') { syncRelationNodes(); renderRelations(); }
+  if(b.dataset.tab==='world') wmapResizeCanvas();
   growVisibleTextareas();
   window.scrollTo({top:0});
 });
@@ -2085,8 +2115,9 @@ function renderWorldMap(){
   const board=document.getElementById('wmapBoard');
   if(!board) return;
   const pins = state.worldMap.pins || [];
+  const strokes = state.worldMap.strokes || [];
   const empty=document.getElementById('wmapEmpty');
-  if(empty) empty.style.display = pins.length===0 ? 'flex' : 'none';
+  if(empty) empty.style.display = (pins.length===0 && strokes.length===0) ? 'flex' : 'none';
   board.querySelectorAll('.wmap-pin').forEach(el=>el.remove());
   pins.forEach(p=>{
     const el=document.createElement('div');
@@ -2096,6 +2127,7 @@ function renderWorldMap(){
     board.appendChild(el);
     bindPinDrag(el);
   });
+  wmapResizeCanvas();
 }
 function bindPinDrag(el){
   let dragging=false, moved=false, rect=null;
@@ -2177,6 +2209,7 @@ document.addEventListener('mousedown', e=>{
   if(!e.target.closest('#wmapPop') && !e.target.closest('.wmap-pin')) closePinEditor();
 });
 document.getElementById('wmapBoard')?.addEventListener('click', e=>{
+  if(wmapDrawMode) return;
   if(e.target.id !== 'wmapBoard') return;
   const rect=e.currentTarget.getBoundingClientRect();
   const x=((e.clientX-rect.left)/rect.width)*100;
@@ -2184,13 +2217,127 @@ document.getElementById('wmapBoard')?.addEventListener('click', e=>{
   openPinEditor(e.clientX, e.clientY+10, null, {x:Math.min(97,Math.max(3,x)), y:Math.min(94,Math.max(6,y))});
 });
 document.getElementById('wmapClearBtn')?.addEventListener('click', ()=>{
-  if(!state.worldMap.pins.length) return;
-  openConfirmModal('지도를 초기화할까요?', '지도에 표시된 모든 위치가 삭제돼요.', ()=>{
+  if(!state.worldMap.pins.length && !state.worldMap.strokes.length) return;
+  openConfirmModal('지도를 초기화할까요?', '지도에 표시된 위치와 그림이 모두 삭제돼요.', ()=>{
     state.worldMap.pins = [];
+    state.worldMap.strokes = [];
     scheduleSave();
     renderWorldMap();
   });
 });
+
+/* ── 세계관 · 지도에 그리기 (아이콘 레이어보다 아래에 그려짐) ── */
+let wmapDrawMode=false, wmapDrawColor='#3A3A42', wmapErasing=false;
+const WMAP_BRUSH=3, WMAP_ERASER=18;
+let wmapCanvas=null, wmapCtx=null, wmapDPR=1, wmapCurrentStroke=null, wmapLastPt=null;
+function wmapResizeCanvas(){
+  if(!wmapCanvas) wmapCanvas=document.getElementById('wmapCanvas');
+  if(!wmapCanvas) return;
+  if(!wmapCtx) wmapCtx=wmapCanvas.getContext('2d');
+  const board=document.getElementById('wmapBoard');
+  const rect=board.getBoundingClientRect();
+  if(rect.width<=0 || rect.height<=0) return; // 탭이 숨겨진 상태면 건너뛰고, 탭 전환 시 다시 계산됨
+  wmapDPR = Math.min(window.devicePixelRatio||1, 2);
+  wmapCanvas.width = Math.round(rect.width*wmapDPR);
+  wmapCanvas.height = Math.round(rect.height*wmapDPR);
+  wmapCtx.setTransform(wmapDPR,0,0,wmapDPR,0,0);
+  wmapRedrawAll();
+}
+function wmapRedrawAll(){
+  if(!wmapCtx || !wmapCanvas) return;
+  const w=wmapCanvas.width/wmapDPR, h=wmapCanvas.height/wmapDPR;
+  wmapCtx.clearRect(0,0,w,h);
+  (state.worldMap.strokes||[]).forEach(s=>wmapPaintStroke(s,w,h));
+}
+function wmapPaintStroke(s,w,h){
+  if(!s.pts || s.pts.length<2) return;
+  wmapCtx.save();
+  wmapCtx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
+  wmapCtx.strokeStyle = s.color || '#3A3A42';
+  wmapCtx.lineWidth = s.width || WMAP_BRUSH;
+  wmapCtx.lineJoin='round'; wmapCtx.lineCap='round';
+  wmapCtx.beginPath();
+  s.pts.forEach((pt,i)=>{
+    const px=pt[0]/100*w, py=pt[1]/100*h;
+    if(i===0) wmapCtx.moveTo(px,py); else wmapCtx.lineTo(px,py);
+  });
+  wmapCtx.stroke();
+  wmapCtx.restore();
+}
+function wmapBindDraw(){
+  if(!wmapCanvas) wmapCanvas=document.getElementById('wmapCanvas');
+  if(!wmapCanvas) return;
+  wmapCanvas.addEventListener('pointerdown', e=>{
+    if(!wmapDrawMode) return;
+    e.preventDefault();
+    const rect=document.getElementById('wmapBoard').getBoundingClientRect();
+    const nx=(e.clientX-rect.left)/rect.width*100, ny=(e.clientY-rect.top)/rect.height*100;
+    wmapCurrentStroke = { color: wmapErasing?'#000':wmapDrawColor, width: wmapErasing?WMAP_ERASER:WMAP_BRUSH, erase: wmapErasing, pts:[[nx,ny]] };
+    wmapLastPt = {x:e.clientX, y:e.clientY};
+    wmapCanvas.setPointerCapture(e.pointerId);
+  });
+  wmapCanvas.addEventListener('pointermove', e=>{
+    if(!wmapDrawMode || !wmapCurrentStroke) return;
+    const dx=e.clientX-wmapLastPt.x, dy=e.clientY-wmapLastPt.y;
+    if(dx*dx+dy*dy < 9) return; // 3px 미만 이동은 기록하지 않음 (포인트 수 최적화)
+    const rect=document.getElementById('wmapBoard').getBoundingClientRect();
+    const prev=wmapCurrentStroke.pts[wmapCurrentStroke.pts.length-1];
+    const nx=(e.clientX-rect.left)/rect.width*100, ny=(e.clientY-rect.top)/rect.height*100;
+    wmapCurrentStroke.pts.push([nx,ny]);
+    wmapLastPt={x:e.clientX,y:e.clientY};
+    // 구간 하나만 그려서(전체 다시 그리기 없이) 부드럽게 이어 그림
+    const w=wmapCanvas.width/wmapDPR, h=wmapCanvas.height/wmapDPR;
+    wmapCtx.save();
+    wmapCtx.globalCompositeOperation = wmapCurrentStroke.erase ? 'destination-out' : 'source-over';
+    wmapCtx.strokeStyle = wmapCurrentStroke.color;
+    wmapCtx.lineWidth = wmapCurrentStroke.width;
+    wmapCtx.lineJoin='round'; wmapCtx.lineCap='round';
+    wmapCtx.beginPath();
+    wmapCtx.moveTo(prev[0]/100*w, prev[1]/100*h);
+    wmapCtx.lineTo(nx/100*w, ny/100*h);
+    wmapCtx.stroke();
+    wmapCtx.restore();
+  });
+  function endStroke(){
+    if(!wmapCurrentStroke) return;
+    if(wmapCurrentStroke.pts.length>1){
+      state.worldMap.strokes.push(wmapCurrentStroke);
+      scheduleSave();
+      document.getElementById('wmapEmpty').style.display='none';
+    }
+    wmapCurrentStroke=null;
+  }
+  wmapCanvas.addEventListener('pointerup', endStroke);
+  wmapCanvas.addEventListener('pointercancel', endStroke);
+}
+document.getElementById('wmapDrawToggle')?.addEventListener('click', ()=>{
+  wmapDrawMode = !wmapDrawMode;
+  document.getElementById('wmapDrawToggle').classList.toggle('on', wmapDrawMode);
+  document.getElementById('wmapDrawExtra').classList.toggle('show', wmapDrawMode);
+  document.getElementById('wmapBoard').classList.toggle('draw-mode', wmapDrawMode);
+});
+document.getElementById('wmapColorRow')?.addEventListener('click', e=>{
+  const b=e.target.closest('.wmap-color-sw'); if(!b) return;
+  wmapDrawColor=b.dataset.c;
+  wmapErasing=false;
+  document.getElementById('wmapEraseToggle')?.classList.remove('on');
+  document.querySelectorAll('.wmap-color-sw').forEach(x=>x.classList.toggle('sel', x===b));
+});
+document.getElementById('wmapEraseToggle')?.addEventListener('click', ()=>{
+  wmapErasing = !wmapErasing;
+  document.getElementById('wmapEraseToggle').classList.toggle('on', wmapErasing);
+});
+document.getElementById('wmapUndoBtn')?.addEventListener('click', ()=>{
+  if(!state.worldMap.strokes.length) return;
+  state.worldMap.strokes.pop();
+  wmapRedrawAll();
+  scheduleSave();
+  if(!state.worldMap.strokes.length && !state.worldMap.pins.length){
+    document.getElementById('wmapEmpty').style.display='flex';
+  }
+});
+wmapBindDraw();
+window.addEventListener('resize', wmapResizeCanvas);
 
 /* ───────────────────────── 캐릭터 ───────────────────────── */
 // 다양한 성격 키워드 색상을 위해 32개로 팔레트 확대
