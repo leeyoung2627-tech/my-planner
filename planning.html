@@ -321,6 +321,38 @@ onAuthStateChanged(auth, user => {
   .tl-char-preview{margin:7px 0 0}
   .tl-char-preview:empty{display:none}
 
+  /* ── 사건 정리 ───────────────────────── */
+  .case-empty{display:none;font-size:13.5px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:22px;text-align:center}
+  .case-empty.show{display:block}
+  .case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:12px}
+  .case-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 10px 13px;text-align:center;cursor:pointer;transition:border-color .12s,box-shadow .12s,transform .12s;position:relative}
+  .case-card:hover{border-color:var(--accent);box-shadow:0 6px 16px rgba(0,0,0,.08);transform:translateY(-2px)}
+  .case-icon{font-size:30px;line-height:1;margin-bottom:9px}
+  .case-card-title{font-size:12.5px;font-weight:700;color:var(--ink);word-break:break-word;line-height:1.35;min-height:17px}
+  .case-status-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%}
+  .case-status-dot.progress{background:#D0903B}
+  .case-status-dot.resolved{background:#3FA873}
+  .case-status-dot.onhold{background:#9AA0AC}
+  .case-modal-box{background:#fff;border-radius:16px;padding:22px 24px 20px;width:100%;max-width:560px;max-height:86vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.22)}
+  .case-modal-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+  .case-icon-btn{font-size:26px;line-height:1;background:var(--accent-soft);border:1px solid var(--line);border-radius:12px;width:50px;height:50px;flex:0 0 auto;cursor:pointer}
+  .case-icon-btn:hover{border-color:var(--accent)}
+  .case-modal-title{flex:1;font-family:var(--serif);font-size:18px;font-weight:700;border:none;border-bottom:1px solid var(--line);padding:8px 2px;outline:none;background:none;color:var(--ink);min-width:0}
+  .case-modal-title:focus{border-bottom-color:var(--accent)}
+  .case-modal-close{border:none;background:none;color:var(--muted);font-size:19px;cursor:pointer;padding:3px 8px;border-radius:8px;flex:0 0 auto}
+  .case-modal-close:hover{background:#F0F0F4}
+  .case-status-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .case-status-btn{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:5px 13px;font-size:12.5px;cursor:pointer;font-family:var(--sans)}
+  .case-status-btn.on[data-status="progress"]{background:#FCEEDB;border-color:#D0903B;color:#8a5b16;font-weight:700}
+  .case-status-btn.on[data-status="resolved"]{background:#E3F4EA;border-color:#3FA873;color:#1F8A5B;font-weight:700}
+  .case-status-btn.on[data-status="onhold"]{background:#EFEFF2;border-color:#9AA0AC;color:#5b5f68;font-weight:700}
+  .case-field-label{font-size:12px;font-weight:700;color:var(--muted);margin:14px 0 5px}
+  .case-modal-box .case-field-label:first-of-type{margin-top:0}
+  .case-modal-actions{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);text-align:right}
+  .case-icon-pop{position:fixed;z-index:120;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 10px 26px rgba(0,0,0,.18);display:grid;grid-template-columns:repeat(6,1fr);gap:3px;width:216px}
+  .case-icon-pop button{font-size:18px;border:none;background:none;border-radius:8px;padding:6px 0;cursor:pointer;line-height:1}
+  .case-icon-pop button:hover{background:var(--accent-soft)}
+
   /* ── 관계도 ───────────────────────── */
   #rel-workspace{position:relative;width:100%;height:600px;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:grab;}
   #rel-workspace:active{cursor:grabbing;}
@@ -402,7 +434,6 @@ onAuthStateChanged(auth, user => {
     width:218px; max-width:calc(100vw - 36px);
     background:#FFF3A3; border-radius:3px 3px 10px 10px;
     box-shadow:0 12px 26px rgba(0,0,0,.16), 0 2px 5px rgba(0,0,0,.08);
-    transform:rotate(-1.2deg);
     transition:width .15s;
   }
   .memo-wrap::after{
@@ -432,6 +463,32 @@ onAuthStateChanged(auth, user => {
   .credit{max-width:880px;margin:0 auto;padding:0 20px 36px;text-align:center;font-family:var(--serif);font-size:13px;color:var(--muted);letter-spacing:.04em}
   .credit-ver{font-size:10.5px;margin-top:3px;font-family:var(--sans);letter-spacing:.08em;opacity:.75}
 </style>
+<script>
+/* 새로고침 시 색 테마가 기본값으로 잠깐 보였다가 바뀌는 깜빡임(FOUC)을 막기 위해,
+   본문이 그려지기 전에 마지막으로 저장해둔 색을 먼저 입혀둔다.
+   실제 데이터가 로드되면 아래 본문 스크립트에서 다시 정확한 값으로 덮어쓴다. */
+(function(){
+  try{
+    var t = JSON.parse(localStorage.getItem('webtoon_plan_theme_cache')||'null');
+    if(t && /^#[0-9a-fA-F]{6}$/.test(t.accent||'') && /^#[0-9a-fA-F]{6}$/.test(t.bg||'')){
+      function shade(hex,f){
+        var n=parseInt(hex.slice(1),16);
+        var r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+        var tt=f>0?255:0, a=Math.abs(f);
+        r=Math.round(r+(tt-r)*a); g=Math.round(g+(tt-g)*a); b=Math.round(b+(tt-b)*a);
+        return '#'+((r<<16)|(g<<8)|b).toString(16).padStart(6,'0');
+      }
+      var r=document.documentElement.style;
+      r.setProperty('--accent', t.accent);
+      r.setProperty('--accent-ink', shade(t.accent,-0.28));
+      r.setProperty('--accent-soft', shade(t.accent,0.9));
+      r.setProperty('--bg', t.bg);
+      var n=parseInt(t.bg.slice(1),16);
+      r.setProperty('--bg-glass', 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+',.92)');
+    }
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <div class="app-wrap">
@@ -498,6 +555,7 @@ onAuthStateChanged(auth, user => {
       <button data-tab="basic" class="active">기획 개요</button>
       <button data-tab="synopsis">시놉시스</button>
       <button data-tab="timeline">타임라인</button>
+      <button data-tab="cases">사건 정리</button>
       <button data-tab="characters">캐릭터</button>
       <button data-tab="relation">관계도</button>
       <button data-tab="treatment">트리트먼트</button>
@@ -571,6 +629,26 @@ onAuthStateChanged(auth, user => {
       <p class="hint"><span class="tip">TIP</span>집필 순서가 아니라 <b>극중 시간 순서</b>대로 기록해보자. 복선을 언제 심고 언제 회수했는지, 인물 관계가 어떻게 변해가는지 한눈에 보여요.</p>
       <div class="tl-empty" id="tlEmpty">아직 기록된 사건이 없어요. 위 <b>＋ 사건 추가</b> 버튼으로 첫 사건을 남겨보세요.</div>
       <div class="tl-list" id="tlList"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-cases">
+    <div class="toolbar">
+      <button class="btn primary" onclick="addCaseFile()">＋ 사건 추가</button>
+      <div class="tl-filter" id="caseFilter">
+        <button type="button" class="tl-filter-btn active" data-status="all">전체</button>
+        <button type="button" class="tl-filter-btn" data-status="progress">진행중</button>
+        <button type="button" class="tl-filter-btn" data-status="resolved">해결됨</button>
+        <button type="button" class="tl-filter-btn" data-status="onhold">보류</button>
+      </div>
+      <button class="btn" onclick="openSpeller('cases')">✓ 맞춤법 검사 (바른 한글)</button>
+      <span class="tool-hint">버튼을 누르면 이 탭의 글이 클립보드에 자동 복사돼요. 새 창에서 붙여넣기(Ctrl+V)만 하면 됩니다.</span>
+    </div>
+    <div class="card">
+      <div class="eyebrow">사건 정리</div>
+      <p class="hint"><span class="tip">TIP</span>타임라인이 <b>시간 순서</b>를 보여준다면, 여기는 사건 하나하나를 깊이 파고드는 <b>자료실</b>이에요. 발단·전개·결과를 정리해두면 나중에 설정 오류 없이 이야기를 이어갈 수 있어요.</p>
+      <div class="case-empty" id="caseEmpty">아직 정리한 사건이 없어요. 위 <b>＋ 사건 추가</b> 버튼으로 첫 사건 파일을 만들어보세요.</div>
+      <div class="case-grid" id="caseGrid"></div>
     </div>
   </section>
 
@@ -652,6 +730,41 @@ onAuthStateChanged(auth, user => {
 <footer class="credit">@gunchong_<div class="credit-ver">v1.1.1</div></footer>
 
 <div id="printArea"></div>
+
+<!-- 사건 정리 상세 -->
+<div class="modal-ov" id="caseModal">
+  <div class="case-modal-box">
+    <div class="case-modal-head">
+      <button type="button" class="case-icon-btn" id="caseIconBtn" title="아이콘 바꾸기">💥</button>
+      <input class="case-modal-title" id="caseTitleInput" placeholder="사건 제목">
+      <button type="button" class="case-modal-close" id="caseModalCloseBtn" title="닫기">✕</button>
+    </div>
+    <div class="case-status-row" id="caseStatusRow">
+      <button type="button" class="case-status-btn" data-status="progress">진행중</button>
+      <button type="button" class="case-status-btn" data-status="resolved">해결됨</button>
+      <button type="button" class="case-status-btn" data-status="onhold">보류</button>
+    </div>
+    <div class="case-field-label">한 줄 요약</div>
+    <div class="field"><input id="caseLogline" placeholder="이 사건을 한 문장으로 정리하면?"></div>
+    <div class="case-field-label">발단 — 왜 일어났는가</div>
+    <div class="field"><textarea id="caseTrigger" placeholder="사건이 시작된 계기"></textarea></div>
+    <div class="case-field-label">전개 — 무슨 일이 있었는가</div>
+    <div class="field"><textarea id="caseDev" placeholder="사건이 어떻게 펼쳐졌는지"></textarea></div>
+    <div class="case-field-label">결과 · 영향 — 무엇이 달라졌는가</div>
+    <div class="field"><textarea id="caseResult" placeholder="이 사건으로 인물·관계·세계관이 어떻게 바뀌었는지"></textarea></div>
+    <div class="case-field-label">관련 정보</div>
+    <div class="tl-mini">
+      <input id="caseEpisode" placeholder="관련 회차 (예: 7화)">
+      <input id="caseCharacters" placeholder="관련 인물 (쉼표로 구분)">
+    </div>
+    <div class="tl-char-preview" id="caseCharPreview"></div>
+    <div class="case-field-label">메모</div>
+    <div class="field"><textarea id="caseNote" placeholder="추가로 남기고 싶은 메모"></textarea></div>
+    <div class="case-modal-actions">
+      <button type="button" class="btn" style="color:#C0392B" id="caseDeleteBtn">🗑 이 사건 삭제</button>
+    </div>
+  </div>
+</div>
 
 <!-- 삭제 확인 팝업 -->
 <div class="modal-ov" id="confirmModal">
@@ -778,6 +891,9 @@ async function _loadProject(id){
   renderTreatment();
   renderCharacters();
   renderTimeline();
+  renderCaseGrid();
+  document.getElementById('caseModal')?.classList.remove('open');
+  activeCaseId=null;
   updateHeadTitle();
   applyTheme((state.theme && state.theme.accent)||'#5856D6', false);
   applyBg((state.theme && state.theme.bg)||'#F2F2F5', false);
@@ -866,6 +982,7 @@ const blankEp = n => ({no:n, fn:'', emoStart:'', emoEnd:'', emoStartColor:'', em
 const genId = () => Math.random().toString(36).substring(2,9);
 const blankChar = type => ({id:genId(), type, images:[], quote:'', name:'', age:'', body:'', job:'', keywords:'', personality:'', relations:'', goal:'', strengths:'', change:''});
 const blankTl = () => ({id:genId(), type:'event', time:'', title:'', desc:'', episode:'', characters:''});
+const blankCase = () => ({id:genId(), icon:'💥', title:'', status:'progress', logline:'', trigger:'', development:'', result:'', characters:'', episode:'', note:''});
 
 function normalizeState(s){
   s.treatment=(s.treatment||[]).map((raw,idx)=>({...blankEp(raw&&raw.no?raw.no:idx+1), ...raw}));
@@ -881,6 +998,11 @@ function normalizeState(s){
     if(!t.id) t.id=genId();
     return t;
   });
+  s.cases=(s.cases||[]).map(raw=>{
+    const c={...blankCase(), ...raw};
+    if(!c.id) c.id=genId();
+    return c;
+  });
   s.customEmotions = s.customEmotions || [];
   s.relations = s.relations || { nodes: {}, links: [] };
   return s;
@@ -891,6 +1013,7 @@ const defaultState = () => ({
   synopsis:'',
   memo:'',
   timeline:[],
+  cases:[],
   treatment:[blankEp(1),blankEp(2),blankEp(3),blankEp(4),blankEp(5)],
   characters:[blankChar('main'),blankChar('sub')],
   customEmotions:[],
@@ -1233,7 +1356,8 @@ async function fsLoad(){
     const txt = await file.text();
     const p = JSON.parse(txt);
     state = normalizeState({...defaultState(), ...p});
-    bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); updateHeadTitle();
+    bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); renderCaseGrid(); updateHeadTitle();
+    document.getElementById('caseModal')?.classList.remove('open'); activeCaseId=null;
     loadSynopsisContent();
     applyTheme(state.theme?.accent||'#5856D6', false);
     applyBg(state.theme?.bg||'#F2F2F5', false);
@@ -1527,6 +1651,126 @@ document.getElementById('tlFilter')?.addEventListener('click',e=>{
   document.querySelectorAll('#tlList .tl-item').forEach(item=>{
     item.classList.toggle('tl-hide', tlFilterType!=='all' && item.dataset.type!==tlFilterType);
   });
+});
+
+/* ───────────────────────── 사건 정리 ───────────────────────── */
+const CASE_ICONS = ['💥','🔍','💔','⚔️','🤝','🔑','⚠️','🎭','🌱','💀','👑','🩸','🕯️','📜','🏚️','💍','🌪️','🕰️','❤️‍🔥','🧩'];
+const CASE_STATUS = { progress:'진행중', resolved:'해결됨', onhold:'보류' };
+let caseFilterStatus='all';
+let activeCaseId=null;
+function renderCaseGrid(){
+  const box=document.getElementById('caseGrid');
+  const empty=document.getElementById('caseEmpty');
+  if(!box) return;
+  empty.classList.toggle('show', state.cases.length===0);
+  const list = state.cases.filter(c=> caseFilterStatus==='all' || c.status===caseFilterStatus);
+  box.innerHTML = list.map(c=>`
+    <div class="case-card" data-id="${c.id}">
+      <span class="case-status-dot ${c.status}" title="${CASE_STATUS[c.status]||''}"></span>
+      <div class="case-icon">${c.icon||'💥'}</div>
+      <div class="case-card-title">${c.title?esc(c.title):'<span style="color:var(--muted);font-weight:400">제목 없음</span>'}</div>
+    </div>`).join('');
+  box.querySelectorAll('.case-card').forEach(el=>{
+    el.addEventListener('click',()=>openCaseModal(el.dataset.id));
+  });
+}
+function addCaseFile(){
+  const c=blankCase();
+  state.cases.push(c);
+  renderCaseGrid(); scheduleSave();
+  openCaseModal(c.id);
+}
+function findCase(id){ return state.cases.find(x=>x.id===id); }
+function openCaseModal(id){
+  const c=findCase(id); if(!c) return;
+  activeCaseId=id;
+  document.getElementById('caseIconBtn').textContent = c.icon||'💥';
+  document.getElementById('caseTitleInput').value = c.title||'';
+  document.querySelectorAll('.case-status-btn').forEach(b=>b.classList.toggle('on', b.dataset.status===c.status));
+  document.getElementById('caseLogline').value = c.logline||'';
+  document.getElementById('caseTrigger').value = c.trigger||'';
+  document.getElementById('caseDev').value = c.development||'';
+  document.getElementById('caseResult').value = c.result||'';
+  document.getElementById('caseEpisode').value = c.episode||'';
+  document.getElementById('caseCharacters').value = c.characters||'';
+  document.getElementById('caseCharPreview').innerHTML = kwChips(c.characters);
+  document.getElementById('caseNote').value = c.note||'';
+  document.getElementById('caseModal').classList.add('open');
+  ['caseTrigger','caseDev','caseResult','caseNote'].forEach(id2=>autoGrow(document.getElementById(id2)));
+  document.getElementById('caseTitleInput').focus();
+}
+function closeCaseModal(){
+  document.getElementById('caseModal').classList.remove('open');
+  closeCaseIconPicker();
+  activeCaseId=null;
+  renderCaseGrid();
+}
+function updateActiveCase(patch){
+  const c=findCase(activeCaseId); if(!c) return;
+  Object.assign(c, patch);
+  scheduleSave();
+}
+function deleteActiveCase(){
+  const c=findCase(activeCaseId); if(!c) return;
+  openConfirmModal('이 사건을 삭제할까요?', `<b>${esc(c.title)||'제목 없음'}</b>에 적어둔 내용이 모두 사라져요.`, ()=>{
+    state.cases = state.cases.filter(x=>x.id!==activeCaseId);
+    document.getElementById('caseModal').classList.remove('open');
+    activeCaseId=null;
+    renderCaseGrid(); scheduleSave();
+  });
+}
+function openCaseIconPicker(){
+  closeCaseIconPicker();
+  const btn=document.getElementById('caseIconBtn');
+  const r=btn.getBoundingClientRect();
+  const pop=document.createElement('div');
+  pop.className='case-icon-pop'; pop.id='caseIconPop';
+  pop.innerHTML = CASE_ICONS.map(ic=>`<button type="button" data-ic="${ic}">${ic}</button>`).join('');
+  document.body.appendChild(pop);
+  pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - pop.offsetWidth - 10)) + 'px';
+  pop.style.top = (r.bottom + 6) + 'px';
+  pop.addEventListener('mousedown', ev=>ev.preventDefault());
+  pop.addEventListener('click', ev=>{
+    const b=ev.target.closest('button'); if(!b) return;
+    document.getElementById('caseIconBtn').textContent = b.dataset.ic;
+    updateActiveCase({icon:b.dataset.ic});
+    closeCaseIconPicker();
+  });
+}
+function closeCaseIconPicker(){ document.getElementById('caseIconPop')?.remove(); }
+document.addEventListener('mousedown', e=>{
+  if(!e.target.closest('#caseIconPop') && !e.target.closest('#caseIconBtn')) closeCaseIconPicker();
+});
+function setupCaseModal(){
+  document.getElementById('caseIconBtn')?.addEventListener('click', openCaseIconPicker);
+  document.getElementById('caseModalCloseBtn')?.addEventListener('click', closeCaseModal);
+  document.getElementById('caseDeleteBtn')?.addEventListener('click', deleteActiveCase);
+  document.getElementById('caseModal')?.addEventListener('click', e=>{
+    if(e.target.id==='caseModal') closeCaseModal();
+  });
+  document.getElementById('caseTitleInput')?.addEventListener('input', e=>updateActiveCase({title:e.target.value}));
+  document.getElementById('caseLogline')?.addEventListener('input', e=>updateActiveCase({logline:e.target.value}));
+  document.getElementById('caseTrigger')?.addEventListener('input', e=>updateActiveCase({trigger:e.target.value}));
+  document.getElementById('caseDev')?.addEventListener('input', e=>updateActiveCase({development:e.target.value}));
+  document.getElementById('caseResult')?.addEventListener('input', e=>updateActiveCase({result:e.target.value}));
+  document.getElementById('caseNote')?.addEventListener('input', e=>updateActiveCase({note:e.target.value}));
+  document.getElementById('caseEpisode')?.addEventListener('input', e=>updateActiveCase({episode:e.target.value}));
+  document.getElementById('caseCharacters')?.addEventListener('input', e=>{
+    updateActiveCase({characters:e.target.value});
+    document.getElementById('caseCharPreview').innerHTML = kwChips(e.target.value);
+  });
+  document.getElementById('caseStatusRow')?.addEventListener('click', e=>{
+    const b=e.target.closest('.case-status-btn'); if(!b) return;
+    document.querySelectorAll('.case-status-btn').forEach(x=>x.classList.toggle('on', x===b));
+    updateActiveCase({status:b.dataset.status});
+    renderCaseGrid();
+  });
+}
+document.getElementById('caseFilter')?.addEventListener('click', e=>{
+  const b=e.target.closest('.tl-filter-btn'); if(!b) return;
+  caseFilterStatus = b.dataset.status;
+  document.querySelectorAll('#caseFilter .tl-filter-btn').forEach(x=>x.classList.toggle('active', x===b));
+  renderCaseGrid();
 });
 
 /* ───────────────────────── 캐릭터 ───────────────────────── */
@@ -1825,6 +2069,7 @@ function sectionTexts(tab){
   if(tab==='treatment') return state.treatment.flatMap(e=>[e.fn,e.emoStart,e.emoEnd,e.event,e.place,e.summary,e.endcut]).filter(Boolean);
   if(tab==='characters') return state.characters.flatMap(c=>[c.quote,c.name,c.job,c.keywords,c.personality,c.relations,c.goal,c.strengths,c.change]).filter(Boolean);
   if(tab==='timeline') return state.timeline.flatMap(t=>[t.time,t.title,t.desc,t.episode,t.characters]).filter(Boolean);
+  if(tab==='cases') return state.cases.flatMap(c=>[c.title,c.logline,c.trigger,c.development,c.result,c.episode,c.characters,c.note]).filter(Boolean);
   return [];
 }
 async function openSpeller(tab){
@@ -1848,6 +2093,7 @@ function bindRefresh(tab){
   if(tab==='treatment') renderTreatment();
   else if(tab==='characters') renderCharacters();
   else if(tab==='timeline') renderTimeline();
+  else if(tab==='cases') renderCaseGrid();
   else if(tab==='relation') { syncRelationNodes(); renderRelations(); }
   else document.querySelectorAll('[data-path]').forEach(el=>{ el.value=getByPath(el.dataset.path)||''; if(el.tagName==='TEXTAREA') autoGrow(el); });
 }
@@ -2236,7 +2482,8 @@ function importJSON(ev){
     try{
       const p=JSON.parse(r.result);
       state=normalizeState({...defaultState(),...p});
-      bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); renderPreview(); updateHeadTitle();
+      bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); renderCaseGrid(); renderPreview(); updateHeadTitle();
+      document.getElementById('caseModal')?.classList.remove('open'); activeCaseId=null;
       loadSynopsisContent();
       applyTheme(state.theme?.accent||'#5856D6', false);
       applyBg(state.theme?.bg||'#F2F2F5', false);
@@ -2267,6 +2514,12 @@ function shade(hex,f){
   r=Math.round(r+(t-r)*a); g=Math.round(g+(t-g)*a); bl=Math.round(bl+(t-bl)*a);
   return '#'+((r<<16)|(g<<8)|bl).toString(16).padStart(6,'0');
 }
+function writeThemeCache(){
+  try{ localStorage.setItem('webtoon_plan_theme_cache', JSON.stringify({accent:state.theme.accent, bg:state.theme.bg})); }catch(e){}
+}
+function readThemeCache(){
+  try{ return JSON.parse(localStorage.getItem('webtoon_plan_theme_cache')||'null'); }catch(e){ return null; }
+}
 function applyTheme(c, persist=true){
   if(!/^#[0-9a-fA-F]{6}$/.test(c)) return;
   state.theme={...state.theme, accent:c};
@@ -2276,6 +2529,7 @@ function applyTheme(c, persist=true){
   r.setProperty('--accent-soft',shade(c,0.9));
   const ci=document.getElementById('colorInput'); if(ci) ci.value=c;
   document.querySelectorAll('#swatches .swatch').forEach(s=>s.classList.toggle('sel', s.dataset.c.toLowerCase()===c.toLowerCase()));
+  writeThemeCache();
   if(persist) scheduleSave();
 }
 function applyBg(c, persist=true){
@@ -2287,6 +2541,7 @@ function applyBg(c, persist=true){
   r.setProperty('--bg-glass',`rgba(${(n>>16)&255},${(n>>8)&255},${n&255},.92)`);
   const bi=document.getElementById('bgColorInput'); if(bi) bi.value=c;
   document.querySelectorAll('#bgSwatches .swatch').forEach(s=>s.classList.toggle('sel', s.dataset.c.toLowerCase()===c.toLowerCase()));
+  writeThemeCache();
   if(persist) scheduleSave();
 }
 function setupTheme(){
@@ -2328,14 +2583,17 @@ function toast(msg){
   renderTreatment();
   renderCharacters();
   renderTimeline();
+  renderCaseGrid();
   updateHeadTitle();
   setupTheme();
   setupCloudBtn();
   setupEmoModal();
+  setupCaseModal();
   updateFolderUI();
   _renderSidebar();
-  applyTheme(state.theme?.accent||'#5856D6', false);
-  applyBg(state.theme?.bg||'#F2F2F5', false);
+  const cachedTheme = readThemeCache();
+  applyTheme((cachedTheme && cachedTheme.accent) || state.theme?.accent || '#5856D6', false);
+  applyBg((cachedTheme && cachedTheme.bg) || state.theme?.bg || '#F2F2F5', false);
   setStatus('로그인 후 불러옵니다', false);
 })();
 </script>
