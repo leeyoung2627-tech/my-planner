@@ -125,7 +125,7 @@ onAuthStateChanged(auth, user => {
   .field textarea{resize:none;overflow:hidden;min-height:90px;line-height:1.7}
 
   /* 시놉시스 — 도입/발단/전개/위기/결말 자동 하이라이트 */
-  .hl-wrap{position:relative; background:#FCFCFD; border-radius:8px}
+  .hl-wrap{position:relative; width:100%; background:#FCFCFD; border-radius:8px}
   .hl-backdrop{
     position:absolute; inset:0; margin:0; pointer-events:none;
     box-sizing:border-box; border:1px solid transparent; border-radius:8px;
@@ -137,7 +137,7 @@ onAuthStateChanged(auth, user => {
     text-decoration-line:underline; text-decoration-color:var(--accent);
     text-decoration-thickness:3px; text-underline-offset:4px;
   }
-  .hl-wrap textarea{position:relative; background:transparent !important; z-index:1}
+  .hl-wrap textarea{position:relative; display:block; width:100%; background:transparent !important; z-index:1}
 
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
   .btn{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:500}
