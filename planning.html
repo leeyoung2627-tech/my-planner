@@ -282,6 +282,45 @@ onAuthStateChanged(auth, user => {
   .emo-chip{display:inline-block;color:#fff;border-radius:999px;padding:1.5px 9px;font-size:11px;font-weight:700}
   .char textarea.small{min-height:54px}
 
+  /* ── 타임라인 ───────────────────────── */
+  .tl-filter{display:flex;gap:6px;flex-wrap:wrap}
+  .tl-filter-btn{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;transition:all .12s;font-family:var(--sans)}
+  .tl-filter-btn:hover{border-color:var(--accent);color:var(--accent-ink)}
+  .tl-filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+  .tl-empty{display:none;font-size:13.5px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:22px;text-align:center}
+  .tl-empty.show{display:block}
+  .tl-list{position:relative;padding-left:30px}
+  .tl-list::before{content:'';position:absolute;left:11px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .tl-item{position:relative;margin-bottom:14px}
+  .tl-item:last-child{margin-bottom:0}
+  .tl-item.tl-hide{display:none}
+  .tl-dot{position:absolute;left:-27px;top:19px;width:16px;height:16px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 3px var(--paper)}
+  .tl-item[data-type="event"] .tl-dot{background:#5856D6}
+  .tl-item[data-type="foreshadow"] .tl-dot{background:#3682B3}
+  .tl-item[data-type="payoff"] .tl-dot{background:#2D8A5E}
+  .tl-item[data-type="relation"] .tl-dot{background:#D0608E}
+  .tl-item[data-type="setting"] .tl-dot{background:#B37B32}
+  .tl-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .tl-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+  .tl-type{border:none;border-radius:999px;padding:4px 22px 4px 10px;font-size:11.5px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--sans);appearance:none;-webkit-appearance:none;background-repeat:no-repeat;background-position:right 8px center;background-size:9px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+  .tl-time{flex:1;min-width:120px;border:none;border-bottom:1px dashed var(--line);padding:4px 2px;font-size:13px;background:none;outline:none;color:var(--muted)}
+  .tl-time:focus{border-bottom-color:var(--accent);color:var(--ink)}
+  .tl-move{border:none;background:none;color:var(--muted);font-size:13px;padding:2px 5px;border-radius:6px;cursor:pointer;line-height:1}
+  .tl-move:hover{color:var(--accent-ink);background:var(--accent-soft)}
+  .tl-move:disabled{opacity:.3;cursor:default;background:none;color:var(--muted)}
+  .tl-del{border:none;background:none;color:var(--muted);font-size:16px;padding:2px 6px;border-radius:6px;cursor:pointer}
+  .tl-del:hover{color:#C0392B;background:#FBEDEA}
+  .tl-title{width:100%;border:none;border-bottom:1px solid var(--line);padding:5px 2px 8px;font-size:15.5px;font-weight:700;font-family:var(--serif);background:none;outline:none;margin-bottom:9px;color:var(--ink)}
+  .tl-title:focus{border-bottom-color:var(--accent)}
+  .tl-desc{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#FCFCFD;outline:none;font-size:14px;line-height:1.65;resize:none;overflow:hidden;min-height:56px;margin-bottom:9px}
+  .tl-desc:focus{border-color:var(--accent);background:#fff}
+  .tl-mini{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  @media(max-width:640px){.tl-mini{grid-template-columns:1fr}}
+  .tl-mini input{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#FCFCFD;outline:none;font-size:13px}
+  .tl-mini input:focus{border-color:var(--accent);background:#fff}
+  .tl-char-preview{margin:7px 0 0}
+  .tl-char-preview:empty{display:none}
+
   /* ── 관계도 ───────────────────────── */
   #rel-workspace{position:relative;width:100%;height:600px;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:grab;}
   #rel-workspace:active{cursor:grabbing;}
@@ -427,6 +466,7 @@ onAuthStateChanged(auth, user => {
     <nav id="nav">
       <button data-tab="basic" class="active">기획 개요</button>
       <button data-tab="synopsis">시놉시스</button>
+      <button data-tab="timeline">타임라인</button>
       <button data-tab="characters">캐릭터</button>
       <button data-tab="relation">관계도</button>
       <button data-tab="treatment">트리트먼트</button>
@@ -478,6 +518,28 @@ onAuthStateChanged(auth, user => {
       <div class="field">
         <div class="synopsis-edit" id="synopsisEdit" contenteditable="true" spellcheck="false" data-ph="현재형으로 생동감 있게, 결말까지 확실하게."></div>
       </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-timeline">
+    <div class="toolbar">
+      <button class="btn primary" onclick="addTlEvent()">＋ 사건 추가</button>
+      <div class="tl-filter" id="tlFilter">
+        <button type="button" class="tl-filter-btn active" data-type="all">전체</button>
+        <button type="button" class="tl-filter-btn" data-type="event">사건</button>
+        <button type="button" class="tl-filter-btn" data-type="foreshadow">복선</button>
+        <button type="button" class="tl-filter-btn" data-type="payoff">회수</button>
+        <button type="button" class="tl-filter-btn" data-type="relation">관계 변화</button>
+        <button type="button" class="tl-filter-btn" data-type="setting">설정</button>
+      </div>
+      <button class="btn" onclick="openSpeller('timeline')">✓ 맞춤법 검사 (바른 한글)</button>
+      <span class="tool-hint">버튼을 누르면 이 탭의 글이 클립보드에 자동 복사돼요. 새 창에서 붙여넣기(Ctrl+V)만 하면 됩니다.</span>
+    </div>
+    <div class="card">
+      <div class="eyebrow">타임라인</div>
+      <p class="hint"><span class="tip">TIP</span>집필 순서가 아니라 <b>극중 시간 순서</b>대로 기록해보자. 복선을 언제 심고 언제 회수했는지, 인물 관계가 어떻게 변해가는지 한눈에 보여요.</p>
+      <div class="tl-empty" id="tlEmpty">아직 기록된 사건이 없어요. 위 <b>＋ 사건 추가</b> 버튼으로 첫 사건을 남겨보세요.</div>
+      <div class="tl-list" id="tlList"></div>
     </div>
   </section>
 
@@ -676,6 +738,7 @@ async function _loadProject(id){
   loadSynopsisContent();
   renderTreatment();
   renderCharacters();
+  renderTimeline();
   updateHeadTitle();
   applyTheme((state.theme && state.theme.accent)||'#5856D6', false);
   applyBg((state.theme && state.theme.bg)||'#F2F2F5', false);
@@ -763,6 +826,7 @@ const KEY='webtoon_plan_v1';
 const blankEp = n => ({no:n, fn:'', emoStart:'', emoEnd:'', emoStartColor:'', emoEndColor:'', event:'', place:'', summary:'', endcut:''});
 const genId = () => Math.random().toString(36).substring(2,9);
 const blankChar = type => ({id:genId(), type, images:[], quote:'', name:'', age:'', body:'', job:'', keywords:'', personality:'', relations:'', goal:'', strengths:'', change:''});
+const blankTl = () => ({id:genId(), type:'event', time:'', title:'', desc:'', episode:'', characters:''});
 
 function normalizeState(s){
   s.treatment=(s.treatment||[]).map((raw,idx)=>({...blankEp(raw&&raw.no?raw.no:idx+1), ...raw}));
@@ -773,6 +837,11 @@ function normalizeState(s){
     delete c.image;
     return c;
   });
+  s.timeline=(s.timeline||[]).map(raw=>{
+    const t={...blankTl(), ...raw};
+    if(!t.id) t.id=genId();
+    return t;
+  });
   s.customEmotions = s.customEmotions || [];
   s.relations = s.relations || { nodes: {}, links: [] };
   return s;
@@ -781,6 +850,7 @@ function normalizeState(s){
 const defaultState = () => ({
   basic:{title:'',author:'',contact:'',genre:'',target:'',logline:'',keywords:'',episodes:'',intent:''},
   synopsis:'',
+  timeline:[],
   treatment:[blankEp(1),blankEp(2),blankEp(3),blankEp(4),blankEp(5)],
   characters:[blankChar('main'),blankChar('sub')],
   customEmotions:[],
@@ -1115,7 +1185,7 @@ async function fsLoad(){
     const txt = await file.text();
     const p = JSON.parse(txt);
     state = normalizeState({...defaultState(), ...p});
-    bindRefresh('basic'); renderTreatment(); renderCharacters(); updateHeadTitle();
+    bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); updateHeadTitle();
     loadSynopsisContent();
     applyTheme(state.theme?.accent||'#5856D6', false);
     applyBg(state.theme?.bg||'#F2F2F5', false);
@@ -1324,6 +1394,92 @@ function removeEpisode(i){
   state.treatment.forEach((e,idx)=>e.no=idx+1);
   renderTreatment(); scheduleSave();
 }
+
+/* ───────────────────────── 타임라인 ───────────────────────── */
+const TL_TYPES = {
+  event:      {label:'사건',      color:'#5856D6'},
+  foreshadow: {label:'복선',      color:'#3682B3'},
+  payoff:     {label:'회수',      color:'#2D8A5E'},
+  relation:   {label:'관계 변화', color:'#D0608E'},
+  setting:    {label:'설정',      color:'#B37B32'},
+};
+let tlFilterType='all';
+function renderTimeline(){
+  const box=document.getElementById('tlList');
+  const empty=document.getElementById('tlEmpty');
+  if(!box) return;
+  empty.classList.toggle('show', state.timeline.length===0);
+  box.innerHTML = state.timeline.map((t,i)=>{
+    const meta = TL_TYPES[t.type] || TL_TYPES.event;
+    const opts = Object.keys(TL_TYPES).map(k=>`<option value="${k}" ${k===t.type?'selected':''}>${TL_TYPES[k].label}</option>`).join('');
+    const hide = (tlFilterType!=='all' && t.type!==tlFilterType) ? ' tl-hide' : '';
+    return `
+    <div class="tl-item${hide}" data-type="${t.type}" data-tl="${i}">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+        <div class="tl-head">
+          <select class="tl-type" data-tl="${i}" data-k="type" style="background-color:${meta.color}">${opts}</select>
+          <input class="tl-time" value="${esc(t.time)}" data-tl="${i}" data-k="time" placeholder="극중 시점 — 예) 3화 아침 · 10년 전 회상">
+          <button type="button" class="tl-move" data-move="up" data-tl="${i}" ${i===0?'disabled':''} title="위로 이동">▲</button>
+          <button type="button" class="tl-move" data-move="down" data-tl="${i}" ${i===state.timeline.length-1?'disabled':''} title="아래로 이동">▼</button>
+          <button type="button" class="tl-del" data-tl="${i}" title="삭제">✕</button>
+        </div>
+        <input class="tl-title" value="${esc(t.title)}" data-tl="${i}" data-k="title" placeholder="사건 제목">
+        <textarea class="tl-desc" data-tl="${i}" data-k="desc" placeholder="무슨 일이 일어났는지, 왜 중요한지">${esc(t.desc)}</textarea>
+        <div class="tl-mini">
+          <input value="${esc(t.episode)}" data-tl="${i}" data-k="episode" placeholder="관련 회차 (예: 3화, 5~6화)">
+          <input value="${esc(t.characters)}" data-tl="${i}" data-k="characters" placeholder="관련 인물 (쉼표로 구분)">
+        </div>
+        <div class="tl-char-preview">${kwChips(t.characters)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('[data-tl][data-k]').forEach(el=>{
+    if(el.tagName==='TEXTAREA') autoGrow(el);
+    const ev = el.tagName==='SELECT'?'change':'input';
+    el.addEventListener(ev,()=>{
+      const idx=+el.dataset.tl;
+      state.timeline[idx][el.dataset.k]=el.value;
+      if(el.dataset.k==='type'){ renderTimeline(); scheduleSave(); return; }
+      if(el.dataset.k==='characters'){
+        const prev=el.closest('.tl-card')?.querySelector('.tl-char-preview');
+        if(prev) prev.innerHTML=kwChips(el.value);
+      }
+      scheduleSave();
+    });
+  });
+  box.querySelectorAll('.tl-move').forEach(btn=>{
+    btn.addEventListener('click',()=>moveTlEvent(+btn.dataset.tl, btn.dataset.move));
+  });
+  box.querySelectorAll('.tl-del').forEach(btn=>{
+    btn.addEventListener('click',()=>removeTlEvent(+btn.dataset.tl));
+  });
+}
+function addTlEvent(){
+  state.timeline.push(blankTl());
+  renderTimeline(); scheduleSave();
+  const last=document.getElementById('tlList').lastElementChild;
+  last?.scrollIntoView({behavior:'smooth',block:'center'});
+  last?.querySelector('.tl-title')?.focus();
+}
+function removeTlEvent(i){
+  state.timeline.splice(i,1);
+  renderTimeline(); scheduleSave();
+}
+function moveTlEvent(i,dir){
+  const j = dir==='up' ? i-1 : i+1;
+  if(j<0 || j>=state.timeline.length) return;
+  [state.timeline[i], state.timeline[j]] = [state.timeline[j], state.timeline[i]];
+  renderTimeline(); scheduleSave();
+}
+document.getElementById('tlFilter')?.addEventListener('click',e=>{
+  const b=e.target.closest('.tl-filter-btn'); if(!b) return;
+  tlFilterType = b.dataset.type;
+  document.querySelectorAll('#tlFilter .tl-filter-btn').forEach(x=>x.classList.toggle('active', x===b));
+  document.querySelectorAll('#tlList .tl-item').forEach(item=>{
+    item.classList.toggle('tl-hide', tlFilterType!=='all' && item.dataset.type!==tlFilterType);
+  });
+});
 
 /* ───────────────────────── 캐릭터 ───────────────────────── */
 // 다양한 성격 키워드 색상을 위해 32개로 팔레트 확대
@@ -1620,6 +1776,7 @@ function sectionTexts(tab){
   if(tab==='synopsis'){ const t=synopsisToPlainText(state.synopsis); return t?[t]:[]; }
   if(tab==='treatment') return state.treatment.flatMap(e=>[e.fn,e.emoStart,e.emoEnd,e.event,e.place,e.summary,e.endcut]).filter(Boolean);
   if(tab==='characters') return state.characters.flatMap(c=>[c.quote,c.name,c.job,c.keywords,c.personality,c.relations,c.goal,c.strengths,c.change]).filter(Boolean);
+  if(tab==='timeline') return state.timeline.flatMap(t=>[t.time,t.title,t.desc,t.episode,t.characters]).filter(Boolean);
   return [];
 }
 async function openSpeller(tab){
@@ -1642,6 +1799,7 @@ async function openSpeller(tab){
 function bindRefresh(tab){
   if(tab==='treatment') renderTreatment();
   else if(tab==='characters') renderCharacters();
+  else if(tab==='timeline') renderTimeline();
   else if(tab==='relation') { syncRelationNodes(); renderRelations(); }
   else document.querySelectorAll('[data-path]').forEach(el=>{ el.value=getByPath(el.dataset.path)||''; if(el.tagName==='TEXTAREA') autoGrow(el); });
 }
@@ -2030,7 +2188,7 @@ function importJSON(ev){
     try{
       const p=JSON.parse(r.result);
       state=normalizeState({...defaultState(),...p});
-      bindRefresh('basic'); renderTreatment(); renderCharacters(); renderPreview(); updateHeadTitle();
+      bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); renderPreview(); updateHeadTitle();
       loadSynopsisContent();
       applyTheme(state.theme?.accent||'#5856D6', false);
       applyBg(state.theme?.bg||'#F2F2F5', false);
@@ -2121,6 +2279,7 @@ function toast(msg){
   setupSynopsisEditor();
   renderTreatment();
   renderCharacters();
+  renderTimeline();
   updateHeadTitle();
   setupTheme();
   setupCloudBtn();
