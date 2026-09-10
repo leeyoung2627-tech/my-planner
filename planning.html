@@ -124,20 +124,25 @@ onAuthStateChanged(auth, user => {
   .field input:focus,.field textarea:focus{border-color:var(--accent);background:#fff}
   .field textarea{resize:none;overflow:hidden;min-height:90px;line-height:1.7}
 
-  /* 시놉시스 — 도입/발단/전개/위기/결말 자동 하이라이트 */
-  .hl-wrap{position:relative; width:100%; background:#FCFCFD; border-radius:8px}
-  .hl-backdrop{
-    position:absolute; inset:0; margin:0; pointer-events:none;
-    box-sizing:border-box; border:1px solid transparent; border-radius:8px;
-    padding:10px 12px; font-family:var(--sans); font-size:15px; line-height:1.7;
-    white-space:pre-wrap; word-wrap:break-word; overflow:hidden; color:transparent;
+  /* 시놉시스 — 드래그 후 우클릭으로 형광펜 칠하기 */
+  .synopsis-edit{
+    border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+    background:#FCFCFD; outline:none; transition:border .15s;
+    font-family:var(--sans); font-size:15px; color:var(--ink); line-height:1.7;
+    white-space:pre-wrap; word-wrap:break-word; min-height:340px;
   }
-  .hl-backdrop mark{
-    color:transparent; background:transparent;
-    text-decoration-line:underline; text-decoration-color:var(--accent);
-    text-decoration-thickness:3px; text-underline-offset:4px;
+  .synopsis-edit:focus{border-color:var(--accent); background:#fff}
+  .synopsis-edit:empty:before{content:attr(data-ph); color:var(--muted); pointer-events:none}
+  .synopsis-edit mark{border-radius:3px; padding:0 1px; color:inherit}
+  .hl-menu{
+    position:fixed; z-index:999; display:flex; align-items:center; gap:7px;
+    background:#fff; border:1px solid var(--line); border-radius:12px;
+    padding:8px 10px; box-shadow:0 10px 28px rgba(0,0,0,.16);
   }
-  .hl-wrap textarea{position:relative; display:block; width:100%; background:transparent !important; z-index:1}
+  .hl-menu .hl-swatch{width:22px; height:22px; border-radius:50%; border:1px solid rgba(0,0,0,.12); padding:0; cursor:pointer}
+  .hl-menu .hl-swatch:hover{transform:scale(1.15)}
+  .hl-menu .hl-clear{font-size:12px; padding:5px 9px; border-radius:7px; border:1px solid var(--line); background:#fff; color:var(--muted); cursor:pointer; white-space:nowrap; margin-left:2px}
+  .hl-menu .hl-clear:hover{border-color:var(--accent); color:var(--accent-ink)}
 
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
   .btn{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:500}
@@ -471,10 +476,7 @@ onAuthStateChanged(auth, user => {
       <div class="eyebrow">시놉시스</div>
       <p class="hint"><span class="tip">TIP</span><b>도입</b>(주인공의 일상·결핍) → <b>발단</b>(일상이 깨지는 계기) → <b>전개</b>(목표 추구·장애물) → <b>위기</b>(상실 혹은 반전) → <b>결말</b><span class="hint-sub">주인공의 <b>선택</b>에 영향을 주는 사건들로 구성하고, <b>결말까지 확실하게</b> 쓸 것.</span></p>
       <div class="field">
-        <div class="hl-wrap">
-          <div class="hl-backdrop" id="synopsisBackdrop" aria-hidden="true"></div>
-          <textarea id="synopsisTa" data-path="synopsis" style="min-height:340px" placeholder="현재형으로 생동감 있게, 결말까지 확실하게." spellcheck="false"></textarea>
-        </div>
+        <div class="synopsis-edit" id="synopsisEdit" contenteditable="true" spellcheck="false" data-ph="현재형으로 생동감 있게, 결말까지 확실하게."></div>
       </div>
     </div>
   </section>
@@ -671,6 +673,7 @@ async function _loadProject(id){
   }
   currentProjId = id;
   bindStatics();
+  loadSynopsisContent();
   renderTreatment();
   renderCharacters();
   updateHeadTitle();
@@ -829,7 +832,6 @@ function bindStatics(){
   document.querySelectorAll('[data-path]').forEach(el=>{
     el.value=getByPath(el.dataset.path)||'';
     if(el.tagName==='TEXTAREA') autoGrow(el);
-    if(el.id==='synopsisTa') syncSynopsisHighlight();
     el.addEventListener('input',()=>{
       setByPath(el.dataset.path, el.value);
       if(el.dataset.path==='basic.title') updateHeadTitle();
@@ -865,28 +867,79 @@ function growVisibleTextareas(){
 }
 document.addEventListener('input',e=>{
   if(e.target && e.target.tagName==='TEXTAREA') autoGrow(e.target);
-  if(e.target && e.target.id==='synopsisTa') syncSynopsisHighlight();
 });
-document.addEventListener('scroll',e=>{
-  if(e.target && e.target.id==='synopsisTa') syncSynopsisHighlight();
-},true);
 window.addEventListener('resize',()=>{
   document.querySelectorAll('textarea').forEach(autoGrow);
 });
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-/* 시놉시스 5단계 키워드 하이라이트 */
-const SYN_HL_WORDS=['도입','발단','전개','위기','결말'];
-const SYN_HL_RE=new RegExp('('+SYN_HL_WORDS.join('|')+')','g');
-function syncSynopsisHighlight(){
-  const ta=document.getElementById('synopsisTa');
-  const bd=document.getElementById('synopsisBackdrop');
-  if(!ta||!bd) return;
-  let html=esc(ta.value).replace(SYN_HL_RE,'<mark>$1</mark>');
-  if(html.endsWith('\n')) html+=' '; // 마지막 줄바꿈에서도 높이가 맞도록
-  bd.innerHTML=html;
-  bd.scrollTop=ta.scrollTop;
-  bd.scrollLeft=ta.scrollLeft;
+/* 시놉시스 — 텍스트를 드래그한 뒤 우클릭하면 형광펜 색을 고를 수 있다 */
+const HL_COLORS=[
+  {name:'노랑', c:'#FFEE58'},
+  {name:'연두', c:'#C6E86B'},
+  {name:'핑크', c:'#FF8FB1'},
+  {name:'주황', c:'#FFB74D'},
+  {name:'파랑', c:'#81D4FA'},
+  {name:'초록', c:'#A5D6A7'},
+  {name:'보라', c:'#CE93D8'},
+];
+function synopsisToPlainText(html){
+  const d=document.createElement('div');
+  d.innerHTML=String(html||'');
+  d.querySelectorAll('br').forEach(b=>b.replaceWith(document.createTextNode('\n')));
+  d.querySelectorAll('div,p').forEach(b=>b.insertAdjacentText('beforeend','\n'));
+  return d.textContent.replace(/\n+$/,'').replace(/\n{3,}/g,'\n\n');
+}
+function loadSynopsisContent(){
+  const ed=document.getElementById('synopsisEdit');
+  if(ed) ed.innerHTML = state.synopsis || '';
+}
+function setupSynopsisEditor(){
+  const ed=document.getElementById('synopsisEdit');
+  if(!ed) return;
+  loadSynopsisContent();
+  ed.addEventListener('input',()=>{
+    if(!ed.innerText.trim()) ed.innerHTML=''; // 완전히 비면 플레이스홀더가 보이도록
+    state.synopsis = ed.innerHTML;
+    scheduleSave();
+  });
+  let savedRange=null;
+  ed.addEventListener('contextmenu',e=>{
+    const sel=window.getSelection();
+    if(!sel || sel.isCollapsed || !ed.contains(sel.anchorNode)) return; // 선택된 글자가 없으면 기본 메뉴 그대로
+    e.preventDefault();
+    savedRange = sel.getRangeAt(0).cloneRange();
+    openHlMenu(e.clientX, e.clientY);
+  });
+  function openHlMenu(x,y){
+    closeHlMenu();
+    const menu=document.createElement('div');
+    menu.className='hl-menu'; menu.id='hlMenu';
+    menu.innerHTML = HL_COLORS.map(h=>`<button type="button" class="hl-swatch" style="background:${h.c}" data-c="${h.c}" title="${h.name}"></button>`).join('')
+      + `<button type="button" class="hl-clear" data-clear="1">지우기</button>`;
+    document.body.appendChild(menu);
+    const r=menu.getBoundingClientRect();
+    menu.style.left = Math.min(x, window.innerWidth - r.width - 10) + 'px';
+    menu.style.top = Math.min(y, window.innerHeight - r.height - 10) + 'px';
+    menu.addEventListener('mousedown',ev=>ev.preventDefault()); // 포커스/선택 유지
+    menu.addEventListener('click',ev=>{
+      const btn=ev.target.closest('button'); if(!btn) return;
+      if(!savedRange) return;
+      const sel2=window.getSelection();
+      sel2.removeAllRanges(); sel2.addRange(savedRange);
+      document.execCommand('styleWithCSS', true);
+      if(btn.dataset.clear) document.execCommand('hiliteColor', false, 'transparent');
+      else document.execCommand('hiliteColor', false, btn.dataset.c);
+      state.synopsis = ed.innerHTML;
+      scheduleSave();
+      closeHlMenu();
+    });
+  }
+  function closeHlMenu(){ document.getElementById('hlMenu')?.remove(); }
+  document.addEventListener('mousedown',e=>{
+    if(!e.target.closest('#hlMenu')) closeHlMenu();
+  });
+  document.addEventListener('scroll',()=>closeHlMenu(), true);
 }
 function mdb(s){ return esc(s).replace(/\n/g,'<br>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); }
 
@@ -1063,6 +1116,7 @@ async function fsLoad(){
     const p = JSON.parse(txt);
     state = normalizeState({...defaultState(), ...p});
     bindRefresh('basic'); renderTreatment(); renderCharacters(); updateHeadTitle();
+    loadSynopsisContent();
     applyTheme(state.theme?.accent||'#5856D6', false);
     applyBg(state.theme?.bg||'#F2F2F5', false);
     growVisibleTextareas();
@@ -1563,7 +1617,7 @@ function deleteRelModal() {
 const SPELLER_URL='https://www.nara-speller.co.kr/speller/';
 function sectionTexts(tab){
   if(tab==='basic') return Object.values(state.basic).filter(Boolean);
-  if(tab==='synopsis') return state.synopsis?[state.synopsis]:[];
+  if(tab==='synopsis'){ const t=synopsisToPlainText(state.synopsis); return t?[t]:[]; }
   if(tab==='treatment') return state.treatment.flatMap(e=>[e.fn,e.emoStart,e.emoEnd,e.event,e.place,e.summary,e.endcut]).filter(Boolean);
   if(tab==='characters') return state.characters.flatMap(c=>[c.quote,c.name,c.job,c.keywords,c.personality,c.relations,c.goal,c.strengths,c.change]).filter(Boolean);
   return [];
@@ -1589,7 +1643,7 @@ function bindRefresh(tab){
   if(tab==='treatment') renderTreatment();
   else if(tab==='characters') renderCharacters();
   else if(tab==='relation') { syncRelationNodes(); renderRelations(); }
-  else document.querySelectorAll('[data-path]').forEach(el=>{ el.value=getByPath(el.dataset.path)||''; if(el.tagName==='TEXTAREA') autoGrow(el); if(el.id==='synopsisTa') syncSynopsisHighlight(); });
+  else document.querySelectorAll('[data-path]').forEach(el=>{ el.value=getByPath(el.dataset.path)||''; if(el.tagName==='TEXTAREA') autoGrow(el); });
 }
 
 /* ───────────────────────── 문서 생성 / 내보내기 ───────────────────────── */
@@ -1622,7 +1676,7 @@ async function buildDocHTML(){
     <tr><th>키워드</th><td>${esc(b.keywords)}</td><th>회차 분량</th><td>${esc(b.episodes)}</td></tr>
     <tr><th>기획 의도</th><td colspan="3">${nl(b.intent)}</td></tr>
   </table>`;
-  h += `<div class="sec">시놉시스</div><p class="pre">${nl(state.synopsis)||'<i>—</i>'}</p>`;
+  h += `<div class="sec">시놉시스</div><p class="pre">${nl(synopsisToPlainText(state.synopsis))||'<i>—</i>'}</p>`;
   
   const mains=state.characters.filter(c=>c.type==='main'), subs=state.characters.filter(c=>c.type==='sub');
   const charBlock = c => {
@@ -1859,7 +1913,7 @@ async function exportDocx(){
       [{text:'기획 의도',th:1},{text:b.intent,span:3}]
     ]);
     body+=wP('시놉시스',{bold:true,sz:26,bottomBorder:true,spacing:160});
-    body+=wP(state.synopsis||'—',{spacing:240});
+    body+=wP(synopsisToPlainText(state.synopsis)||'—',{spacing:240});
 
     const charSection=async (title,list)=>{
       if(!list.length) return;
@@ -1977,6 +2031,7 @@ function importJSON(ev){
       const p=JSON.parse(r.result);
       state=normalizeState({...defaultState(),...p});
       bindRefresh('basic'); renderTreatment(); renderCharacters(); renderPreview(); updateHeadTitle();
+      loadSynopsisContent();
       applyTheme(state.theme?.accent||'#5856D6', false);
       applyBg(state.theme?.bg||'#F2F2F5', false);
       growVisibleTextareas();
@@ -2063,6 +2118,7 @@ function toast(msg){
 /* ───────────────────────── 시작 ───────────────────────── */
 (async function init(){
   bindStatics();
+  setupSynopsisEditor();
   renderTreatment();
   renderCharacters();
   updateHeadTitle();
