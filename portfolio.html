@@ -69,37 +69,37 @@
   body.is-owner #login-btn{ display:none; }
   .sidebar .name{
     font-family:'Memoment', sans-serif; font-weight:400;
-    font-size:21px; padding: 0 24px 24px;
+    font-size:24px; padding: 0 24px 24px;
     border-bottom: 1px solid var(--line); margin-bottom: 12px;
     color: var(--sidebar-text);
   }
   .nav-item{
     display:flex; justify-content:space-between; align-items:center;
-    padding: 11px 24px; font-size:16px; cursor:pointer; color: var(--sidebar-text);
+    padding: 11px 24px; font-size:19px; cursor:pointer; color: var(--sidebar-text);
     font-weight: 500;
   }
   .nav-item:hover{ background: color-mix(in srgb, var(--sidebar-text) 12%, transparent); }
   .nav-item.active{ color: var(--accent); }
-  .nav-item .arrow{ font-size:11px; color: color-mix(in srgb, var(--sidebar-text) 60%, transparent); transition: transform 0.15s; }
+  .nav-item .arrow{ font-size:12px; color: color-mix(in srgb, var(--sidebar-text) 60%, transparent); transition: transform 0.15s; }
   .nav-item.open .arrow{ transform: rotate(90deg); }
 
   .submenu{ display:none; padding: 2px 0 10px; }
   .submenu.open{ display:block; }
   .sub-item{
     display:flex; align-items:center; justify-content:space-between;
-    padding: 8px 12px 8px 38px; font-size:14px; color: color-mix(in srgb, var(--sidebar-text) 65%, transparent); cursor:pointer;
+    padding: 8px 12px 8px 38px; font-size:16px; color: color-mix(in srgb, var(--sidebar-text) 65%, transparent); cursor:pointer;
   }
   .sub-item:hover{ color: var(--sidebar-text); }
   .sub-item.active{ color: var(--accent); font-weight:500; }
   .sub-item .sub-item-title{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .sub-item-del{
     opacity:0; pointer-events:none; transition:opacity .15s;
-    color: color-mix(in srgb, var(--sidebar-text) 55%, transparent); font-size:14px; padding:2px 6px; flex-shrink:0;
+    color: color-mix(in srgb, var(--sidebar-text) 55%, transparent); font-size:15px; padding:2px 6px; flex-shrink:0;
   }
   body.is-owner .sub-item:hover .sub-item-del{ opacity:1; pointer-events:auto; }
   .sub-item-del:hover{ color: var(--accent); }
   .sub-item-add{
-    padding: 8px 24px 8px 38px; font-size:16px; color: color-mix(in srgb, var(--sidebar-text) 50%, transparent); cursor:pointer;
+    padding: 8px 24px 8px 38px; font-size:19px; color: color-mix(in srgb, var(--sidebar-text) 50%, transparent); cursor:pointer;
   }
   .sub-item-add:hover{ color: var(--accent); }
 
