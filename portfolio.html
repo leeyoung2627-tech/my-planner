@@ -14,6 +14,7 @@
     --ink-dim: #767267;
     --line: #E7E4DD;
     --accent: #C4622D;
+    --highlight: #FFD966;
     --sidebar-text: #1C1C1C;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -311,7 +312,7 @@
   }
   .underline-effect::after{
     content:''; position:absolute; left:-4px; right:-4px; bottom:1px;
-    height:46%; background:var(--accent); z-index:-1;
+    height:46%; background:var(--highlight); opacity:0.55; z-index:-1;
     transition: height .25s cubic-bezier(.4,0,.2,1), bottom .25s cubic-bezier(.4,0,.2,1);
   }
   .underline-effect:hover::after{ height:3px; bottom:-2px; }
@@ -372,6 +373,10 @@
         <div class="settings-row">
           <span>포인트색</span>
           <input type="color" id="accent-color" value="#C4622D">
+        </div>
+        <div class="settings-row">
+          <span>밑줄 강조색</span>
+          <input type="color" id="highlight-color" value="#FFD966">
         </div>
       </div>
     </div>
@@ -538,6 +543,11 @@
   // 포인트색(액센트) 변경
   document.getElementById('accent-color').addEventListener('input', (e) => {
     document.documentElement.style.setProperty('--accent', e.target.value);
+  });
+
+  // 밑줄 강조색 변경
+  document.getElementById('highlight-color').addEventListener('input', (e) => {
+    document.documentElement.style.setProperty('--highlight', e.target.value);
   });
 
   // 사이드바 배경색 변경 — 배경이 어두우면 글자색을 밝게, 밝으면 어둡게 자동 반전
@@ -1019,6 +1029,10 @@
       document.documentElement.style.setProperty('--accent', data.accentColor);
       document.getElementById('accent-color').value = data.accentColor;
     }
+    if(data.highlightColor){
+      document.documentElement.style.setProperty('--highlight', data.highlightColor);
+      document.getElementById('highlight-color').value = data.highlightColor;
+    }
     if(data.contactInstaHref){
       document.getElementById('contactInstaLink').href = data.contactInstaHref;
     }
@@ -1067,6 +1081,7 @@
     data.sidebarColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar').trim();
     data.sidebarTextColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-text').trim();
     data.accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    data.highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--highlight').trim();
     try{
       await setDoc(CONTENT_DOC, data, { merge: true });
       showToast('저장되었습니다.');
