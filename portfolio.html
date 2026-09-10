@@ -314,11 +314,11 @@
     position:relative; display:inline-block; z-index:1;
   }
   .underline-effect::after{
-    content:''; position:absolute; left:-4px; right:-4px; bottom:1px;
-    height:46%; background:var(--highlight); opacity:0.55; z-index:-1;
-    transition: height .25s cubic-bezier(.4,0,.2,1), bottom .25s cubic-bezier(.4,0,.2,1);
+    content:''; position:absolute; left:-4px; right:-4px; top:-2px; bottom:-2px;
+    height:auto; background:var(--highlight); opacity:0.55; z-index:-1;
+    transition: top .25s cubic-bezier(.4,0,.2,1), bottom .25s cubic-bezier(.4,0,.2,1);
   }
-  .underline-effect:hover::after{ height:3px; bottom:-2px; }
+  .underline-effect:hover::after{ top:calc(100% - 3px); bottom:-2px; }
 
   /* ---- 초기 로딩 화면 (깜빡임 방지) ---- */
   .page-loader{
