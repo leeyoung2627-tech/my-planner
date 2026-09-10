@@ -255,8 +255,9 @@ onAuthStateChanged(auth, user => {
   .ep .endcut input{width:100%;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:8px 10px;background:#FCFCFD;outline:none}
 
   /* ── 캐릭터 ─────────────────────── */
-  .char-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media(max-width:700px){.char-grid{grid-template-columns:1fr}}
+  .char-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:900px){.char-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.char-grid{grid-template-columns:1fr}}
   .char{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px}
   .char.main-type{border-top:3px solid var(--accent)}
   .char-top{display:flex;gap:8px;align-items:center;margin-bottom:8px}
@@ -271,8 +272,7 @@ onAuthStateChanged(auth, user => {
   .char-gallery:empty{display:none}
   .gal-item{position:relative;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#F4F4F8}
   .gal-item.solo{grid-column:1/-1}
-  .gal-item img{width:100%;height:104px;object-fit:cover;display:block;cursor:zoom-in}
-  .gal-item.solo img{height:150px}
+  .gal-item img{width:100%;height:auto;display:block;cursor:zoom-in}
   .gal-del{position:absolute;top:5px;right:5px;background:rgba(26,26,32,.62);color:#fff;border:none;border-radius:6px;width:19px;height:19px;font-size:11px;line-height:1;padding:0}
   .gal-del:hover{background:#C0392B}
   .char-img-actions{margin-bottom:9px;text-align:center}
