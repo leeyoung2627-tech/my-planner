@@ -100,7 +100,8 @@
   .sub-item-add:hover{ color: var(--accent); }
 
   /* ---- Editable text ---- */
-  .editable{ cursor: text; border-radius:3px; }
+  .editable{ border-radius:3px; }
+  body.is-owner .editable{ cursor: text; }
   body.is-owner .editable:hover{ outline: 1px dashed var(--line); outline-offset:2px; }
   .editable[contenteditable="true"]{
     outline: 1px dashed var(--accent); outline-offset:2px;
@@ -203,7 +204,9 @@
   #careerRows .career-del-btn{
     border-top:1px solid var(--line); padding:12px 0; align-self:center;
     cursor:pointer; color: var(--ink-dim); font-size:14px; text-align:center;
+    visibility:hidden;
   }
+  body.is-owner #careerRows .career-del-btn{ visibility:visible; }
   #careerRows .career-del-btn:hover{ color: var(--accent); }
 
   .contact-links{
@@ -607,7 +610,7 @@
     makeEditable(textEl);
 
     const delBtn = document.createElement('div');
-    delBtn.className = 'career-del-btn owner-only';
+    delBtn.className = 'career-del-btn';
     delBtn.title = '삭제';
     delBtn.textContent = '×';
     delBtn.addEventListener('click', () => row.remove());
