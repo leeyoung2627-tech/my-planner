@@ -396,6 +396,37 @@ onAuthStateChanged(auth, user => {
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   }
 
+  /* ── 메모 포스트잇 (작품당 1개, 메인 화면 오른쪽에 항상 고정) ── */
+  .memo-wrap{
+    position:fixed; top:128px; right:22px; z-index:55;
+    width:218px; max-width:calc(100vw - 36px);
+    background:#FFF3A3; border-radius:3px 3px 10px 10px;
+    box-shadow:0 12px 26px rgba(0,0,0,.16), 0 2px 5px rgba(0,0,0,.08);
+    transform:rotate(-1.2deg);
+    transition:width .15s;
+  }
+  .memo-wrap::after{
+    content:''; position:absolute; right:0; bottom:0; width:0; height:0;
+    border-style:solid; border-width:0 0 15px 15px;
+    border-color:transparent transparent rgba(0,0,0,.14) transparent;
+    border-bottom-right-radius:10px;
+  }
+  .memo-head{display:flex; align-items:center; justify-content:space-between; padding:9px 8px 0 13px}
+  .memo-label{font-family:var(--serif); font-weight:700; font-size:13px; color:#6B5900; letter-spacing:.04em}
+  .memo-toggle{border:none; background:none; color:#8a7a1f; font-size:13px; width:22px; height:22px; cursor:pointer; border-radius:6px; line-height:1}
+  .memo-toggle:hover{background:rgba(0,0,0,.08)}
+  .memo-text{
+    display:block; width:100%; box-sizing:border-box; border:none; background:transparent; outline:none;
+    resize:none; overflow:hidden; padding:6px 14px 15px; margin:0;
+    font-family:var(--sans); font-size:13.5px; line-height:1.6; color:#4a4210;
+    min-height:88px; max-height:calc(100vh - 240px); overflow-y:auto;
+  }
+  .memo-text::placeholder{color:#9c8f3f}
+  .memo-wrap.collapsed{width:auto}
+  .memo-wrap.collapsed .memo-text{display:none}
+  .memo-wrap.collapsed .memo-head{padding:9px 8px 9px 13px}
+  @media(max-width:900px){ .memo-wrap{position:static; margin:0 0 16px; transform:none; width:100%; max-width:none} .memo-wrap::after{display:none} }
+
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:200;max-width:90vw}
   .toast.show{opacity:1}
   .credit{max-width:880px;margin:0 auto;padding:0 20px 36px;text-align:center;font-family:var(--serif);font-size:13px;color:var(--muted);letter-spacing:.04em}
@@ -609,6 +640,14 @@ onAuthStateChanged(auth, user => {
   </section>
 
 </main>
+
+<div class="memo-wrap" id="memoWrap">
+  <div class="memo-head">
+    <span class="memo-label">메모</span>
+    <button type="button" class="memo-toggle" id="memoToggle" title="접기">─</button>
+  </div>
+  <textarea class="memo-text" data-path="memo" placeholder="아이디어, 할 일, 체크할 것들을 자유롭게…" spellcheck="false"></textarea>
+</div>
 
 <footer class="credit">@gunchong_<div class="credit-ver">v1.1.1</div></footer>
 
@@ -850,6 +889,7 @@ function normalizeState(s){
 const defaultState = () => ({
   basic:{title:'',author:'',contact:'',genre:'',target:'',logline:'',keywords:'',episodes:'',intent:''},
   synopsis:'',
+  memo:'',
   timeline:[],
   treatment:[blankEp(1),blankEp(2),blankEp(3),blankEp(4),blankEp(5)],
   characters:[blankChar('main'),blankChar('sub')],
@@ -922,6 +962,14 @@ document.getElementById('nav').addEventListener('click',e=>{
   if(b.dataset.tab==='relation') { syncRelationNodes(); renderRelations(); }
   growVisibleTextareas();
   window.scrollTo({top:0});
+});
+
+/* ── 메모 포스트잇 접기/펼치기 ── */
+document.getElementById('memoToggle')?.addEventListener('click',()=>{
+  const wrap=document.getElementById('memoWrap');
+  const collapsed=wrap.classList.toggle('collapsed');
+  document.getElementById('memoToggle').textContent = collapsed ? '＋' : '─';
+  document.getElementById('memoToggle').title = collapsed ? '펼치기' : '접기';
 });
 
 /* ───────────────────────── 공통 ───────────────────────── */
