@@ -133,8 +133,9 @@ onAuthStateChanged(auth, user => {
     white-space:pre-wrap; word-wrap:break-word; overflow:hidden; color:transparent;
   }
   .hl-backdrop mark{
-    color:transparent; background:var(--accent-soft); border-radius:5px;
-    box-shadow:0 0 0 3px var(--accent-soft);
+    color:transparent; background:transparent;
+    text-decoration-line:underline; text-decoration-color:var(--accent);
+    text-decoration-thickness:3px; text-underline-offset:4px;
   }
   .hl-wrap textarea{position:relative; background:transparent !important; z-index:1}
 
