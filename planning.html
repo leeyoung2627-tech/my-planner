@@ -2228,7 +2228,7 @@ document.getElementById('wmapClearBtn')?.addEventListener('click', ()=>{
 
 /* ── 세계관 · 지도에 그리기 (아이콘 레이어보다 아래에 그려짐) ── */
 let wmapDrawMode=false, wmapDrawColor='#3A3A42', wmapErasing=false;
-const WMAP_BRUSH=3, WMAP_ERASER=18;
+const WMAP_BRUSH=1.6, WMAP_ERASER=14;
 let wmapCanvas=null, wmapCtx=null, wmapDPR=1, wmapCurrentStroke=null, wmapLastPt=null;
 function wmapResizeCanvas(){
   if(!wmapCanvas) wmapCanvas=document.getElementById('wmapCanvas');
