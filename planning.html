@@ -324,16 +324,22 @@ onAuthStateChanged(auth, user => {
   /* ── 사건 정리 ───────────────────────── */
   .case-empty{display:none;font-size:13.5px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:22px;text-align:center}
   .case-empty.show{display:block}
-  .case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:12px}
-  .case-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 10px 13px;text-align:center;cursor:pointer;transition:border-color .12s,box-shadow .12s,transform .12s;position:relative}
-  .case-card:hover{border-color:var(--accent);box-shadow:0 6px 16px rgba(0,0,0,.08);transform:translateY(-2px)}
-  .case-icon{font-size:30px;line-height:1;margin-bottom:9px}
-  .case-card-title{font-size:12.5px;font-weight:700;color:var(--ink);word-break:break-word;line-height:1.35;min-height:17px}
-  .case-status-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%}
+  .case-board-wrap{position:relative;border:1px dashed var(--line);border-radius:14px;overflow:auto;background:#FBFBFD}
+  .case-board{position:relative;min-width:100%;min-height:460px}
+  .case-card{
+    position:absolute; width:152px; background:var(--paper); border:1px solid var(--line);
+    border-radius:14px; padding:16px 10px 13px; text-align:center; cursor:grab; user-select:none;
+    touch-action:none; transition:border-color .12s,box-shadow .12s;
+  }
+  .case-card:hover{border-color:var(--accent);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+  .case-card.dragging{cursor:grabbing;box-shadow:0 16px 32px rgba(0,0,0,.2);z-index:50;transition:none}
+  .case-icon{font-size:30px;line-height:1;margin-bottom:9px;pointer-events:none}
+  .case-card-title{font-size:12.5px;font-weight:700;color:var(--ink);word-break:break-word;line-height:1.35;min-height:17px;pointer-events:none}
+  .case-status-dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;pointer-events:none}
   .case-status-dot.progress{background:#D0903B}
   .case-status-dot.resolved{background:#3FA873}
   .case-status-dot.onhold{background:#9AA0AC}
-  .case-modal-box{background:#fff;border-radius:16px;padding:22px 24px 20px;width:100%;max-width:560px;max-height:86vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.22)}
+  .case-modal-box{background:#fff;border-radius:16px;padding:22px 28px 20px;width:100%;max-width:760px;max-height:86vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.22)}
   .case-modal-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
   .case-icon-btn{font-size:26px;line-height:1;background:var(--accent-soft);border:1px solid var(--line);border-radius:12px;width:50px;height:50px;flex:0 0 auto;cursor:pointer}
   .case-icon-btn:hover{border-color:var(--accent)}
@@ -352,6 +358,61 @@ onAuthStateChanged(auth, user => {
   .case-icon-pop{position:fixed;z-index:120;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 10px 26px rgba(0,0,0,.18);display:grid;grid-template-columns:repeat(6,1fr);gap:3px;width:216px}
   .case-icon-pop button{font-size:18px;border:none;background:none;border-radius:8px;padding:6px 0;cursor:pointer;line-height:1}
   .case-icon-pop button:hover{background:var(--accent-soft)}
+
+  /* ── 세계관 ───────────────────────── */
+  .world-search{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;outline:none;background:#fff;min-width:150px;font-family:var(--sans)}
+  .world-search:focus{border-color:var(--accent)}
+  .world-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+  .world-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 12px 13px;text-align:center;cursor:pointer;transition:border-color .12s,box-shadow .12s,transform .12s}
+  .world-card:hover{border-color:var(--accent);box-shadow:0 6px 16px rgba(0,0,0,.08);transform:translateY(-2px)}
+  .world-icon{font-size:28px;line-height:1;margin-bottom:8px}
+  .world-card-title{font-size:13px;font-weight:700;color:var(--ink);word-break:break-word;line-height:1.3}
+  .world-card-cat{font-size:11px;color:var(--muted);margin-top:4px}
+  .world-modal-box{background:#fff;border-radius:16px;padding:22px 26px 20px;width:100%;max-width:640px;max-height:86vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.22)}
+  .world-cat-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .world-cat-btn{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;font-family:var(--sans)}
+  .world-cat-btn.on[data-cat="place"]{background:#DDF1F2;border-color:#3A8FA0;color:#1f5c66;font-weight:700}
+  .world-cat-btn.on[data-cat="faction"]{background:#E7E6F7;border-color:#6E5EB8;color:#4a3f8a;font-weight:700}
+  .world-cat-btn.on[data-cat="rule"]{background:#FEF2D6;border-color:#B37B32;color:#7a5220;font-weight:700}
+  .world-cat-btn.on[data-cat="term"]{background:#E8F3DC;border-color:#3FA873;color:#1F8A5B;font-weight:700}
+  .world-cat-btn.on[data-cat="history"]{background:#F5E3E3;border-color:#A84D4D;color:#7a3535;font-weight:700}
+
+  /* ── 세계관 · 간이 지도 ───────────────────────── */
+  .wmap-card{padding-bottom:18px}
+  .wmap-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+  .wmap-board{
+    position:relative; width:100%; aspect-ratio:16/7; min-height:220px;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.035) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.035) 0 1px, transparent 1px 28px),
+      #EAF3E4;
+    border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:crosshair;
+  }
+  .wmap-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#5f7a54;font-size:13px;pointer-events:none}
+  .wmap-pin{
+    position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center;
+    gap:3px; cursor:grab; user-select:none; touch-action:none;
+  }
+  .wmap-pin.dragging{cursor:grabbing; z-index:30}
+  .wmap-pin-icon{
+    width:32px; height:32px; border-radius:50%; background:#fff; border:2px solid var(--accent);
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+    box-shadow:0 3px 8px rgba(0,0,0,.18); pointer-events:none;
+  }
+  .wmap-pin-label{
+    font-size:10.5px; font-weight:700; color:var(--ink); background:#fff; border-radius:6px; padding:1px 6px;
+    box-shadow:0 2px 5px rgba(0,0,0,.12); white-space:nowrap; max-width:96px; overflow:hidden;
+    text-overflow:ellipsis; pointer-events:none;
+  }
+  .wmap-pop{position:fixed; z-index:130; background:#fff; border:1px solid var(--line); border-radius:12px; padding:11px; box-shadow:0 12px 28px rgba(0,0,0,.2); width:232px}
+  .wmap-pop-icons{display:grid; grid-template-columns:repeat(6,1fr); gap:3px; margin-bottom:8px}
+  .wmap-pop-icons button{font-size:17px; border:none; background:none; border-radius:8px; padding:5px 0; cursor:pointer; line-height:1}
+  .wmap-pop-icons button:hover{background:var(--accent-soft)}
+  .wmap-pop-icons button.sel{background:var(--accent-soft); box-shadow:0 0 0 2px var(--accent) inset}
+  .wmap-pop input{width:100%; border:1px solid var(--line); border-radius:8px; padding:6px 9px; font-size:12.5px; outline:none; margin-bottom:8px; box-sizing:border-box; font-family:var(--sans)}
+  .wmap-pop input:focus{border-color:var(--accent)}
+  .wmap-pop-actions{display:flex; gap:6px}
+  .wmap-pop-actions .btn{flex:1; padding:6px 8px; font-size:12px; text-align:center; justify-content:center}
 
   /* ── 관계도 ───────────────────────── */
   #rel-workspace{position:relative;width:100%;height:600px;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:grab;}
@@ -556,6 +617,7 @@ onAuthStateChanged(auth, user => {
       <button data-tab="synopsis">시놉시스</button>
       <button data-tab="timeline">타임라인</button>
       <button data-tab="cases">사건 정리</button>
+      <button data-tab="world">세계관</button>
       <button data-tab="characters">캐릭터</button>
       <button data-tab="relation">관계도</button>
       <button data-tab="treatment">트리트먼트</button>
@@ -648,7 +710,40 @@ onAuthStateChanged(auth, user => {
       <div class="eyebrow">사건 정리</div>
       <p class="hint"><span class="tip">TIP</span>타임라인이 <b>시간 순서</b>를 보여준다면, 여기는 사건 하나하나를 깊이 파고드는 <b>자료실</b>이에요. 발단·전개·결과를 정리해두면 나중에 설정 오류 없이 이야기를 이어갈 수 있어요.</p>
       <div class="case-empty" id="caseEmpty">아직 정리한 사건이 없어요. 위 <b>＋ 사건 추가</b> 버튼으로 첫 사건 파일을 만들어보세요.</div>
-      <div class="case-grid" id="caseGrid"></div>
+      <div class="case-board-wrap"><div class="case-board" id="caseGrid"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-world">
+    <div class="card wmap-card">
+      <div class="eyebrow">간이 지도 <span style="font-weight:400;color:var(--muted);font-size:12px">· 선택 사항</span></div>
+      <p class="hint"><span class="tip">TIP</span>마을·동네·학교처럼 공간의 대략적인 위치 관계를 표시해두면 장면을 그릴 때 헷갈리지 않아요. 지도의 빈 곳을 클릭해서 위치를 추가해보세요.</p>
+      <div class="wmap-toolbar">
+        <button class="btn" type="button" id="wmapClearBtn">🗑 지도 초기화</button>
+      </div>
+      <div class="wmap-board" id="wmapBoard">
+        <div class="wmap-empty" id="wmapEmpty">지도가 비어있어요. 지도 위 아무 곳이나 클릭해서 첫 위치를 추가해보세요.</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn primary" onclick="addWorldItem()">＋ 항목 추가</button>
+      <div class="tl-filter" id="worldFilter">
+        <button type="button" class="tl-filter-btn active" data-cat="all">전체</button>
+        <button type="button" class="tl-filter-btn" data-cat="place">🗺️ 장소</button>
+        <button type="button" class="tl-filter-btn" data-cat="faction">🏛️ 조직·세력</button>
+        <button type="button" class="tl-filter-btn" data-cat="rule">📖 설정·규칙</button>
+        <button type="button" class="tl-filter-btn" data-cat="term">📔 용어</button>
+        <button type="button" class="tl-filter-btn" data-cat="history">📜 역사</button>
+      </div>
+      <input type="text" id="worldSearch" class="world-search" placeholder="🔍 제목·설명 검색">
+      <button class="btn" onclick="openSpeller('world')">✓ 맞춤법 검사 (바른 한글)</button>
+      <span class="tool-hint">버튼을 누르면 이 탭의 글이 클립보드에 자동 복사돼요. 새 창에서 붙여넣기(Ctrl+V)만 하면 됩니다.</span>
+    </div>
+    <div class="card">
+      <div class="eyebrow">세계관</div>
+      <p class="hint"><span class="tip">TIP</span>장소·조직·설정 규칙·용어·역사를 미리 정리해두면 연재가 길어져도 설정이 흔들리지 않아요. 항목이 많아지면 위 검색으로 바로 찾아보세요.</p>
+      <div class="case-empty" id="worldEmpty">아직 정리한 세계관 항목이 없어요. 위 <b>＋ 항목 추가</b> 버튼으로 첫 항목을 만들어보세요.</div>
+      <div class="world-grid" id="worldGrid"></div>
     </div>
   </section>
 
@@ -762,6 +857,34 @@ onAuthStateChanged(auth, user => {
     <div class="field"><textarea id="caseNote" placeholder="추가로 남기고 싶은 메모"></textarea></div>
     <div class="case-modal-actions">
       <button type="button" class="btn" style="color:#C0392B" id="caseDeleteBtn">🗑 이 사건 삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- 세계관 상세 -->
+<div class="modal-ov" id="worldModal">
+  <div class="world-modal-box">
+    <div class="case-modal-head">
+      <div class="case-icon-btn" id="worldModalIcon" style="cursor:default">🗺️</div>
+      <input class="case-modal-title" id="worldTitleInput" placeholder="항목 제목 (지명, 조직명, 용어 등)">
+      <button type="button" class="case-modal-close" id="worldModalCloseBtn" title="닫기">✕</button>
+    </div>
+    <div class="world-cat-row" id="worldCatRow">
+      <button type="button" class="world-cat-btn" data-cat="place">🗺️ 장소</button>
+      <button type="button" class="world-cat-btn" data-cat="faction">🏛️ 조직·세력</button>
+      <button type="button" class="world-cat-btn" data-cat="rule">📖 설정·규칙</button>
+      <button type="button" class="world-cat-btn" data-cat="term">📔 용어</button>
+      <button type="button" class="world-cat-btn" data-cat="history">📜 역사</button>
+    </div>
+    <div class="case-field-label">한 줄 설명</div>
+    <div class="field"><input id="worldSummary" placeholder="이 항목을 한 문장으로 정리하면?"></div>
+    <div class="case-field-label">상세 내용</div>
+    <div class="field"><textarea id="worldDetail" placeholder="자세한 설정을 자유롭게 적어보세요"></textarea></div>
+    <div class="case-field-label">관련 인물·항목</div>
+    <div class="field"><input id="worldRelated" placeholder="관련 인물, 장소, 사건 등 (쉼표로 구분)"></div>
+    <div class="tl-char-preview" id="worldRelatedPreview"></div>
+    <div class="case-modal-actions">
+      <button type="button" class="btn" style="color:#C0392B" id="worldDeleteBtn">🗑 이 항목 삭제</button>
     </div>
   </div>
 </div>
@@ -892,8 +1015,12 @@ async function _loadProject(id){
   renderCharacters();
   renderTimeline();
   renderCaseGrid();
+  renderWorldGrid();
+  renderWorldMap();
   document.getElementById('caseModal')?.classList.remove('open');
+  document.getElementById('worldModal')?.classList.remove('open');
   activeCaseId=null;
+  activeWorldId=null;
   updateHeadTitle();
   applyTheme((state.theme && state.theme.accent)||'#5856D6', false);
   applyBg((state.theme && state.theme.bg)||'#F2F2F5', false);
@@ -982,7 +1109,8 @@ const blankEp = n => ({no:n, fn:'', emoStart:'', emoEnd:'', emoStartColor:'', em
 const genId = () => Math.random().toString(36).substring(2,9);
 const blankChar = type => ({id:genId(), type, images:[], quote:'', name:'', age:'', body:'', job:'', keywords:'', personality:'', relations:'', goal:'', strengths:'', change:''});
 const blankTl = () => ({id:genId(), type:'event', time:'', title:'', desc:'', episode:'', characters:''});
-const blankCase = () => ({id:genId(), icon:'💥', title:'', status:'progress', logline:'', trigger:'', development:'', result:'', characters:'', episode:'', note:''});
+const blankCase = () => ({id:genId(), icon:'💥', color:'', x:null, y:null, title:'', status:'progress', logline:'', trigger:'', development:'', result:'', characters:'', episode:'', note:''});
+const blankWorld = () => ({id:genId(), cat:'place', title:'', summary:'', detail:'', related:''});
 
 function normalizeState(s){
   s.treatment=(s.treatment||[]).map((raw,idx)=>({...blankEp(raw&&raw.no?raw.no:idx+1), ...raw}));
@@ -998,11 +1126,19 @@ function normalizeState(s){
     if(!t.id) t.id=genId();
     return t;
   });
-  s.cases=(s.cases||[]).map(raw=>{
+  s.cases=(s.cases||[]).map((raw,idx)=>{
     const c={...blankCase(), ...raw};
     if(!c.id) c.id=genId();
+    if(!c.color) c.color = CASE_CARD_COLORS[idx % CASE_CARD_COLORS.length];
     return c;
   });
+  s.world=(s.world||[]).map(raw=>{
+    const w={...blankWorld(), ...raw};
+    if(!w.id) w.id=genId();
+    return w;
+  });
+  s.worldMap = (s.worldMap && Array.isArray(s.worldMap.pins)) ? s.worldMap : {pins:[]};
+  s.worldMap.pins = s.worldMap.pins.map(p=>({id:p.id||genId(), icon:p.icon||'📍', label:p.label||'', x:typeof p.x==='number'?p.x:50, y:typeof p.y==='number'?p.y:50}));
   s.customEmotions = s.customEmotions || [];
   s.relations = s.relations || { nodes: {}, links: [] };
   return s;
@@ -1014,6 +1150,8 @@ const defaultState = () => ({
   memo:'',
   timeline:[],
   cases:[],
+  world:[],
+  worldMap:{pins:[]},
   treatment:[blankEp(1),blankEp(2),blankEp(3),blankEp(4),blankEp(5)],
   characters:[blankChar('main'),blankChar('sub')],
   customEmotions:[],
@@ -1356,8 +1494,9 @@ async function fsLoad(){
     const txt = await file.text();
     const p = JSON.parse(txt);
     state = normalizeState({...defaultState(), ...p});
-    bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); renderCaseGrid(); updateHeadTitle();
+    bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); renderCaseGrid(); renderWorldGrid(); renderWorldMap(); updateHeadTitle();
     document.getElementById('caseModal')?.classList.remove('open'); activeCaseId=null;
+    document.getElementById('worldModal')?.classList.remove('open'); activeWorldId=null;
     loadSynopsisContent();
     applyTheme(state.theme?.accent||'#5856D6', false);
     applyBg(state.theme?.bg||'#F2F2F5', false);
@@ -1656,26 +1795,85 @@ document.getElementById('tlFilter')?.addEventListener('click',e=>{
 /* ───────────────────────── 사건 정리 ───────────────────────── */
 const CASE_ICONS = ['💥','🔍','💔','⚔️','🤝','🔑','⚠️','🎭','🌱','💀','👑','🩸','🕯️','📜','🏚️','💍','🌪️','🕰️','❤️‍🔥','🧩'];
 const CASE_STATUS = { progress:'진행중', resolved:'해결됨', onhold:'보류' };
+const CASE_CARD_COLORS = ['#FDEBE1','#FEF2D6','#FBF7D2','#E8F3DC','#DDF2E7','#DDF1F2','#E0EBF8','#E7E6F7','#F3E2F6','#FBE2EC','#F5E3E3','#EFEADF'];
+function randomCaseColor(excludeColor){
+  const pool = excludeColor ? CASE_CARD_COLORS.filter(c=>c!==excludeColor) : CASE_CARD_COLORS;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
 let caseFilterStatus='all';
 let activeCaseId=null;
+function ensureCasePosition(c, idx){
+  if(typeof c.x==='number' && typeof c.y==='number') return false;
+  const col = idx % 4, row = Math.floor(idx/4);
+  c.x = 20 + col*182 + Math.round((Math.random()-0.5)*20);
+  c.y = 20 + row*148 + Math.round((Math.random()-0.5)*16);
+  return true;
+}
 function renderCaseGrid(){
   const box=document.getElementById('caseGrid');
   const empty=document.getElementById('caseEmpty');
   if(!box) return;
-  empty.classList.toggle('show', state.cases.length===0);
+  const isEmpty = state.cases.length===0;
+  empty.classList.toggle('show', isEmpty);
+  const wrap=box.closest('.case-board-wrap');
+  if(wrap) wrap.style.display = isEmpty ? 'none' : 'block';
+  let needsSave=false;
+  state.cases.forEach((c,idx)=>{ if(ensureCasePosition(c,idx)) needsSave=true; });
   const list = state.cases.filter(c=> caseFilterStatus==='all' || c.status===caseFilterStatus);
   box.innerHTML = list.map(c=>`
-    <div class="case-card" data-id="${c.id}">
+    <div class="case-card" data-id="${c.id}" style="background:${c.color||'#fff'};left:${c.x}px;top:${c.y}px">
       <span class="case-status-dot ${c.status}" title="${CASE_STATUS[c.status]||''}"></span>
       <div class="case-icon">${c.icon||'💥'}</div>
       <div class="case-card-title">${c.title?esc(c.title):'<span style="color:var(--muted);font-weight:400">제목 없음</span>'}</div>
     </div>`).join('');
+  let maxX=340, maxY=320;
+  list.forEach(c=>{ maxX=Math.max(maxX,c.x+172); maxY=Math.max(maxY,c.y+148); });
+  box.style.width=maxX+'px';
+  box.style.height=maxY+'px';
   box.querySelectorAll('.case-card').forEach(el=>{
-    el.addEventListener('click',()=>openCaseModal(el.dataset.id));
+    bindCaseDrag(el);
   });
+  if(needsSave) scheduleSave();
+}
+function bindCaseDrag(el){
+  let sx=0, sy=0, ox=0, oy=0, dragging=false, moved=false;
+  el.addEventListener('pointerdown', e=>{
+    if(e.button!==0 && e.pointerType==='mouse') return;
+    dragging=true; moved=false;
+    sx=e.clientX; sy=e.clientY;
+    ox=parseFloat(el.style.left)||0; oy=parseFloat(el.style.top)||0;
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('dragging');
+  });
+  el.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx=e.clientX-sx, dy=e.clientY-sy;
+    if(Math.abs(dx)>3 || Math.abs(dy)>3) moved=true;
+    if(!moved) return;
+    const nx=Math.max(0, Math.round(ox+dx)), ny=Math.max(0, Math.round(oy+dy));
+    el.style.left=nx+'px'; el.style.top=ny+'px';
+    const box=document.getElementById('caseGrid');
+    if(nx+172 > parseFloat(box.style.width||0)) box.style.width=(nx+200)+'px';
+    if(ny+148 > parseFloat(box.style.height||0)) box.style.height=(ny+180)+'px';
+  });
+  function endDrag(e){
+    if(!dragging) return;
+    dragging=false;
+    el.classList.remove('dragging');
+    if(moved){
+      const c=findCase(el.dataset.id);
+      if(c){ c.x=parseFloat(el.style.left)||0; c.y=parseFloat(el.style.top)||0; scheduleSave(); }
+    } else {
+      openCaseModal(el.dataset.id);
+    }
+  }
+  el.addEventListener('pointerup', endDrag);
+  el.addEventListener('pointercancel', ()=>{ dragging=false; el.classList.remove('dragging'); });
 }
 function addCaseFile(){
   const c=blankCase();
+  const last=state.cases[state.cases.length-1];
+  c.color = randomCaseColor(last && last.color);
   state.cases.push(c);
   renderCaseGrid(); scheduleSave();
   openCaseModal(c.id);
@@ -1771,6 +1969,227 @@ document.getElementById('caseFilter')?.addEventListener('click', e=>{
   caseFilterStatus = b.dataset.status;
   document.querySelectorAll('#caseFilter .tl-filter-btn').forEach(x=>x.classList.toggle('active', x===b));
   renderCaseGrid();
+});
+
+/* ───────────────────────── 세계관 ───────────────────────── */
+const WORLD_CATS = {
+  place:   {label:'장소',      icon:'🗺️', color:'#DDF1F2'},
+  faction: {label:'조직·세력', icon:'🏛️', color:'#E7E6F7'},
+  rule:    {label:'설정·규칙', icon:'📖', color:'#FEF2D6'},
+  term:    {label:'용어',      icon:'📔', color:'#E8F3DC'},
+  history: {label:'역사',      icon:'📜', color:'#F5E3E3'},
+};
+let worldFilterCat='all';
+let worldSearchQ='';
+let activeWorldId=null;
+function renderWorldGrid(){
+  const box=document.getElementById('worldGrid');
+  const empty=document.getElementById('worldEmpty');
+  if(!box) return;
+  empty.classList.toggle('show', state.world.length===0);
+  const q=worldSearchQ.trim().toLowerCase();
+  const list = state.world.filter(w=>{
+    if(worldFilterCat!=='all' && w.cat!==worldFilterCat) return false;
+    if(q && !(w.title||'').toLowerCase().includes(q) && !(w.summary||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  box.innerHTML = list.map(w=>{
+    const meta = WORLD_CATS[w.cat] || WORLD_CATS.place;
+    return `<div class="world-card" data-id="${w.id}" style="background:${meta.color}">
+      <div class="world-icon">${meta.icon}</div>
+      <div class="world-card-title">${w.title?esc(w.title):'<span style="color:var(--muted);font-weight:400">제목 없음</span>'}</div>
+      <div class="world-card-cat">${meta.label}</div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.world-card').forEach(el=>{
+    el.addEventListener('click',()=>openWorldModal(el.dataset.id));
+  });
+}
+function addWorldItem(){
+  const w=blankWorld();
+  if(worldFilterCat!=='all') w.cat=worldFilterCat;
+  state.world.push(w);
+  renderWorldGrid(); scheduleSave();
+  openWorldModal(w.id);
+}
+function findWorld(id){ return state.world.find(x=>x.id===id); }
+function openWorldModal(id){
+  const w=findWorld(id); if(!w) return;
+  activeWorldId=id;
+  document.getElementById('worldModalIcon').textContent = (WORLD_CATS[w.cat]||WORLD_CATS.place).icon;
+  document.getElementById('worldTitleInput').value = w.title||'';
+  document.querySelectorAll('.world-cat-btn').forEach(b=>b.classList.toggle('on', b.dataset.cat===w.cat));
+  document.getElementById('worldSummary').value = w.summary||'';
+  document.getElementById('worldDetail').value = w.detail||'';
+  document.getElementById('worldRelated').value = w.related||'';
+  document.getElementById('worldRelatedPreview').innerHTML = kwChips(w.related);
+  document.getElementById('worldModal').classList.add('open');
+  autoGrow(document.getElementById('worldDetail'));
+  document.getElementById('worldTitleInput').focus();
+}
+function closeWorldModal(){
+  document.getElementById('worldModal').classList.remove('open');
+  activeWorldId=null;
+  renderWorldGrid();
+}
+function updateActiveWorld(patch){
+  const w=findWorld(activeWorldId); if(!w) return;
+  Object.assign(w, patch);
+  scheduleSave();
+}
+function deleteActiveWorld(){
+  const w=findWorld(activeWorldId); if(!w) return;
+  openConfirmModal('이 항목을 삭제할까요?', `<b>${w.title?esc(w.title):'제목 없음'}</b> 항목에 적어둔 내용이 모두 사라져요.`, ()=>{
+    state.world = state.world.filter(x=>x.id!==activeWorldId);
+    document.getElementById('worldModal').classList.remove('open');
+    activeWorldId=null;
+    renderWorldGrid(); scheduleSave();
+  });
+}
+function setupWorldModal(){
+  document.getElementById('worldModalCloseBtn')?.addEventListener('click', closeWorldModal);
+  document.getElementById('worldDeleteBtn')?.addEventListener('click', deleteActiveWorld);
+  document.getElementById('worldModal')?.addEventListener('click', e=>{
+    if(e.target.id==='worldModal') closeWorldModal();
+  });
+  document.getElementById('worldTitleInput')?.addEventListener('input', e=>updateActiveWorld({title:e.target.value}));
+  document.getElementById('worldSummary')?.addEventListener('input', e=>updateActiveWorld({summary:e.target.value}));
+  document.getElementById('worldDetail')?.addEventListener('input', e=>updateActiveWorld({detail:e.target.value}));
+  document.getElementById('worldRelated')?.addEventListener('input', e=>{
+    updateActiveWorld({related:e.target.value});
+    document.getElementById('worldRelatedPreview').innerHTML = kwChips(e.target.value);
+  });
+  document.getElementById('worldCatRow')?.addEventListener('click', e=>{
+    const b=e.target.closest('.world-cat-btn'); if(!b) return;
+    document.querySelectorAll('.world-cat-btn').forEach(x=>x.classList.toggle('on', x===b));
+    updateActiveWorld({cat:b.dataset.cat});
+    document.getElementById('worldModalIcon').textContent = (WORLD_CATS[b.dataset.cat]||WORLD_CATS.place).icon;
+    renderWorldGrid();
+  });
+}
+document.getElementById('worldFilter')?.addEventListener('click', e=>{
+  const b=e.target.closest('.tl-filter-btn'); if(!b) return;
+  worldFilterCat = b.dataset.cat;
+  document.querySelectorAll('#worldFilter .tl-filter-btn').forEach(x=>x.classList.toggle('active', x===b));
+  renderWorldGrid();
+});
+document.getElementById('worldSearch')?.addEventListener('input', e=>{
+  worldSearchQ = e.target.value;
+  renderWorldGrid();
+});
+
+/* ── 세계관 · 간이 지도 ── */
+const WMAP_ICONS = ['🏠','🏫','🏢','🏪','🏛️','🏥','🌳','🌲','🌊','⛰️','🛤️','📍'];
+function findPin(id){ return (state.worldMap.pins||[]).find(p=>p.id===id); }
+function renderWorldMap(){
+  const board=document.getElementById('wmapBoard');
+  if(!board) return;
+  const pins = state.worldMap.pins || [];
+  const empty=document.getElementById('wmapEmpty');
+  if(empty) empty.style.display = pins.length===0 ? 'flex' : 'none';
+  board.querySelectorAll('.wmap-pin').forEach(el=>el.remove());
+  pins.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='wmap-pin'; el.dataset.id=p.id;
+    el.style.left=p.x+'%'; el.style.top=p.y+'%';
+    el.innerHTML = `<div class="wmap-pin-icon">${p.icon||'📍'}</div>${p.label?`<div class="wmap-pin-label">${esc(p.label)}</div>`:''}`;
+    board.appendChild(el);
+    bindPinDrag(el);
+  });
+}
+function bindPinDrag(el){
+  let dragging=false, moved=false, rect=null;
+  el.addEventListener('pointerdown', e=>{
+    if(e.button!==0 && e.pointerType==='mouse') return;
+    dragging=true; moved=false;
+    rect = document.getElementById('wmapBoard').getBoundingClientRect();
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('dragging');
+  });
+  el.addEventListener('pointermove', e=>{
+    if(!dragging || !rect) return;
+    const nx=((e.clientX-rect.left)/rect.width)*100;
+    const ny=((e.clientY-rect.top)/rect.height)*100;
+    if(Math.abs(nx-parseFloat(el.style.left))>0.6 || Math.abs(ny-parseFloat(el.style.top))>0.6) moved=true;
+    if(!moved) return;
+    el.style.left = Math.min(100,Math.max(0,nx))+'%';
+    el.style.top = Math.min(100,Math.max(0,ny))+'%';
+  });
+  el.addEventListener('pointerup', ()=>{
+    if(!dragging) return;
+    dragging=false;
+    el.classList.remove('dragging');
+    if(moved){
+      const p=findPin(el.dataset.id);
+      if(p){ p.x=parseFloat(el.style.left); p.y=parseFloat(el.style.top); scheduleSave(); }
+    } else {
+      const r=el.getBoundingClientRect();
+      openPinEditor(r.left+r.width/2, r.bottom+4, el.dataset.id, null);
+    }
+  });
+  el.addEventListener('pointercancel', ()=>{ dragging=false; el.classList.remove('dragging'); });
+}
+function openPinEditor(clientX, clientY, pinId, newPos){
+  closePinEditor();
+  const existing = pinId ? findPin(pinId) : null;
+  const preselected = existing ? (existing.icon||WMAP_ICONS[0]) : WMAP_ICONS[0];
+  let selectedIcon = preselected;
+  const pop=document.createElement('div');
+  pop.className='wmap-pop'; pop.id='wmapPop';
+  pop.innerHTML = `
+    <div class="wmap-pop-icons">${WMAP_ICONS.map(ic=>`<button type="button" data-ic="${ic}" class="${ic===preselected?'sel':''}">${ic}</button>`).join('')}</div>
+    <input type="text" id="wmapPopLabel" placeholder="장소 이름 (예: 마을회관)" maxlength="20" value="${existing?esc(existing.label):''}">
+    <div class="wmap-pop-actions">
+      ${existing?'<button type="button" class="btn" id="wmapPopDelete" style="color:#C0392B">삭제</button>':''}
+      <button type="button" class="btn primary" id="wmapPopSave">${existing?'저장':'추가'}</button>
+    </div>`;
+  document.body.appendChild(pop);
+  const pw=pop.offsetWidth, ph=pop.offsetHeight;
+  pop.style.left = Math.max(8, Math.min(clientX-pw/2, window.innerWidth-pw-8)) + 'px';
+  pop.style.top = Math.max(8, Math.min(clientY, window.innerHeight-ph-8)) + 'px';
+  pop.querySelector('.wmap-pop-icons').addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    selectedIcon=b.dataset.ic;
+    pop.querySelectorAll('.wmap-pop-icons button').forEach(x=>x.classList.toggle('sel', x===b));
+  });
+  pop.addEventListener('mousedown', ev=>ev.stopPropagation());
+  document.getElementById('wmapPopSave').addEventListener('click', ()=>{
+    const label=document.getElementById('wmapPopLabel').value.trim();
+    if(existing){
+      existing.icon=selectedIcon; existing.label=label;
+    } else if(newPos){
+      state.worldMap.pins.push({id:genId(), icon:selectedIcon, label, x:newPos.x, y:newPos.y});
+    }
+    scheduleSave();
+    renderWorldMap();
+    closePinEditor();
+  });
+  document.getElementById('wmapPopDelete')?.addEventListener('click', ()=>{
+    state.worldMap.pins = state.worldMap.pins.filter(p=>p.id!==pinId);
+    scheduleSave();
+    renderWorldMap();
+    closePinEditor();
+  });
+  document.getElementById('wmapPopLabel').focus();
+}
+function closePinEditor(){ document.getElementById('wmapPop')?.remove(); }
+document.addEventListener('mousedown', e=>{
+  if(!e.target.closest('#wmapPop') && !e.target.closest('.wmap-pin')) closePinEditor();
+});
+document.getElementById('wmapBoard')?.addEventListener('click', e=>{
+  if(e.target.id !== 'wmapBoard') return;
+  const rect=e.currentTarget.getBoundingClientRect();
+  const x=((e.clientX-rect.left)/rect.width)*100;
+  const y=((e.clientY-rect.top)/rect.height)*100;
+  openPinEditor(e.clientX, e.clientY+10, null, {x:Math.min(97,Math.max(3,x)), y:Math.min(94,Math.max(6,y))});
+});
+document.getElementById('wmapClearBtn')?.addEventListener('click', ()=>{
+  if(!state.worldMap.pins.length) return;
+  openConfirmModal('지도를 초기화할까요?', '지도에 표시된 모든 위치가 삭제돼요.', ()=>{
+    state.worldMap.pins = [];
+    scheduleSave();
+    renderWorldMap();
+  });
 });
 
 /* ───────────────────────── 캐릭터 ───────────────────────── */
@@ -2070,6 +2489,7 @@ function sectionTexts(tab){
   if(tab==='characters') return state.characters.flatMap(c=>[c.quote,c.name,c.job,c.keywords,c.personality,c.relations,c.goal,c.strengths,c.change]).filter(Boolean);
   if(tab==='timeline') return state.timeline.flatMap(t=>[t.time,t.title,t.desc,t.episode,t.characters]).filter(Boolean);
   if(tab==='cases') return state.cases.flatMap(c=>[c.title,c.logline,c.trigger,c.development,c.result,c.episode,c.characters,c.note]).filter(Boolean);
+  if(tab==='world') return state.world.flatMap(w=>[w.title,w.summary,w.detail,w.related]).filter(Boolean);
   return [];
 }
 async function openSpeller(tab){
@@ -2094,6 +2514,7 @@ function bindRefresh(tab){
   else if(tab==='characters') renderCharacters();
   else if(tab==='timeline') renderTimeline();
   else if(tab==='cases') renderCaseGrid();
+  else if(tab==='world') { renderWorldGrid(); renderWorldMap(); }
   else if(tab==='relation') { syncRelationNodes(); renderRelations(); }
   else document.querySelectorAll('[data-path]').forEach(el=>{ el.value=getByPath(el.dataset.path)||''; if(el.tagName==='TEXTAREA') autoGrow(el); });
 }
@@ -2482,8 +2903,9 @@ function importJSON(ev){
     try{
       const p=JSON.parse(r.result);
       state=normalizeState({...defaultState(),...p});
-      bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); renderCaseGrid(); renderPreview(); updateHeadTitle();
+      bindRefresh('basic'); renderTreatment(); renderCharacters(); renderTimeline(); renderCaseGrid(); renderWorldGrid(); renderWorldMap(); renderPreview(); updateHeadTitle();
       document.getElementById('caseModal')?.classList.remove('open'); activeCaseId=null;
+      document.getElementById('worldModal')?.classList.remove('open'); activeWorldId=null;
       loadSynopsisContent();
       applyTheme(state.theme?.accent||'#5856D6', false);
       applyBg(state.theme?.bg||'#F2F2F5', false);
@@ -2584,11 +3006,14 @@ function toast(msg){
   renderCharacters();
   renderTimeline();
   renderCaseGrid();
+  renderWorldGrid();
+  renderWorldMap();
   updateHeadTitle();
   setupTheme();
   setupCloudBtn();
   setupEmoModal();
   setupCaseModal();
+  setupWorldModal();
   updateFolderUI();
   _renderSidebar();
   const cachedTheme = readThemeCache();
