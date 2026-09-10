@@ -261,7 +261,8 @@ onAuthStateChanged(auth, user => {
   .char{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px}
   .char.main-type{border-top:3px solid var(--accent)}
   .char-top{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-  .drag-handle{cursor:grab;color:var(--muted);font-size:15px;padding:2px 5px;border-radius:6px;touch-action:none;user-select:none;line-height:1;flex:0 0 auto}
+  .drag-handle{cursor:grab;color:var(--muted);font-size:15px;padding:2px 5px;border-radius:6px;touch-action:none;user-select:none;line-height:1;flex:0 0 auto;opacity:0;transition:opacity .12s}
+  .char:hover .drag-handle,.world-card:hover .drag-handle,.dragging-card .drag-handle{opacity:1}
   .drag-handle:hover{background:#F0F0F4;color:var(--ink)}
   .drag-handle:active{cursor:grabbing}
   .dragging-card{opacity:.45}
