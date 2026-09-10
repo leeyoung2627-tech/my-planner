@@ -124,6 +124,20 @@ onAuthStateChanged(auth, user => {
   .field input:focus,.field textarea:focus{border-color:var(--accent);background:#fff}
   .field textarea{resize:none;overflow:hidden;min-height:90px;line-height:1.7}
 
+  /* 시놉시스 — 도입/발단/전개/위기/결말 자동 하이라이트 */
+  .hl-wrap{position:relative; background:#FCFCFD; border-radius:8px}
+  .hl-backdrop{
+    position:absolute; inset:0; margin:0; pointer-events:none;
+    box-sizing:border-box; border:1px solid transparent; border-radius:8px;
+    padding:10px 12px; font-family:var(--sans); font-size:15px; line-height:1.7;
+    white-space:pre-wrap; word-wrap:break-word; overflow:hidden; color:transparent;
+  }
+  .hl-backdrop mark{
+    color:transparent; background:var(--accent-soft); border-radius:5px;
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  .hl-wrap textarea{position:relative; background:transparent !important; z-index:1}
+
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
   .btn{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:500}
   .btn:hover{border-color:var(--accent);color:var(--accent-ink)}
@@ -455,7 +469,12 @@ onAuthStateChanged(auth, user => {
     <div class="card">
       <div class="eyebrow">시놉시스</div>
       <p class="hint"><span class="tip">TIP</span><b>도입</b>(주인공의 일상·결핍) → <b>발단</b>(일상이 깨지는 계기) → <b>전개</b>(목표 추구·장애물) → <b>위기</b>(상실 혹은 반전) → <b>결말</b><span class="hint-sub">주인공의 <b>선택</b>에 영향을 주는 사건들로 구성하고, <b>결말까지 확실하게</b> 쓸 것.</span></p>
-      <div class="field"><textarea data-path="synopsis" style="min-height:340px" placeholder="현재형으로 생동감 있게, 결말까지 확실하게."></textarea></div>
+      <div class="field">
+        <div class="hl-wrap">
+          <div class="hl-backdrop" id="synopsisBackdrop" aria-hidden="true"></div>
+          <textarea id="synopsisTa" data-path="synopsis" style="min-height:340px" placeholder="현재형으로 생동감 있게, 결말까지 확실하게." spellcheck="false"></textarea>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -809,6 +828,7 @@ function bindStatics(){
   document.querySelectorAll('[data-path]').forEach(el=>{
     el.value=getByPath(el.dataset.path)||'';
     if(el.tagName==='TEXTAREA') autoGrow(el);
+    if(el.id==='synopsisTa') syncSynopsisHighlight();
     el.addEventListener('input',()=>{
       setByPath(el.dataset.path, el.value);
       if(el.dataset.path==='basic.title') updateHeadTitle();
@@ -844,11 +864,29 @@ function growVisibleTextareas(){
 }
 document.addEventListener('input',e=>{
   if(e.target && e.target.tagName==='TEXTAREA') autoGrow(e.target);
+  if(e.target && e.target.id==='synopsisTa') syncSynopsisHighlight();
 });
+document.addEventListener('scroll',e=>{
+  if(e.target && e.target.id==='synopsisTa') syncSynopsisHighlight();
+},true);
 window.addEventListener('resize',()=>{
   document.querySelectorAll('textarea').forEach(autoGrow);
 });
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* 시놉시스 5단계 키워드 하이라이트 */
+const SYN_HL_WORDS=['도입','발단','전개','위기','결말'];
+const SYN_HL_RE=new RegExp('('+SYN_HL_WORDS.join('|')+')','g');
+function syncSynopsisHighlight(){
+  const ta=document.getElementById('synopsisTa');
+  const bd=document.getElementById('synopsisBackdrop');
+  if(!ta||!bd) return;
+  let html=esc(ta.value).replace(SYN_HL_RE,'<mark>$1</mark>');
+  if(html.endsWith('\n')) html+=' '; // 마지막 줄바꿈에서도 높이가 맞도록
+  bd.innerHTML=html;
+  bd.scrollTop=ta.scrollTop;
+  bd.scrollLeft=ta.scrollLeft;
+}
 function mdb(s){ return esc(s).replace(/\n/g,'<br>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); }
 
 /* ───────────────────────── 트리트먼트 감정 ───────────────────────── */
@@ -1550,7 +1588,7 @@ function bindRefresh(tab){
   if(tab==='treatment') renderTreatment();
   else if(tab==='characters') renderCharacters();
   else if(tab==='relation') { syncRelationNodes(); renderRelations(); }
-  else document.querySelectorAll('[data-path]').forEach(el=>{ el.value=getByPath(el.dataset.path)||''; if(el.tagName==='TEXTAREA') autoGrow(el); });
+  else document.querySelectorAll('[data-path]').forEach(el=>{ el.value=getByPath(el.dataset.path)||''; if(el.tagName==='TEXTAREA') autoGrow(el); if(el.id==='synopsisTa') syncSynopsisHighlight(); });
 }
 
 /* ───────────────────────── 문서 생성 / 내보내기 ───────────────────────── */
