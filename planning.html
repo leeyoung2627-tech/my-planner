@@ -122,7 +122,7 @@ onAuthStateChanged(auth, user => {
   .field label small{font-weight:400;color:var(--muted)}
   .field input,.field textarea,.field select{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#FCFCFD;outline:none;transition:border .15s}
   .field input:focus,.field textarea:focus{border-color:var(--accent);background:#fff}
-  .field textarea{resize:vertical;min-height:90px;line-height:1.7}
+  .field textarea{resize:none;overflow:hidden;min-height:90px;line-height:1.7}
 
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
   .btn{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:500}
@@ -229,7 +229,7 @@ onAuthStateChanged(auth, user => {
   @media(max-width:640px){.ep .mini{grid-template-columns:1fr}}
   .ep .mini input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#FCFCFD;outline:none;width:100%}
   .ep .mini input:focus{border-color:var(--accent)}
-  .ep textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:74px;background:#FCFCFD;outline:none;resize:vertical;line-height:1.7}
+  .ep textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:74px;background:#FCFCFD;outline:none;resize:none;overflow:hidden;line-height:1.7}
   .ep textarea:focus{border-color:var(--accent)}
   .ep .endcut{margin-top:10px}
   .ep .endcut input{width:100%;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:8px 10px;background:#FCFCFD;outline:none}
@@ -245,7 +245,7 @@ onAuthStateChanged(auth, user => {
   .char input,.char textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#FCFCFD;outline:none;margin-bottom:8px}
   .char input:focus,.char textarea:focus{border-color:var(--accent)}
   .char .quote{font-family:var(--serif);font-size:15px}
-  .char textarea{min-height:70px;resize:vertical;line-height:1.65}
+  .char textarea{min-height:70px;resize:none;overflow:hidden;line-height:1.65}
   .char .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .char-gallery{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
   .char-gallery:empty{display:none}
@@ -659,6 +659,7 @@ async function _loadProject(id){
   // 첫 탭으로 이동
   document.querySelectorAll('#nav button').forEach(function(b,i){ b.classList.toggle('active',i===0); });
   document.querySelectorAll('.panel').forEach(function(p,i){ p.classList.toggle('active',i===0); });
+  growVisibleTextareas();
   window.scrollTo({top:0});
 }
 
@@ -807,6 +808,7 @@ function setByPath(p,v){
 function bindStatics(){
   document.querySelectorAll('[data-path]').forEach(el=>{
     el.value=getByPath(el.dataset.path)||'';
+    if(el.tagName==='TEXTAREA') autoGrow(el);
     el.addEventListener('input',()=>{
       setByPath(el.dataset.path, el.value);
       if(el.dataset.path==='basic.title') updateHeadTitle();
@@ -825,10 +827,27 @@ document.getElementById('nav').addEventListener('click',e=>{
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+b.dataset.tab));
   if(b.dataset.tab==='export') renderPreview();
   if(b.dataset.tab==='relation') { syncRelationNodes(); renderRelations(); }
+  growVisibleTextareas();
   window.scrollTo({top:0});
 });
 
 /* ───────────────────────── 공통 ───────────────────────── */
+function autoGrow(el){
+  if(!el) return;
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+}
+function growVisibleTextareas(){
+  // 숨겨진 패널(display:none) 안에서는 scrollHeight가 0으로 잡히므로,
+  // 패널이 화면에 보이게 될 때마다 다시 계산해 준다.
+  document.querySelectorAll('.panel.active textarea').forEach(autoGrow);
+}
+document.addEventListener('input',e=>{
+  if(e.target && e.target.tagName==='TEXTAREA') autoGrow(e.target);
+});
+window.addEventListener('resize',()=>{
+  document.querySelectorAll('textarea').forEach(autoGrow);
+});
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function mdb(s){ return esc(s).replace(/\n/g,'<br>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); }
 
@@ -1007,6 +1026,7 @@ async function fsLoad(){
     bindRefresh('basic'); renderTreatment(); renderCharacters(); updateHeadTitle();
     applyTheme(state.theme?.accent||'#5856D6', false);
     applyBg(state.theme?.bg||'#F2F2F5', false);
+    growVisibleTextareas();
     scheduleSave(); toast(`"${picked}" 파일을 불러왔어요.`);
   }catch(e){ toast('불러오기에 실패했어요.'); }
 }
@@ -1177,6 +1197,7 @@ function renderTreatment(){
       <div class="endcut"><input value="${esc(ep.endcut)}" data-ep="${i}" data-k="endcut" placeholder="엔드컷 — 이 화는 어떤 장면으로 끝나는가?"></div>
     </div>`).join('');
   box.querySelectorAll('[data-ep]').forEach(el=>{
+    if(el.tagName==='TEXTAREA') autoGrow(el);
     el.addEventListener('input',()=>{
       state.treatment[+el.dataset.ep][el.dataset.k]=el.value;
       if(el.dataset.k==='emoStart'||el.dataset.k==='emoEnd') refreshEmoField(+el.dataset.ep, el.dataset.k);
@@ -1275,6 +1296,7 @@ function renderCharacters(){
     </div>`;
   }).join('');
   box.querySelectorAll('[data-ch]').forEach(el=>{
+    if(el.tagName==='TEXTAREA') autoGrow(el);
     const ev = el.tagName==='SELECT'?'change':'input';
     el.addEventListener(ev,()=>{
       state.characters[+el.dataset.ch][el.dataset.k]=el.value;
@@ -1528,7 +1550,7 @@ function bindRefresh(tab){
   if(tab==='treatment') renderTreatment();
   else if(tab==='characters') renderCharacters();
   else if(tab==='relation') { syncRelationNodes(); renderRelations(); }
-  else document.querySelectorAll('[data-path]').forEach(el=>{ el.value=getByPath(el.dataset.path)||''; });
+  else document.querySelectorAll('[data-path]').forEach(el=>{ el.value=getByPath(el.dataset.path)||''; if(el.tagName==='TEXTAREA') autoGrow(el); });
 }
 
 /* ───────────────────────── 문서 생성 / 내보내기 ───────────────────────── */
@@ -1918,6 +1940,7 @@ function importJSON(ev){
       bindRefresh('basic'); renderTreatment(); renderCharacters(); renderPreview(); updateHeadTitle();
       applyTheme(state.theme?.accent||'#5856D6', false);
       applyBg(state.theme?.bg||'#F2F2F5', false);
+      growVisibleTextareas();
       scheduleSave(); toast('백업을 불러왔어요.');
     }catch(e){ toast('파일을 읽지 못했어요. 백업 파일이 맞는지 확인해 주세요.'); }
   };
