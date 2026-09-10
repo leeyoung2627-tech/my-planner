@@ -195,12 +195,21 @@
   .career .add-img-btn{ width:20px; height:20px; font-size:13px; }
 
   #careerRows{
-    display:grid; grid-template-columns: 110px max-content 22px;
+    display:grid; grid-template-columns: 110px max-content 24px 22px;
     column-gap:20px; border-bottom:1px solid var(--line);
   }
   .career-row{ display:contents; }
   #careerRows .period{ color: var(--ink-dim); font-size:13px; border-top:1px solid var(--line); padding:12px 0; align-self:center; }
   #careerRows .text{ font-size:14px; white-space:nowrap; border-top:1px solid var(--line); padding:12px 0; align-self:center; }
+  .career-link-btn{
+    border-top:1px solid var(--line); padding:12px 0; align-self:center;
+    display:flex; align-items:center; justify-content:center;
+    color: var(--ink-dim); cursor:pointer; text-decoration:none;
+    visibility:hidden;
+  }
+  .career-link-btn.has-link{ visibility:visible; color: var(--accent); }
+  body.is-owner .career-link-btn{ visibility:visible; }
+  .career-link-btn:hover{ color: var(--accent); }
   #careerRows .career-del-btn{
     border-top:1px solid var(--line); padding:12px 0; align-self:center;
     cursor:pointer; color: var(--ink-dim); font-size:14px; text-align:center;
@@ -595,7 +604,7 @@
     { period: '진행중', text: '프리랜서 일러스트 어시스트' }
   ];
 
-  function createCareerRow(period, text){
+  function createCareerRow(period, text, link){
     const row = document.createElement('div');
     row.className = 'career-row';
 
@@ -609,6 +618,35 @@
     textEl.textContent = text;
     makeEditable(textEl);
 
+    const linkBtn = document.createElement('a');
+    linkBtn.className = 'career-link-btn';
+    linkBtn.target = '_blank';
+    linkBtn.rel = 'noopener';
+    linkBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+
+    function applyLink(url){
+      if(url){
+        linkBtn.setAttribute('href', url);
+        linkBtn.classList.add('has-link');
+        linkBtn.title = '연재처로 이동 (관리자는 클릭해서 수정)';
+      } else {
+        linkBtn.removeAttribute('href');
+        linkBtn.classList.remove('has-link');
+        linkBtn.title = '링크 추가';
+      }
+    }
+    applyLink(link);
+
+    linkBtn.addEventListener('click', (e) => {
+      if(isOwner){
+        e.preventDefault();
+        const current = linkBtn.getAttribute('href') || '';
+        const val = prompt('연재처 링크를 입력하세요 (비워두면 삭제)', current);
+        if(val === null) return;
+        applyLink(val.trim());
+      }
+    });
+
     const delBtn = document.createElement('div');
     delBtn.className = 'career-del-btn';
     delBtn.title = '삭제';
@@ -617,19 +655,20 @@
 
     row.appendChild(periodEl);
     row.appendChild(textEl);
+    row.appendChild(linkBtn);
     row.appendChild(delBtn);
     return row;
   }
 
   function renderCareerList(list){
     careerRowsEl.innerHTML = '';
-    list.forEach(item => careerRowsEl.appendChild(createCareerRow(item.period, item.text)));
+    list.forEach(item => careerRowsEl.appendChild(createCareerRow(item.period, item.text, item.link)));
   }
   renderCareerList(DEFAULT_CAREER);
 
   careerAddBtn.addEventListener('click', () => {
     if(!isOwner) return;
-    const row = createCareerRow('기간', '내용을 입력하세요');
+    const row = createCareerRow('기간', '내용을 입력하세요', '');
     careerRowsEl.appendChild(row);
     const textEl = row.querySelector('.text');
     textEl.setAttribute('contenteditable', 'true');
@@ -1010,7 +1049,8 @@
     });
     data.career = Array.from(document.querySelectorAll('#careerRows .career-row')).map(row => ({
       period: row.querySelector('.period').textContent.trim(),
-      text: row.querySelector('.text').textContent.trim()
+      text: row.querySelector('.text').textContent.trim(),
+      link: row.querySelector('.career-link-btn').getAttribute('href') || ''
     }));
     data.works = getCurrentWorksFromDOM();
     data.sidebarColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar').trim();
