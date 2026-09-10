@@ -189,7 +189,7 @@
   .info .bio{ font-size:14px; line-height:1.75; color: var(--ink); white-space: pre-line; }
 
   .career-contact-row{ display:flex; gap:40px; align-items:flex-start; }
-  .career{ flex:0 0 auto; }
+  .career{ flex:0 0 auto; border-left: 3px solid var(--accent); padding-left: 18px; }
   .career .title-row{ margin-bottom:14px; }
   .career h2{ font-size:14px; color: var(--ink-dim); font-weight:600; }
   .career .add-img-btn{ width:20px; height:20px; font-size:13px; }
@@ -199,8 +199,8 @@
     column-gap:20px; border-bottom:1px solid var(--line);
   }
   .career-row{ display:contents; }
-  #careerRows .period{ color: var(--ink-dim); font-size:13px; border-top:1px solid var(--line); padding:12px 0; align-self:center; }
-  #careerRows .text{ font-size:14px; white-space:nowrap; border-top:1px solid var(--line); padding:12px 0; align-self:center; }
+  #careerRows .period{ color: var(--ink-dim); font-size:13px; border-top:1px solid var(--line); padding:12px 8px; margin: 0 -8px; align-self:center; }
+  #careerRows .text{ font-size:14px; white-space:nowrap; border-top:1px solid var(--line); padding:12px 8px; margin: 0 -8px; align-self:center; }
   .career-link-btn{
     border-top:1px solid var(--line); padding:12px 0; align-self:center;
     display:flex; align-items:center; justify-content:center;
@@ -219,7 +219,7 @@
   #careerRows .career-del-btn:hover{ color: var(--accent); }
 
   .contact-links{
-    padding-left:40px; border-left:1px solid var(--line);
+    padding-left:18px; border-left: 3px solid var(--accent);
     min-width:170px; display:flex; flex-direction:column; gap:14px; flex-shrink:0;
   }
   .contact-links h2{ font-size:14px; color: var(--ink-dim); font-weight:600; }
@@ -305,6 +305,17 @@
   }
   .lb-btn:hover{ background:rgba(255,255,255,.18); }
 
+  /* ---- 밑줄(형광펜) 호버 애니메이션 ---- */
+  .underline-effect{
+    position:relative; display:inline-block; z-index:1;
+  }
+  .underline-effect::after{
+    content:''; position:absolute; left:-4px; right:-4px; bottom:1px;
+    height:46%; background:var(--accent); z-index:-1;
+    transition: height .25s cubic-bezier(.4,0,.2,1), bottom .25s cubic-bezier(.4,0,.2,1);
+  }
+  .underline-effect:hover::after{ height:3px; bottom:-2px; }
+
   /* ---- 초기 로딩 화면 (깜빡임 방지) ---- */
   .page-loader{
     position:fixed; inset:0; background:var(--bg); z-index:100000;
@@ -331,17 +342,17 @@
     <div class="name editable" data-field="sidebarName">두목</div>
 
     <div class="sidebar-nav">
-      <div class="nav-item active" data-view="about"><span class="editable" data-field="navAbout">소개</span></div>
+      <div class="nav-item active" data-view="about"><span class="editable underline-effect" data-field="navAbout">소개</span></div>
 
       <div class="nav-item" id="webtoon-toggle">
-        <span class="editable" data-field="navWebtoon">웹툰 작업</span> <span class="arrow">▸</span>
+        <span class="editable underline-effect" data-field="navWebtoon">웹툰 작업</span> <span class="arrow">▸</span>
       </div>
       <div class="submenu" id="webtoon-submenu">
         <div class="sub-item-add owner-only" id="workAddBtn" title="작품 추가">＋</div>
       </div>
 
-      <div class="nav-item" data-view="illust"><span class="editable" data-field="navIllust">일러스트 작업</span></div>
-      <div class="nav-item" data-view="character"><span class="editable" data-field="navCharacter">기타 작업</span></div>
+      <div class="nav-item" data-view="illust"><span class="editable underline-effect" data-field="navIllust">일러스트 작업</span></div>
+      <div class="nav-item" data-view="character"><span class="editable underline-effect" data-field="navCharacter">기타 작업</span></div>
     </div>
 
     <div class="sidebar-settings">
@@ -391,7 +402,7 @@
       </div>
       <div class="info">
         <div class="info-top">
-          <h1 class="editable" data-field="aboutName">두목</h1>
+          <h1 class="editable underline-effect" data-field="aboutName">두목</h1>
           <div class="role editable" data-field="role">웹툰 작가 · 일러스트레이터</div>
           <div class="bio editable" data-field="bio">여기에 간단한 소개글을 적습니다.
 예: 웹툰 3편 연재, 프리랜서 일러스트 작업 병행.</div>
@@ -862,7 +873,7 @@
     item.dataset.work = work.id;
 
     const span = document.createElement('span');
-    span.className = 'sub-item-title';
+    span.className = 'sub-item-title underline-effect';
     span.textContent = work.title;
     makeEditable(span);
 
