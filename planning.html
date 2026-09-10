@@ -257,30 +257,33 @@ onAuthStateChanged(auth, user => {
   /* ── 캐릭터 ─────────────────────── */
   .char-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:700px){.char-grid{grid-template-columns:1fr}}
-  .char{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .char{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px}
   .char.main-type{border-top:3px solid var(--accent)}
-  .char-top{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-  .char-top select{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:12.5px;background:#FCFCFD}
+  .char-top{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .char-top select{border:1px solid var(--line);border-radius:7px;padding:4px 6px;font-size:11px;background:#FCFCFD}
   .char-top .ep-del{margin-left:auto}
-  .char input,.char textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#FCFCFD;outline:none;margin-bottom:8px}
+  .char input,.char textarea{width:100%;border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:#FCFCFD;outline:none;margin-bottom:6px;font-size:12.5px}
   .char input:focus,.char textarea:focus{border-color:var(--accent)}
-  .char .quote{font-family:var(--serif);font-size:15px}
-  .char textarea{min-height:70px;resize:none;overflow:hidden;line-height:1.65}
-  .char .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .char-gallery{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .char .quote{font-family:var(--serif);font-size:13px}
+  .char textarea{min-height:52px;resize:none;overflow:hidden;line-height:1.55}
+  .char .pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .char-gallery{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
   .char-gallery:empty{display:none}
-  .gal-item{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#F4F4F8}
+  .gal-item{position:relative;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#F4F4F8}
   .gal-item.solo{grid-column:1/-1}
-  .gal-item img{width:100%;height:auto;display:block;cursor:zoom-in}
-  .gal-del{position:absolute;top:6px;right:6px;background:rgba(26,26,32,.62);color:#fff;border:none;border-radius:6px;width:22px;height:22px;font-size:12px;line-height:1;padding:0}
+  .gal-item img{width:100%;height:104px;object-fit:cover;display:block;cursor:zoom-in}
+  .gal-item.solo img{height:150px}
+  .gal-del{position:absolute;top:5px;right:5px;background:rgba(26,26,32,.62);color:#fff;border:none;border-radius:6px;width:19px;height:19px;font-size:11px;line-height:1;padding:0}
   .gal-del:hover{background:#C0392B}
-  .char-img-actions{margin-bottom:12px;text-align:center}
-  .btn.small{padding:5px 10px;font-size:12.5px}
+  .char-img-actions{margin-bottom:9px;text-align:center}
+  .btn.small{padding:4px 8px;font-size:11px}
   .kw-chip{display:inline-block;color:#fff;border-radius:7px;padding:2.5px 10px;font-size:12px;font-weight:500;margin:2px 6px 2px 0}
+  .char-grid .kw-chip{padding:1.5px 7px;font-size:10px;margin:1.5px 4px 1.5px 0;border-radius:6px}
   .kw-preview{margin:-2px 0 10px}
   .kw-preview:empty{display:none}
   .emo-chip{display:inline-block;color:#fff;border-radius:999px;padding:1.5px 9px;font-size:11px;font-weight:700}
-  .char textarea.small{min-height:54px}
+  .char textarea.small{min-height:40px}
+  .char .bubble{font-size:12px !important;padding:5px 10px !important}
 
   /* ── 타임라인 ───────────────────────── */
   .tl-filter{display:flex;gap:6px;flex-wrap:wrap}
