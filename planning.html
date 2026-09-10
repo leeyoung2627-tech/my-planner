@@ -261,6 +261,12 @@ onAuthStateChanged(auth, user => {
   .char{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px}
   .char.main-type{border-top:3px solid var(--accent)}
   .char-top{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .drag-handle{cursor:grab;color:var(--muted);font-size:15px;padding:2px 5px;border-radius:6px;touch-action:none;user-select:none;line-height:1;flex:0 0 auto}
+  .drag-handle:hover{background:#F0F0F4;color:var(--ink)}
+  .drag-handle:active{cursor:grabbing}
+  .dragging-card{opacity:.45}
+  .world-card .drag-handle{position:absolute;top:6px;left:6px;background:rgba(255,255,255,.75)}
+  .world-card .drag-handle:hover{background:rgba(255,255,255,.95)}
   .char-top select{border:1px solid var(--line);border-radius:7px;padding:4px 6px;font-size:11px;background:#FCFCFD}
   .char-top .ep-del{margin-left:auto}
   .char input,.char textarea{width:100%;border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:#FCFCFD;outline:none;margin-bottom:6px;font-size:12.5px}
@@ -366,7 +372,7 @@ onAuthStateChanged(auth, user => {
   .world-search{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;outline:none;background:#fff;min-width:150px;font-family:var(--sans)}
   .world-search:focus{border-color:var(--accent)}
   .world-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
-  .world-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 12px 13px;text-align:center;cursor:pointer;transition:border-color .12s,box-shadow .12s,transform .12s}
+  .world-card{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 12px 13px;text-align:center;cursor:pointer;transition:border-color .12s,box-shadow .12s,transform .12s}
   .world-card:hover{border-color:var(--accent);box-shadow:0 6px 16px rgba(0,0,0,.08);transform:translateY(-2px)}
   .world-icon{font-size:28px;line-height:1;margin-bottom:8px}
   .world-card-title{font-size:13px;font-weight:700;color:var(--ink);word-break:break-word;line-height:1.3}
@@ -1264,7 +1270,22 @@ document.getElementById('memoToggle')?.addEventListener('click',()=>{
   const collapsed=wrap.classList.toggle('collapsed');
   document.getElementById('memoToggle').textContent = collapsed ? '＋' : '─';
   document.getElementById('memoToggle').title = collapsed ? '펼치기' : '접기';
+  positionMemo();
 });
+/* 메모를 본문(main) 오른쪽 가장자리에 바짝 붙여서 배치 — 화면이 넓어 본문이 가운데로
+   몰릴 때도 항상 본문 바로 옆에 오도록 매번 실제 위치를 계산한다. */
+function positionMemo(){
+  const wrap=document.getElementById('memoWrap');
+  const main=document.querySelector('main');
+  if(!wrap || !main) return;
+  if(window.innerWidth<=900){ wrap.style.left=''; wrap.style.right=''; return; } // 이 구간은 CSS가 정적 배치로 처리
+  const mainRect=main.getBoundingClientRect();
+  const gap=14;
+  const maxLeft=window.innerWidth - wrap.offsetWidth - 8;
+  wrap.style.left = Math.min(mainRect.right+gap, maxLeft) + 'px';
+  wrap.style.right = 'auto';
+}
+window.addEventListener('resize', positionMemo);
 
 /* ───────────────────────── 공통 ───────────────────────── */
 function autoGrow(el){
@@ -1276,6 +1297,51 @@ function growVisibleTextareas(){
   // 숨겨진 패널(display:none) 안에서는 scrollHeight가 0으로 잡히므로,
   // 패널이 화면에 보이게 될 때마다 다시 계산해 준다.
   document.querySelectorAll('.panel.active textarea').forEach(autoGrow);
+}
+/* ── 그리드 카드 드래그로 순서 바꾸기 (캐릭터, 세계관 등에서 공용으로 사용) ── */
+function bindSortableHandle(handle, cardEl, containerId, cardSelector, onDrop){
+  let dragging=false;
+  handle.addEventListener('click', e=>e.stopPropagation());
+  handle.addEventListener('pointerdown', e=>{
+    if(e.button!==0 && e.pointerType==='mouse') return;
+    dragging=true;
+    cardEl.classList.add('dragging-card');
+    try{ handle.setPointerCapture(e.pointerId); }catch(err){}
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  handle.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const hit=document.elementFromPoint(e.clientX, e.clientY);
+    const overCard = hit && hit.closest(cardSelector);
+    const box=document.getElementById(containerId);
+    if(overCard && overCard!==cardEl && overCard.parentElement===box){
+      const cards=[...box.children];
+      const overIdx=cards.indexOf(overCard);
+      const curIdx=cards.indexOf(cardEl);
+      if(curIdx<overIdx) box.insertBefore(cardEl, overCard.nextSibling);
+      else box.insertBefore(cardEl, overCard);
+    }
+  });
+  function endDrag(){
+    if(!dragging) return;
+    dragging=false;
+    cardEl.classList.remove('dragging-card');
+    const box=document.getElementById(containerId);
+    const order=[...box.children].map(el=>el.dataset.id);
+    onDrop(order);
+  }
+  handle.addEventListener('pointerup', endDrag);
+  handle.addEventListener('pointercancel', endDrag);
+}
+function reorderByVisibleIds(fullArr, visibleIdOrder){
+  const byId={}; fullArr.forEach(item=>{ byId[item.id]=item; });
+  const visibleSet=new Set(visibleIdOrder);
+  let vi=0;
+  return fullArr.map(item=>{
+    if(visibleSet.has(item.id)) return byId[visibleIdOrder[vi++]];
+    return item;
+  });
 }
 document.addEventListener('input',e=>{
   if(e.target && e.target.tagName==='TEXTAREA') autoGrow(e.target);
@@ -2029,6 +2095,7 @@ function renderWorldGrid(){
   box.innerHTML = list.map(w=>{
     const meta = WORLD_CATS[w.cat] || WORLD_CATS.place;
     return `<div class="world-card" data-id="${w.id}" style="background:${meta.color}">
+      <span class="drag-handle" title="드래그해서 순서 바꾸기">⠿</span>
       <div class="world-icon">${meta.icon}</div>
       <div class="world-card-title">${w.title?esc(w.title):'<span style="color:var(--muted);font-weight:400">제목 없음</span>'}</div>
       <div class="world-card-cat">${meta.label}</div>
@@ -2036,6 +2103,12 @@ function renderWorldGrid(){
   }).join('');
   box.querySelectorAll('.world-card').forEach(el=>{
     el.addEventListener('click',()=>openWorldModal(el.dataset.id));
+    const handle=el.querySelector('.drag-handle');
+    if(handle) bindSortableHandle(handle, el, 'worldGrid', '.world-card', order=>{
+      state.world = reorderByVisibleIds(state.world, order);
+      renderWorldGrid();
+      scheduleSave();
+    });
   });
 }
 function addWorldItem(){
@@ -2367,8 +2440,9 @@ function renderCharacters(){
   box.innerHTML = state.characters.map((c,i)=>{
     const q=stripQuotes(c.quote);
     return `
-    <div class="char ${c.type==='main'?'main-type':''}">
+    <div class="char ${c.type==='main'?'main-type':''}" data-id="${c.id}">
       <div class="char-top">
+        <span class="drag-handle" title="드래그해서 순서 바꾸기">⠿</span>
         <select data-ch="${i}" data-k="type">
           <option value="main" ${c.type==='main'?'selected':''}>메인 캐릭터</option>
           <option value="sub" ${c.type==='sub'?'selected':''}>서브 캐릭터</option>
@@ -2420,6 +2494,15 @@ function renderCharacters(){
         const kp=document.getElementById('kw-'+el.dataset.ch);
         if(kp) kp.innerHTML=kwChips(el.value);
       }
+      scheduleSave();
+    });
+  });
+  box.querySelectorAll('.char').forEach(cardEl=>{
+    const handle=cardEl.querySelector('.drag-handle');
+    if(!handle) return;
+    bindSortableHandle(handle, cardEl, 'charList', '.char', order=>{
+      state.characters = reorderByVisibleIds(state.characters, order);
+      renderCharacters();
       scheduleSave();
     });
   });
@@ -3170,6 +3253,7 @@ function toast(msg){
   applyTheme((cachedTheme && cachedTheme.accent) || state.theme?.accent || '#5856D6', false);
   applyBg((cachedTheme && cachedTheme.bg) || state.theme?.bg || '#F2F2F5', false);
   setStatus('로그인 후 불러옵니다', false);
+  requestAnimationFrame(positionMemo);
 })();
 </script>
 <script>
