@@ -718,9 +718,9 @@ onAuthStateChanged(auth, async (user) => {
   if(user){
     currentUser = user;
     document.getElementById('loginWrap').style.display = 'none';
-    document.getElementById('mainWrap').style.display = 'block';
     await loadState();
     render();
+    document.getElementById('mainWrap').style.display = 'block';
   } else {
     currentUser = null;
     document.getElementById('loginWrap').style.display = 'flex';
