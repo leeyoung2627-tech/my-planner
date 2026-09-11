@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preload" href="./MemomentKkukkukk.woff2" as="font" type="font/woff2" crossorigin>
 <title>프로젝트</title>
 <style>
 
@@ -55,7 +56,12 @@
     color: var(--ink);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+    /* 손글씨 폰트가 다 로드되기 전까지는 화면을 잠깐 숨겨서,
+       기본 폰트로 잠깐 보이다 바뀌는 깜빡임을 없앤다 */
+    opacity: 0;
+    transition: opacity .25s ease;
   }
+  body.fonts-ready{ opacity: 1; }
 
   /* ---------- 로그인 화면 ---------- */
   #loginWrap, #mainWrap, #savingIndicator{ display:none; }
@@ -514,6 +520,20 @@
 </style>
 </head>
 <body>
+
+<script>
+(function(){
+  function reveal(){ document.body.classList.add('fonts-ready'); }
+  // 폰트 로딩이 끝나면 바로 보여주고,
+  // 혹시 실패하거나 너무 오래 걸리면 800ms 뒤엔 그냥 보여준다
+  if (document.fonts && document.fonts.load){
+    document.fonts.load("16px 'MemomentKkukkukk'").then(reveal, reveal);
+  } else {
+    reveal();
+  }
+  setTimeout(reveal, 800);
+})();
+</script>
 
 <svg width="0" height="0" style="position:absolute">
   <filter id="wobble">
