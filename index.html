@@ -4397,6 +4397,9 @@ function renderMoneyCal(){
     const dt=new Date(cur.getFullYear(),cur.getMonth(),d);
     const key=fmt(dt);
     const isToday=fmt(dt)===fmt(today),isSel=fmt(dt)===fmt(selDate);
+    const dow=dt.getDay();
+    const holiday=getHoliday(dt);
+    const mdnColor=holiday||dow===0?'color:#D85A30':dow===6?'color:var(--accent)':'';
     const items=moneyData[key]||[];
     let dayOut=0,dayIn=0;
     items.forEach(item=>{if(item.type==='out')dayOut+=item.amount;else dayIn+=item.amount;});
@@ -4407,6 +4410,7 @@ function renderMoneyCal(){
       return `<div class="money-day-item ${item.type}" draggable="true" ondragstart="event.stopPropagation();dragMoneyStart(event,'${key}',${i})" ondragend="dragEnd(event)">${item.name?escapeHtml(item.name)+' ':''}${sign}${item.amount.toLocaleString()}</div>`;
     }).join('')}${items.length>maxShow?`<div class="money-day-item" style="color:#999">+${items.length-maxShow}건</div>`:''}</div>`:'';
     const nsHtml=ns?`<div class="money-day-ns">💚</div>`:'';
+    const holidayHtml=holiday?`<div class="day-cell-holiday">${holiday}</div>`:'';
     const memo=moneyMemoData[key];
     const memoBtn=`<span class="money-day-memo-btn" onclick="event.stopPropagation();openMoneyMemoModal('${key}')" title="날짜 메모">📝</span>`;
     const memoHtml=(memo&&memo.text)?`<div class="money-day-memo-text${memo.pending?' pending':''}">${memo.pending?'💸 ':''}${escapeHtml(memo.text)}</div>`:'';
@@ -4414,7 +4418,7 @@ function renderMoneyCal(){
     html+=`<div class="${cellClasses}" onclick="selectDay(${d})"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
-      ondrop="event.stopPropagation();dropMoneyMonth(event,'${key}')">${memoBtn}<div class="mdn-row"><span class="mdn">${d}</span>${nsHtml}</div>${itemsHtml}${memoHtml}</div>`;
+      ondrop="event.stopPropagation();dropMoneyMonth(event,'${key}')">${memoBtn}<div class="mdn-row"><span class="mdn" style="${mdnColor}">${d}</span>${nsHtml}</div>${holidayHtml}${itemsHtml}${memoHtml}</div>`;
   }
   const rem=(7-(start+total)%7)%7;
   for(let i=1;i<=rem&&rem<7;i++)html+=`<div class="money-day-cell other"><span class="mdn">${i}</span></div>`;
