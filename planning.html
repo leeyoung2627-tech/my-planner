@@ -441,7 +441,7 @@ onAuthStateChanged(auth, user => {
   .wmap-terrain{
     position:absolute; transform:translate(-50%,-50%); cursor:grab; user-select:none; touch-action:none;
   }
-  .wmap-terrain img,.wmap-terrain svg{display:block; width:100%; height:100%; object-fit:contain}
+  .wmap-terrain img,.wmap-terrain svg{display:block; width:100%; height:100%; object-fit:contain; -webkit-user-drag:none; user-drag:none; pointer-events:none}
   .wmap-terrain.svg-fallback{opacity:.68; filter:saturate(.85)}
   .wmap-terrain.dragging{cursor:grabbing; z-index:20; opacity:.85}
   .wmap-board-square{aspect-ratio:1/1; max-width:320px; min-height:180px}
@@ -2355,7 +2355,7 @@ function renderWmapInstance(mapId){
     el.style.left=t.x+'%'; el.style.top=t.y+'%';
     el.style.width=wpx+'px'; el.style.height=wpx+'px';
     const asset=wmapFindAsset(t.assetId);
-    if(asset){ el.innerHTML = `<img src="${asset.src}" alt="">`; }
+    if(asset){ el.innerHTML = `<img src="${asset.src}" alt="" draggable="false">`; }
     else { el.classList.add('svg-fallback'); el.innerHTML = wmapTerrainSVG(t.type||'mountain'); }
     board.appendChild(el);
     bindTerrainDrag(mapId, el);
@@ -2374,6 +2374,7 @@ function bindPinDrag(mapId, el){
   let dragging=false, moved=false, rect=null;
   el.addEventListener('pointerdown', e=>{
     if(e.button!==0 && e.pointerType==='mouse') return;
+    e.preventDefault();
     dragging=true; moved=false;
     rect=wEl(mapId,'board').getBoundingClientRect();
     el.setPointerCapture(e.pointerId);
@@ -2404,6 +2405,7 @@ function bindTerrainDrag(mapId, el){
   let dragging=false, moved=false, rect=null;
   el.addEventListener('pointerdown', e=>{
     if(e.button!==0 && e.pointerType==='mouse') return;
+    e.preventDefault();
     dragging=true; moved=false;
     rect=wEl(mapId,'board').getBoundingClientRect();
     el.setPointerCapture(e.pointerId);
