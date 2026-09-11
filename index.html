@@ -3224,34 +3224,40 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById('mainApp').style.display='grid';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     await loadAllData();
-    loadQuickLinksCloud();
-    renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
-    loadMindBar();renderCategoryLegend();loadDdayHero();
-    renderCalBoardTabs();
-    renderRoutineList();checkRoutineAlarms();
-    renderTipList();
-    runFixedCostAutoRecord();
-    if(!window._fixedCostAutoTimer){
-      window._fixedCostAutoTimer=setInterval(runFixedCostAutoRecord,30*60*1000); // 30분마다 재확인 (자정 넘겨도 놓치지 않게)
+    try{
+      loadQuickLinksCloud();
+      renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
+      loadMindBar();renderCategoryLegend();loadDdayHero();
+      renderCalBoardTabs();
+      renderRoutineList();checkRoutineAlarms();
+      renderTipList();
+      runFixedCostAutoRecord();
+      if(!window._fixedCostAutoTimer){
+        window._fixedCostAutoTimer=setInterval(runFixedCostAutoRecord,30*60*1000); // 30분마다 재확인 (자정 넘겨도 놓치지 않게)
+      }
+      if(!window._scheduleTimePastTimer){
+        window._scheduleTimePastTimer=setInterval(renderSchedule,60*1000); // 1분마다 재확인해서 시간 지난 일정 자동으로 어둡게
+      }
+      if(!window._routineAlarmTimer){
+        window._routineAlarmTimer=setInterval(checkRoutineAlarms,20*1000); // 20초마다 루틴 알림 시간 확인
+      }
+      positionNoteButtons();
+      initMissionTracker();
+    }catch(err){
+      // 위 초기화 중 일부가 실패해도, 아래의 "화면 요소 보이기"는 항상 실행되게 해서
+      // 캐릭터 아이콘 등이 영영 안 보이는 상태로 멈추지 않게 함
+      console.error('초기 로딩 중 일부 기능에서 오류가 발생했어요:',err);
     }
-    if(!window._scheduleTimePastTimer){
-      window._scheduleTimePastTimer=setInterval(renderSchedule,60*1000); // 1분마다 재확인해서 시간 지난 일정 자동으로 어둡게
-    }
-    if(!window._routineAlarmTimer){
-      window._routineAlarmTimer=setInterval(checkRoutineAlarms,20*1000); // 20초마다 루틴 알림 시간 확인
-    }
-    positionNoteButtons();
-    initMissionTracker();
     // 모든 준비 완료 후 부드럽게 표시
     requestAnimationFrame(()=>{
       document.body.style.opacity='1';
-      document.querySelector('.note-buttons').style.visibility='visible';
-      document.querySelector('.note-buttons').style.opacity='1';
+      const noteBtnsEl=document.querySelector('.note-buttons');
+      if(noteBtnsEl){noteBtnsEl.style.visibility='visible';noteBtnsEl.style.opacity='1';}
       const slimeBtn=document.getElementById('rpgSlimeBtn');
       if(slimeBtn){slimeBtn.style.visibility='visible';slimeBtn.style.opacity='1';}
       const gymWrap=document.getElementById('gymMascotWrap');
       if(gymWrap){gymWrap.style.visibility='visible';gymWrap.style.opacity='1';}
-      initGymMascotBubble();
+      try{initGymMascotBubble();}catch(err){console.error('initGymMascotBubble 오류:',err);}
     });
   } else {
     currentUser=null;
