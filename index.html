@@ -1889,7 +1889,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <a class="note-btn" href="/planning.html" target="_blank" title="기획 노트로 이동">기획<br>노트</a>
   <a class="note-btn" href="https://mybox.naver.com/main/web/my?resourceKey=c2FuaG9zdW0wMDF8MzQ3MjU5OTQ5MTEyOTU0NzYyMHxEfDA" target="_blank" title="스크리브너 저장소" style="font-size:10px">스크리브너<br>저장소</a>
   <a class="note-btn" href="/writing.html" target="_blank" title="글 콘티 노트로 이동">글 콘티<br>노트</a>
-  <a class="note-btn" href="/goal-focus.html" target="_blank" title="프로젝트로 이동">프로젝트</a>
+  <a class="note-btn" href="https://leeyoung2627-tech.github.io/conti-note" target="_blank" title="웹툰 콘티 노트로 이동">웹툰콘티<br>노트</a>
   <a class="note-btn" href="https://app.xmind.com/home/my-works/q4uVwW3kLT" target="_blank" title="Xmind 마인드맵">Xmind</a>
   <a class="note-btn note-btn-secondary" href="https://cafe.naver.com/greencaejj" target="_blank" title="우리끼리 카페">우리끼리</a>
   <a class="note-btn" href="/character-builder.html" target="_blank" title="캐릭터 만들기로 이동">캐릭터<br>만들기</a>
@@ -2599,6 +2599,22 @@ const ROUTINE_TARGETS=[
 
 function fmt(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// 예전 "글자 크기" 슬라이더 버그로 메모/식단메모 저장 내용에 박혀버린 font-size 인라인 스타일을 정리
+// (그 슬라이더는 이제 이런 입력칸을 건드리지 않도록 고쳤지만, 이미 저장된 내용은 정리가 필요함)
+function stripInlineFontSize(html){
+  if(!html)return html;
+  try{
+    const tmp=document.createElement('div');
+    tmp.innerHTML=html;
+    tmp.querySelectorAll('[style]').forEach(el=>{
+      el.style.removeProperty('font-size');
+      if(!el.getAttribute('style'))el.removeAttribute('style');
+    });
+    return tmp.innerHTML;
+  }catch(e){
+    return html;
+  }
+}
 
 // ── 범용 호버 툴팁: data-tooltip 속성이 있는 요소는 어디든 하트 트래커와 같은 스타일로 빠르게 말풍선이 떠요 ──
 function getAppTooltipEl(){
@@ -6432,13 +6448,13 @@ function renderMeal(){
     </div>`).join('');
 }
 function loadMealPlanNote(){
-  // 고정 메모 — 날짜 무관하게 'settings/mealPlanNote'에서 로드
+  // 고정 메모 — 날짜 무관하게 'settings/mealPlanNote'에서 로드 (예전 글자크기 슬라이더 버그로 박힌 font-size는 정리해서 보여줌)
   const el=document.getElementById('mealPlanNote');if(!el)return;
-  el.innerHTML=window._mealPlanNoteContent||'';
+  el.innerHTML=stripInlineFontSize(window._mealPlanNoteContent||'');
 }
 window.saveMealPlanNote=async function(){
   const el=document.getElementById('mealPlanNote');if(!el)return;
-  const text=el.innerHTML;
+  const text=stripInlineFontSize(el.innerHTML);
   if(text===window._mealPlanNoteContent)return;
   window._mealPlanNoteContent=text;
   await setDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote'),{text},{merge:true});showSaving();
@@ -6585,13 +6601,14 @@ function openMemoInLeft(id){
         </label>
         <span style="font-size:10px;color:#ccc">또는 이미지 붙여넣기 (Ctrl+V)</span>
         <div style="flex:1"></div>
+        <button class="mdabtn" onclick="clearMemoFormatting()" title="글자 크기·색상 등 서식만 지우고 이미지는 그대로 둬요">서식 정리</button>
         <button class="mdabtn del" onclick="deleteMemoFromView('${id}')">삭제</button>
         <button class="mdabtn save" onclick="saveMemoFromView('${id}')">저장</button>
       </div>
     </div>`;
-  // 저장된 HTML(이미지+텍스트 혼합) 복원
+  // 저장된 HTML(이미지+텍스트 혼합) 복원 — 예전 글자크기 슬라이더 버그로 박힌 font-size는 정리해서 보여줌
   const editor=document.getElementById('mvBody');
-  editor.innerHTML=memo.body||'';
+  editor.innerHTML=stripInlineFontSize(memo.body||'');
   // 에디터 내 기존 이미지에 삭제 버튼 이벤트 재연결
   _reattachImgHandlers(editor);
   // 붙여넣기로 이미지 삽입 지원
@@ -6616,6 +6633,26 @@ function openMemoInLeft(id){
     document.execCommand('insertText',false,text);
   });
 }
+// 옛날에 다른 곳(카톡, 웹페이지 등)에서 복사+붙여넣기 하면서 글자 크기/색상이 딸려 들어온 메모를 정리
+// (지금은 붙여넣을 때 자동으로 서식이 빠지지만, 그 전에 저장된 메모는 남아있을 수 있어서 수동으로 정리하는 버튼)
+window.clearMemoFormatting=function(){
+  const editor=document.getElementById('mvBody');
+  if(!editor)return;
+  if(!confirm('이 메모의 글자 크기·색상 같은 서식을 전부 지울까요? (이미지는 그대로 남아요)\n지운 뒤에는 꼭 "저장"을 눌러야 반영돼요.'))return;
+  editor.querySelectorAll('*').forEach(el=>{
+    if(el.tagName==='IMG')return; // 이미지는 그대로 유지
+    el.removeAttribute('style');
+    el.removeAttribute('size');
+    el.removeAttribute('color');
+    el.removeAttribute('face');
+    if(el.tagName==='FONT'||el.tagName==='SPAN'){
+      // font/span 태그는 내용물만 남기고 태그 자체는 벗겨냄
+      while(el.firstChild)el.parentNode.insertBefore(el.firstChild,el);
+      el.remove();
+    }
+  });
+  editor.focus();
+};
 // 에디터 커서 위치에 이미지 삽입
 function _insertImgAtCursor(editor,src){
   const wrap=document.createElement('div');
@@ -6807,7 +6844,7 @@ window.handleLeftBack=function(){viewingMemoId=null;setLeftMode('cal');};
 window.saveMemoFromView=async function(id){
   const title=document.getElementById('mvTitle')?.value.trim();
   const bodyEl=document.getElementById('mvBody');
-  const body=bodyEl?bodyEl.innerHTML:'';
+  const body=bodyEl?stripInlineFontSize(bodyEl.innerHTML):'';
   const m=memos.find(x=>x.id===id);if(!m)return;
   // Firestore 1MB 한도 사전 체크 (JSON 직렬화 크기 기준, 여유분 포함)
   const payload={title:m.title,category:m.category,body,folderId:m.folderId||null,createdAt:m.createdAt||Date.now()};
@@ -7896,6 +7933,13 @@ function _scaleElementFont(el,scale,bodyFamily){
   if(!el||el.nodeType!==1)return;
   // 테마/폰트 설정 패널 자체는 글자 크기 설정과 무관하게 항상 고정 크기로 유지 (설정 UI가 같이 커지면 헷갈림)
   if(el.closest&&el.closest('#bgPanel')){
+    if(_origFontSizeCache.has(el)){el.style.fontSize='';_origFontSizeCache.delete(el);}
+    return;
+  }
+  // 메모/식단메모처럼 직접 입력한 내용을 그대로 저장하는 칸(contenteditable)은 글자 크기 배율 대상에서 제외.
+  // (이 배율을 걸어버리면 그 시점의 px 값이 저장 내용에 그대로 박혀버려서, 나중에 슬라이더를 되돌려도
+  //  이미 저장된 글자만 계속 커진/작아진 채로 남는 문제가 있었음)
+  if(el.closest&&el.closest('[contenteditable="true"]')){
     if(_origFontSizeCache.has(el)){el.style.fontSize='';_origFontSizeCache.delete(el);}
     return;
   }
