@@ -141,7 +141,8 @@ body{opacity:0;transition:opacity .25s ease}
   display:none;flex-direction:column;gap:0;
   width:190px;
   background:var(--page-bg);
-  filter:drop-shadow(0 4px 18px #0000001a);
+  box-shadow:0 4px 18px #0000001a; /* filter(drop-shadow)였으나, filter가 걸린 조상 안에서는
+    overflow:hidden으로 가려둔 확대된 이미지의 클릭 판정이 프레임 밖으로 새는 문제가 있어 box-shadow로 교체 */
 }
 #missionTracker.visible{display:flex}
 /* 세로로 긴 이미지 박스 (플래너28 상단 배너를 세로형으로 응용) - 너비/높이는 JS가 남는 공간에 맞춰 채움 */
