@@ -849,7 +849,11 @@ body{opacity:0;transition:opacity .25s ease}
 .item-row.past-time .item-text{color:#666}
 .item-row.past-time .ev-time-badge{opacity:.75}
 .item-row-time{width:52px;flex-shrink:0;height:19.5px;display:flex;align-items:center}
-.item-text{font-size:13px;font-weight:600;color:#222;flex:1;line-height:1.5}
+.item-text{font-size:13px;font-weight:600;color:#222;flex:1;line-height:1.5;min-width:0}
+.item-actual-divider{width:0.5px;align-self:stretch;background:#eee;flex-shrink:0}
+.item-actual{font-size:13px;font-weight:500;color:#555;flex:1;line-height:1.5;min-width:0;outline:none;cursor:text;word-break:break-word}
+.item-actual:empty:before{content:attr(data-placeholder);color:#ccc;font-weight:400}
+.item-actual:focus{color:#222}
 .ev-time-badge{
   display:inline-block;flex-shrink:0;
   font-family:var(--time-font,ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace);
@@ -4268,7 +4272,7 @@ function renderMonth(){
     // 일정 텍스트 (최대 3개, 나머지는 +N) — 카테고리를 지정한 일정만 달력에 표시
     const maxShow=3;
     const catEvs=evs.map((ev,i)=>({ev,i})).filter(o=>stripEvPrefixes(o.ev).cat);
-    const evHtml=catEvs.length>0?`<div class="day-cell-events">${catEvs.slice(0,maxShow).map(({ev,i})=>{const p=stripEvPrefixes(ev);const chipStyle=catChipStyle(p.cat)+(p.done?'text-decoration:line-through;opacity:.5;':'');return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${i})" ondragend="dragEnd(event)" style="${chipStyle}">${escapeHtml(splitEvTime(p.rest).text)}</div>`;}).join('')}${catEvs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${catEvs.length-maxShow}</div>`:''}</div>`:'';
+    const evHtml=catEvs.length>0?`<div class="day-cell-events">${catEvs.slice(0,maxShow).map(({ev,i})=>{const p=stripEvPrefixes(ev);const chipStyle=catChipStyle(p.cat)+(p.done?'text-decoration:line-through;opacity:.5;':'');return`<div class="day-cell-ev" draggable="true" ondragstart="event.stopPropagation();dragStart(event,'${key}',${i})" ondragend="dragEnd(event)" style="${chipStyle}">${escapeHtml(splitPlanActual(splitEvTime(p.rest).text).plan)}</div>`;}).join('')}${catEvs.length>maxShow?`<div class="day-cell-ev" style="background:var(--accent-light);color:#888">+${catEvs.length-maxShow}</div>`:''}</div>`:'';
     html+=`<div class="day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
@@ -4394,8 +4398,9 @@ function renderBoardCal(){
         const st=splitEvTime(p.rest);
         const bgStyle=(p.bg||p.cat?evChipStyle(p):'background:var(--accent-light);color:var(--accent);')+(p.done?'text-decoration:line-through;opacity:.5;':'');
         const timeTxt=st.time?st.time+' ':'';
+        const planTxt=splitPlanActual(st.text).plan;
         const stampHtml=p.done?`<img class="ev-stamp" src="${EV_STAMP_IMG}" alt="완료"/>`:'';
-        return `<div class="board-ev-block" onclick="event.stopPropagation();selectDay(${d});toggleEventDone('${key}',${i})" oncontextmenu="openEventColorPopover(event,'${key}',${i})" title="클릭: 완료 표시 · 우클릭: 색 설정"><div class="board-ev-block-bg" style="${bgStyle}"><span class="board-ev-block-text">${escapeHtml(timeTxt+st.text)}</span></div>${stampHtml}</div>`;
+        return `<div class="board-ev-block" onclick="event.stopPropagation();selectDay(${d});toggleEventDone('${key}',${i})" oncontextmenu="openEventColorPopover(event,'${key}',${i})" title="클릭: 완료 표시 · 우클릭: 색 설정"><div class="board-ev-block-bg" style="${bgStyle}"><span class="board-ev-block-text">${escapeHtml(timeTxt+planTxt)}</span></div>${stampHtml}</div>`;
       }).join('')+'</div>';
     }
     html+=`<div class="board-day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><span class="bdn">${d}</span>${fillHtml}</div>`;
@@ -4500,7 +4505,7 @@ function renderWeek(){
         ondragstart="dragStart(event,'${key}',${idx})"
         ondragend="dragEnd(event)"
         onclick="event.stopPropagation();editWeekEvent('${key}',${idx})"
-        style="${chipStyle}">${escapeHtml(splitEvTime(p.rest).text)}</div>`;
+        style="${chipStyle}">${escapeHtml(splitPlanActual(splitEvTime(p.rest).text).plan)}</div>`;
     });
     bH+=`<div class="week-add-btn" onclick="event.stopPropagation();addWeekEvent('${key}')">＋</div></div>`;
   }
@@ -4645,6 +4650,16 @@ function buildEvString({done,cat,bg,time,text}){
   s+=text;
   return s;
 }
+// 일정 내용 안에서 "계획"과 "실제 한 일"을 구분하는 구분자 — 사용자가 직접 입력할 일이 없는 제어문자라 안전
+const PA_SEP='\u001F';
+function splitPlanActual(text){
+  const i=(text||'').indexOf(PA_SEP);
+  if(i===-1)return {plan:text||'',actual:''};
+  return {plan:text.slice(0,i),actual:text.slice(i+1)};
+}
+function joinPlanActual(plan,actual){
+  return actual?plan+PA_SEP+actual:plan;
+}
 // 카테고리(cat) 또는 추가 달력의 개별 지정 색(bg) 중 있는 것으로 칩 스타일 결정
 function evChipStyle(p){
   if(p.bg){
@@ -4690,7 +4705,8 @@ function renderSchedule(){
   const parsed=evs.map(ev=>{
     const p=stripEvPrefixes(ev);
     const st=splitEvTime(p.rest);
-    return {cat:p.cat,bg:p.bg,done:p.done,time:st.time,text:st.text};
+    const pa=splitPlanActual(st.text);
+    return {cat:p.cat,bg:p.bg,done:p.done,time:st.time,plan:pa.plan,actual:pa.actual};
   });
   // 시간이 적힌 항목 중 이미 지난 가장 아래(마지막) 항목의 위치를 찾고,
   // 그 위쪽(시간 없는 항목 포함) 전체를 지난 것으로 간주
@@ -4701,7 +4717,7 @@ function renderSchedule(){
     if(dt&&dt.getTime()<=Date.now())lastPastIdx=i;
   });
   parsed.forEach((p,idx)=>{
-    const {time,text,cat,bg,done}=p;
+    const {time,plan,actual,cat,bg,done}=p;
     const past=idx<=lastPastIdx;
     const row=document.createElement('div');
     row.className='item-row'+(past?' past-time':'')+(activeBoardId&&done?' ev-done':'');
@@ -4715,10 +4731,17 @@ function renderSchedule(){
     row.innerHTML=`
       ${checkHtml}
       <span class="item-row-time">${time?`<span class="ev-time-badge">${time}</span>`:''}</span>
-      <span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})">${text}</span>
+      <span class="item-text editable-title" onclick="openScheduleEditModal('${key}',${idx})" title="클릭해서 계획 수정">${escapeHtml(plan)}</span>
+      <span class="item-actual-divider"></span>
+      <span class="item-actual" contenteditable="true" spellcheck="false" data-placeholder="실제로 한 일"
+        onclick="event.stopPropagation()"
+        onblur="saveScheduleActual('${key}',${idx},this)"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+      >${escapeHtml(actual)}</span>
       <span style="font-size:11px;color:#ccc;cursor:pointer;display:inline-flex;align-items:center;padding-top:3px" onclick="deleteScheduleItem('${key}',${idx})"><svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg></span>`;
-    // 드래그 이벤트
+    // 드래그 이벤트 (실제 한 일 입력칸 안에서 드래그하는 건 텍스트 선택용이므로 순서변경 드래그는 취소)
     row.addEventListener('dragstart',e=>{
+      if(e.target.closest('.item-actual')){e.preventDefault();return;}
       e.dataTransfer.effectAllowed='move';
       e.dataTransfer.setData('text/plain',idx);
       row.style.opacity='.4';
@@ -4757,6 +4780,20 @@ window.deleteScheduleItem=async function(key,idx){
   renderSchedule();
   if(curView==='week')renderWeek();else if(activeBoardId)renderBoardCal();else renderMonth();
 };
+// "실제로 한 일" 칸 저장 — 계획(plan)과 시간/카테고리/색상/완료 여부는 그대로 두고 실제 내용만 갱신
+window.saveScheduleActual=async function(key,idx,el){
+  const arr=evStore()[key];
+  if(!arr||!arr[idx])return;
+  const newActual=(el.textContent||'').trim();
+  const p=stripEvPrefixes(arr[idx]);
+  const st=splitEvTime(p.rest);
+  const pa=splitPlanActual(st.text);
+  if(pa.actual===newActual)return; // 변경 없으면 저장 생략
+  const newText=joinPlanActual(pa.plan,newActual);
+  arr[idx]=buildEvString({done:p.done,cat:p.cat,bg:p.bg,time:st.time,text:newText});
+  await saveData(evSaveType(),evSaveKey(key),{items:arr});
+  showSaving();
+};
 function parseTimeInput(str){
   str=(str||'').trim();
   if(!str)return '';
@@ -4784,7 +4821,8 @@ window.openScheduleEditModal=function(key,idx){
   const raw=evStore()[key]?.[idx]||'';
   const p=stripEvPrefixes(raw);
   const st=splitEvTime(p.rest);
-  document.getElementById('sche-name').value=st.text;
+  const pa=splitPlanActual(st.text);
+  document.getElementById('sche-name').value=pa.plan;
   document.getElementById('sche-time').value=st.time;
   populateCatSelect('sche-cat',p.cat);
   const catWrap=document.getElementById('sche-cat-wrap');
@@ -4798,7 +4836,10 @@ window.confirmScheduleEdit=async function(){
   const cat=activeBoardId?'':(document.getElementById('sche-cat')?.value||'');
   const prev=evStore()[editingScheduleKey][editingScheduleIdx]||'';
   const prevParsed=stripEvPrefixes(prev);
-  evStore()[editingScheduleKey][editingScheduleIdx]=buildEvString({done:prevParsed.done,cat,bg:prevParsed.bg,time,text:name});
+  const prevSt=splitEvTime(prevParsed.rest);
+  const prevPa=splitPlanActual(prevSt.text);
+  const newText=joinPlanActual(name,prevPa.actual); // 계획만 바꾸고, 이미 적어둔 "실제로 한 일"은 그대로 유지
+  evStore()[editingScheduleKey][editingScheduleIdx]=buildEvString({done:prevParsed.done,cat,bg:prevParsed.bg,time,text:newText});
   await saveData(evSaveType(),evSaveKey(editingScheduleKey),{items:evStore()[editingScheduleKey]});
   closeModal('scheduleEditModal');renderSchedule();
   if(curView==='week')renderWeek();else if(activeBoardId)renderBoardCal();else renderMonth();
