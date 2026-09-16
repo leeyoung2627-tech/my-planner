@@ -554,6 +554,11 @@ body{opacity:0;transition:opacity .25s ease}
 .money-subtabs{display:flex;gap:4px;margin-bottom:8px;background:#f8f8f8;border-radius:8px;padding:3px}
 .money-subtab{flex:1;text-align:center;font-size:11px;padding:5px 2px;border-radius:6px;cursor:pointer;color:#888;transition:all .15s}
 .money-subtab.active{background:#fff;color:var(--accent);font-weight:600;box-shadow:0 1px 4px #0001}
+/* 가계부 내역탭 상단 메모 — 내용 길이에 따라 칸 높이가 자동으로 줄고 늘어남(div 특성상 별도 JS 없이 동작) */
+.money-memo-box{background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.money-memo-label{font-size:10.5px;font-weight:700;color:#aaa;letter-spacing:.03em;margin-bottom:4px}
+.money-memo-editor{font-size:13px;color:#333;line-height:1.5;min-height:20px;outline:none;cursor:text;word-break:break-word;white-space:pre-wrap}
+.money-memo-editor:empty:before{content:attr(data-placeholder);color:#ccc}
 .mtab-content{display:none;flex-direction:column;gap:6px}
 .mtab-content.active{display:flex}
 /* 태그 선택 */
@@ -1595,6 +1600,10 @@ body.memo-edit-on .memo-text-handle{display:flex}
 
       <!-- 내역 탭 -->
       <div id="mtab-ledger" class="mtab-content active">
+        <div class="money-memo-box">
+          <div class="money-memo-label">📝 메모</div>
+          <div class="money-memo-editor" id="moneyLedgerMemo" contenteditable="true" spellcheck="false" data-placeholder="메모를 입력하세요..." onblur="saveMoneyLedgerMemo()"></div>
+        </div>
         <div class="budget-box" id="budgetBox">
           <div class="budget-top">
             <span class="budget-label">이번 달 예산</span>
@@ -3245,7 +3254,7 @@ onAuthStateChanged(auth,async user=>{
     await loadAllData();
     try{
       loadQuickLinksCloud();
-      renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMemoBottleTexts();
+      renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMoneyLedgerMemo();loadMemoBottleTexts();
       loadMindBar();renderCategoryLegend();loadDdayHero();
       renderCalBoardTabs();
       renderRoutineList();checkRoutineAlarms();
@@ -3360,7 +3369,7 @@ async function saveAppearanceNow(){
 window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -3395,6 +3404,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','ddayHero')),
     getDoc(doc(db,'users',currentUser.uid,'settings','calBoards')),
     getDocs(collection(db,'users',currentUser.uid,'boardEvents')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','moneyLedgerMemo')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   calBoards=(cbS.exists()&&cbS.data().items)?cbS.data().items:[];
@@ -3431,6 +3441,7 @@ async function loadAllData(){
   folders.sort((a,b)=>(a.order??9999)-(b.order??9999));
   habitPostitContent=hpS.exists()?hpS.data().text||'':'';
   window._mealPlanNoteContent=mpnS.exists()?mpnS.data().text||'':'';
+  window._moneyLedgerMemoContent=mlmS.exists()?mlmS.data().text||'':'';
   fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
   if(!fixedCosts.fixed)fixedCosts.fixed=[];
   if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
@@ -6494,6 +6505,18 @@ function loadMealPlanNote(){
   const el=document.getElementById('mealPlanNote');if(!el)return;
   el.innerHTML=stripInlineFontSize(window._mealPlanNoteContent||'');
 }
+// 가계부 내역탭 상단 메모 — 날짜 무관하게 'settings/moneyLedgerMemo'에서 로드/저장
+function loadMoneyLedgerMemo(){
+  const el=document.getElementById('moneyLedgerMemo');if(!el)return;
+  el.innerHTML=stripInlineFontSize(window._moneyLedgerMemoContent||'');
+}
+window.saveMoneyLedgerMemo=async function(){
+  const el=document.getElementById('moneyLedgerMemo');if(!el||!currentUser)return;
+  const text=stripInlineFontSize(el.innerHTML);
+  if(text===window._moneyLedgerMemoContent)return;
+  window._moneyLedgerMemoContent=text;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','moneyLedgerMemo'),{text},{merge:true});showSaving();
+};
 window.saveMealPlanNote=async function(){
   const el=document.getElementById('mealPlanNote');if(!el)return;
   const text=stripInlineFontSize(el.innerHTML);
