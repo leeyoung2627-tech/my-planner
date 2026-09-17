@@ -1493,8 +1493,8 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <button class="nav-btn" id="leftBackBtn" onclick="handleLeftBack()" style="display:none"><svg width="12" height="11" viewBox="0 0 12 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5.5H1M5.5 1L1 5.5l4.5 4.5"/></svg></button>
       <span class="period-label" id="periodLabel"></span>
       <div class="attendance-btns" id="attendanceBtns">
-        <button class="attend-btn" id="attendInBtn" onclick="toggleAttendance('in')" oncontextmenu="editAttendanceTime(event,'in')" title="클릭: 지금 시간으로 출근 체크 · 우클릭: 시간 직접 입력">출근</button>
-        <button class="attend-btn" id="attendOutBtn" onclick="toggleAttendance('out')" oncontextmenu="editAttendanceTime(event,'out')" title="클릭: 지금 시간으로 퇴근 체크 · 우클릭: 시간 직접 입력">퇴근</button>
+        <button class="attend-btn" id="attendInBtn" onclick="toggleAttendance('in')" oncontextmenu="editAttendanceTime(event,'in')" title="처음 클릭: 지금 시간으로 출근 체크 · 체크된 후 클릭(또는 우클릭): 시간 수정">출근</button>
+        <button class="attend-btn" id="attendOutBtn" onclick="toggleAttendance('out')" oncontextmenu="editAttendanceTime(event,'out')" title="처음 클릭: 지금 시간으로 퇴근 체크 · 체크된 후 클릭(또는 우클릭): 시간 수정">퇴근</button>
       </div>
       <div class="view-toggle" id="viewToggle">
         <button class="vbtn active" id="btnMonth" onclick="switchView('month')">월</button>
@@ -3756,42 +3756,43 @@ function renderAttendanceBtns(){
   }
 }
 function nowHM(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
-// 이름에 "작업실"이 들어간 루틴을 찾아서 자동 실행 (출근 체크 시 사용)
+// 이름에 "작업실"이 들어간 루틴을 찾아서 알림 팝업으로 띄움 (출근 체크 시 사용 — 바로 시작시키지 않고 알림만)
 function startNamedRoutine(keyword){
   const r=routines.find(x=>x.name&&x.name.includes(keyword));
-  if(r)startRoutine(r.id);
+  if(r)showRoutineAlarm(r);
 }
-window.toggleAttendance=async function(kind){
+async function promptAttendanceTime(kind){
   const key=todayStr();
   const rec={...(attendanceData[key]||{})};
-  let justCheckedIn=false;
-  if(rec[kind]){
-    // 이미 체크돼 있으면 클릭으로 취소
-    rec[kind]=null;
-  }else{
-    rec[kind]=nowHM();
-    if(kind==='in')justCheckedIn=true;
-  }
-  attendanceData[key]=rec;
-  await saveData('attendance',key,rec);
-  renderAttendanceBtns();
-  if(justCheckedIn)startNamedRoutine('작업실'); // 출근 체크되면 "작업실" 루틴 자동 시작
-};
-window.editAttendanceTime=async function(e,kind){
-  e.preventDefault();
-  const key=todayStr();
-  const rec={...(attendanceData[key]||{})};
+  const wasEmpty=!rec[kind];
   const cur=rec[kind]||'';
   const input=prompt((kind==='in'?'출근':'퇴근')+' 시간을 입력해주세요 (예: 930, 9:30, 1430 · 비우면 체크 취소)',cur);
   if(input===null)return; // 취소
   const t=parseTimeInput(input);
   if(t===null){alert('시간 형식을 확인해주세요 (예: 930, 9:30, 1430)');return;}
-  const wasEmpty=!rec[kind];
   rec[kind]=t||null;
   attendanceData[key]=rec;
   await saveData('attendance',key,rec);
   renderAttendanceBtns();
   if(kind==='in'&&wasEmpty&&rec.in)startNamedRoutine('작업실');
+}
+window.toggleAttendance=async function(kind){
+  const key=todayStr();
+  const rec=attendanceData[key]||{};
+  if(rec[kind]){
+    // 이미 체크돼 있으면 클릭으로 시간을 직접 수정(비우면 체크 취소)
+    await promptAttendanceTime(kind);
+    return;
+  }
+  const newRec={...rec,[kind]:nowHM()};
+  attendanceData[key]=newRec;
+  await saveData('attendance',key,newRec);
+  renderAttendanceBtns();
+  if(kind==='in')startNamedRoutine('작업실'); // 출근 체크되면 "작업실" 루틴 자동 시작
+};
+window.editAttendanceTime=async function(e,kind){
+  e.preventDefault();
+  await promptAttendanceTime(kind);
 };
 function routineTypeLabel(t){return {morning:'🌅 오전',afternoon:'☀️ 오후',evening:'🌙 마무리',custom:'✨ 기타'}[t]||'✨ 기타';}
 
