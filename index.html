@@ -1493,8 +1493,8 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <button class="nav-btn" id="leftBackBtn" onclick="handleLeftBack()" style="display:none"><svg width="12" height="11" viewBox="0 0 12 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5.5H1M5.5 1L1 5.5l4.5 4.5"/></svg></button>
       <span class="period-label" id="periodLabel"></span>
       <div class="attendance-btns" id="attendanceBtns">
-        <button class="attend-btn" id="attendInBtn" onclick="toggleAttendance('in')" oncontextmenu="editAttendanceTime(event,'in')" title="처음 클릭: 지금 시간으로 출근 체크 · 체크된 후 클릭(또는 우클릭): 시간 수정">출근</button>
-        <button class="attend-btn" id="attendOutBtn" onclick="toggleAttendance('out')" oncontextmenu="editAttendanceTime(event,'out')" title="처음 클릭: 지금 시간으로 퇴근 체크 · 체크된 후 클릭(또는 우클릭): 시간 수정">퇴근</button>
+        <button class="attend-btn" id="attendInBtn" onclick="toggleAttendance('in')" oncontextmenu="editAttendanceTime(event,'in')" title="클릭: 지금 시간으로 출근 체크 (다시 클릭 시 취소) · 우클릭: 시간 수정">출근</button>
+        <button class="attend-btn" id="attendOutBtn" onclick="toggleAttendance('out')" oncontextmenu="editAttendanceTime(event,'out')" title="클릭: 지금 시간으로 퇴근 체크 (다시 클릭 시 취소) · 우클릭: 시간 수정">퇴근</button>
       </div>
       <div class="view-toggle" id="viewToggle">
         <button class="vbtn active" id="btnMonth" onclick="switchView('month')">월</button>
@@ -3780,15 +3780,18 @@ window.toggleAttendance=async function(kind){
   const key=todayStr();
   const rec=attendanceData[key]||{};
   if(rec[kind]){
-    // 이미 체크돼 있으면 클릭으로 시간을 직접 수정(비우면 체크 취소)
-    await promptAttendanceTime(kind);
+    // 이미 체크돼 있으면 다시 클릭 시 취소 (시간 수정은 우클릭으로)
+    const newRec={...rec,[kind]:null};
+    attendanceData[key]=newRec;
+    await saveData('attendance',key,newRec);
+    renderAttendanceBtns();
     return;
   }
   const newRec={...rec,[kind]:nowHM()};
   attendanceData[key]=newRec;
   await saveData('attendance',key,newRec);
   renderAttendanceBtns();
-  if(kind==='in')startNamedRoutine('작업실'); // 출근 체크되면 "작업실" 루틴 자동 시작
+  if(kind==='in')startNamedRoutine('작업실'); // 출근 체크되면 "작업실" 루틴 알림 팝업
 };
 window.editAttendanceTime=async function(e,kind){
   e.preventDefault();
