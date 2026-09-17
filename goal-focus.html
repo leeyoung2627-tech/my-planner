@@ -718,9 +718,16 @@ onAuthStateChanged(auth, async (user) => {
   if(user){
     currentUser = user;
     document.getElementById('loginWrap').style.display = 'none';
+    // mainWrap을 먼저 보이는 상태로 만든 뒤에 render()를 호출해야
+    // autoGrow(goalTitleEl)가 실제 높이를 정확히 잴 수 있음.
+    // (숨겨진 상태에서 재면 항상 0으로 계산되어, 제목 칸이 납작하게 굳어버리는 문제가 있었음)
+    document.getElementById('mainWrap').style.display = 'block';
     await loadState();
     render();
-    document.getElementById('mainWrap').style.display = 'block';
+    // 손글씨 폰트가 나중에 로드되면서 글자 크기가 바뀌어 제목이 잘리는 것도 방지
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(() => autoGrow(goalTitleEl));
+    }
   } else {
     currentUser = null;
     document.getElementById('loginWrap').style.display = 'flex';
