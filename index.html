@@ -3866,8 +3866,28 @@ window.selectRoutineType=function(t){
   });
 };
 
+// 루틴 단계에서 이동할 곳: 기본 탭들 + 우리 사이트에 걸어둔 링크들(오른쪽 링크버튼, 달력 위 빠른 링크)도 선택 가능하게
+function getRoutineLinkTargets(){
+  const list=[];
+  document.querySelectorAll('.note-buttons .note-btn').forEach(a=>{
+    const url=a.getAttribute('href');
+    if(!url)return;
+    const label=(a.textContent||'').replace(/\s+/g,' ').trim()||url;
+    list.push({value:'link:'+url,label:'🔗 '+label});
+  });
+  (typeof quickLinks!=='undefined'?quickLinks:[]).forEach(l=>{
+    if(!l||!l.url)return;
+    list.push({value:'link:'+l.url,label:'🔗 '+(l.label||l.url)});
+  });
+  return list;
+}
 function routineTargetOptionsHtml(selected){
-  return ROUTINE_TARGETS.map(t=>`<option value="${t.value}"${t.value===selected?' selected':''}>${t.label}</option>`).join('');
+  const all=[...ROUTINE_TARGETS,...getRoutineLinkTargets()];
+  // 예전에 저장해둔 링크가 지금은 이름이 바뀌었거나 삭제됐어도 선택값 자체는 잃지 않도록 보정
+  if(selected&&!all.some(t=>t.value===selected)){
+    all.push({value:selected,label:'⚠️ '+selected.replace(/^link:/,'')});
+  }
+  return all.map(t=>`<option value="${escapeHtml(t.value)}"${t.value===selected?' selected':''}>${escapeHtml(t.label)}</option>`).join('');
 }
 
 window.updateRoutineStepTarget=function(i,val){routineEditStepsTmp[i].target=val;};
@@ -3967,6 +3987,10 @@ function goToRoutineStep(idx){
 }
 
 function applyRoutineStepTarget(target){
+  if(target&&target.startsWith('link:')){
+    window.open(target.slice(5),'_blank');
+    return;
+  }
   if(target==='habitrpg'){
     window.open('rpg-map.html','_blank');
     return;

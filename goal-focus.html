@@ -421,7 +421,10 @@
     color: var(--ink);
     outline: none;
   }
-  .journal-input-row textarea:focus{ border-color: var(--accent); }
+  .journal-input-row textarea:focus{
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,121,101,.18); /* 클릭이든 키보드든 항상 똑같이, 분명하게 보이는 포커스 표시 */
+  }
   .journal-submit{
     flex: none;
     align-self: flex-end;
