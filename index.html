@@ -3761,14 +3761,19 @@ window.switchTab=function(name,el){
 // ── 루틴 (Routine) ──
 // ══════════════════════════════════════════
 function todayStr(){const n=new Date();return n.getFullYear()+'-'+(n.getMonth()+1)+'-'+n.getDate();}
-// ── 출근/퇴근 체크 (항상 "오늘" 기준) ──
+// ── 출근/퇴근 체크 (자정이 아니라 "아침 7시"를 하루 기준으로 삼음 — 새벽 0~7시는 전날 근무로 취급) ──
+function attendanceDayStr(){
+  const n=new Date();
+  if(n.getHours()<7)n.setDate(n.getDate()-1);
+  return n.getFullYear()+'-'+(n.getMonth()+1)+'-'+n.getDate();
+}
 function updateAttendanceBtnsVisibility(){
   const el=document.getElementById('attendanceBtns');
   if(!el)return;
   el.style.display=(leftMode==='cal'&&(curView==='month'||activeBoardId))?'':'none';
 }
 function renderAttendanceBtns(){
-  const rec=attendanceData[todayStr()]||{};
+  const rec=attendanceData[attendanceDayStr()]||{};
   const inBtn=document.getElementById('attendInBtn');
   const outBtn=document.getElementById('attendOutBtn');
   if(inBtn){
@@ -3788,7 +3793,7 @@ function startNamedRoutine(keyword){
 }
 // 출근/퇴근 체크 시각을 오늘 일기장에 한 줄 기록
 async function appendAttendanceToDiary(kind,time){
-  const key=todayStr();
+  const key=attendanceDayStr();
   const entry=diaryEntries[key]||{};
   const line=(kind==='in'?'🕐 출근 ':'🕐 퇴근 ')+time;
   const text=(entry.text?entry.text+'\n':'')+line;
@@ -3803,7 +3808,7 @@ async function appendAttendanceToDiary(kind,time){
   if(typeof renderDiaryCalendar==='function')renderDiaryCalendar();
 }
 async function promptAttendanceTime(kind){
-  const key=todayStr();
+  const key=attendanceDayStr();
   const rec={...(attendanceData[key]||{})};
   const wasEmpty=!rec[kind];
   const cur=rec[kind]||'';
@@ -3819,7 +3824,7 @@ async function promptAttendanceTime(kind){
   if(kind==='in'&&wasEmpty&&rec.in)startNamedRoutine('작업실');
 }
 window.toggleAttendance=async function(kind){
-  const key=todayStr();
+  const key=attendanceDayStr();
   const rec=attendanceData[key]||{};
   if(rec[kind]){
     // 이미 체크돼 있으면 다시 클릭 시 취소 (시간 수정은 우클릭으로)
