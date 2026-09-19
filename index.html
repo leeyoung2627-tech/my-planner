@@ -559,6 +559,20 @@ body{opacity:0;transition:opacity .25s ease}
 .money-memo-label{font-size:10.5px;font-weight:700;color:#aaa;letter-spacing:.03em;margin-bottom:4px}
 .money-memo-editor{font-size:13px;color:#333;line-height:1.5;min-height:20px;outline:none;cursor:text;word-break:break-word;white-space:pre-wrap}
 .money-memo-editor:empty:before{content:attr(data-placeholder);color:#ccc}
+/* 가계부 내역탭 진행률 그래프 (대출 갚기·적금 붓기 등 필요할 때만 추가) */
+.money-progress-section{margin-bottom:10px}
+.money-progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:6px}
+.money-progress-add-btn{font-size:11px;color:var(--accent);background:var(--accent-light);border:none;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;flex-shrink:0}
+.money-progress-item{background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.money-progress-item-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:6px}
+.money-progress-name{font-size:12.5px;font-weight:700;color:#333;cursor:pointer}
+.money-progress-amt{font-size:11px;color:#999;white-space:nowrap}
+.money-progress-track{height:14px;border-radius:7px;background:#f0f0f0;overflow:hidden}
+.money-progress-fill{height:100%;border-radius:7px;transition:width .3s}
+.money-progress-actions{display:flex;align-items:center;gap:6px;margin-top:6px;justify-content:flex-end}
+.money-progress-color-input{width:22px;height:22px;padding:0;border:0.5px solid #ddd;border-radius:6px;cursor:pointer;background:none;margin-right:auto}
+.money-progress-mini-btn{font-size:10.5px;color:#aaa;background:none;border:none;cursor:pointer;padding:2px 4px;font-family:inherit}
+.money-progress-mini-btn:hover{color:var(--accent)}
 .mtab-content{display:none;flex-direction:column;gap:6px}
 .mtab-content.active{display:flex}
 /* 태그 선택 */
@@ -1614,6 +1628,13 @@ body.memo-edit-on .memo-text-handle{display:flex}
           <div class="money-memo-label">📝 메모</div>
           <div class="money-memo-editor" id="moneyLedgerMemo" contenteditable="true" spellcheck="false" data-placeholder="메모를 입력하세요..." onblur="saveMoneyLedgerMemo()"></div>
         </div>
+        <div class="money-progress-section" id="moneyProgressSection">
+          <div class="money-progress-header">
+            <span class="money-memo-label" style="margin-bottom:0">📊 진행률 (대출 갚기·적금 붓기 등)</span>
+            <button class="money-progress-add-btn" onclick="addMoneyProgressBar()">＋ 추가</button>
+          </div>
+          <div id="moneyProgressList"></div>
+        </div>
         <div class="budget-box" id="budgetBox">
           <div class="budget-top">
             <span class="budget-label">이번 달 예산</span>
@@ -2567,6 +2588,7 @@ const EV_STAMP_IMG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAAA
 let habits=[],editingHabitId=null;
 let weekEvents={},moneyData={},mealData={},fixedCosts={fixed:[],semifixed:[]};
 let attendanceData={}; // {날짜: {in:'HH:MM'|null, out:'HH:MM'|null}} — 출근/퇴근 체크
+let moneyProgressBars=[]; // {id,name,color,target,current} — 대출 갚기/적금 붓기 등 필요할 때 추가하는 진행률 그래프
 let savingBaseline={};
 let savingOrder=[];
 let loans=[]; // {id,name,principal,rate} rate=연이율(%)
@@ -3267,6 +3289,7 @@ onAuthStateChanged(auth,async user=>{
       loadQuickLinksCloud();
       renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMoneyLedgerMemo();loadMemoBottleTexts();
       renderAttendanceBtns();updateAttendanceBtnsVisibility();
+      renderMoneyProgressBars();
       loadMindBar();renderCategoryLegend();loadDdayHero();
       renderCalBoardTabs();
       renderRoutineList();checkRoutineAlarms();
@@ -3276,7 +3299,7 @@ onAuthStateChanged(auth,async user=>{
         window._fixedCostAutoTimer=setInterval(runFixedCostAutoRecord,30*60*1000); // 30분마다 재확인 (자정 넘겨도 놓치지 않게)
       }
       if(!window._scheduleTimePastTimer){
-        window._scheduleTimePastTimer=setInterval(renderSchedule,60*1000); // 1분마다 재확인해서 시간 지난 일정 자동으로 어둡게
+        window._scheduleTimePastTimer=setInterval(()=>{renderSchedule();renderAttendanceBtns();},60*1000); // 1분마다 재확인 - 시간 지난 일정 자동으로 어둡게 + 출퇴근 버튼 날짜 바뀌면 리셋
       }
       if(!window._routineAlarmTimer){
         window._routineAlarmTimer=setInterval(checkRoutineAlarms,20*1000); // 20초마다 루틴 알림 시간 확인
@@ -3381,7 +3404,7 @@ async function saveAppearanceNow(){
 window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -3418,6 +3441,7 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'boardEvents')),
     getDoc(doc(db,'users',currentUser.uid,'settings','moneyLedgerMemo')),
     getDocs(collection(db,'users',currentUser.uid,'attendance')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','moneyProgressBars')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   calBoards=(cbS.exists()&&cbS.data().items)?cbS.data().items:[];
@@ -3456,6 +3480,7 @@ async function loadAllData(){
   window._mealPlanNoteContent=mpnS.exists()?mpnS.data().text||'':'';
   window._moneyLedgerMemoContent=mlmS.exists()?mlmS.data().text||'':'';
   attendanceData={};atS.forEach(d=>{attendanceData[d.id]=d.data();});
+  moneyProgressBars=mpbS.exists()?(mpbS.data().items||[]):[];
   fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
   if(!fixedCosts.fixed)fixedCosts.fixed=[];
   if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
@@ -3761,6 +3786,22 @@ function startNamedRoutine(keyword){
   const r=routines.find(x=>x.name&&x.name.includes(keyword));
   if(r)showRoutineAlarm(r);
 }
+// 출근/퇴근 체크 시각을 오늘 일기장에 한 줄 기록
+async function appendAttendanceToDiary(kind,time){
+  const key=todayStr();
+  const entry=diaryEntries[key]||{};
+  const line=(kind==='in'?'🕐 출근 ':'🕐 퇴근 ')+time;
+  const text=(entry.text?entry.text+'\n':'')+line;
+  const updated={mood:entry.mood||null,result:entry.result||'',text};
+  diaryEntries[key]=updated;
+  await saveData('diary',key,updated);
+  // 지금 일기장 화면이 오늘 날짜를 보고 있으면 화면에도 바로 반영
+  if(typeof diarySelDate!=='undefined'&&fmt(diarySelDate)===key){
+    const ta=document.getElementById('diaryTextArea');
+    if(ta)ta.value=text;
+  }
+  if(typeof renderDiaryCalendar==='function')renderDiaryCalendar();
+}
 async function promptAttendanceTime(kind){
   const key=todayStr();
   const rec={...(attendanceData[key]||{})};
@@ -3774,6 +3815,7 @@ async function promptAttendanceTime(kind){
   attendanceData[key]=rec;
   await saveData('attendance',key,rec);
   renderAttendanceBtns();
+  if(rec[kind])await appendAttendanceToDiary(kind,rec[kind]);
   if(kind==='in'&&wasEmpty&&rec.in)startNamedRoutine('작업실');
 }
 window.toggleAttendance=async function(kind){
@@ -3787,10 +3829,12 @@ window.toggleAttendance=async function(kind){
     renderAttendanceBtns();
     return;
   }
-  const newRec={...rec,[kind]:nowHM()};
+  const time=nowHM();
+  const newRec={...rec,[kind]:time};
   attendanceData[key]=newRec;
   await saveData('attendance',key,newRec);
   renderAttendanceBtns();
+  await appendAttendanceToDiary(kind,time);
   if(kind==='in')startNamedRoutine('작업실'); // 출근 체크되면 "작업실" 루틴 알림 팝업
 };
 window.editAttendanceTime=async function(e,kind){
@@ -6618,6 +6662,83 @@ window.saveMoneyLedgerMemo=async function(){
   if(text===window._moneyLedgerMemoContent)return;
   window._moneyLedgerMemoContent=text;
   await setDoc(doc(db,'users',currentUser.uid,'settings','moneyLedgerMemo'),{text},{merge:true});showSaving();
+};
+// ── 대출 갚기/적금 붓기 등 필요할 때 추가하는 진행률 그래프 ──
+function renderMoneyProgressBars(){
+  const wrap=document.getElementById('moneyProgressList');
+  if(!wrap)return;
+  wrap.innerHTML=moneyProgressBars.map(b=>{
+    const target=b.target||0;
+    const current=b.current||0;
+    const pct=target>0?Math.min(100,Math.round(current/target*100)):0;
+    return `<div class="money-progress-item">
+      <div class="money-progress-item-top">
+        <span class="money-progress-name" onclick="editMoneyProgressBar('${b.id}')" title="클릭해서 이름/목표금액 수정">${escapeHtml(b.name)}</span>
+        <span class="money-progress-amt">${current.toLocaleString()} / ${target.toLocaleString()}원 (${pct}%)</span>
+      </div>
+      <div class="money-progress-track">
+        <div class="money-progress-fill" style="width:${pct}%;background:${b.color||'#7ec8e3'}"></div>
+      </div>
+      <div class="money-progress-actions">
+        <input type="color" class="money-progress-color-input" value="${b.color||'#7ec8e3'}" onchange="setMoneyProgressColor('${b.id}',this.value)" title="막대 색 바꾸기">
+        <button class="money-progress-mini-btn" onclick="addMoneyProgressAmount('${b.id}')">＋ 금액 입력</button>
+        <button class="money-progress-mini-btn" onclick="deleteMoneyProgressBar('${b.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function saveMoneyProgressBars(){
+  if(!currentUser)return;
+  await setDoc(doc(db,'users',currentUser.uid,'settings','moneyProgressBars'),{items:moneyProgressBars},{merge:true});
+  showSaving();
+}
+const MONEY_PROGRESS_COLORS=['#7ec8e3','#F4A6A6','#B7E4C7','#FFD59E','#C9B6E4','#F7C6D9'];
+window.addMoneyProgressBar=function(){
+  const name=prompt('무엇에 대한 그래프인가요? (예: 대출 갚기, ○○적금 붓기)');
+  if(!name||!name.trim())return;
+  const targetStr=prompt('목표 금액을 입력해주세요 (숫자만, 원 단위)','0');
+  if(targetStr===null)return;
+  const target=parseInt((targetStr||'0').replace(/[^0-9]/g,''))||0;
+  if(target<=0){alert('목표 금액을 0보다 크게 입력해주세요');return;}
+  const id='mpb_'+Date.now();
+  const color=MONEY_PROGRESS_COLORS[moneyProgressBars.length%MONEY_PROGRESS_COLORS.length];
+  moneyProgressBars.push({id,name:name.trim(),color,target,current:0});
+  saveMoneyProgressBars();
+  renderMoneyProgressBars();
+};
+window.addMoneyProgressAmount=function(id){
+  const b=moneyProgressBars.find(x=>x.id===id);if(!b)return;
+  const input=prompt(`'${b.name}'에 얼마를 입력할까요? (기존 금액에 더해져요, 원 단위 · 빼려면 -숫자)`,'0');
+  if(input===null)return;
+  const amt=parseInt(input.replace(/[^0-9-]/g,''))||0;
+  if(amt===0)return;
+  b.current=Math.max(0,(b.current||0)+amt);
+  saveMoneyProgressBars();
+  renderMoneyProgressBars();
+};
+window.editMoneyProgressBar=function(id){
+  const b=moneyProgressBars.find(x=>x.id===id);if(!b)return;
+  const name=prompt('이름을 수정해주세요',b.name);
+  if(name===null)return;
+  const targetStr=prompt('목표 금액을 수정해주세요 (원 단위)',b.target);
+  if(targetStr===null)return;
+  const target=parseInt((targetStr||'0').replace(/[^0-9]/g,''));
+  b.name=name.trim()||b.name;
+  if(target>0)b.target=target;
+  saveMoneyProgressBars();
+  renderMoneyProgressBars();
+};
+window.setMoneyProgressColor=function(id,color){
+  const b=moneyProgressBars.find(x=>x.id===id);if(!b)return;
+  b.color=color;
+  saveMoneyProgressBars();
+  renderMoneyProgressBars();
+};
+window.deleteMoneyProgressBar=function(id){
+  if(!confirm('이 그래프를 삭제할까요?'))return;
+  moneyProgressBars=moneyProgressBars.filter(b=>b.id!==id);
+  saveMoneyProgressBars();
+  renderMoneyProgressBars();
 };
 window.saveMealPlanNote=async function(){
   const el=document.getElementById('mealPlanNote');if(!el)return;
