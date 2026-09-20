@@ -340,6 +340,32 @@
   .check-item:hover .check-remove{ opacity: 1; }
   .check-remove:hover{ color: var(--danger); }
 
+  .check-body{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .repeat-chip{
+    align-self: flex-start;
+    font-family: var(--font-body);
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: none;
+    border-radius: 10px;
+    padding: 1px 8px;
+    cursor: pointer;
+    line-height: 1.6;
+  }
+  .repeat-chip.is-none{
+    color: var(--ink-soft);
+    background: transparent;
+    padding-left: 0;
+  }
+  .repeat-chip:hover{ opacity: .8; }
+
   .add-item-row{
     display: flex;
     align-items: center;
@@ -347,9 +373,11 @@
     margin-top: 10px;
     padding-top: 10px;
     border-top: 1px dashed var(--line);
+    flex-wrap: wrap;
   }
   .add-item-row input{
     flex: 1;
+    min-width: 120px;
     border: none;
     background: transparent;
     font-family: var(--font-body);
@@ -359,6 +387,16 @@
     padding: 2px 0;
   }
   .add-item-row input::placeholder{ color: var(--ink-soft); }
+  .add-item-row select{
+    border: 1px solid var(--line);
+    background: var(--paper-soft);
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+    font-size: 12px;
+    border-radius: 6px;
+    padding: 3px 6px;
+    outline: none;
+  }
   .add-item-row button{
     background: none;
     border: none;
@@ -742,6 +780,89 @@ function uid(){
   return Math.random().toString(36).slice(2, 10);
 }
 
+/* ---------- 반복 체크리스트 ----------
+   item.repeat: 'none' | 'daily' | 'weekly'
+   item.completedCount: 체크한 누적 횟수 (기간이 리셋돼도 사라지지 않음)
+   item.periodKey: 마지막으로 체크박스가 속해있던 기간(날짜/주차) 식별자
+   반복 항목의 "목표 횟수"는 한 달 기준으로 자동 계산됨
+   (매일반복 = 30회, 매주반복 = 4회) — 예: 매주 항목 2개면 한 달 목표는 8개.
+------------------------------------------ */
+
+const REPEAT_TARGETS = { daily: 30, weekly: 4 };
+const REPEAT_LABELS = { none: '반복없음', daily: '매일', weekly: '매주' };
+const REPEAT_ORDER = ['none', 'daily', 'weekly'];
+
+function pad2(n){ return String(n).padStart(2, '0'); }
+
+function dailyKey(d){
+  return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+}
+
+function weeklyKey(d){
+  // ISO 주차 계산 (월요일 시작)
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = (t.getUTCDay() + 6) % 7; // 월=0 ... 일=6
+  t.setUTCDate(t.getUTCDate() - day + 3);
+  const firstThursday = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+  const week = 1 + Math.round(((t - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+  return t.getUTCFullYear() + '-W' + pad2(week);
+}
+
+function currentPeriodKey(repeat){
+  if (repeat === 'daily') return dailyKey(new Date());
+  if (repeat === 'weekly') return weeklyKey(new Date());
+  return null;
+}
+
+// 항목의 기간이 지났으면(날짜/주차가 바뀌었으면) 체크박스만 초기화.
+// completedCount는 이미 누적돼 있으므로 건드리지 않음 — 이게 핵심.
+function rollIfNeeded(item){
+  if (!item.repeat || item.repeat === 'none') return;
+  const key = currentPeriodKey(item.repeat);
+  if (item.periodKey !== key){
+    item.periodKey = key;
+    item.done = false;
+  }
+}
+
+function rollAllPeriods(){
+  state.subgoals.forEach(sg => sg.items.forEach(rollIfNeeded));
+}
+
+function itemTarget(item){
+  if (!item.repeat || item.repeat === 'none') return 1;
+  return item.targetCount || REPEAT_TARGETS[item.repeat] || 1;
+}
+
+function itemCompletedUnits(item){
+  if (!item.repeat || item.repeat === 'none') return item.done ? 1 : 0;
+  return Math.min(item.completedCount || 0, itemTarget(item));
+}
+
+function toggleItem(item){
+  rollIfNeeded(item);
+  if (!item.repeat || item.repeat === 'none'){
+    item.done = !item.done;
+    return;
+  }
+  if (!item.done){
+    item.done = true;
+    item.completedCount = (item.completedCount || 0) + 1;
+  } else {
+    item.done = false;
+    item.completedCount = Math.max(0, (item.completedCount || 0) - 1);
+  }
+}
+
+function cycleRepeat(item){
+  const idx = REPEAT_ORDER.indexOf(item.repeat || 'none');
+  const next = REPEAT_ORDER[(idx + 1) % REPEAT_ORDER.length];
+  item.repeat = next;
+  item.completedCount = 0;
+  item.periodKey = next === 'none' ? null : currentPeriodKey(next);
+  item.done = false;
+}
+
 /* ---------- 렌더링 ---------- */
 
 const emptyState = document.getElementById('emptyState');
@@ -760,6 +881,7 @@ function hasActiveGoal(){
 }
 
 function render(){
+  rollAllPeriods();
   if (!hasActiveGoal()){
     emptyState.hidden = false;
     mainContent.hidden = true;
@@ -781,8 +903,10 @@ function render(){
 function renderProgress(){
   let total = 0, done = 0;
   state.subgoals.forEach(sg => {
-    total += sg.items.length;
-    done += sg.items.filter(i => i.done).length;
+    sg.items.forEach(item => {
+      total += itemTarget(item);
+      done += itemCompletedUnits(item);
+    });
   });
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
   const offset = RING_CIRC - (RING_CIRC * pct / 100);
@@ -822,10 +946,11 @@ function buildSubgoalCard(sg){
   nameInput.oninput = () => { sg.title = nameInput.value; queueSave(); };
   head.appendChild(nameInput);
 
-  const doneCount = sg.items.filter(i => i.done).length;
+  let doneUnits = 0, totalUnits = 0;
+  sg.items.forEach(item => { totalUnits += itemTarget(item); doneUnits += itemCompletedUnits(item); });
   const progLabel = document.createElement('span');
   progLabel.className = 'subgoal-progress-label';
-  progLabel.textContent = doneCount + '/' + sg.items.length;
+  progLabel.textContent = doneUnits + '/' + totalUnits;
   head.appendChild(progLabel);
 
   card.appendChild(head);
@@ -834,7 +959,7 @@ function buildSubgoalCard(sg){
   bar.className = 'subgoal-bar';
   const barFill = document.createElement('div');
   barFill.className = 'subgoal-bar-fill';
-  const pct = sg.items.length ? (doneCount / sg.items.length) * 100 : 0;
+  const pct = totalUnits ? (doneUnits / totalUnits) * 100 : 0;
   barFill.style.width = pct + '%';
   bar.appendChild(barFill);
   card.appendChild(bar);
@@ -848,18 +973,32 @@ function buildSubgoalCard(sg){
   addRow.className = 'add-item-row';
   const addInput = document.createElement('input');
   addInput.placeholder = '체크리스트 항목 추가...';
+  const repeatSelect = document.createElement('select');
+  repeatSelect.title = '반복 옵션 (리셋돼도 진행도 누적은 유지돼요)';
+  REPEAT_ORDER.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r;
+    opt.textContent = REPEAT_LABELS[r];
+    repeatSelect.appendChild(opt);
+  });
   const addBtn = document.createElement('button');
   addBtn.textContent = '추가';
   const commit = () => {
     const val = addInput.value.trim();
     if (!val) return;
-    sg.items.push({ id: uid(), text: val, done: false });
+    const repeat = repeatSelect.value;
+    sg.items.push({
+      id: uid(), text: val, done: false,
+      repeat, completedCount: 0,
+      periodKey: repeat === 'none' ? null : currentPeriodKey(repeat)
+    });
     addInput.value = '';
     queueSave(); render();
   };
   addBtn.onclick = commit;
   addInput.onkeydown = (e) => { if (e.key === 'Enter'){ e.preventDefault(); commit(); } };
   addRow.appendChild(addInput);
+  addRow.appendChild(repeatSelect);
   addRow.appendChild(addBtn);
   card.appendChild(addRow);
 
@@ -867,6 +1006,7 @@ function buildSubgoalCard(sg){
 }
 
 function buildCheckItem(sg, item){
+  if (item.repeat === undefined) item.repeat = 'none';
   const li = document.createElement('li');
   li.className = 'check-item' + (item.done ? ' done' : '');
 
@@ -877,12 +1017,15 @@ function buildCheckItem(sg, item){
   box.tabIndex = 0;
   box.innerHTML = '<svg viewBox="0 0 20 20"><path d="M4 10.5 L8.3 14.5 L16 5.5"/></svg>';
   const toggle = () => {
-    item.done = !item.done;
+    toggleItem(item);
     queueSave(); render();
   };
   box.onclick = toggle;
   box.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); } };
   li.appendChild(box);
+
+  const body = document.createElement('div');
+  body.className = 'check-body';
 
   const text = document.createElement('div');
   text.className = 'check-text';
@@ -890,7 +1033,19 @@ function buildCheckItem(sg, item){
   text.textContent = item.text;
   text.oninput = () => { item.text = text.textContent; };
   text.onblur = () => { queueSave(); };
-  li.appendChild(text);
+  body.appendChild(text);
+
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'repeat-chip' + (item.repeat === 'none' ? ' is-none' : '');
+  chip.textContent = item.repeat === 'none'
+    ? '반복없음'
+    : REPEAT_LABELS[item.repeat] + ' · ' + itemCompletedUnits(item) + '/' + itemTarget(item);
+  chip.title = '눌러서 반복 옵션 바꾸기 (매일 → 매주 → 없음 순서로 돌아가요)';
+  chip.onclick = () => { cycleRepeat(item); queueSave(); render(); };
+  body.appendChild(chip);
+
+  li.appendChild(body);
 
   const remove = document.createElement('button');
   remove.className = 'check-remove';
