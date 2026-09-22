@@ -92,8 +92,28 @@
   }
 
   .page{
-    max-width: 720px;
+    max-width: 960px;
     margin: 0 auto;
+  }
+
+  /* ---------- 좌: 체크리스트 / 우: 생각 기록 2단 레이아웃 ---------- */
+  .layout{
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 40px;
+    align-items: start;
+  }
+  .side-col{
+    position: sticky;
+    top: 24px;
+  }
+  .side-col .section-title,
+  .side-col .section-desc{
+    max-width: none;
+  }
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; }
+    .side-col{ position: static; }
   }
 
   /* ---------- 상단: 목표 + 진행도 링 (히어로) ---------- */
@@ -443,12 +463,13 @@
 
   .journal-input-row{
     display: flex;
+    flex-direction: column;
     gap: 8px;
     margin-bottom: 18px;
   }
   .journal-input-row textarea{
     flex: 1;
-    min-height: 46px;
+    min-height: 64px;
     resize: vertical;
     border: 1px solid var(--line);
     background: var(--paper-soft);
@@ -464,8 +485,7 @@
     box-shadow: 0 0 0 3px rgba(79,121,101,.18); /* 클릭이든 키보드든 항상 똑같이, 분명하게 보이는 포커스 표시 */
   }
   .journal-submit{
-    flex: none;
-    align-self: flex-end;
+    align-self: stretch;
     background: var(--highlight);
     color: #fff;
     border: none;
@@ -480,15 +500,19 @@
   .journal-list{
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
   .journal-entry{
     position: relative;
-    padding: 12px 14px 12px 16px;
-    border-left: 2px solid var(--accent-soft);
+    background: var(--paper-soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 28px 12px 14px;
     font-size: 13.5px;
     line-height: 1.6;
     color: var(--ink);
+    box-shadow: 1px 2px 0 rgba(56,46,36,0.05);
+    word-break: break-word;
   }
   .journal-date{
     display: block;
@@ -498,11 +522,11 @@
   }
   .journal-remove{
     position: absolute;
-    right: 4px;
+    right: 6px;
     top: 10px;
     background: none;
     border: none;
-    color: var(--line);
+    color: var(--ink-soft);
     cursor: pointer;
     font-size: 13px;
     opacity: 0;
@@ -637,27 +661,33 @@
       <input type="file" id="importFile" accept="application/json,.json" hidden>
     </div>
 
-    <div class="section">
-      <h2 class="section-title">작은 목표 &amp; 체크리스트</h2>
-      <p class="section-desc">목표를 이루기 위해 필요한 일들을 작게 쪼개서 적어보세요.</p>
+    <div class="layout">
+      <div class="main-col">
+        <div class="section">
+          <h2 class="section-title">작은 목표 &amp; 체크리스트</h2>
+          <p class="section-desc">목표를 이루기 위해 필요한 일들을 작게 쪼개서 적어보세요.</p>
 
-      <div class="subgoals" id="subgoalsList"></div>
+          <div class="subgoals" id="subgoalsList"></div>
 
-      <button class="add-subgoal-btn" id="addSubgoalBtn" style="margin-top:18px;">
-        + 작은 목표 추가하기
-      </button>
-    </div>
-
-    <div class="section">
-      <h2 class="section-title">생각 기록</h2>
-      <p class="section-desc">아직 체크리스트로 정리되지 않은 생각이나 아이디어를 편하게 적어두는 곳이에요.</p>
-
-      <div class="journal-input-row">
-        <textarea id="journalInput" placeholder="예: 다음 그림 컨셉은 야간 배경으로 해볼까..."></textarea>
-        <button class="journal-submit" id="journalSubmit">기록하기</button>
+          <button class="add-subgoal-btn" id="addSubgoalBtn" style="margin-top:18px;">
+            + 작은 목표 추가하기
+          </button>
+        </div>
       </div>
 
-      <div class="journal-list" id="journalList"></div>
+      <aside class="side-col">
+        <div class="section">
+          <h2 class="section-title">생각 기록</h2>
+          <p class="section-desc">아직 체크리스트로 정리되지 않은 생각이나 아이디어를 편하게 적어두는 곳이에요.</p>
+
+          <div class="journal-input-row">
+            <textarea id="journalInput" placeholder="예: 다음 그림 컨셉은 야간 배경으로 해볼까..."></textarea>
+            <button class="journal-submit" id="journalSubmit">기록하기</button>
+          </div>
+
+          <div class="journal-list" id="journalList"></div>
+        </div>
+      </aside>
     </div>
 
   </div>
