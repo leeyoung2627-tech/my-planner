@@ -606,6 +606,8 @@
   <div class="empty-state" id="emptyState" hidden>
     <p>지금 집중하고 있는 목표가 없어요.<br>이번엔 뭘 완성해보고 싶으세요?</p>
     <button class="empty-start-btn" id="emptyStartBtn">새 목표 시작하기</button>
+    <button class="empty-start-btn" id="emptyImportBtn" style="margin-top:10px; background:var(--paper-soft); color:var(--ink);">파일로 가져오기</button>
+    <input type="file" id="importFileEmpty" accept="application/json,.json" hidden>
   </div>
 
   <!-- 메인 컨텐츠 -->
@@ -631,6 +633,8 @@
       <div class="hero-sub">체크리스트를 하나씩 해나갈수록 채워져요 · Ctrl+S로 저장</div>
       <br>
       <button class="new-goal-btn" id="resetBtn">다른 목표로 새로 시작하기</button>
+      <button class="new-goal-btn" id="importBtn">파일로 가져오기</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
     </div>
 
     <div class="section">
@@ -778,6 +782,79 @@ onAuthStateChanged(auth, async (user) => {
 
 function uid(){
   return Math.random().toString(36).slice(2, 10);
+}
+
+/* ---------- 파일로 가져오기 ----------
+   가져오는 JSON 형식:
+   {
+     "goalTitle": "이번 달 목표",
+     "subgoals": [
+       { "title": "작은 목표 이름",
+         "items": [ { "text": "체크리스트 항목", "repeat": "none|daily|weekly" } ] }
+     ],
+     "journal": [ { "text": "생각 기록" } ]   // 선택
+   }
+   기존 목표/체크리스트는 덮어쓰고, 생각 기록은 기존 기록 위에 이어붙임.
+------------------------------------------------- */
+
+function importState(json){
+  if (!json || typeof json !== 'object'){
+    alert('파일 형식을 확인해주세요.');
+    return;
+  }
+  if (hasActiveGoal() && !confirm('지금 목표를 정리하고, 가져온 내용으로 새로 시작할까요? 현재 체크리스트는 사라져요.')){
+    return;
+  }
+
+  const newGoalTitle = typeof json.goalTitle === 'string' ? json.goalTitle : '';
+  const newSubgoals = Array.isArray(json.subgoals) ? json.subgoals.map(sg => ({
+    id: uid(),
+    title: typeof sg.title === 'string' ? sg.title : '',
+    items: Array.isArray(sg.items) ? sg.items.map(it => {
+      const repeat = REPEAT_ORDER.includes(it.repeat) ? it.repeat : 'none';
+      return {
+        id: uid(),
+        text: typeof it.text === 'string' ? it.text : '',
+        done: false,
+        repeat,
+        completedCount: 0,
+        periodKey: repeat === 'none' ? null : currentPeriodKey(repeat)
+      };
+    }) : []
+  })) : [];
+  const importedJournal = Array.isArray(json.journal)
+    ? json.journal
+        .filter(j => j && typeof j.text === 'string')
+        .map(j => ({ id: uid(), text: j.text, date: typeof j.date === 'string' ? j.date : '' }))
+    : [];
+
+  state = {
+    goalTitle: newGoalTitle,
+    subgoals: newSubgoals,
+    journal: importedJournal.concat(state.journal)
+  };
+  queueSave(); render();
+}
+
+function bindImportInput(inputId, triggerId){
+  const input = document.getElementById(inputId);
+  const trigger = document.getElementById(triggerId);
+  if (!input || !trigger) return;
+  trigger.onclick = () => input.click();
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        importState(JSON.parse(reader.result));
+      }catch(err){
+        alert('파일을 읽을 수 없어요. JSON 형식을 확인해주세요.\n(' + err.message + ')');
+      }
+    };
+    reader.readAsText(file);
+  };
 }
 
 /* ---------- 반복 체크리스트 ----------
@@ -1121,6 +1198,9 @@ document.getElementById('resetBtn').onclick = () => {
   state = { goalTitle: '', subgoals: [], journal: state.journal };
   queueSave(); render();
 };
+
+bindImportInput('importFile', 'importBtn');
+bindImportInput('importFileEmpty', 'emptyImportBtn');
 
 document.getElementById('emptyStartBtn').onclick = () => {
   render();
