@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>아이디어 정리 — 두목의 플래너</title>
+<style>
+:root{
+  --bg:#f6f4f1; --card:#ffffff; --text:#2b2621; --sub:#8a8078;
+  --accent:#534AB7; --accent-soft:rgba(83,74,183,0.14); --border:#e6e0d8;
+  --danger:#c15b4a;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root[data-theme="dark"]{
+  --bg:#1b1815; --card:#252019; --text:#ece6df; --sub:#a89e92;
+  --border:#3a332b; --danger:#e08070;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  min-height:100vh; opacity:0; transition:opacity .25s ease;
+}
+#loginWrap,#mainApp{display:none;}
+
+.login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}
+.login-box{background:#fff;border-radius:16px;padding:40px;width:320px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 4px 24px #0001;border:0.5px solid #eee}
+.login-title{font-size:18px;font-weight:700;color:#222}
+.login-sub{font-size:13px;color:#aaa;text-align:center}
+.google-btn{display:flex;align-items:center;gap:10px;padding:10px 20px;border-radius:8px;border:0.5px solid #ddd;background:#fff;cursor:pointer;font-size:14px;color:#222;font-family:inherit;width:100%;justify-content:center}
+.google-btn:hover{background:#f5f5f5}
+.google-btn img{width:20px;height:20px}
+.back-link{font-size:12px;color:#aaa;text-decoration:none}
+.back-link:hover{color:#777}
+
+.wrap{max-width:760px;margin:0 auto;padding:28px 18px 60px;}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+h1{font-size:1.4rem;margin:0 0 4px;letter-spacing:-0.02em;}
+.sub{color:var(--sub);font-size:0.85rem;margin:0 0 22px;}
+.top-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.top-nav a{color:var(--sub);font-size:0.8rem;text-decoration:none;}
+.top-nav a:hover{color:var(--accent);}
+
+.settings-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:1.05rem;flex-shrink:0;}
+.settings-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:20px;display:none;}
+.settings-panel.open{display:block;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;}
+.settings-row:last-child{margin-bottom:0;}
+.settings-label{font-size:0.85rem;color:var(--sub);}
+.theme-group{display:flex;gap:6px;}
+.theme-group button{border:1px solid var(--border);background:var(--bg);color:var(--text);padding:6px 12px;border-radius:8px;font-size:0.82rem;cursor:pointer;}
+.theme-group button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+input[type=color]{width:44px;height:32px;border:1px solid var(--border);border-radius:8px;padding:2px;background:var(--card);cursor:pointer;}
+.logout-link{font-size:0.78rem;color:var(--sub);background:none;border:none;cursor:pointer;text-decoration:underline;}
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.tab-btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 14px;border-radius:20px;font-size:0.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.tab-btn.add-cat{color:var(--sub);border-style:dashed;}
+.x-btn{border:none;background:none;color:inherit;opacity:0.55;cursor:pointer;font-size:0.8rem;line-height:1;padding:0;}
+.x-btn:hover{opacity:1;}
+
+.mode-switch{display:flex;gap:6px;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;}
+.mode-btn{flex:1;border:none;background:none;color:var(--sub);padding:9px;border-radius:9px;cursor:pointer;font-size:0.9rem;font-weight:600;}
+.mode-btn.active{background:var(--accent-soft);color:var(--accent);}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;}
+.note-content{white-space:pre-wrap;line-height:1.55;font-size:0.95rem;margin:0 0 10px;}
+.note-meta{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;}
+.tag{background:var(--accent-soft);color:var(--accent);font-size:0.76rem;padding:3px 9px;border-radius:10px;cursor:pointer;white-space:nowrap;}
+.tag.cat-label{background:none;border:1px solid var(--border);color:var(--sub);}
+.note-actions{display:flex;gap:8px;flex-shrink:0;}
+.icon-btn{background:none;border:none;color:var(--sub);cursor:pointer;font-size:0.8rem;padding:2px 4px;}
+.icon-btn:hover{color:var(--danger);}
+
+.empty{color:var(--sub);text-align:center;padding:40px 0;font-size:0.9rem;}
+
+.add-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:22px;}
+.add-box textarea{width:100%;min-height:70px;border:1px solid var(--border);border-radius:10px;padding:10px;font-family:inherit;font-size:0.92rem;background:transparent;color:var(--text);resize:vertical;margin-bottom:8px;}
+.add-box input[type=text]{width:100%;border:1px solid var(--border);border-radius:10px;padding:9px 10px;font-family:inherit;font-size:0.88rem;background:transparent;color:var(--text);margin-bottom:8px;}
+.add-row{display:flex;gap:8px;}
+.add-row select{border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--card);color:var(--text);font-family:inherit;font-size:0.88rem;}
+.save-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:0.88rem;cursor:pointer;font-weight:600;margin-left:auto;}
+
+.cloud{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+.cloud .tag{font-size:0.85rem;padding:6px 13px;display:inline-flex;align-items:center;gap:6px;}
+.cloud .tag.selected{background:var(--accent);color:#fff;}
+.clear-filter{font-size:0.78rem;color:var(--sub);background:none;border:none;cursor:pointer;text-decoration:underline;margin-bottom:14px;}
+
+.edit-form textarea{width:100%;min-height:70px;border:1px solid var(--border);border-radius:10px;padding:10px;font-family:inherit;font-size:0.95rem;background:transparent;color:var(--text);resize:vertical;margin-bottom:8px;}
+.edit-form input[type=text]{width:100%;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-family:inherit;font-size:0.85rem;background:transparent;color:var(--text);margin-bottom:8px;}
+.edit-actions{display:flex;gap:8px;justify-content:flex-end;}
+.edit-actions button{border-radius:8px;padding:6px 14px;font-size:0.82rem;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text);}
+.edit-actions .primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.saving-tag{font-size:0.72rem;color:var(--sub);}
+</style>
+</head>
+<body>
+
+<div id="loginWrap" class="login-wrap">
+  <div class="login-box">
+    <div class="login-title">아이디어 정리</div>
+    <div class="login-sub">두목의 플래너 계정으로<br>로그인하면 기기 간에 메모가 동기화돼요.</div>
+    <button class="google-btn" onclick="loginWithGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
+      Google로 로그인
+    </button>
+  </div>
+  <a class="back-link" href="/">← 플래너로 돌아가기</a>
+</div>
+
+<div id="mainApp">
+<div class="wrap">
+  <div class="top-nav">
+    <a href="/">← 플래너로</a>
+    <span class="saving-tag" id="savingTag"></span>
+  </div>
+  <div class="header-row">
+    <div>
+      <h1>아이디어 정리</h1>
+      <p class="sub">캐릭터·장소·상황·장르별로 메모하고, 태그로 한 번에 모아보기</p>
+    </div>
+    <button class="settings-btn" id="settingsBtn" onclick="toggleSettings()" title="설정">⚙</button>
+  </div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-row">
+      <span class="settings-label">테마</span>
+      <div class="theme-group" id="themeGroup">
+        <button data-v="system" onclick="setTheme('system')">시스템</button>
+        <button data-v="light" onclick="setTheme('light')">라이트</button>
+        <button data-v="dark" onclick="setTheme('dark')">다크</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">강조 색상</span>
+      <input type="color" id="accentPicker" oninput="setAccent(this.value)">
+    </div>
+    <div class="settings-row">
+      <span class="settings-label" id="userEmailLabel"></span>
+      <button class="logout-link" onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="mode-switch">
+    <button class="mode-btn active" id="modeCatBtn" onclick="setMode('cat')">카테고리별</button>
+    <button class="mode-btn" id="modeTagBtn" onclick="setMode('tag')">태그별</button>
+  </div>
+
+  <div id="catView">
+    <div class="tabs" id="catTabs"></div>
+
+    <div class="add-box">
+      <textarea id="contentInput" placeholder="아이디어를 적어보세요..."></textarea>
+      <input type="text" id="tagInput" placeholder="태그 (쉼표로 구분, 예: 츤데레, 밤거리, 우연한 만남)">
+      <div class="add-row">
+        <select id="catSelect"></select>
+        <button class="save-btn" onclick="addNote()">추가</button>
+      </div>
+    </div>
+
+    <div id="noteList"></div>
+  </div>
+
+  <div id="tagView" style="display:none;">
+    <div class="cloud" id="tagCloud"></div>
+    <div id="filterInfo"></div>
+    <div id="tagNoteList"></div>
+  </div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "179812397978",
+  appId: "1:179812397978:web:3525714542291e818e0023"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+const DEFAULT_CATS = ['캐릭터','장소','상황','장르'];
+let state = { categories: [...DEFAULT_CATS], notes: [] };
+let settings = loadSettings();
+let mode = 'cat';
+let activeCat = state.categories[0];
+let activeTag = null;
+let editingId = null;
+
+window.loginWithGoogle = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch(e){ alert('로그인 실패: ' + e.message); }
+};
+window.logout = async () => { await signOut(auth); };
+
+onAuthStateChanged(auth, async user => {
+  document.body.style.opacity = '1';
+  if(user){
+    currentUser = user;
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('userEmailLabel').textContent = user.email || '';
+    await loadCloudData();
+    applySettings();
+    render();
+  } else {
+    currentUser = null;
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('loginWrap').style.display = 'flex';
+  }
+});
+
+// ── 설정(테마/강조색) — 기기별 로컬 저장 ──
+function loadSettings(){
+  try{ const raw = localStorage.getItem('idea-notes-settings'); if(raw) return JSON.parse(raw); }catch(e){}
+  return { theme:'system', accent:'#534AB7' };
+}
+function saveSettings(){ try{ localStorage.setItem('idea-notes-settings', JSON.stringify(settings)); }catch(e){} }
+function hexToRgba(hex, alpha){
+  hex = hex.replace('#','');
+  if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+  const r=parseInt(hex.substring(0,2),16), g=parseInt(hex.substring(2,4),16), b=parseInt(hex.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function applySettings(){
+  const root = document.documentElement;
+  if(settings.theme==='system') root.removeAttribute('data-theme');
+  else root.setAttribute('data-theme', settings.theme);
+  root.style.setProperty('--accent', settings.accent);
+  root.style.setProperty('--accent-soft', hexToRgba(settings.accent, 0.16));
+  document.querySelectorAll('#themeGroup button').forEach(b=>b.classList.toggle('active', b.dataset.v===settings.theme));
+  document.getElementById('accentPicker').value = settings.accent;
+}
+window.toggleSettings = () => document.getElementById('settingsPanel').classList.toggle('open');
+window.setTheme = t => { settings.theme=t; saveSettings(); applySettings(); };
+window.setAccent = hex => { settings.accent=hex; saveSettings(); applySettings(); };
+
+// ── Firestore 동기화 ──
+function showSaving(){
+  const el = document.getElementById('savingTag');
+  el.textContent = '저장 중...';
+  clearTimeout(showSaving._t);
+  showSaving._t = setTimeout(()=>{ el.textContent=''; }, 900);
+}
+async function loadCloudData(){
+  const catSnap = await getDoc(doc(db,'users',currentUser.uid,'settings','ideaCategories'));
+  if(catSnap.exists() && Array.isArray(catSnap.data().list) && catSnap.data().list.length){
+    state.categories = catSnap.data().list;
+  } else {
+    state.categories = [...DEFAULT_CATS];
+    await setDoc(doc(db,'users',currentUser.uid,'settings','ideaCategories'), {list: state.categories});
+  }
+  activeCat = state.categories[0];
+
+  const notesSnap = await getDocs(collection(db,'users',currentUser.uid,'ideaNotes'));
+  state.notes = notesSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+}
+async function saveCategories(){
+  showSaving();
+  try{ await setDoc(doc(db,'users',currentUser.uid,'settings','ideaCategories'), {list: state.categories}); }
+  catch(e){ alert('카테고리 저장 중 오류가 발생했어요.\\n('+e.message+')'); }
+}
+async function saveNote(note){
+  showSaving();
+  try{ await setDoc(doc(db,'users',currentUser.uid,'ideaNotes',note.id), {category:note.category, content:note.content, tags:note.tags, createdAt:note.createdAt}); }
+  catch(e){ alert('저장 중 오류가 발생했어요.\\n('+e.message+')'); }
+}
+async function removeNoteDoc(id){
+  showSaving();
+  try{ await deleteDoc(doc(db,'users',currentUser.uid,'ideaNotes',id)); }
+  catch(e){ alert('삭제 중 오류가 발생했어요.\\n('+e.message+')'); }
+}
+
+window.setMode = m => {
+  mode = m;
+  document.getElementById('modeCatBtn').classList.toggle('active', m==='cat');
+  document.getElementById('modeTagBtn').classList.toggle('active', m==='tag');
+  document.getElementById('catView').style.display = m==='cat' ? '' : 'none';
+  document.getElementById('tagView').style.display = m==='tag' ? '' : 'none';
+  render();
+};
+
+function renderCatTabs(){
+  const box = document.getElementById('catTabs');
+  box.innerHTML = '';
+  state.categories.forEach(c=>{
+    const b = document.createElement('div');
+    b.className = 'tab-btn' + (c===activeCat ? ' active' : '');
+    b.setAttribute('role','button'); b.tabIndex=0;
+    const label = document.createElement('span');
+    label.textContent = c;
+    label.onclick = ()=>{ activeCat=c; render(); };
+    b.appendChild(label);
+
+    const edit = document.createElement('button');
+    edit.className='x-btn'; edit.textContent='✎'; edit.title='카테고리 이름 수정';
+    edit.onclick = e=>{ e.stopPropagation(); renameCategory(c); };
+    b.appendChild(edit);
+
+    const x = document.createElement('button');
+    x.className='x-btn'; x.textContent='✕'; x.title='카테고리 삭제';
+    x.onclick = e=>{ e.stopPropagation(); deleteCategory(c); };
+    b.appendChild(x);
+
+    box.appendChild(b);
+  });
+  const addB = document.createElement('button');
+  addB.className='tab-btn add-cat'; addB.textContent='+ 카테고리';
+  addB.onclick = ()=>{
+    const name = prompt('새 카테고리 이름');
+    if(name && name.trim() && !state.categories.includes(name.trim())){
+      state.categories.push(name.trim());
+      activeCat = name.trim();
+      saveCategories(); render();
+    }
+  };
+  box.appendChild(addB);
+
+  const sel = document.getElementById('catSelect');
+  sel.innerHTML = '';
+  state.categories.forEach(c=>{
+    const o = document.createElement('option');
+    o.value=c; o.textContent=c;
+    if(c===activeCat) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function noteCard(n, {showCat=false}={}){
+  const div = document.createElement('div');
+  div.className = 'card';
+
+  if(editingId===n.id){
+    div.classList.add('edit-form');
+    const ta = document.createElement('textarea'); ta.value = n.content;
+    div.appendChild(ta);
+    const tagIn = document.createElement('input'); tagIn.type='text'; tagIn.value=n.tags.join(', '); tagIn.placeholder='태그 (쉼표로 구분)';
+    div.appendChild(tagIn);
+    const actions = document.createElement('div'); actions.className='edit-actions';
+    const cancel = document.createElement('button'); cancel.textContent='취소';
+    cancel.onclick = ()=>{ editingId=null; render(); };
+    const ok = document.createElement('button'); ok.className='primary'; ok.textContent='저장';
+    ok.onclick = ()=>{
+      const newContent = ta.value.trim();
+      if(!newContent) return;
+      n.content = newContent;
+      n.tags = tagIn.value.trim() ? tagIn.value.split(',').map(t=>t.trim()).filter(Boolean) : [];
+      editingId = null;
+      saveNote(n); render();
+    };
+    actions.appendChild(cancel); actions.appendChild(ok);
+    div.appendChild(actions);
+    return div;
+  }
+
+  const p = document.createElement('p'); p.className='note-content'; p.textContent=n.content;
+  div.appendChild(p);
+
+  const meta = document.createElement('div'); meta.className='note-meta';
+  const tagRow = document.createElement('div'); tagRow.className='tag-row';
+  if(showCat){
+    const cl = document.createElement('span'); cl.className='tag cat-label'; cl.textContent=n.category;
+    tagRow.appendChild(cl);
+  }
+  n.tags.forEach(t=>{
+    const tg = document.createElement('span'); tg.className='tag'; tg.textContent='#'+t;
+    tg.onclick = ()=>{ mode='tag'; window.setMode('tag'); activeTag=t; render(); };
+    tagRow.appendChild(tg);
+  });
+  meta.appendChild(tagRow);
+
+  const actions = document.createElement('div'); actions.className='note-actions';
+  const edit = document.createElement('button'); edit.className='icon-btn'; edit.textContent='수정';
+  edit.onclick = ()=>{ editingId=n.id; render(); };
+  actions.appendChild(edit);
+  const del = document.createElement('button'); del.className='icon-btn'; del.textContent='삭제';
+  del.onclick = ()=>{
+    if(confirm('이 메모를 삭제할까요?')){
+      state.notes = state.notes.filter(x=>x.id!==n.id);
+      removeNoteDoc(n.id); render();
+    }
+  };
+  actions.appendChild(del);
+  meta.appendChild(actions);
+
+  div.appendChild(meta);
+  return div;
+}
+
+function render(){
+  renderCatTabs();
+  if(mode==='cat'){
+    const list = document.getElementById('noteList'); list.innerHTML='';
+    const notes = state.notes.filter(n=>n.category===activeCat).sort((a,b)=>b.createdAt-a.createdAt);
+    if(notes.length===0){
+      const e = document.createElement('div'); e.className='empty'; e.textContent='아직 메모가 없어요.';
+      list.appendChild(e);
+    } else notes.forEach(n=>list.appendChild(noteCard(n)));
+  } else {
+    const cloud = document.getElementById('tagCloud'); cloud.innerHTML='';
+    const allTags = [...new Set(state.notes.flatMap(n=>n.tags))].sort();
+    allTags.forEach(t=>{
+      const tg = document.createElement('span'); tg.className='tag'+(t===activeTag?' selected':'');
+      const label = document.createElement('span'); label.textContent='#'+t;
+      label.onclick = ()=>{ activeTag = (activeTag===t)?null:t; render(); };
+      tg.appendChild(label);
+      const edit = document.createElement('button'); edit.className='x-btn'; edit.textContent='✎'; edit.title='태그 이름 수정';
+      edit.onclick = e=>{ e.stopPropagation(); renameTag(t); };
+      tg.appendChild(edit);
+      const x = document.createElement('button'); x.className='x-btn'; x.textContent='✕'; x.title='태그 삭제';
+      x.onclick = e=>{ e.stopPropagation(); deleteTag(t); };
+      tg.appendChild(x);
+      cloud.appendChild(tg);
+    });
+    const info = document.getElementById('filterInfo'); info.innerHTML='';
+    if(activeTag){
+      const c = document.createElement('button'); c.className='clear-filter'; c.textContent=`#${activeTag} 필터 해제`;
+      c.onclick = ()=>{ activeTag=null; render(); };
+      info.appendChild(c);
+    }
+    const list = document.getElementById('tagNoteList'); list.innerHTML='';
+    const notes = state.notes.filter(n=> activeTag ? n.tags.includes(activeTag) : true).sort((a,b)=>b.createdAt-a.createdAt);
+    if(notes.length===0){
+      const e = document.createElement('div'); e.className='empty';
+      e.textContent = allTags.length===0 ? '아직 태그가 달린 메모가 없어요.' : '해당 태그의 메모가 없어요.';
+      list.appendChild(e);
+    } else notes.forEach(n=>list.appendChild(noteCard(n,{showCat:true})));
+  }
+}
+
+function renameCategory(c){
+  const name = prompt('새 카테고리 이름', c);
+  if(!name || !name.trim() || name.trim()===c) return;
+  const newName = name.trim();
+  if(state.categories.includes(newName)){ alert('이미 있는 카테고리 이름이에요.'); return; }
+  state.categories = state.categories.map(x=> x===c ? newName : x);
+  state.notes.forEach(n=>{ if(n.category===c){ n.category=newName; saveNote(n); } });
+  if(activeCat===c) activeCat = newName;
+  saveCategories(); render();
+}
+function renameTag(t){
+  const name = prompt('새 태그 이름', t);
+  if(!name || !name.trim() || name.trim()===t) return;
+  const newTag = name.trim();
+  state.notes.forEach(n=>{
+    if(n.tags.includes(t)){
+      n.tags = [...new Set(n.tags.map(x=> x===t?newTag:x))];
+      saveNote(n);
+    }
+  });
+  if(activeTag===t) activeTag=newTag;
+  render();
+}
+function deleteCategory(c){
+  if(state.categories.length<=1){ alert('카테고리가 최소 1개는 있어야 해요.'); return; }
+  const notesInCat = state.notes.filter(n=>n.category===c);
+  const msg = notesInCat.length>0
+    ? `'${c}' 카테고리를 삭제하면 그 안의 메모 ${notesInCat.length}개도 함께 삭제돼요. 계속할까요?`
+    : `'${c}' 카테고리를 삭제할까요?`;
+  if(!confirm(msg)) return;
+  state.categories = state.categories.filter(x=>x!==c);
+  notesInCat.forEach(n=>removeNoteDoc(n.id));
+  state.notes = state.notes.filter(n=>n.category!==c);
+  if(activeCat===c) activeCat = state.categories[0];
+  saveCategories(); render();
+}
+function deleteTag(t){
+  if(!confirm(`태그 '#${t}'를 모든 메모에서 없앨까요? (메모 자체는 남아요)`)) return;
+  state.notes.forEach(n=>{
+    if(n.tags.includes(t)){ n.tags = n.tags.filter(x=>x!==t); saveNote(n); }
+  });
+  if(activeTag===t) activeTag=null;
+  render();
+}
+window.addNote = () => {
+  const content = document.getElementById('contentInput').value.trim();
+  if(!content) return;
+  const tagsRaw = document.getElementById('tagInput').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
+  const category = document.getElementById('catSelect').value;
+  const note = { id: Date.now()+'_'+Math.random().toString(36).slice(2,7), category, content, tags, createdAt: Date.now() };
+  state.notes.push(note);
+  document.getElementById('contentInput').value='';
+  document.getElementById('tagInput').value='';
+  saveNote(note);
+  activeCat = category;
+  render();
+};
+</script>
+</body>
+</html>
