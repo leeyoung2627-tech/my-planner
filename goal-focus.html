@@ -436,17 +436,25 @@
     margin-bottom: 14px;
   }
   .stage-crumb{
+    font-family: inherit;
     font-size: 11.5px;
     color: var(--ink-soft);
     background: transparent;
+    border: none;
     padding: 2px 6px;
     border-radius: 8px;
+    cursor: pointer;
   }
+  .stage-crumb:hover{ background: var(--accent-soft); color: var(--ink); }
   .stage-crumb.is-done{ color: var(--accent); }
   .stage-crumb.is-current{
     color: var(--ink);
     background: var(--highlight-soft);
     font-weight: 600;
+  }
+  .stage-crumb.is-open:not(.is-current){
+    text-decoration: underline dashed var(--line);
+    text-underline-offset: 3px;
   }
   .stage-crumb-arrow{ font-size: 11px; color: var(--line); }
 
@@ -1102,9 +1110,10 @@ const journalList = document.getElementById('journalList');
 
 const RING_CIRC = 264; // 2 * PI * 42, 대략
 
-// 단계형 작은 목표에서 "이전 단계 보기"를 펼쳐둔 카드들
+// 단계형 작은 목표에서 지금 단계 외에 "펼쳐서 설정 중"인 단계들
 // (저장되는 데이터가 아니라 화면 상태 — 새로고침하면 다시 접힘)
-const expandedPrevStages = new Set();
+const expandedStages = new Set();
+function stageKey(sg, stage){ return sg.id + '::' + stage.id; }
 
 function hasActiveGoal(){
   return state.goalTitle.trim().length > 0;
@@ -1259,9 +1268,18 @@ function buildStagePanel(sg){
     crumb.className = 'stage-breadcrumb';
     sg.stages.forEach((st, i) => {
       const complete = isStageComplete(st);
-      const tag = document.createElement('span');
-      tag.className = 'stage-crumb' + (complete ? ' is-done' : '') + (i === curIdx ? ' is-current' : '');
+      const isCurrent = i === curIdx;
+      const key = stageKey(sg, st);
+      const isOpen = isCurrent || expandedStages.has(key);
+      const tag = document.createElement('button');
+      tag.type = 'button';
+      tag.className = 'stage-crumb' + (complete ? ' is-done' : '') + (isCurrent ? ' is-current' : '') + (isOpen ? ' is-open' : '');
       tag.textContent = (i + 1) + '. ' + (st.title || '단계') + (complete ? ' ✓' : '');
+      tag.title = '눌러서 이 단계 열기/접기 (지금 단계는 항상 열려있어요)';
+      tag.onclick = () => {
+        if (expandedStages.has(key)) expandedStages.delete(key); else expandedStages.add(key);
+        render();
+      };
       crumb.appendChild(tag);
       if (i < sg.stages.length - 1){
         const arrow = document.createElement('span');
@@ -1273,26 +1291,16 @@ function buildStagePanel(sg){
     wrap.appendChild(crumb);
   }
 
-  const prevStages = curIdx === -1 ? sg.stages : sg.stages.slice(0, curIdx);
-  if (prevStages.length){
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'checklist-toggle';
-    const isOpen = expandedPrevStages.has(sg.id);
-    toggle.textContent = isOpen ? '이전 단계 숨기기' : '이전 단계 ' + prevStages.length + '개 보기';
-    toggle.onclick = () => {
-      if (expandedPrevStages.has(sg.id)) expandedPrevStages.delete(sg.id); else expandedPrevStages.add(sg.id);
-      render();
-    };
-    wrap.appendChild(toggle);
+  sg.stages.forEach((st, i) => {
+    const isCurrent = i === curIdx;
+    const key = stageKey(sg, st);
+    const isOpen = isCurrent || expandedStages.has(key);
     if (isOpen){
-      prevStages.forEach(st => wrap.appendChild(buildStagePanelBlock(sg, st, false)));
+      wrap.appendChild(buildStagePanelBlock(sg, st, isCurrent));
     }
-  }
+  });
 
-  if (curIdx !== -1){
-    wrap.appendChild(buildStagePanelBlock(sg, sg.stages[curIdx], true));
-  } else if (sg.stages.length){
+  if (curIdx === -1 && sg.stages.length){
     const clear = document.createElement('p');
     clear.className = 'subgoal-clear';
     clear.innerHTML = '<b>🎉 모든 단계를 완료했어요!</b> 이어서 할 다음 단계를 추가해보세요.';
@@ -1304,7 +1312,9 @@ function buildStagePanel(sg){
   addStageBtn.className = 'add-stage-btn';
   addStageBtn.textContent = '+ 다음 단계 추가';
   addStageBtn.onclick = () => {
-    sg.stages.push({ id: uid(), title: '', items: [] });
+    const newStage = { id: uid(), title: '', items: [] };
+    sg.stages.push(newStage);
+    expandedStages.add(stageKey(sg, newStage)); // 추가하자마자 바로 설정할 수 있게 열어둠
     queueSave(); render();
     requestAnimationFrame(() => {
       const inputs = document.querySelectorAll('.stage-title-input[data-sg="' + sg.id + '"]');
@@ -1316,7 +1326,7 @@ function buildStagePanel(sg){
   return wrap;
 }
 
-// 단계형 패널 한 칸 (지금 단계 또는 이전 단계 하나)
+// 단계형 패널 한 칸 (지금 단계 또는 열어본 다른 단계)
 function buildStagePanelBlock(sg, stage, isCurrent){
   const box = document.createElement('div');
   box.className = 'stage-panel' + (isCurrent ? ' is-current' : ' is-prev');
