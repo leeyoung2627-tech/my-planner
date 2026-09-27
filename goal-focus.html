@@ -386,26 +386,21 @@
   }
   .repeat-chip:hover{ opacity: .8; }
 
-  /* ---------- 단계별 진행(현재 할 일 / 다음 할 일 / 완료) ---------- */
+  /* ---------- 작은 목표 유형: 습관형 / 단계형 ---------- */
 
-  .current-label{
-    font-family: var(--font-hand);
-    font-size: 13px;
-    color: var(--highlight);
-    margin: 0 0 6px 2px;
+  .type-chip{
+    align-self: center;
+    font-family: var(--font-body);
+    font-size: 11px;
+    color: var(--ink-soft);
+    background: var(--paper-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 3px 9px;
+    cursor: pointer;
+    white-space: nowrap;
   }
-
-  .check-item.current .check-box{
-    border-color: var(--highlight);
-    box-shadow: 0 0 0 3px var(--highlight-soft);
-  }
-  .check-item.current .check-text{
-    font-size: 15.5px;
-  }
-
-  .check-item.upcoming{
-    opacity: .5;
-  }
+  .type-chip:hover{ border-color: var(--accent); color: var(--accent); }
 
   .checklist-toggle{
     align-self: flex-start;
@@ -418,21 +413,97 @@
     text-underline-offset: 3px;
     cursor: pointer;
     padding: 2px 0;
+    margin-bottom: 10px;
   }
   .checklist-toggle:hover{ color: var(--accent); }
-
-  .checklist-group{
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
 
   .subgoal-clear{
     font-size: 13px;
     color: var(--ink-soft);
-    padding: 2px 0;
+    margin: 6px 0 12px;
   }
   .subgoal-clear b{ color: var(--accent); }
+
+  /* ---------- 단계형: 단계 이동 경로 ---------- */
+
+  .stage-wrap{ display:flex; flex-direction:column; }
+
+  .stage-breadcrumb{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .stage-crumb{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    background: transparent;
+    padding: 2px 6px;
+    border-radius: 8px;
+  }
+  .stage-crumb.is-done{ color: var(--accent); }
+  .stage-crumb.is-current{
+    color: var(--ink);
+    background: var(--highlight-soft);
+    font-weight: 600;
+  }
+  .stage-crumb-arrow{ font-size: 11px; color: var(--line); }
+
+  /* ---------- 단계형: 단계 패널(현재/이전) ---------- */
+
+  .stage-panel{
+    background: var(--paper-soft);
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 14px 16px 12px;
+    margin-bottom: 14px;
+  }
+  .stage-panel.is-current{
+    border: 1px solid var(--accent);
+  }
+  .stage-panel.is-prev{ opacity: .75; }
+
+  .stage-panel-head{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .stage-panel-label{
+    font-family: var(--font-hand);
+    font-size: 12.5px;
+    color: var(--highlight);
+    white-space: nowrap;
+  }
+  .stage-panel.is-prev .stage-panel-label{ color: var(--ink-soft); }
+
+  .stage-title-input{
+    flex: 1;
+    font-family: var(--font-hand);
+    font-size: 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed transparent;
+    outline: none;
+    color: var(--ink);
+  }
+  .stage-title-input:focus{ border-bottom-color: var(--line); }
+
+  .add-stage-btn{
+    align-self: flex-start;
+    margin-top: 4px;
+    font-family: var(--font-hand);
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    background: none;
+    border: 1.5px dashed var(--line);
+    border-radius: 6px;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .add-stage-btn:hover{ color: var(--accent); border-color: var(--accent); }
 
   .add-item-row{
     display: flex;
@@ -981,7 +1052,7 @@ function rollIfNeeded(item){
 }
 
 function rollAllPeriods(){
-  state.subgoals.forEach(sg => sg.items.forEach(rollIfNeeded));
+  state.subgoals.forEach(sg => getSubgoalItems(sg).forEach(rollIfNeeded));
 }
 
 function itemTarget(item){
@@ -1031,13 +1102,33 @@ const journalList = document.getElementById('journalList');
 
 const RING_CIRC = 264; // 2 * PI * 42, 대략
 
-// 어떤 "작은 목표" 카드에서 완료/다음 목록을 펼쳐 보고 있는지
-// (새로고침하면 다시 접힘 — 저장되는 데이터가 아니라 화면 상태일 뿐)
-const expandedDone = new Set();
-const expandedUpcoming = new Set();
+// 단계형 작은 목표에서 "이전 단계 보기"를 펼쳐둔 카드들
+// (저장되는 데이터가 아니라 화면 상태 — 새로고침하면 다시 접힘)
+const expandedPrevStages = new Set();
 
 function hasActiveGoal(){
   return state.goalTitle.trim().length > 0;
+}
+
+// 작은 목표 하나가 가진 모든 체크리스트 항목을 평평하게 모아줌.
+// 습관형(checklist)은 sg.items를, 단계형(stage)은 모든 단계의 items를 합침.
+function getSubgoalItems(sg){
+  if (sg.type === 'stage'){
+    return Array.isArray(sg.stages) ? sg.stages.flatMap(st => st.items || []) : [];
+  }
+  return sg.items || [];
+}
+
+// 단계 하나가 "끝났다" = 항목이 1개 이상 있고, 전부 체크됨
+function isStageComplete(stage){
+  return !!(stage.items && stage.items.length) && stage.items.every(it => it.done);
+}
+
+// 지금 보여줘야 할 단계의 인덱스. 앞에서부터 봐서 아직 안 끝난 첫 단계.
+// 전부 끝났으면(또는 단계가 없으면) -1
+function currentStageIndex(sg){
+  if (!Array.isArray(sg.stages)) return -1;
+  return sg.stages.findIndex(st => !isStageComplete(st));
 }
 
 function render(){
@@ -1063,7 +1154,7 @@ function render(){
 function renderProgress(){
   let total = 0, done = 0;
   state.subgoals.forEach(sg => {
-    sg.items.forEach(item => {
+    getSubgoalItems(sg).forEach(item => {
       total += itemTarget(item);
       done += itemCompletedUnits(item);
     });
@@ -1107,11 +1198,29 @@ function buildSubgoalCard(sg){
   head.appendChild(nameInput);
 
   let doneUnits = 0, totalUnits = 0;
-  sg.items.forEach(item => { totalUnits += itemTarget(item); doneUnits += itemCompletedUnits(item); });
+  getSubgoalItems(sg).forEach(item => { totalUnits += itemTarget(item); doneUnits += itemCompletedUnits(item); });
   const progLabel = document.createElement('span');
   progLabel.className = 'subgoal-progress-label';
   progLabel.textContent = doneUnits + '/' + totalUnits;
   head.appendChild(progLabel);
+
+  const typeChip = document.createElement('button');
+  typeChip.type = 'button';
+  typeChip.className = 'type-chip';
+  typeChip.textContent = sg.type === 'stage' ? '📖 단계형' : '🔁 습관형';
+  typeChip.title = '눌러서 습관 체크리스트 ↔ 단계별 진행으로 바꾸기';
+  typeChip.onclick = () => {
+    if (sg.type === 'stage'){
+      sg.type = 'checklist';
+    } else {
+      sg.type = 'stage';
+      if (!Array.isArray(sg.stages) || sg.stages.length === 0){
+        sg.stages = [{ id: uid(), title: '1단계', items: (sg.items && sg.items.length) ? sg.items : [] }];
+      }
+    }
+    queueSave(); render();
+  };
+  head.appendChild(typeChip);
 
   card.appendChild(head);
 
@@ -1124,83 +1233,137 @@ function buildSubgoalCard(sg){
   bar.appendChild(barFill);
   card.appendChild(bar);
 
-  card.appendChild(buildChecklist(sg));
+  if (sg.type === 'stage'){
+    card.appendChild(buildStagePanel(sg));
+  } else {
+    const list = document.createElement('ul');
+    list.className = 'checklist';
+    sg.items.forEach(item => list.appendChild(buildCheckItem(sg, 'items', item)));
+    card.appendChild(list);
+    card.appendChild(buildAddItemRow(sg.items));
+  }
 
   return card;
 }
 
-function buildChecklist(sg){
+// 단계형 작은 목표: 지금 단계만 보여주고, 다 체크하면 다음 단계로 넘어감
+function buildStagePanel(sg){
   const wrap = document.createElement('div');
-  wrap.className = 'checklist-group';
+  wrap.className = 'stage-wrap';
+  if (!Array.isArray(sg.stages)) sg.stages = [];
 
-  const doneItems = sg.items.filter(it => it.done);
-  const pendingItems = sg.items.filter(it => !it.done);
+  const curIdx = currentStageIndex(sg);
 
-  // 완료한 항목 — 기본은 접혀있고, 눌러야 펼쳐짐
-  if (doneItems.length){
-    const doneToggle = document.createElement('button');
-    doneToggle.type = 'button';
-    doneToggle.className = 'checklist-toggle';
-    const isOpen = expandedDone.has(sg.id);
-    doneToggle.textContent = (isOpen ? '완료한 항목 숨기기' : '완료한 항목 ' + doneItems.length + '개 보기');
-    doneToggle.onclick = () => {
-      if (expandedDone.has(sg.id)) expandedDone.delete(sg.id); else expandedDone.add(sg.id);
+  if (sg.stages.length){
+    const crumb = document.createElement('div');
+    crumb.className = 'stage-breadcrumb';
+    sg.stages.forEach((st, i) => {
+      const complete = isStageComplete(st);
+      const tag = document.createElement('span');
+      tag.className = 'stage-crumb' + (complete ? ' is-done' : '') + (i === curIdx ? ' is-current' : '');
+      tag.textContent = (i + 1) + '. ' + (st.title || '단계') + (complete ? ' ✓' : '');
+      crumb.appendChild(tag);
+      if (i < sg.stages.length - 1){
+        const arrow = document.createElement('span');
+        arrow.className = 'stage-crumb-arrow';
+        arrow.textContent = '→';
+        crumb.appendChild(arrow);
+      }
+    });
+    wrap.appendChild(crumb);
+  }
+
+  const prevStages = curIdx === -1 ? sg.stages : sg.stages.slice(0, curIdx);
+  if (prevStages.length){
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'checklist-toggle';
+    const isOpen = expandedPrevStages.has(sg.id);
+    toggle.textContent = isOpen ? '이전 단계 숨기기' : '이전 단계 ' + prevStages.length + '개 보기';
+    toggle.onclick = () => {
+      if (expandedPrevStages.has(sg.id)) expandedPrevStages.delete(sg.id); else expandedPrevStages.add(sg.id);
       render();
     };
-    wrap.appendChild(doneToggle);
+    wrap.appendChild(toggle);
     if (isOpen){
-      const doneList = document.createElement('ul');
-      doneList.className = 'checklist';
-      doneItems.forEach(item => doneList.appendChild(buildCheckItem(sg, item, 'done')));
-      wrap.appendChild(doneList);
+      prevStages.forEach(st => wrap.appendChild(buildStagePanelBlock(sg, st, false)));
     }
   }
 
-  // 지금 할 일 — 순서상 맨 앞의 미완료 항목 하나만 크게 보여줌
-  if (pendingItems.length){
-    const currentLabel = document.createElement('p');
-    currentLabel.className = 'current-label';
-    currentLabel.textContent = '👉 지금 할 일';
-    wrap.appendChild(currentLabel);
-
-    const currentList = document.createElement('ul');
-    currentList.className = 'checklist';
-    currentList.appendChild(buildCheckItem(sg, pendingItems[0], 'current'));
-    wrap.appendChild(currentList);
-
-    const upcoming = pendingItems.slice(1);
-    if (upcoming.length){
-      const upToggle = document.createElement('button');
-      upToggle.type = 'button';
-      upToggle.className = 'checklist-toggle';
-      const isOpen = expandedUpcoming.has(sg.id);
-      upToggle.textContent = (isOpen ? '다음 할 일 숨기기' : '다음 할 일 ' + upcoming.length + '개 더 보기');
-      upToggle.onclick = () => {
-        if (expandedUpcoming.has(sg.id)) expandedUpcoming.delete(sg.id); else expandedUpcoming.add(sg.id);
-        render();
-      };
-      wrap.appendChild(upToggle);
-      if (isOpen){
-        const upList = document.createElement('ul');
-        upList.className = 'checklist';
-        upcoming.forEach(item => upList.appendChild(buildCheckItem(sg, item, 'upcoming')));
-        wrap.appendChild(upList);
-      }
-    }
-  } else if (doneItems.length){
+  if (curIdx !== -1){
+    wrap.appendChild(buildStagePanelBlock(sg, sg.stages[curIdx], true));
+  } else if (sg.stages.length){
     const clear = document.createElement('p');
     clear.className = 'subgoal-clear';
-    clear.innerHTML = '<b>🎉 이 목표의 할 일을 다 끝냈어요!</b>';
+    clear.innerHTML = '<b>🎉 모든 단계를 완료했어요!</b> 이어서 할 다음 단계를 추가해보세요.';
     wrap.appendChild(clear);
   }
 
-  const addRow = buildAddItemRow(sg);
-  wrap.appendChild(addRow);
+  const addStageBtn = document.createElement('button');
+  addStageBtn.type = 'button';
+  addStageBtn.className = 'add-stage-btn';
+  addStageBtn.textContent = '+ 다음 단계 추가';
+  addStageBtn.onclick = () => {
+    sg.stages.push({ id: uid(), title: '', items: [] });
+    queueSave(); render();
+    requestAnimationFrame(() => {
+      const inputs = document.querySelectorAll('.stage-title-input[data-sg="' + sg.id + '"]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+  };
+  wrap.appendChild(addStageBtn);
 
   return wrap;
 }
 
-function buildAddItemRow(sg){
+// 단계형 패널 한 칸 (지금 단계 또는 이전 단계 하나)
+function buildStagePanelBlock(sg, stage, isCurrent){
+  const box = document.createElement('div');
+  box.className = 'stage-panel' + (isCurrent ? ' is-current' : ' is-prev');
+
+  const head = document.createElement('div');
+  head.className = 'stage-panel-head';
+
+  const label = document.createElement('span');
+  label.className = 'stage-panel-label';
+  label.textContent = isCurrent ? '👉 지금 단계' : '완료';
+  head.appendChild(label);
+
+  const titleInput = document.createElement('input');
+  titleInput.className = 'stage-title-input';
+  titleInput.setAttribute('data-sg', sg.id);
+  titleInput.value = stage.title;
+  titleInput.placeholder = '단계 이름 (예: 2과 관계대명사)';
+  titleInput.oninput = () => { stage.title = titleInput.value; queueSave(); };
+  titleInput.onblur = () => { render(); };
+  head.appendChild(titleInput);
+
+  const removeStageBtn = document.createElement('button');
+  removeStageBtn.className = 'check-remove';
+  removeStageBtn.style.opacity = '1';
+  removeStageBtn.textContent = '✕';
+  removeStageBtn.setAttribute('aria-label', '단계 삭제');
+  removeStageBtn.onclick = () => {
+    if (stage.items.length && !confirm('이 단계와 안의 체크리스트를 삭제할까요?')) return;
+    sg.stages = sg.stages.filter(s => s.id !== stage.id);
+    queueSave(); render();
+  };
+  head.appendChild(removeStageBtn);
+
+  box.appendChild(head);
+
+  const list = document.createElement('ul');
+  list.className = 'checklist';
+  stage.items.forEach(item => list.appendChild(buildCheckItem(stage, 'items', item)));
+  box.appendChild(list);
+
+  box.appendChild(buildAddItemRow(stage.items));
+
+  return box;
+}
+
+// 체크리스트 항목 추가 입력줄 (습관형의 sg.items, 단계형의 stage.items 양쪽에서 재사용)
+function buildAddItemRow(itemsArray){
   const addRow = document.createElement('div');
   addRow.className = 'add-item-row';
   const addInput = document.createElement('input');
@@ -1219,7 +1382,7 @@ function buildAddItemRow(sg){
     const val = addInput.value.trim();
     if (!val) return;
     const repeat = repeatSelect.value;
-    sg.items.push({
+    itemsArray.push({
       id: uid(), text: val, done: false,
       repeat, completedCount: 0,
       periodKey: repeat === 'none' ? null : currentPeriodKey(repeat)
@@ -1235,10 +1398,10 @@ function buildAddItemRow(sg){
   return addRow;
 }
 
-function buildCheckItem(sg, item, variant){
+function buildCheckItem(container, key, item){
   if (item.repeat === undefined) item.repeat = 'none';
   const li = document.createElement('li');
-  li.className = 'check-item' + (item.done ? ' done' : '') + (variant && variant !== 'done' ? ' ' + variant : '');
+  li.className = 'check-item' + (item.done ? ' done' : '');
 
   const box = document.createElement('div');
   box.className = 'check-box';
@@ -1282,7 +1445,7 @@ function buildCheckItem(sg, item, variant){
   remove.textContent = '✕';
   remove.setAttribute('aria-label', '항목 삭제');
   remove.onclick = () => {
-    sg.items = sg.items.filter(i => i.id !== item.id);
+    container[key] = container[key].filter(i => i.id !== item.id);
     queueSave(); render();
   };
   li.appendChild(remove);
