@@ -513,6 +513,63 @@
   }
   .add-stage-btn:hover{ color: var(--accent); border-color: var(--accent); }
 
+  /* ---------- 습관형: 택1 그룹 ---------- */
+
+  .group-card{
+    background: var(--paper-soft);
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 14px 16px 12px;
+    margin-bottom: 14px;
+  }
+  .group-card.is-met{ border: 1px solid var(--accent); }
+
+  .group-card-head{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .group-title-input{
+    flex: 1;
+    font-family: var(--font-hand);
+    font-size: 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed transparent;
+    outline: none;
+    color: var(--ink);
+  }
+  .group-title-input:focus{ border-bottom-color: var(--line); }
+  .group-title-input::placeholder{ color: var(--ink-soft); opacity: .7; }
+
+  .group-need-row{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  .group-need-input{
+    width: 46px;
+    text-align: center;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px 4px;
+    font-size: 12px;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+  }
+
+  .group-status{
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 6px 0 12px;
+  }
+  .group-card.is-met .group-status{ color: var(--accent); font-weight: 600; }
+
   .add-item-row{
     display: flex;
     align-items: center;
@@ -1050,12 +1107,14 @@ function currentPeriodKey(repeat){
 
 // 항목의 기간이 지났으면(날짜/주차가 바뀌었으면) 체크박스만 초기화.
 // completedCount는 이미 누적돼 있으므로 건드리지 않음 — 이게 핵심.
+// (택1 그룹인 경우, 체크해둔 선택지들도 함께 초기화됨)
 function rollIfNeeded(item){
   if (!item.repeat || item.repeat === 'none') return;
   const key = currentPeriodKey(item.repeat);
   if (item.periodKey !== key){
     item.periodKey = key;
     item.done = false;
+    if (item.kind === 'group') item.checkedIds = [];
   }
 }
 
@@ -1095,6 +1154,43 @@ function cycleRepeat(item){
   item.completedCount = 0;
   item.periodKey = next === 'none' ? null : currentPeriodKey(next);
   item.done = false;
+  if (item.kind === 'group') item.checkedIds = [];
+}
+
+/* ---------- 택1(선택) 그룹 ----------
+   여러 체크리스트 항목을 하나의 그룹으로 묶어두고,
+   그 중 "성공 기준"으로 정한 개수만큼만 체크해도
+   그 기간(하루/한주)엔 성공으로 쳐주는 기능.
+   group = {
+     kind: 'group', title, repeat, needCount,
+     options: [{id, text}], checkedIds: [optionId...],
+     completedCount, periodKey, done
+   }
+   (target/누적치 계산은 itemTarget/itemCompletedUnits를 그대로 재사용함)
+------------------------------------------- */
+
+function groupIsMet(group){
+  return (group.checkedIds || []).length >= (group.needCount || 1);
+}
+
+function toggleGroupOption(group, optId){
+  rollIfNeeded(group);
+  if (!Array.isArray(group.checkedIds)) group.checkedIds = [];
+  const wasMet = groupIsMet(group);
+  const idx = group.checkedIds.indexOf(optId);
+  if (idx === -1) group.checkedIds.push(optId); else group.checkedIds.splice(idx, 1);
+  const nowMet = groupIsMet(group);
+  if (!group.repeat || group.repeat === 'none'){
+    group.done = nowMet;
+    return;
+  }
+  if (nowMet && !wasMet){
+    group.done = true;
+    group.completedCount = (group.completedCount || 0) + 1;
+  } else if (!nowMet && wasMet){
+    group.done = false;
+    group.completedCount = Math.max(0, (group.completedCount || 0) - 1);
+  }
 }
 
 /* ---------- 렌더링 ---------- */
@@ -1245,11 +1341,37 @@ function buildSubgoalCard(sg){
   if (sg.type === 'stage'){
     card.appendChild(buildStagePanel(sg));
   } else {
+    if (!Array.isArray(sg.items)) sg.items = [];
+    const plainItems = sg.items.filter(e => e.kind !== 'group');
+    const groups = sg.items.filter(e => e.kind === 'group');
+
     const list = document.createElement('ul');
     list.className = 'checklist';
-    sg.items.forEach(item => list.appendChild(buildCheckItem(sg, 'items', item)));
+    plainItems.forEach(item => list.appendChild(buildCheckItem(sg, 'items', item)));
     card.appendChild(list);
+
+    groups.forEach(group => card.appendChild(buildGroupCard(sg, 'items', group)));
+
     card.appendChild(buildAddItemRow(sg.items));
+
+    const addGroupBtn = document.createElement('button');
+    addGroupBtn.type = 'button';
+    addGroupBtn.className = 'add-stage-btn';
+    addGroupBtn.textContent = '+ 택1 그룹 추가 (여러 개 중 일부만 해도 성공)';
+    addGroupBtn.onclick = () => {
+      const group = {
+        id: uid(), kind: 'group', title: '', repeat: 'daily',
+        needCount: 1, options: [], checkedIds: [],
+        completedCount: 0, periodKey: currentPeriodKey('daily')
+      };
+      sg.items.push(group);
+      queueSave(); render();
+      requestAnimationFrame(() => {
+        const inputs = document.querySelectorAll('.group-title-input[data-sg="' + sg.id + '"]');
+        if (inputs.length) inputs[inputs.length - 1].focus();
+      });
+    };
+    card.appendChild(addGroupBtn);
   }
 
   return card;
@@ -1406,6 +1528,142 @@ function buildAddItemRow(itemsArray){
   addRow.appendChild(repeatSelect);
   addRow.appendChild(addBtn);
   return addRow;
+}
+
+// 택1 그룹 카드 — 여러 선택지 중 "성공 기준" 개수만큼만 체크해도 성공 처리됨
+function buildGroupCard(sg, key, group){
+  const card = document.createElement('div');
+  card.className = 'group-card' + (group.done ? ' is-met' : '');
+
+  const head = document.createElement('div');
+  head.className = 'group-card-head';
+
+  const titleInput = document.createElement('input');
+  titleInput.className = 'group-title-input';
+  titleInput.setAttribute('data-sg', sg.id);
+  titleInput.value = group.title;
+  titleInput.placeholder = '이 중 일부만 해도 성공! (예: 오늘의 그림 연습)';
+  titleInput.oninput = () => { group.title = titleInput.value; queueSave(); };
+  head.appendChild(titleInput);
+
+  const repeatChip = document.createElement('button');
+  repeatChip.type = 'button';
+  repeatChip.className = 'repeat-chip' + (group.repeat === 'none' ? ' is-none' : '');
+  repeatChip.textContent = group.repeat === 'none'
+    ? '반복없음'
+    : REPEAT_LABELS[group.repeat] + ' · ' + itemCompletedUnits(group) + '/' + itemTarget(group);
+  repeatChip.title = '눌러서 반복 옵션 바꾸기 (매일 → 매주 → 없음 순서로 돌아가요)';
+  repeatChip.onclick = () => { cycleRepeat(group); queueSave(); render(); };
+  head.appendChild(repeatChip);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'check-remove';
+  removeBtn.style.opacity = '1';
+  removeBtn.textContent = '✕';
+  removeBtn.setAttribute('aria-label', '그룹 삭제');
+  removeBtn.onclick = () => {
+    sg.items = sg.items.filter(i => i.id !== group.id);
+    queueSave(); render();
+  };
+  head.appendChild(removeBtn);
+
+  card.appendChild(head);
+
+  const needRow = document.createElement('div');
+  needRow.className = 'group-need-row';
+  const needLabelBefore = document.createElement('span');
+  needLabelBefore.textContent = '성공 기준: 선택지 중';
+  needRow.appendChild(needLabelBefore);
+  const needInput = document.createElement('input');
+  needInput.type = 'number';
+  needInput.min = '1';
+  needInput.className = 'group-need-input';
+  needInput.value = group.needCount || 1;
+  needInput.oninput = () => {
+    let v = parseInt(needInput.value, 10);
+    if (!v || v < 1) v = 1;
+    group.needCount = v;
+    queueSave();
+  };
+  needInput.onblur = () => render();
+  needRow.appendChild(needInput);
+  const needLabelAfter = document.createElement('span');
+  needLabelAfter.textContent = '개 이상 체크하면 성공';
+  needRow.appendChild(needLabelAfter);
+  card.appendChild(needRow);
+
+  const optList = document.createElement('ul');
+  optList.className = 'checklist';
+  (group.options || []).forEach(opt => optList.appendChild(buildGroupOption(sg, group, opt)));
+  card.appendChild(optList);
+
+  const status = document.createElement('p');
+  status.className = 'group-status';
+  const checkedCount = (group.checkedIds || []).length;
+  status.textContent = group.done
+    ? ('✅ 이번 기간 성공! (' + checkedCount + '/' + (group.options || []).length + '개 체크됨)')
+    : (checkedCount + ' / ' + (group.needCount || 1) + ' 체크됨 — 조금만 더!');
+  card.appendChild(status);
+
+  const addOptRow = document.createElement('div');
+  addOptRow.className = 'add-item-row';
+  const addOptInput = document.createElement('input');
+  addOptInput.placeholder = '선택지 추가... (예: 크로키 10장)';
+  const addOptBtn = document.createElement('button');
+  addOptBtn.textContent = '추가';
+  const commitOpt = () => {
+    const val = addOptInput.value.trim();
+    if (!val) return;
+    if (!Array.isArray(group.options)) group.options = [];
+    group.options.push({ id: uid(), text: val });
+    addOptInput.value = '';
+    queueSave(); render();
+  };
+  addOptBtn.onclick = commitOpt;
+  addOptInput.onkeydown = (e) => { if (e.key === 'Enter'){ e.preventDefault(); commitOpt(); } };
+  addOptRow.appendChild(addOptInput);
+  addOptRow.appendChild(addOptBtn);
+  card.appendChild(addOptRow);
+
+  return card;
+}
+
+function buildGroupOption(sg, group, opt){
+  const isChecked = (group.checkedIds || []).includes(opt.id);
+  const li = document.createElement('li');
+  li.className = 'check-item' + (isChecked ? ' done' : '');
+
+  const box = document.createElement('div');
+  box.className = 'check-box';
+  box.setAttribute('role', 'checkbox');
+  box.setAttribute('aria-checked', isChecked ? 'true' : 'false');
+  box.tabIndex = 0;
+  box.innerHTML = '<svg viewBox="0 0 20 20"><path d="M4 10.5 L8.3 14.5 L16 5.5"/></svg>';
+  const toggle = () => { toggleGroupOption(group, opt.id); queueSave(); render(); };
+  box.onclick = toggle;
+  box.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); } };
+  li.appendChild(box);
+
+  const text = document.createElement('div');
+  text.className = 'check-text';
+  text.contentEditable = 'true';
+  text.textContent = opt.text;
+  text.oninput = () => { opt.text = text.textContent; };
+  text.onblur = () => { queueSave(); };
+  li.appendChild(text);
+
+  const remove = document.createElement('button');
+  remove.className = 'check-remove';
+  remove.textContent = '✕';
+  remove.setAttribute('aria-label', '선택지 삭제');
+  remove.onclick = () => {
+    group.options = group.options.filter(o => o.id !== opt.id);
+    group.checkedIds = (group.checkedIds || []).filter(id => id !== opt.id);
+    queueSave(); render();
+  };
+  li.appendChild(remove);
+
+  return li;
 }
 
 function buildCheckItem(container, key, item){
