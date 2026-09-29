@@ -125,7 +125,7 @@ body{opacity:0;transition:opacity .25s ease}
 .diary-save-hint{font-size:10.5px;color:#777;text-shadow:0 1px 2px rgba(255,255,255,.6)}
 .diary-save-btn{padding:6px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit}
 /* 앱 레이아웃 */
-.app{display:grid;grid-template-columns:1fr 450px;align-items:start;gap:16px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;width:100%;max-width:1370px;box-shadow:none}
+.app{display:grid;grid-template-columns:1fr 450px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;width:100%;max-width:1370px;box-shadow:none}
 
 /* 노트 버튼 */
 .note-buttons{position:fixed;top:0;display:flex;flex-direction:column;gap:10px;z-index:40}
@@ -8384,15 +8384,10 @@ window.showLayoutTip=function(){
 
 // 노트 버튼 위치 — 메인창 오른쪽 끝 + 100px
 function positionNoteButtons(){
-  const app=document.getElementById('mainApp');
-  const btns=document.querySelector('.note-buttons');
-  if(!app||!btns)return;
-  const rect=app.getBoundingClientRect();
-  btns.style.left=(rect.right+16)+'px';
-  btns.style.top=rect.top+'px';
-  btns.style.transform='none';
+  // (기존 독자적 위치 계산 로직은 제거됨 — 이제 positionMissionTracker() 안에서
+  // note-buttons 위치까지 함께, 한 번에 계산해서 서로 충돌 없이 일관되게 배치함)
+  if(window.positionMissionTracker)positionMissionTracker();
 }
-window.addEventListener('resize',positionNoteButtons);
 
 // ══════════════════════════════════════════
 //  미션 트래커
@@ -8682,7 +8677,8 @@ function positionMissionTracker(){
 
   const gap=20;
   const desiredW=200; // 왼쪽 이미지 패널 목표 너비
-  const rightReserve=345; // 오른쪽 고정 요소(D-day 사이드바 215px + 링크버튼 68px + 그 사이/끝 간격들)를 위해 남겨둘 공간
+  const rightReserve=343; // 오른쪽 고정 요소들 사이 간격을 왼쪽(gap=20)과 전부 똑같이 20px로 맞추기 위한 계산값
+    // = 달력쪽↔D-day 간격(20) + D-day 사이드바(215) + D-day↔링크버튼 간격(20) + 링크버튼(68) + 링크버튼↔화면끝 간격(20)
   const minAppWidth=900; // 달력/일정 2칸이 이 폭 아래로는 너무 좁아지지 않게 하는 최소값
   const bodyPad=16; // body의 좌우 padding
 
