@@ -50,7 +50,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 button,input,textarea,select{font-family:inherit}
 [contenteditable],[spellcheck]{-webkit-spell-check:none;spell-check:none}
-body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);display:flex;flex-direction:column;align-items:center;padding:16px 16px 80px 16px;min-height:100vh;gap:10px}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);display:flex;flex-direction:column;align-items:center;padding:16px 343px 80px 16px;min-height:100vh;gap:10px}
 
 /* 초기 로딩 — 깜빡임 방지 */
 #loginWrap,#mainApp,#savingIndicator{display:none}
@@ -125,10 +125,10 @@ body{opacity:0;transition:opacity .25s ease}
 .diary-save-hint{font-size:10.5px;color:#777;text-shadow:0 1px 2px rgba(255,255,255,.6)}
 .diary-save-btn{padding:6px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit}
 /* 앱 레이아웃 */
-.app{display:grid;grid-template-columns:1fr 450px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;width:100%;max-width:1370px;box-shadow:none}
+.app{display:grid;grid-template-columns:1fr 450px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;width:100%;min-width:900px;max-width:1370px;box-shadow:none}
 
 /* 노트 버튼 */
-.note-buttons{position:fixed;top:0;display:flex;flex-direction:column;gap:10px;z-index:40}
+.note-buttons{position:fixed;top:16px;display:flex;flex-direction:column;gap:10px;z-index:40}
 .note-btn{width:68px;height:68px;background:#fff;border:1.5px solid #1558CC;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:12px;font-weight:600;color:#1558CC;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:6px}
 .note-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 13%,transparent)}
 .note-btn:active{transform:scale(.97)}
@@ -137,14 +137,9 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* ── 왼쪽 세로 이미지 패널 (구 미션 트래커 자리) ── */
 #missionTracker{
-  position:fixed;z-index:40;
-  display:none;flex-direction:column;gap:0;
-  width:95px;
-  background:var(--page-bg);
-  box-shadow:0 4px 18px #0000001a; /* filter(drop-shadow)였으나, filter가 걸린 조상 안에서는
-    overflow:hidden으로 가려둔 확대된 이미지의 클릭 판정이 프레임 밖으로 새는 문제가 있어 box-shadow로 교체 */
+  display:none!important; /* 왼쪽 캐릭터 이미지 패널 기능 자체를 없앰 — 대신 배경 이미지 기능을 사용 */
 }
-#missionTracker.visible{display:flex}
+#missionTracker.visible{display:none!important}
 /* 세로로 긴 이미지 박스 (플래너28 상단 배너를 세로형으로 응용) - 너비/높이는 JS가 남는 공간에 맞춰 채움 */
 .mt-char-wrap{
   position:relative;width:100%;height:900px;
@@ -642,7 +637,7 @@ body{opacity:0;transition:opacity .25s ease}
 #mealPlanNote:empty:before{content:attr(data-ph);color:#ccc;pointer-events:none}
 
 /* 왼쪽 */
-.left{display:flex;flex-direction:row;align-items:stretch;min-width:0;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;overflow:hidden;min-height:calc(100vh - 230px)}
+.left{display:flex;flex-direction:row;align-items:stretch;min-width:0;background:var(--cal-bg,var(--app-bg,#fff));border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;overflow:hidden;min-height:calc(100vh - 230px)}
 .left-inner{flex:1;display:flex;flex-direction:column;min-width:0}
 /* 달력 오른쪽 벽 — 탭별 독립 달력 스트립 */
 .cal-board-strip{width:34px;flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:10px 0;background:transparent;overflow-y:auto}
@@ -1073,7 +1068,7 @@ body{opacity:0;transition:opacity .25s ease}
 .day-cell-anniv{font-size:9px;color:var(--accent);text-align:center;line-height:1.2;word-break:keep-all}
 
 /* 디데이 */
-.dday-sidebar{position:fixed;right:108px;top:0;width:215px;height:100vh;z-index:35;display:flex;flex-direction:column;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;padding:.85rem .75rem;gap:2px;overflow-y:auto}
+.dday-sidebar{position:fixed;right:108px;top:16px;width:215px;height:calc(100vh - 32px);z-index:35;display:flex;flex-direction:column;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;padding:.85rem .75rem;gap:2px;overflow-y:auto}
 .dday-header-row{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;margin-bottom:4px;border-bottom:0.5px solid #eee}
 .dday-header{font-size:14px;font-weight:700;color:#222}
 .dday-add-circle{width:22px;height:22px;border-radius:50%;background:var(--accent-light,#eef3fc);color:var(--accent,#4472B8);display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;cursor:pointer;border:none;font-family:inherit;flex-shrink:0}
@@ -2110,6 +2105,10 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <span class="color-hex" id="hex-appbg">#ffffff</span>
         <input type="color" id="inp-appbg" oninput="onCustomColor('appbg',this.value)"/>
       </div>
+    </div>
+    <div class="font-scale-row">
+      <span class="font-scale-label-txt">🔲 달력 칸 투명도</span>
+      <input type="range" id="calBgAlphaSlider" min="20" max="100" step="5" value="100" oninput="onCalBgAlphaInput(this.value)"/>
     </div>
     <div class="color-row">
       <span class="color-label">🖊️ 메인 폰트 색</span>
@@ -7713,6 +7712,7 @@ function applyTheme(){
   root.style.setProperty('--accent-contrast',isColorDark(t.accent)?'#fff':'#1a1a1a');
   root.style.setProperty('--accent-light',t.accentLight);
   root.style.setProperty('--app-bg',t.appbg);
+  root.style.setProperty('--cal-bg',hexToRgba(t.appbg,(t.calBgAlpha??1)));
   root.style.setProperty('--page-bg',t.pagebg);
   root.style.setProperty('--text-main',t.text);
   root.style.setProperty('--nav-bg', t.navbg||t.appbg);
@@ -7812,6 +7812,8 @@ function updatePanelPreviews(){
   const navbgInp=document.getElementById('inp-navbg');if(navbgInp)navbgInp.value=t.navbg||t.appbg;
   const navtextInp=document.getElementById('inp-navtext');if(navtextInp)navtextInp.value=t.navtext||t.text;
   const bcInp=document.getElementById('inp-bordercol');if(bcInp)bcInp.value=t.bordercol||'#dddddd';
+  const calAlphaSlider=document.getElementById('calBgAlphaSlider');
+  if(calAlphaSlider)calAlphaSlider.value=Math.round((t.calBgAlpha??1)*100);
   const pInp=document.getElementById('inp-pattern');
   if(pInp)pInp.value=patternColor;
   const fsSlider=document.getElementById('fontScaleSlider');
@@ -8289,6 +8291,11 @@ window.onFontScaleInput=function(val){
   localStorage.setItem('planner_font_scale',String(scale));
   if(window.queueSaveAppearance)window.queueSaveAppearance();
 };
+window.onCalBgAlphaInput=function(val){
+  currentTheme.calBgAlpha=parseInt(val,10)/100;
+  applyTheme();
+  saveTheme();
+};
 window.resetTheme=function(){
   currentTheme={...THEMES[0]};currentPattern='none';currentFont='system';patternColor='#000000';
   applyTheme();applyPattern('none');applyFont('system');applyFontScale(1);
@@ -8669,52 +8676,12 @@ async function saveMtCharPos(){
 }
 
 function positionMissionTracker(){
-  const app=document.getElementById('mainApp');
+  // 왼쪽 캐릭터 이미지 패널 기능은 없앴고, 오른쪽 D-day 사이드바/링크버튼 위치도
+  // 이제 전부 고정된 CSS 값(body padding + position:fixed)만으로 처리해서
+  // 창 크기가 바뀌어도 서로 다른 계산이 충돌할 일이 없음. 이 함수는 안전을 위해
+  // missionTracker가 혹시라도 보이지 않게만 확인해준다.
   const tracker=document.getElementById('missionTracker');
-  const wrap=document.getElementById('mtCharWrap');
-  const btns=document.querySelector('.note-buttons');
-  if(!app||!tracker)return;
-
-  const gap=20;
-  const desiredW=200; // 왼쪽 이미지 패널 목표 너비
-  const rightReserve=343; // 오른쪽 고정 요소들 사이 간격을 왼쪽(gap=20)과 전부 똑같이 20px로 맞추기 위한 계산값
-    // = 달력쪽↔D-day 간격(20) + D-day 사이드바(215) + D-day↔링크버튼 간격(20) + 링크버튼(68) + 링크버튼↔화면끝 간격(20)
-  const minAppWidth=900; // 달력/일정 2칸이 이 폭 아래로는 너무 좁아지지 않게 하는 최소값
-  const bodyPad=16; // body의 좌우 padding
-
-  // body가 flex+align-items:center로 가운데 정렬을 하기 때문에, marginLeft를 줘도 절반만 반영되고
-  // 오른쪽으로는 아예 밀어낼 방법이 없어서 오른쪽 고정 요소와 계속 겹쳤음.
-  // → align-self:flex-start로 가운데 정렬에서 완전히 빠져나와서, 왼쪽 끝 위치를 직접 확정지음.
-  app.style.alignSelf='flex-start';
-
-  const leftEdge=desiredW+gap; // 화면(뷰포트) 맨 왼쪽부터 여기까지는 이미지 패널 몫
-  const availWidth=window.innerWidth-leftEdge-rightReserve;
-  const appWidth=Math.max(minAppWidth,Math.min(availWidth,1370));
-
-  app.style.maxWidth=appWidth+'px';
-  app.style.marginLeft=Math.max(0,leftEdge-bodyPad)+'px'; // body 좌측 padding만큼 빼서 뷰포트 기준 leftEdge에 맞춤
-  let rect=app.getBoundingClientRect();
-
-  // 트래커 너비: 화면 맨 왼쪽부터 달력 카드 앞(gap)까지 남는 공간을 꽉 채움
-  const trackerW=Math.min(desiredW,Math.max(0, rect.left-gap));
-  tracker.style.width=trackerW+'px';
-  tracker.style.left='0px';
-  // 위쪽도 화면 맨 위에 딱 닿게
-  tracker.style.top='0px';
-
-  // 이미지 박스 높이: 화면 위~아래 끝까지 꽉 채움 (상하좌 모두 화면 끝에 닿도록)
-  if(wrap){
-    wrap.style.height=Math.max(rect.height, window.innerHeight)+'px';
-  }
-  if(window.applyMtCharTransform)window.applyMtCharTransform();
-
-  // 노트 버튼(외부 링크 모음): 화면 맨 오른쪽 끝에 고정, D-day 사이드바는 그 왼쪽에 간격을 두고 배치
-  if(btns){
-    btns.style.left='auto';
-    btns.style.right='20px';
-    btns.style.top = rect.top + 'px';
-    btns.style.transform = 'none';
-  }
+  if(tracker)tracker.style.display='none';
 }
 window.addEventListener('resize',positionMissionTracker);
 window.addEventListener('load',positionMissionTracker);
