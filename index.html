@@ -650,8 +650,8 @@ body{opacity:0;transition:opacity .25s ease}
 .cal-board-tab-add{width:22px;height:22px;min-height:22px;border-radius:50%;background:transparent;border:1px solid #ddd;color:#aaa;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;margin:4px auto 0;align-self:center}
 .cal-board-tab-add:hover{background:var(--accent-light);color:var(--accent)}
 /* 탭별 독립 달력 — 일정이 칸을 가득 채우도록 강조 표시 */
-.board-cal-wrap{padding:.75rem 1rem 1rem;background:var(--app-bg,#fff)}
-.board-day-cell{height:112px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--app-bg,#fff);padding:3px}
+.board-cal-wrap{padding:.75rem 1rem 1rem;background:var(--cal-bg,var(--app-bg,#fff))}
+.board-day-cell{height:112px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--cal-bg,var(--app-bg,#fff));padding:3px}
 .board-day-cell.other{opacity:.4;cursor:default}
 .board-day-cell:hover{border-color:var(--accent)}
 .board-day-cell.selected{border-color:var(--accent)}
@@ -666,7 +666,7 @@ body{opacity:0;transition:opacity .25s ease}
 .mind-bar{background:var(--accent,#4472B8);color:#fff;border-radius:12px;padding:11px 16px;font-size:13px;line-height:1.5;margin:1rem 1rem 0;outline:none;cursor:text;position:relative;z-index:45}
 .mind-bar:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.75)}
 /* 일정 카테고리 범례 */
-.legend{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:.75rem 1rem .6rem;position:relative;z-index:45;background:var(--app-bg,#fff)}
+.legend{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:.75rem 1rem .6rem;position:relative;z-index:45;background:var(--cal-bg,var(--app-bg,#fff))}
 .legend-item{display:flex;align-items:center;gap:4px;font-size:9px;color:#666}
 .legend-swatch{width:9px;height:9px;min-width:9px;border-radius:50%;cursor:pointer;border:1px solid #00000014;flex:0 0 9px}
 .legend-label{outline:none;border-bottom:1px dashed transparent;cursor:text;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -688,7 +688,7 @@ body{opacity:0;transition:opacity .25s ease}
 .ev-cat-dot{width:7px;height:7px;min-width:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
 .cat-select{flex-shrink:0;max-width:88px;border:0.5px solid #e4e4e4;border-radius:20px;padding:8px 8px;font-size:12px;color:#888;background:#fafafa;outline:none;font-family:inherit;cursor:pointer}
 .cat-select:focus{border-color:var(--accent,#7ec8e3)}
-.top-nav{display:flex;align-items:center;gap:10px;padding:.7rem 1rem;border-bottom:0.5px solid #eee;flex-shrink:0;position:relative;z-index:45;background:var(--app-bg,#fff)}
+.top-nav{display:flex;align-items:center;gap:10px;padding:.7rem 1rem;border-bottom:0.5px solid #eee;flex-shrink:0;position:relative;z-index:45;background:var(--cal-bg,var(--app-bg,#fff))}
 .nav-btn{background:none;border:0.5px solid #e2e2e2;cursor:pointer;color:#888;width:26px;height:26px;border-radius:50%;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
 .nav-btn:hover{background:#f5f5f5}
 .today-btn{padding:5px 14px;border-radius:20px;border:0.5px solid #ddd;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#666;flex-shrink:0}
@@ -714,13 +714,13 @@ body{opacity:0;transition:opacity .25s ease}
 .left-view{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column}
 
 /* 일정 달력 */
-.cal-wrap{padding:.75rem 1rem 1rem;background:var(--app-bg,#fff)}
+.cal-wrap{padding:.75rem 1rem 1rem;background:var(--cal-bg,var(--app-bg,#fff))}
 .dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px}
 .dow{text-align:center;font-size:13.5px;font-weight:700;color:var(--accent,#666);padding:6px 0}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 
 /* 날짜 칸 2배 높이 */
-.day-cell{height:112px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--app-bg,#fff)}
+.day-cell{height:112px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--cal-bg,var(--app-bg,#fff))}
 .dn{color:#b8b8b8;font-weight:500;text-shadow:0 0 3px #fff,0 0 3px #fff}
 .day-cell-events{display:flex;flex-direction:column;gap:1px;width:100%;align-items:stretch;margin-top:2px;overflow:hidden}
 .day-cell-ev{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0;cursor:grab}
@@ -733,8 +733,8 @@ body{opacity:0;transition:opacity .25s ease}
 .dot{width:4px;height:4px;border-radius:50%;background:var(--accent)}
 
 /* 가계부 달력 — 금액 표시 */
-.money-cal-wrap{padding:.65rem .85rem;background:var(--app-bg,#fff)}
-.money-day-cell{min-height:110px;min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative;overflow:hidden;background:var(--app-bg,#fff)}
+.money-cal-wrap{padding:.65rem .85rem;background:var(--cal-bg,var(--app-bg,#fff))}
+.money-day-cell{min-height:110px;min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative;overflow:hidden;background:var(--cal-bg,var(--app-bg,#fff))}
 .money-day-cell:hover{background:#fff8f5}
 .money-day-cell.other{color:#ccc}
 .money-day-cell.today .mdn{background:var(--accent);color:var(--accent-contrast,#fff)!important;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px}
@@ -748,7 +748,7 @@ body{opacity:0;transition:opacity .25s ease}
 .money-day-memo-text{font-size:10px;color:#8a7a4a;line-height:1.3;background:#F5EFD9;border-radius:4px;padding:1px 4px;margin-top:1px;max-width:100%;width:100%;box-sizing:border-box;overflow:hidden;white-space:normal;word-break:break-all;overflow-wrap:break-word}
 .money-day-memo-text.pending{color:#B8611A;font-weight:700;background:#FFE7BD}
 
-.meal-cal-wrap{padding:.65rem .85rem;background:var(--app-bg,#fff)}
+.meal-cal-wrap{padding:.65rem .85rem;background:var(--cal-bg,var(--app-bg,#fff))}
 .meal-day-cell{min-height:110px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden}
 .meal-day-cell:hover{background:#f5fbf5}
 .meal-day-cell.other{color:#ccc}
