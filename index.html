@@ -3544,8 +3544,11 @@ async function loadAllData(){
   moneyData={};mnS.forEach(d=>{moneyData[d.id]=d.data().items||[];});
   mealData={};mlS.forEach(d=>{mealData[d.id]=d.data();});
   memos=[];moS.forEach(d=>{memos.push({id:d.id,...d.data()});});
+  // order가 없는(한 번도 드래그로 안 옮겨본) 메모가 섞여 있으면, 비교 기준이 메모 쌍마다 달라져서
+  // (어떤 쌍은 order로, 어떤 쌍은 createdAt으로) 정렬이 뒤틀리는 문제가 있었음 → 기준 하나로 통일
   memos.sort((a,b)=>{
-    if(a.order!=null&&b.order!=null)return a.order-b.order;
+    const ao=a.order??Infinity,bo=b.order??Infinity;
+    if(ao!==bo)return ao-bo;
     return (b.createdAt||0)-(a.createdAt||0);
   });
   noSpendData={};nsS.forEach(d=>{noSpendData[d.id]=d.data().done||false;});
@@ -7590,8 +7593,12 @@ window.confirmMemo=async function(){
     m.title=title;m.category=category;m.body=body;m.folderId=folderId;
     await saveData('memos',editingMemoId,{title,category,body,folderId,createdAt:m.createdAt||Date.now()});
   } else {
-    const id='m_'+Date.now();memos.unshift({id,title,category,body,folderId,createdAt:Date.now()});
-    await saveData('memos',id,{title,category,body,folderId,createdAt:Date.now()});
+    // order 없는 메모가 섞이는 걸 막기 위해, 새 메모도 처음부터 그 폴더(또는 전체) 맨 앞에 오도록 order를 명시적으로 부여
+    const sameGroup=memos.filter(m=>(m.folderId||null)===(folderId||null));
+    const minOrder=sameGroup.reduce((min,m)=>m.order!=null?Math.min(min,m.order):min,0);
+    const order=minOrder-1;
+    const id='m_'+Date.now();memos.unshift({id,title,category,body,folderId,createdAt:Date.now(),order});
+    await saveData('memos',id,{title,category,body,folderId,createdAt:Date.now(),order});
   }
   closeModal('memoModal');renderMemos();renderFolders();
 };
