@@ -125,12 +125,12 @@ body{opacity:0;transition:opacity .25s ease}
 .diary-save-hint{font-size:10.5px;color:#777;text-shadow:0 1px 2px rgba(255,255,255,.6)}
 .diary-save-btn{padding:6px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit}
 /* 앱 레이아웃 */
-.app{display:grid;grid-template-columns:900px 450px 215px 82px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;box-shadow:none}
+.app{display:grid;grid-template-columns:900px 450px 215px 64px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;box-shadow:none}
 
 /* 노트 버튼 */
 .note-buttons{display:flex;flex-direction:column;gap:10px;z-index:1}
-.note-btn{width:80px;height:80px;background:#fff;border:1.5px solid #1558CC;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:13px;font-weight:600;color:#1558CC;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:7px}
-.note-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 13%,transparent)}
+.note-btn{width:64px;height:64px;background:var(--accent,#1558CC);border:1.5px solid var(--accent,#1558CC);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:11.5px;font-weight:600;color:#fff;text-align:center;line-height:1.3;text-decoration:none;transition:all .15s;user-select:none;padding:5px}
+.note-btn:hover{filter:brightness(1.08);box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent);transform:translateY(-1px)}
 .note-btn:active{transform:scale(.97)}
 .note-btn-secondary{border-color:#b8e0c4;color:#2d7a4f}
 .note-btn-secondary:hover{background:#e8f5ed;border-color:#2d7a4f;color:#2d7a4f;box-shadow:0 4px 12px #2d7a4f20}
@@ -1670,20 +1670,20 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <div class="real-cash-box" id="realCashBox">
           <div class="real-cash-top">
             <span class="real-cash-label">💵 현실 잔돈</span>
-            <span class="real-cash-info" title="현금성 흐름만 반영: 이번 달 수입 − 이번 달 현금 지출 − 아직 안 지난 현금성 고정비(적금·보험비 등) − 아직 결제 안 된 카드값(사용일~결제일 기준 실제 카드 지출 합계).">ⓘ</span>
+            <span class="real-cash-info" title="이번 달로 한정하지 않고 전체 기간 기준이에요. 보유 자금 = (지금까지 전체 수입) − (지금까지 현금으로 나간 지출). 카드로 긁은 개별 내역은 결제일 전까지는 안 빼고, 등록해두신 카드의 다음 결제일에 그때까지 쓴 카드 지출 합계를 한 번에 반영해요.">ⓘ</span>
           </div>
           <div class="real-cash-row">
-            <span>지금까지 현금 흐름</span>
+            <span>지금 보유 자금</span>
             <span id="realCashNow">0원</span>
           </div>
           <div class="real-cash-row">
-            <span>남은 현금성 고정비·카드값</span>
+            <span>앞으로 나갈 돈(고정비+카드값)</span>
             <span id="realCashUpcoming">-0원</span>
           </div>
           <div class="real-cash-upcoming-list" id="realCashUpcomingList"></div>
           <div class="real-cash-divider"></div>
           <div class="real-cash-row result">
-            <span>이번 달 말 예상 잔액</span>
+            <span>예정된 지출 다 치르면 남는 돈</span>
             <span id="realCashResult">0원</span>
           </div>
           <div class="real-cash-daily" id="realCashDaily"></div>
@@ -2358,12 +2358,13 @@ body.memo-edit-on .memo-text-handle{display:flex}
     </div>
     <div class="tag-chips" id="mn-tags"></div>
     <div class="paymethod-row" id="mn-paymethod-row">
-      <select id="mn-paymethod">
+      <select id="mn-paymethod" onchange="onMoneyPayMethodChange('mn')">
         <option value="card">💳 카드</option>
         <option value="cash">💵 현금</option>
       </select>
       <label class="saving-check-label"><input type="checkbox" id="mn-saving"/> 💰 저축으로 표시</label>
     </div>
+    <select id="mn-cardid" style="display:none;width:100%;margin-top:6px"></select>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('moneyModal')">취소</button>
       <button class="mbtn ok" onclick="confirmMoney()">추가</button>
@@ -2388,12 +2389,13 @@ body.memo-edit-on .memo-text-handle{display:flex}
     </div>
     <div class="tag-chips" id="mne-tags"></div>
     <div class="paymethod-row" id="mne-paymethod-row">
-      <select id="mne-paymethod">
+      <select id="mne-paymethod" onchange="onMoneyPayMethodChange('mne')">
         <option value="card">💳 카드</option>
         <option value="cash">💵 현금</option>
       </select>
       <label class="saving-check-label"><input type="checkbox" id="mne-saving"/> 💰 저축으로 표시</label>
     </div>
+    <select id="mne-cardid" style="display:none;width:100%;margin-top:6px"></select>
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeModal('moneyEditModal')">취소</button>
       <button class="mbtn ok" onclick="confirmMoneyEdit()">저장</button>
@@ -4906,12 +4908,12 @@ function catChipStyle(catId){
   const textColor=isColorDark(cat.color)?'#fff':'#222';
   return `background:${cat.color};color:${textColor};`;
 }
-const DAY_END_HOUR=3; // 하루 기준: 아침에 시작해서 다음날 새벽 3시까지
+const DAY_END_HOUR=8; // 하루 기준: 아침에 시작해서 다음날 아침 8시까지
 function evDateTime(time){
   const m=time.match(/^(\d{2}):(\d{2})$/);if(!m)return null;
   const h=parseInt(m[1],10),mi=parseInt(m[2],10);
   const t=new Date(selDate);
-  if(h<DAY_END_HOUR)t.setDate(t.getDate()+1); // 새벽 0~2시대는 그날의 "밤 늦은 시간"이라 다음날 새벽으로 취급
+  if(h<DAY_END_HOUR)t.setDate(t.getDate()+1); // 새벽 0~7시대는 그날의 "밤 늦은 시간"이라 다음날 아침으로 취급
   t.setHours(h,mi,0,0);
   return t;
 }
@@ -6031,7 +6033,8 @@ function renderMoney(){
     const row=document.createElement('div');row.className='money-row';
     const amt=item.type==='out'?-item.amount:item.amount;total+=amt;
     const tagBadge=item.tag?`<span style="font-size:10px;background:#f0f0f0;color:#888;padding:1px 6px;border-radius:8px;margin-right:4px">${item.tag}</span>`:'';
-    const pmBadge=(item.type==='out'&&item.payMethod)?`<span class="pm-badge ${item.payMethod}">${item.payMethod==='card'?'💳 카드':'💵 현금'}</span>`:'';
+    const cardLabel=item.payMethod==='card'&&item.cardId?(getRegisteredCards().find(c=>c.id===item.cardId)?.name||'카드'):'카드';
+    const pmBadge=(item.type==='out'&&item.payMethod)?`<span class="pm-badge ${item.payMethod}">${item.payMethod==='card'?'💳 '+escapeHtml(cardLabel):'💵 현금'}</span>`:'';
     const savingBadge=(item.type==='out'&&item.isSaving)?`<span class="saving-badge">💰 저축</span>`:'';
     row.innerHTML=`
       <span class="money-cat" style="cursor:pointer;flex:1" onclick="openMoneyEditModal('${key}',${idx})">${item.name}${tagBadge}${pmBadge}${savingBadge}</span>
@@ -6055,38 +6058,86 @@ function renderMoney(){
 }
 // 현실 잔돈: 이번 달 수입 - 이번 달 현금 지출 - 아직 안 지난 현금성 고정비(카드값 결제일 포함)
 // 카드 사용 마감일(U)/결제일(P) 기준으로, refDate가 속한 "이번 달 결제"가 커버하는 사용기간[시작,끝]과 결제일을 계산
+// y, m(0-indexed)의 실제 마지막 날짜를 구해서 day를 그 안으로 맞춤 (31일=말일로 등록해도 2월·30일짜리 달에서 안 밀리게)
+function clampDayInMonth(y,m,day){
+  const last=new Date(y,m+1,0).getDate();
+  return new Date(y,m,Math.min(day,last));
+}
+function startOfDay(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+// 카드 사용 마감일(U)/결제일(P) 기준, refDate가 속한 달의 결제가 커버하는 사용기간[시작,끝]과 결제일을 계산 (말일 안전 처리)
 function getCardCycle(usageDay,payDay,refDate){
   const U=parseInt(usageDay),P=parseInt(payDay);
   if(!U||!P)return null;
   const y=refDate.getFullYear(),m=refDate.getMonth();
   // 결제일(P)이 사용마감일(U)보다 크면 같은 달 마감분을 같은 달에 결제, 아니면 전달 마감분을 이번 달에 결제
-  const cutoffDate=P>U?new Date(y,m,U):new Date(y,m-1,U);
-  const payDate=new Date(y,m,P);
+  const cutoffDate=P>U?clampDayInMonth(y,m,U):clampDayInMonth(y,m-1,U);
+  const payDate=clampDayInMonth(y,m,P);
   const cycleStart=new Date(cutoffDate.getFullYear(),cutoffDate.getMonth(),cutoffDate.getDate()+1);
   return {payDate,cycleStart,cycleEnd:cutoffDate};
 }
-// 특정 기간(포함) 동안 "카드"로 결제수단 찍어둔 지출의 합계
-function sumCardSpend(cycleStart,cycleEnd){
+// 특정 기간(포함) 동안 특정 카드(cardId)로 찍어둔 지출의 합계
+// cardId가 없는 옛날 내역(카드 구분 기능 생기기 전)은, 등록된 카드가 1개뿐일 때만 그 카드 몫으로 쳐줌
+function sumCardSpend(cycleStart,cycleEnd,cardId){
   let sum=0;
+  const onlyCard=getRegisteredCards().length<=1;
   const cur=new Date(cycleStart.getFullYear(),cycleStart.getMonth(),cycleStart.getDate());
   while(cur<=cycleEnd){
     const key=fmt(cur);
     (moneyData[key]||[]).forEach(it=>{
-      if(it.type==='out'&&it.payMethod==='card')sum+=it.amount;
+      if(it.type!=='out'||it.payMethod!=='card')return;
+      if(it.cardId){
+        if(it.cardId===cardId)sum+=it.amount;
+      }else if(onlyCard){
+        sum+=it.amount;
+      }
     });
     cur.setDate(cur.getDate()+1);
   }
   return sum;
 }
+// 일반 고정비(현금)의 "다음 결제일"(오늘 포함, 이번 주기가 지났으면 다음 주기)을 계산
+function getNextFixedPayment(row,now){
+  const d=parseInt(row.day);
+  const amt=parseAmount(row.amount);
+  if(!d||!amt)return null;
+  const today0=startOfDay(now);
+  if(row.cycle==='yearly'){
+    const rm=(parseInt(row.month)||1)-1;
+    let y=now.getFullYear();
+    let date=clampDayInMonth(y,rm,d);
+    if(date<today0)date=clampDayInMonth(y+1,rm,d);
+    return {date,name:row.name||'고정비',amount:amt};
+  }
+  let y=now.getFullYear(),m=now.getMonth();
+  let date=clampDayInMonth(y,m,d);
+  if(date<today0){
+    m+=1;if(m>11){m=0;y+=1;}
+    date=clampDayInMonth(y,m,d);
+  }
+  return {date,name:row.name||'고정비',amount:amt};
+}
+// 카드값의 "다음 결제일"과 그때까지 실제로 쓴 카드 지출 합계(진행 중인 사이클이면 지금까지 쓴 만큼만)
+function getNextCardPayment(row,now){
+  const today0=startOfDay(now);
+  let cyc=getCardCycle(row.usageDay,row.payDay,now);
+  if(!cyc)return null;
+  if(cyc.payDate<today0){
+    const nextRef=new Date(now.getFullYear(),now.getMonth()+1,1);
+    cyc=getCardCycle(row.usageDay,row.payDay,nextRef);
+    if(!cyc)return null;
+  }
+  const amt=sumCardSpend(cyc.cycleStart,cyc.cycleEnd,row.id);
+  if(amt<=0)return null; // 이번 사이클에 쓴 게 없으면 목록에 안 띄움
+  return {date:cyc.payDate,name:(row.name||'카드')+' 결제',amount:amt};
+}
 function renderRealisticCash(){
   const box=document.getElementById('realCashBox');
   if(!box)return;
   const now=new Date();
-  const y=now.getFullYear(),m=now.getMonth()+1,todayDay=now.getDate();
-  const mKey=y+'-'+m;
+
+  // 지금까지 전체 기간 누적: 수입 - 현금 지출 (카드로 긁은 개별 지출은 결제일에 현금으로 반영되므로 여기선 제외)
   let totalIn=0,totalCashOut=0;
   Object.keys(moneyData).forEach(k=>{
-    if(!(k.startsWith(mKey+'-')||k===mKey))return;
     (moneyData[k]||[]).forEach(it=>{
       if(it.type==='in')totalIn+=it.amount;
       else if(it.type==='out'&&it.payMethod==='cash')totalCashOut+=it.amount;
@@ -6094,59 +6145,71 @@ function renderRealisticCash(){
   });
   const nowCash=totalIn-totalCashOut;
 
-  // 이번 달 안에서 아직 안 지난 현금성 고정비(적금·보험비 등) + 아직 결제 안 된 카드값(실제 카드 지출 합산)
+  // 이번 달에 한정하지 않고, 등록된 고정비/카드값 각각의 "다음 결제" 건을 전부 모아서 가까운 순서로 나열
   const allFixed=[...(fixedCosts.fixed||[]),...(fixedCosts.semifixed||[])];
-  const daysInMonth=new Date(y,m,0).getDate();
   const upcoming=[];
   allFixed.forEach(r=>{
-    if(r.kind==='card'){
-      const cyc=getCardCycle(r.usageDay,r.payDay,now);
-      if(!cyc)return;
-      if(cyc.payDate.getFullYear()===now.getFullYear()&&cyc.payDate.getMonth()===now.getMonth()&&cyc.payDate.getDate()>todayDay){
-        const amt=sumCardSpend(cyc.cycleStart,cyc.cycleEnd);
-        upcoming.push({day:cyc.payDate.getDate(),name:(r.name||'카드')+' 결제',amount:amt});
-      }
-      return;
-    }
-    if(r.method!=='cash')return;
-    const d=parseInt(r.day);
-    if(!d||d<=todayDay||d>daysInMonth)return;
-    if(r.cycle==='yearly'){
-      const rm=parseInt(r.month)||1;
-      if(rm!==m)return;
-    }
-    upcoming.push({day:d,name:r.name||'고정비',amount:parseAmount(r.amount)||0});
+    const next=r.kind==='card'?getNextCardPayment(r,now):(r.method==='cash'?getNextFixedPayment(r,now):null);
+    if(next)upcoming.push(next);
   });
-  upcoming.sort((a,b)=>a.day-b.day);
+  upcoming.sort((a,b)=>a.date-b.date);
   const upcomingSum=upcoming.reduce((s,r)=>s+r.amount,0);
 
   const projected=nowCash-upcomingSum;
-  const daysLeft=Math.max(1,daysInMonth-todayDay);
-  const dailyAvg=Math.floor(projected/daysLeft);
 
   document.getElementById('realCashNow').textContent=nowCash.toLocaleString()+'원';
   document.getElementById('realCashUpcoming').textContent='-'+upcomingSum.toLocaleString()+'원';
   document.getElementById('realCashUpcomingList').innerHTML=upcoming.length?
-    upcoming.map(r=>`<div class="real-cash-upcoming-item"><span>${r.day}일 · ${escapeHtml(r.name)}</span><span>-${r.amount.toLocaleString()}원</span></div>`).join('')
-    :'<div class="real-cash-upcoming-item">남은 현금성 고정비 없음</div>';
+    upcoming.map(r=>`<div class="real-cash-upcoming-item"><span>${r.date.getMonth()+1}/${r.date.getDate()} · ${escapeHtml(r.name)}</span><span>-${r.amount.toLocaleString()}원</span></div>`).join('')
+    :'<div class="real-cash-upcoming-item">등록된 예정 지출 없음</div>';
   const resultEl=document.getElementById('realCashResult');
   resultEl.textContent=projected.toLocaleString()+'원';
   resultEl.classList.toggle('real-cash-warn',projected<0);
   const dailyEl=document.getElementById('realCashDaily');
   if(projected<0){
-    dailyEl.textContent='⚠️ 이번 달 안에 '+Math.abs(projected).toLocaleString()+'원 부족할 수 있어요';
+    dailyEl.textContent='⚠️ 지금 예정된 지출을 다 치르면 '+Math.abs(projected).toLocaleString()+'원 부족해요';
     dailyEl.classList.add('real-cash-warn');
+  }else if(upcoming.length){
+    const next=upcoming[0];
+    const daysToNext=Math.max(1,Math.round((next.date-startOfDay(now))/86400000));
+    dailyEl.textContent='다음 지출("'+next.name+'", '+(next.date.getMonth()+1)+'/'+next.date.getDate()+')까지 '+daysToNext+'일 — 하루 약 '+Math.floor(projected/daysToNext).toLocaleString()+'원꼴로 쓸 수 있어요';
+    dailyEl.classList.remove('real-cash-warn');
   }else{
-    dailyEl.textContent='남은 '+daysLeft+'일 동안 하루 약 '+dailyAvg.toLocaleString()+'원 쓸 수 있어요';
+    dailyEl.textContent='';
     dailyEl.classList.remove('real-cash-warn');
   }
 }
+// 등록된 카드(고정비의 kind==='card') 목록으로 선택창을 채움
+function getRegisteredCards(){
+  return [...(fixedCosts.fixed||[]),...(fixedCosts.semifixed||[])].filter(r=>r.kind==='card');
+}
+function populateCardSelect(prefix,selectedId){
+  const sel=document.getElementById(prefix+'-cardid');
+  if(!sel)return;
+  const cards=getRegisteredCards();
+  sel.innerHTML=cards.map(c=>`<option value="${c.id}">${escapeHtml(c.name||'카드')}</option>`).join('');
+  if(selectedId&&cards.some(c=>c.id===selectedId))sel.value=selectedId;
+  else if(cards.length)sel.value=cards[0].id;
+}
+window.onMoneyPayMethodChange=function(prefix){
+  const method=document.getElementById(prefix+'-paymethod').value;
+  const cardSel=document.getElementById(prefix+'-cardid');
+  const cards=getRegisteredCards();
+  if(!cardSel)return;
+  if(method==='card'&&cards.length){
+    populateCardSelect(prefix,cardSel.value);
+    cardSel.style.display='';
+  }else{
+    cardSel.style.display='none';
+  }
+};
 window.openMoneyModal=function(){
   document.getElementById('mn-name').value='';document.getElementById('mn-amount').value='';
   document.getElementById('mn-type').value='out';
   document.getElementById('mn-paymethod').value='card';
   document.getElementById('mn-saving').checked=false;
   selectedTag='';updateTagsByType();
+  onMoneyPayMethodChange('mn');
   document.getElementById('moneyModal').style.display='flex';
 };
 window.confirmMoney=async function(){
@@ -6156,7 +6219,9 @@ window.confirmMoney=async function(){
   const key=fmt(selDate);if(!moneyData[key])moneyData[key]=[];
   const payMethod=type==='out'?document.getElementById('mn-paymethod').value:'';
   const isSaving=type==='out'?document.getElementById('mn-saving').checked:false;
-  moneyData[key].push({name,type,amount,tag:selectedTag||'',payMethod,isSaving});
+  const cardIdSel=document.getElementById('mn-cardid');
+  const cardId=(payMethod==='card'&&cardIdSel.style.display!=='none')?cardIdSel.value:'';
+  moneyData[key].push({name,type,amount,tag:selectedTag||'',payMethod,isSaving,cardId});
   await saveData('money',key,{items:moneyData[key]});closeModal('moneyModal');
   renderMoney();if(leftMode==='money-cal')renderMoneyCal();
 };
@@ -6176,6 +6241,8 @@ window.openMoneyEditModal=function(key,idx){
   document.getElementById('mne-saving').checked=!!item.isSaving;
   selectedEditTag=item.tag||'';
   updateEditTagsByType();
+  onMoneyPayMethodChange('mne');
+  if(item.cardId)populateCardSelect('mne',item.cardId);
   document.getElementById('moneyEditModal').style.display='flex';
 };
 let selectedEditTag='';
@@ -6185,7 +6252,9 @@ window.confirmMoneyEdit=async function(){
   const type=document.getElementById('mne-type').value;
   const payMethod=type==='out'?document.getElementById('mne-paymethod').value:'';
   const isSaving=type==='out'?document.getElementById('mne-saving').checked:false;
-  moneyData[editMoneyKey][editMoneyIdx]={name,type,amount,tag:selectedEditTag||'',payMethod,isSaving};
+  const cardIdSel=document.getElementById('mne-cardid');
+  const cardId=(payMethod==='card'&&cardIdSel.style.display!=='none')?cardIdSel.value:'';
+  moneyData[editMoneyKey][editMoneyIdx]={name,type,amount,tag:selectedEditTag||'',payMethod,isSaving,cardId};
   await saveData('money',editMoneyKey,{items:moneyData[editMoneyKey]});
   closeModal('moneyEditModal');renderMoney();if(leftMode==='money-cal')renderMoneyCal();
 };
@@ -6800,10 +6869,12 @@ async function runFixedCostAutoRecord(){
     if(!row.id)continue;
     if(row.kind==='card'){
       const pd=parseInt(row.payDay);
-      if(!pd||pd!==todayDay)continue;
+      if(!pd)continue;
+      const clampedPd=clampDayInMonth(now.getFullYear(),now.getMonth(),pd).getDate();
+      if(clampedPd!==todayDay)continue;
       const cyc=getCardCycle(row.usageDay,row.payDay,now);
       if(!cyc)continue;
-      const amt=sumCardSpend(cyc.cycleStart,cyc.cycleEnd);
+      const amt=sumCardSpend(cyc.cycleStart,cyc.cycleEnd,row.id);
       if(!amt)continue;
       if(!moneyData[key])moneyData[key]=[];
       const already=moneyData[key].some(it=>it.fixedId===row.id);
@@ -6817,10 +6888,15 @@ async function runFixedCostAutoRecord(){
       continue;
     }
     const d=parseInt(row.day);
-    if(!d||d!==todayDay)continue;
+    if(!d)continue;
     if(row.cycle==='yearly'){
       const m=parseInt(row.month)||1;
       if(m!==todayMonth)continue;
+      const clampedD=clampDayInMonth(now.getFullYear(),m-1,d).getDate();
+      if(clampedD!==todayDay)continue;
+    }else{
+      const clampedD=clampDayInMonth(now.getFullYear(),now.getMonth(),d).getDate();
+      if(clampedD!==todayDay)continue;
     }
     const amt=parseAmount(row.amount);
     if(!amt)continue;
@@ -7964,13 +8040,13 @@ function applyTheme(){
     if(lo){lo.style.color='';lo.style.borderColor='';}
   }
 
-  // 노트 버튼 — 테두리는 상단바/사이드바 색(navbg, 없으면 테두리 기본색), 글자는 포인트색(accent)
-  const noteBorderColor=nb||t.bordercol||'#ddd';
+  // 노트 버튼 — 배경을 포인트색(accent)으로, 글자색은 배경 밝기에 따라 흰색/검정 자동 전환
+  const noteTextColor=isColorDark(t.accent)?'#fff':'#222';
   document.querySelectorAll('.note-btn').forEach(b=>{
     if(b.classList.contains('note-btn-secondary'))return; // '우리끼리' 버튼은 고유 초록색 유지
-    b.style.background='#fff';
-    b.style.borderColor=noteBorderColor;
-    b.style.color=t.accent;
+    b.style.background=t.accent;
+    b.style.borderColor=t.accent;
+    b.style.color=noteTextColor;
   });
 
   // 미션트래커 말풍선 영역 (배경 흰색 고정, 글자색은 포인트색 반영)
