@@ -50,7 +50,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 button,input,textarea,select{font-family:inherit}
 [contenteditable],[spellcheck]{-webkit-spell-check:none;spell-check:none}
-body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);display:flex;flex-direction:column;align-items:center;padding:16px 343px 80px 16px;min-height:100vh;gap:10px}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--page-bg);display:flex;flex-direction:column;align-items:center;padding:16px 16px 80px 16px;min-height:100vh;gap:10px}
 
 /* 초기 로딩 — 깜빡임 방지 */
 #loginWrap,#mainApp,#savingIndicator{display:none}
@@ -125,10 +125,10 @@ body{opacity:0;transition:opacity .25s ease}
 .diary-save-hint{font-size:10.5px;color:#777;text-shadow:0 1px 2px rgba(255,255,255,.6)}
 .diary-save-btn{padding:6px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit}
 /* 앱 레이아웃 */
-.app{display:grid;grid-template-columns:1fr 450px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;width:100%;min-width:900px;max-width:1370px;box-shadow:none}
+.app{display:grid;grid-template-columns:1fr 450px 215px 68px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;width:100%;min-width:1240px;box-shadow:none}
 
 /* 노트 버튼 */
-.note-buttons{position:fixed;top:16px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:40}
+.note-buttons{display:flex;flex-direction:column;gap:10px;z-index:1}
 .note-btn{width:68px;height:68px;background:#fff;border:1.5px solid #1558CC;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:12px;font-weight:600;color:#1558CC;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:6px}
 .note-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 13%,transparent)}
 .note-btn:active{transform:scale(.97)}
@@ -650,8 +650,8 @@ body{opacity:0;transition:opacity .25s ease}
 .cal-board-tab-add{width:22px;height:22px;min-height:22px;border-radius:50%;background:transparent;border:1px solid #ddd;color:#aaa;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;margin:4px auto 0;align-self:center}
 .cal-board-tab-add:hover{background:var(--accent-light);color:var(--accent)}
 /* 탭별 독립 달력 — 일정이 칸을 가득 채우도록 강조 표시 */
-.board-cal-wrap{padding:.75rem 1rem 1rem;background:var(--cal-bg,var(--app-bg,#fff))}
-.board-day-cell{height:112px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--cal-bg,var(--app-bg,#fff));padding:3px}
+.board-cal-wrap{padding:.75rem 1rem 1rem;background:transparent}
+.board-day-cell{height:112px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;overflow:hidden;position:relative;display:flex;flex-direction:column;background:transparent;padding:3px}
 .board-day-cell.other{opacity:.4;cursor:default}
 .board-day-cell:hover{border-color:var(--accent)}
 .board-day-cell.selected{border-color:var(--accent)}
@@ -666,7 +666,7 @@ body{opacity:0;transition:opacity .25s ease}
 .mind-bar{background:var(--accent,#4472B8);color:#fff;border-radius:12px;padding:11px 16px;font-size:13px;line-height:1.5;margin:1rem 1rem 0;outline:none;cursor:text;position:relative;z-index:45}
 .mind-bar:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.75)}
 /* 일정 카테고리 범례 */
-.legend{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:.75rem 1rem .6rem;position:relative;z-index:45;background:var(--cal-bg,var(--app-bg,#fff))}
+.legend{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:.75rem 1rem .6rem;position:relative;z-index:45;background:transparent}
 .legend-item{display:flex;align-items:center;gap:4px;font-size:9px;color:#666}
 .legend-swatch{width:9px;height:9px;min-width:9px;border-radius:50%;cursor:pointer;border:1px solid #00000014;flex:0 0 9px}
 .legend-label{outline:none;border-bottom:1px dashed transparent;cursor:text;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -688,7 +688,7 @@ body{opacity:0;transition:opacity .25s ease}
 .ev-cat-dot{width:7px;height:7px;min-width:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
 .cat-select{flex-shrink:0;max-width:88px;border:0.5px solid #e4e4e4;border-radius:20px;padding:8px 8px;font-size:12px;color:#888;background:#fafafa;outline:none;font-family:inherit;cursor:pointer}
 .cat-select:focus{border-color:var(--accent,#7ec8e3)}
-.top-nav{display:flex;align-items:center;gap:10px;padding:.7rem 1rem;border-bottom:0.5px solid #eee;flex-shrink:0;position:relative;z-index:45;background:var(--cal-bg,var(--app-bg,#fff))}
+.top-nav{display:flex;align-items:center;gap:10px;padding:.7rem 1rem;border-bottom:0.5px solid #eee;flex-shrink:0;position:relative;z-index:45;background:transparent}
 .nav-btn{background:none;border:0.5px solid #e2e2e2;cursor:pointer;color:#888;width:26px;height:26px;border-radius:50%;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
 .nav-btn:hover{background:#f5f5f5}
 .today-btn{padding:5px 14px;border-radius:20px;border:0.5px solid #ddd;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#666;flex-shrink:0}
@@ -714,13 +714,13 @@ body{opacity:0;transition:opacity .25s ease}
 .left-view{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column}
 
 /* 일정 달력 */
-.cal-wrap{padding:.75rem 1rem 1rem;background:var(--cal-bg,var(--app-bg,#fff))}
+.cal-wrap{padding:.75rem 1rem 1rem;background:transparent}
 .dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px}
 .dow{text-align:center;font-size:13.5px;font-weight:700;color:var(--accent,#666);padding:6px 0}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 
 /* 날짜 칸 2배 높이 */
-.day-cell{height:112px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:var(--cal-bg,var(--app-bg,#fff))}
+.day-cell{height:112px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:transparent}
 .dn{color:var(--text-secondary,#b8b8b8);font-weight:500}
 .day-cell-events{display:flex;flex-direction:column;gap:1px;width:100%;align-items:stretch;margin-top:2px;overflow:hidden}
 .day-cell-ev{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0;cursor:grab}
@@ -733,8 +733,8 @@ body{opacity:0;transition:opacity .25s ease}
 .dot{width:4px;height:4px;border-radius:50%;background:var(--accent)}
 
 /* 가계부 달력 — 금액 표시 */
-.money-cal-wrap{padding:.65rem .85rem;background:var(--cal-bg,var(--app-bg,#fff))}
-.money-day-cell{min-height:110px;min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative;overflow:hidden;background:var(--cal-bg,var(--app-bg,#fff))}
+.money-cal-wrap{padding:.65rem .85rem;background:transparent}
+.money-day-cell{min-height:110px;min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;position:relative;overflow:hidden;background:transparent}
 .money-day-cell:hover{background:#fff8f5}
 .money-day-cell.other{color:#ccc}
 .money-day-cell.today .mdn{background:var(--accent);color:var(--accent-contrast,#fff)!important;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px}
@@ -748,7 +748,7 @@ body{opacity:0;transition:opacity .25s ease}
 .money-day-memo-text{font-size:10px;color:#8a7a4a;line-height:1.3;background:#F5EFD9;border-radius:4px;padding:1px 4px;margin-top:1px;max-width:100%;width:100%;box-sizing:border-box;overflow:hidden;white-space:normal;word-break:break-all;overflow-wrap:break-word}
 .money-day-memo-text.pending{color:#B8611A;font-weight:700;background:#FFE7BD}
 
-.meal-cal-wrap{padding:.65rem .85rem;background:var(--cal-bg,var(--app-bg,#fff))}
+.meal-cal-wrap{padding:.65rem .85rem;background:transparent}
 .meal-day-cell{min-height:110px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden}
 .meal-day-cell:hover{background:#f5fbf5}
 .meal-day-cell.other{color:#ccc}
@@ -1080,7 +1080,7 @@ body{opacity:0;transition:opacity .25s ease}
 .day-cell-anniv{font-size:9px;color:var(--accent);text-align:center;line-height:1.2;word-break:keep-all}
 
 /* 디데이 */
-.dday-sidebar{position:fixed;right:108px;top:16px;width:215px;height:calc(100vh - 32px);z-index:35;display:flex;flex-direction:column;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;padding:.85rem .75rem;gap:2px;overflow-y:auto}
+.dday-sidebar{min-width:0;min-height:calc(100vh - 230px);max-height:calc(100vh - 230px);z-index:1;display:flex;flex-direction:column;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;padding:.85rem .75rem;gap:2px;overflow-y:auto}
 .dday-header-row{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;margin-bottom:4px;border-bottom:0.5px solid #eee}
 .dday-header{font-size:14px;font-weight:700;color:#222}
 .dday-add-circle{width:22px;height:22px;border-radius:50%;background:var(--accent-light,#eef3fc);color:var(--accent,#4472B8);display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;cursor:pointer;border:none;font-family:inherit;flex-shrink:0}
@@ -1743,6 +1743,43 @@ body.memo-edit-on .memo-text-handle{display:flex}
     </div>
     <div id="ddayList"></div>
   </div>
+  <!-- 노트 버튼 -->
+<div class="note-buttons">
+  <a class="note-btn" href="/media-log.html" target="_blank" title="독서·영화 기록으로 이동">
+    <svg viewBox="0 0 256 256" width="40" height="40" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="60" y="20" width="136" height="112" rx="8"/>
+      <path d="M108 55L150 76L108 97Z" fill="currentColor" stroke="currentColor" stroke-width="6"/>
+      <line x1="60" y1="42" x2="80" y2="42"/>
+      <line x1="60" y1="64" x2="80" y2="64"/>
+      <line x1="60" y1="88" x2="80" y2="88"/>
+      <line x1="60" y1="110" x2="80" y2="110"/>
+      <line x1="176" y1="42" x2="196" y2="42"/>
+      <line x1="176" y1="64" x2="196" y2="64"/>
+      <line x1="176" y1="88" x2="196" y2="88"/>
+      <line x1="176" y1="110" x2="196" y2="110"/>
+      <path d="M30 152C30 152 70 140 128 168C186 140 226 152 226 152V208C226 208 186 196 128 224C70 196 30 208 30 208Z"/>
+      <path d="M128 168V224"/>
+      <path d="M52 165C70 160 92 162 108 170" stroke-width="7"/>
+      <path d="M52 187C70 182 92 184 108 192" stroke-width="7"/>
+      <path d="M204 165C186 160 164 162 148 170" stroke-width="7"/>
+      <path d="M204 187C186 182 164 184 148 192" stroke-width="7"/>
+    </svg>
+  </a>
+  <a class="note-btn" href="/planning.html" target="_blank" title="기획 노트로 이동">기획<br>노트</a>
+  <a class="note-btn" href="/idea-notes.html" target="_blank" title="아이디어 정리로 이동">아이디어<br>정리</a>
+  <a class="note-btn" href="https://mybox.naver.com/main/web/my?resourceKey=c2FuaG9zdW0wMDF8MzQ3MjU5OTQ5MTEyOTU0NzYyMHxEfDA" target="_blank" title="스크리브너 저장소" style="font-size:10px">스크리브너<br>저장소</a>
+  <a class="note-btn" href="/writing.html" target="_blank" title="글 콘티 노트로 이동">글 콘티<br>노트</a>
+  <a class="note-btn" href="/goal-focus.html" target="_blank" title="프로젝트로 이동">프로젝트</a>
+  <a class="note-btn" href="https://app.xmind.com/home/my-works/q4uVwW3kLT" target="_blank" title="Xmind 마인드맵">Xmind</a>
+  <a class="note-btn note-btn-secondary" href="https://cafe.naver.com/greencaejj" target="_blank" title="우리끼리 카페">우리끼리</a>
+  <a class="note-btn" href="/character-builder.html" target="_blank" title="캐릭터 만들기로 이동">캐릭터<br>만들기</a>
+  <a href="https://mail.naver.com/v2/folders/121" target="_blank" title="뉴스레터" style="
+    width:34px;height:34px;border-radius:8px;background:#fff;border:1.5px solid #ddd;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px #0001;text-decoration:none;transition:all .15s;flex-shrink:0;
+    align-self:center;font-size:16px;
+  " onmouseover="this.style.borderColor='#2DB400';this.style.boxShadow='0 3px 10px #2DB40030'" onmouseout="this.style.borderColor='#ddd';this.style.boxShadow='0 2px 6px #0001'">📰</a>
+</div>
 </div>
 
 <div class="saving-indicator" id="savingIndicator">저장 중...</div>
@@ -1956,44 +1993,6 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <img class="memo-bottle-img" src="memo-note-linen.png" alt="인물 그림 메모">
   <textarea class="memo-bottle-text" id="memoBottleText-linen" placeholder="여기에 적어요" spellcheck="false" oninput="scheduleSaveMemoBottle('linen')" onblur="saveMemoBottle('linen')"></textarea>
   <div class="memo-text-handle" data-target="linen" title="드래그로 글자 위치 옮기기">⠿</div>
-</div>
-
-<!-- 노트 버튼 -->
-<div class="note-buttons">
-  <a class="note-btn" href="/media-log.html" target="_blank" title="독서·영화 기록으로 이동">
-    <svg viewBox="0 0 256 256" width="40" height="40" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="60" y="20" width="136" height="112" rx="8"/>
-      <path d="M108 55L150 76L108 97Z" fill="currentColor" stroke="currentColor" stroke-width="6"/>
-      <line x1="60" y1="42" x2="80" y2="42"/>
-      <line x1="60" y1="64" x2="80" y2="64"/>
-      <line x1="60" y1="88" x2="80" y2="88"/>
-      <line x1="60" y1="110" x2="80" y2="110"/>
-      <line x1="176" y1="42" x2="196" y2="42"/>
-      <line x1="176" y1="64" x2="196" y2="64"/>
-      <line x1="176" y1="88" x2="196" y2="88"/>
-      <line x1="176" y1="110" x2="196" y2="110"/>
-      <path d="M30 152C30 152 70 140 128 168C186 140 226 152 226 152V208C226 208 186 196 128 224C70 196 30 208 30 208Z"/>
-      <path d="M128 168V224"/>
-      <path d="M52 165C70 160 92 162 108 170" stroke-width="7"/>
-      <path d="M52 187C70 182 92 184 108 192" stroke-width="7"/>
-      <path d="M204 165C186 160 164 162 148 170" stroke-width="7"/>
-      <path d="M204 187C186 182 164 184 148 192" stroke-width="7"/>
-    </svg>
-  </a>
-  <a class="note-btn" href="/planning.html" target="_blank" title="기획 노트로 이동">기획<br>노트</a>
-  <a class="note-btn" href="/idea-notes.html" target="_blank" title="아이디어 정리로 이동">아이디어<br>정리</a>
-  <a class="note-btn" href="https://mybox.naver.com/main/web/my?resourceKey=c2FuaG9zdW0wMDF8MzQ3MjU5OTQ5MTEyOTU0NzYyMHxEfDA" target="_blank" title="스크리브너 저장소" style="font-size:10px">스크리브너<br>저장소</a>
-  <a class="note-btn" href="/writing.html" target="_blank" title="글 콘티 노트로 이동">글 콘티<br>노트</a>
-  <a class="note-btn" href="/goal-focus.html" target="_blank" title="프로젝트로 이동">프로젝트</a>
-  <a class="note-btn" href="https://app.xmind.com/home/my-works/q4uVwW3kLT" target="_blank" title="Xmind 마인드맵">Xmind</a>
-  <a class="note-btn note-btn-secondary" href="https://cafe.naver.com/greencaejj" target="_blank" title="우리끼리 카페">우리끼리</a>
-  <a class="note-btn" href="/character-builder.html" target="_blank" title="캐릭터 만들기로 이동">캐릭터<br>만들기</a>
-  <a href="https://mail.naver.com/v2/folders/121" target="_blank" title="뉴스레터" style="
-    width:34px;height:34px;border-radius:8px;background:#fff;border:1.5px solid #ddd;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 2px 6px #0001;text-decoration:none;transition:all .15s;flex-shrink:0;
-    align-self:center;font-size:16px;
-  " onmouseover="this.style.borderColor='#2DB400';this.style.boxShadow='0 3px 10px #2DB40030'" onmouseout="this.style.borderColor='#ddd';this.style.boxShadow='0 2px 6px #0001'">📰</a>
 </div>
 
 <!-- 왼쪽 세로 이미지 패널 (구 미션 트래커 자리를 대체) -->
