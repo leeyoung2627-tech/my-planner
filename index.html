@@ -960,6 +960,7 @@ body{opacity:0;transition:opacity .25s ease}
 .real-cash-start-row{display:flex;align-items:center;gap:6px;font-size:11px;color:#999;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid #eee}
 .real-cash-start-row input[type="date"]{font-size:11px;padding:3px 5px;border:0.5px solid #ddd;border-radius:6px;font-family:inherit;color:#666}
 .real-cash-start-hint{color:#ccc;font-size:10px}
+.real-cash-mom-tag{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:#B8860B;background:#FFF8E6;border:0.5px solid #F0DFA0;border-radius:7px;padding:4px 8px;margin:2px 0 4px 8px}
 .paymethod-row{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:2px}
 .paymethod-row select{width:100%}
 .paymethod-row select{flex:0 0 auto}
@@ -1694,6 +1695,14 @@ body.memo-edit-on .memo-text-handle{display:flex}
             <span id="realCashUpcoming">-0원</span>
           </div>
           <div class="real-cash-upcoming-list" id="realCashUpcomingList"></div>
+          <div class="real-cash-divider"></div>
+          <div class="real-cash-row" style="font-size:11px;color:#aaa">
+            <span>💳 카드별 현재 사용액 (내가 쓴 몫만, "엄마가 쓴 내 카드" 제외)</span>
+          </div>
+          <div class="real-cash-upcoming-list" id="realCashCardUsage"></div>
+          <div class="real-cash-mom-tag" id="realCashMomTag" style="display:none" title="위 금액은 '엄마가 쓴 내 카드' 태그를 뺀, 내가 실제로 쓴 몫이에요. 하지만 카드값 자체는 그 금액까지 합쳐서 청구되니, 참고용으로 포함 총액도 같이 보여드려요.">
+            <span id="realCashMomTagAmt">0원</span>
+          </div>
           <div class="real-cash-divider"></div>
           <div class="real-cash-row result">
             <span>예정된 지출 다 치르면 남는 돈</span>
@@ -6113,6 +6122,27 @@ function sumCardSpend(cycleStart,cycleEnd,cardId){
   }
   return sum;
 }
+// 특정 기간 동안 특정 카드로 찍힌 지출 중, 특정 태그(예: "엄마가 쓴 돈")만 뽑아 합산
+// — 카드값엔 포함되지만 내가 실제로 쓴 돈은 아닌 금액을 구분해서 보여주기 위함
+const MOM_SPEND_TAG='엄마가 쓴 내 카드';
+function sumTaggedCardSpend(cycleStart,cycleEnd,cardId,tag){
+  let sum=0;
+  const onlyCard=getRegisteredCards().length<=1;
+  const cur=new Date(cycleStart.getFullYear(),cycleStart.getMonth(),cycleStart.getDate());
+  while(cur<=cycleEnd){
+    const key=fmt(cur);
+    (moneyData[key]||[]).forEach(it=>{
+      if(it.type!=='out'||it.payMethod!=='card'||it.tag!==tag)return;
+      if(it.cardId){
+        if(it.cardId===cardId)sum+=it.amount;
+      }else if(onlyCard){
+        sum+=it.amount;
+      }
+    });
+    cur.setDate(cur.getDate()+1);
+  }
+  return sum;
+}
 // 일반 고정비(현금)의 "다음 결제일"(오늘 포함, 이번 주기가 지났으면 다음 주기)을 계산
 function getNextFixedPayment(row,now){
   const d=parseInt(row.day);
@@ -6134,23 +6164,7 @@ function getNextFixedPayment(row,now){
   }
   return {date,name:row.name||'고정비',amount:amt};
 }
-// 카드값의 "다음 결제일"과 그때까지 실제로 쓴 카드 지출 합계(진행 중인 사이클이면 지금까지 쓴 만큼만)
-// startBound가 있으면, 그 이전에 쓴 카드 지출(이미 예전에 결제 끝난 것으로 보는 옛날 내역)은 집계에서 뺌
-function getNextCardPayment(row,now,startBound){
-  const today0=startOfDay(now);
-  let cyc=getCardCycle(row.usageDay,row.payDay,now);
-  if(!cyc)return null;
-  if(cyc.payDate<today0){
-    const nextRef=new Date(now.getFullYear(),now.getMonth()+1,1);
-    cyc=getCardCycle(row.usageDay,row.payDay,nextRef);
-    if(!cyc)return null;
-  }
-  const cycleStart=(startBound&&startBound>cyc.cycleStart)?startBound:cyc.cycleStart;
-  if(cycleStart>cyc.cycleEnd)return null; // 시작일이 이 사이클보다 뒤면(=이 사이클 전체가 시작일 이전) 계산에서 제외
-  const amt=sumCardSpend(cycleStart,cyc.cycleEnd,row.id);
-  if(amt<=0)return null; // 이번 사이클에 쓴 게 없으면 목록에 안 띄움
-  return {date:cyc.payDate,name:(row.name||'카드')+' 결제',amount:amt};
-}
+
 window.onRealCashStartChange=async function(val){
   realCashStartDate=val||'';
   if(currentUser){
@@ -6196,11 +6210,36 @@ function renderRealisticCash(){
   const cutoff=now.getDate()<=cutoffDay?clampDayInMonth(now.getFullYear(),now.getMonth(),cutoffDay):clampDayInMonth(now.getFullYear(),now.getMonth()+1,cutoffDay);
   const allFixed=[...(fixedCosts.fixed||[]),...(fixedCosts.semifixed||[])];
   const upcoming=[];
+  const cardUsage=[]; // 집계 기준(cutoff)과 무관하게, 카드별로 지금까지 쌓인 금액을 항상 보여주기 위한 목록
+  let momSpendTotal=0; // 카드값엔 포함되지만 엄마가 쓰고 나중에 갚는 돈
   allFixed.forEach(r=>{
-    const next=r.kind==='card'?getNextCardPayment(r,now,startBound):(r.method==='cash'?getNextFixedPayment(r,now):null);
-    if(next&&next.date<=cutoff)upcoming.push(next);
+    if(r.kind==='card'){
+      // 카드별 현재 사용액은 0원이어도 항상 표시(기록할 때마다 바로 반영되는 걸 확인할 수 있게)
+      const today0=startOfDay(now);
+      let cyc=getCardCycle(r.usageDay,r.payDay,now);
+      if(cyc){
+        if(cyc.payDate<today0){
+          const nextRef=new Date(now.getFullYear(),now.getMonth()+1,1);
+          cyc=getCardCycle(r.usageDay,r.payDay,nextRef);
+        }
+        if(cyc){
+          const cycleStart=(startBound&&startBound>cyc.cycleStart)?startBound:cyc.cycleStart;
+          const amt=cycleStart>cyc.cycleEnd?0:sumCardSpend(cycleStart,cyc.cycleEnd,r.id); // 카드값 전체(엄마가 쓴 것 포함) — 실제로 청구되는 금액이라 예정 지출 계산엔 이 값을 그대로 씀
+          const momAmt=cycleStart>cyc.cycleEnd?0:sumTaggedCardSpend(cycleStart,cyc.cycleEnd,r.id,MOM_SPEND_TAG);
+          const myAmt=Math.max(0,amt-momAmt); // 엄마가 쓴 돈을 뺀, 내가 실제로 쓴 몫 — 목록엔 이걸 메인으로 보여줌
+          const usageItem={date:cyc.payDate,name:(r.name||'카드')+' 결제',amount:amt,myAmt,momAmt};
+          cardUsage.push(usageItem);
+          if(amt>0&&usageItem.date<=cutoff)upcoming.push(usageItem);
+          momSpendTotal+=momAmt;
+        }
+      }
+    }else{
+      const next=r.method==='cash'?getNextFixedPayment(r,now):null;
+      if(next&&next.date<=cutoff)upcoming.push(next);
+    }
   });
   upcoming.sort((a,b)=>a.date-b.date);
+  cardUsage.sort((a,b)=>a.date-b.date);
   const upcomingSum=upcoming.reduce((s,r)=>s+r.amount,0);
 
   const projected=nowCash-upcomingSum;
@@ -6210,6 +6249,16 @@ function renderRealisticCash(){
   document.getElementById('realCashUpcomingList').innerHTML=upcoming.length?
     upcoming.map(r=>`<div class="real-cash-upcoming-item"><span>${r.date.getMonth()+1}/${r.date.getDate()} · ${escapeHtml(r.name)}</span><span>-${r.amount.toLocaleString()}원</span></div>`).join('')
     :'<div class="real-cash-upcoming-item">등록된 예정 지출 없음</div>';
+  const cardUsageEl=document.getElementById('realCashCardUsage');
+  if(cardUsageEl){
+    cardUsageEl.innerHTML=cardUsage.length?
+      cardUsage.map(r=>`<div class="real-cash-upcoming-item"><span>${escapeHtml(r.name)} (결제일 ${r.date.getMonth()+1}/${r.date.getDate()})</span><span>${r.myAmt.toLocaleString()}원</span></div>`).join('')
+      :'<div class="real-cash-upcoming-item">카드로 기록한 지출 없음</div>';
+  }
+  const momTagEl=document.getElementById('realCashMomTag');
+  if(momTagEl)momTagEl.style.display=momSpendTotal>0?'flex':'none';
+  const momTagAmtEl=document.getElementById('realCashMomTagAmt');
+  if(momTagAmtEl)momTagAmtEl.textContent='엄마가 쓴 '+momSpendTotal.toLocaleString()+'원 포함 시 '+cardUsage.reduce((s,r)=>s+r.amount,0).toLocaleString()+'원';
   const resultEl=document.getElementById('realCashResult');
   resultEl.textContent=projected.toLocaleString()+'원';
   resultEl.classList.toggle('real-cash-warn',projected<0);
