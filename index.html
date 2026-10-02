@@ -125,11 +125,11 @@ body{opacity:0;transition:opacity .25s ease}
 .diary-save-hint{font-size:10.5px;color:#777;text-shadow:0 1px 2px rgba(255,255,255,.6)}
 .diary-save-btn{padding:6px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit}
 /* 앱 레이아웃 */
-.app{display:grid;grid-template-columns:700px 450px 215px 68px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;box-shadow:none}
+.app{display:grid;grid-template-columns:900px 450px 215px 82px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;box-shadow:none}
 
 /* 노트 버튼 */
 .note-buttons{display:flex;flex-direction:column;gap:10px;z-index:1}
-.note-btn{width:68px;height:68px;background:#fff;border:1.5px solid #1558CC;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:12px;font-weight:600;color:#1558CC;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:6px}
+.note-btn{width:80px;height:80px;background:#fff;border:1.5px solid #1558CC;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:13px;font-weight:600;color:#1558CC;text-align:center;line-height:1.4;text-decoration:none;transition:all .15s;user-select:none;padding:7px}
 .note-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 13%,transparent)}
 .note-btn:active{transform:scale(.97)}
 .note-btn-secondary{border-color:#b8e0c4;color:#2d7a4f}
@@ -1080,7 +1080,7 @@ body{opacity:0;transition:opacity .25s ease}
 .day-cell-anniv{font-size:9px;color:var(--accent);text-align:center;line-height:1.2;word-break:keep-all}
 
 /* 디데이 */
-.dday-sidebar{min-width:0;min-height:calc(100vh - 230px);max-height:calc(100vh - 230px);z-index:1;display:flex;flex-direction:column;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;padding:.85rem .75rem;gap:2px;overflow-y:auto}
+.dday-sidebar{min-width:0;max-height:calc(100vh - 230px);z-index:1;display:flex;flex-direction:column;background:var(--app-bg,#fff);border:0.5px solid var(--border-col,#eee);border-radius:16px;box-shadow:0 2px 14px #0000000a;padding:.85rem .75rem;gap:2px;overflow-y:auto}
 .dday-header-row{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;margin-bottom:4px;border-bottom:0.5px solid #eee}
 .dday-header{font-size:14px;font-weight:700;color:#222}
 .dday-add-circle{width:22px;height:22px;border-radius:50%;background:var(--accent-light,#eef3fc);color:var(--accent,#4472B8);display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;cursor:pointer;border:none;font-family:inherit;flex-shrink:0}
