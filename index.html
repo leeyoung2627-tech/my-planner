@@ -1624,6 +1624,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <!-- 세부 탭 -->
       <div class="money-subtabs">
         <div class="money-subtab active" onclick="switchMoneyTab('ledger',this)">내역</div>
+        <div class="money-subtab" onclick="switchMoneyTab('balance',this)">💵 잔액</div>
         <div class="money-subtab" onclick="switchMoneyTab('stats',this)">📊 통계</div>
         <div class="money-subtab" onclick="switchMoneyTab('saving',this)">💰 저축</div>
         <div class="money-subtab" onclick="switchMoneyTab('fixed',this)">📌 고정비</div>
@@ -1653,17 +1654,30 @@ body.memo-edit-on .memo-text-handle{display:flex}
             <span class="budget-remain" id="budgetRemain">예산 미설정</span>
           </div>
         </div>
+        <div class="no-spend-bar" onclick="toggleNoSpend()">
+          <div class="ns-check" id="nsCheck"></div>
+          <span class="ns-label">오늘 무지출 💪</span>
+          <span class="ns-badge" id="nsBadge">✓ 달성!</span>
+        </div>
+        <div id="money-list"></div>
+        <button class="add-btn" onclick="openMoneyModal()">＋ 내역 추가</button>
+        <p class="section-title" style="margin-top:8px">이번 달 합계</p>
+        <div id="money-summary"></div>
+      </div>
+
+      <!-- 잔액 탭 -->
+      <div id="mtab-balance" class="mtab-content">
         <div class="real-cash-box" id="realCashBox">
           <div class="real-cash-top">
             <span class="real-cash-label">💵 현실 잔돈</span>
-            <span class="real-cash-info" title="현금성 흐름만 반영: 이번 달 수입 − 이번 달 현금 지출 − 아직 안 지난 현금성 고정비(카드값 결제일·적금·보험비 등). 카드로 긁은 개별 내역은 제외하고, 카드값 결제일에 고정비로 등록해두신 금액만 반영돼요.">ⓘ</span>
+            <span class="real-cash-info" title="현금성 흐름만 반영: 이번 달 수입 − 이번 달 현금 지출 − 아직 안 지난 현금성 고정비(적금·보험비 등) − 아직 결제 안 된 카드값(사용일~결제일 기준 실제 카드 지출 합계).">ⓘ</span>
           </div>
           <div class="real-cash-row">
             <span>지금까지 현금 흐름</span>
             <span id="realCashNow">0원</span>
           </div>
           <div class="real-cash-row">
-            <span>남은 현금성 고정비</span>
+            <span>남은 현금성 고정비·카드값</span>
             <span id="realCashUpcoming">-0원</span>
           </div>
           <div class="real-cash-upcoming-list" id="realCashUpcomingList"></div>
@@ -1674,15 +1688,6 @@ body.memo-edit-on .memo-text-handle{display:flex}
           </div>
           <div class="real-cash-daily" id="realCashDaily"></div>
         </div>
-        <div class="no-spend-bar" onclick="toggleNoSpend()">
-          <div class="ns-check" id="nsCheck"></div>
-          <span class="ns-label">오늘 무지출 💪</span>
-          <span class="ns-badge" id="nsBadge">✓ 달성!</span>
-        </div>
-        <div id="money-list"></div>
-        <button class="add-btn" onclick="openMoneyModal()">＋ 내역 추가</button>
-        <p class="section-title" style="margin-top:8px">이번 달 합계</p>
-        <div id="money-summary"></div>
       </div>
 
       <!-- 통계 탭 -->
@@ -1840,30 +1845,46 @@ body.memo-edit-on .memo-text-handle{display:flex}
 <div class="modal-bg" id="fixedEditModal" style="display:none">
   <div class="modal" style="max-width:300px">
     <h3 id="fixedEditTitle">고정비 추가</h3>
-    <div class="modal-label">항목명</div>
-    <input id="fixed-e-name" placeholder="예: 넷플릭스"/>
-    <div class="modal-label">금액</div>
-    <input id="fixed-e-amount" placeholder="예: 17000" inputmode="numeric"/>
-    <div class="modal-label">주기</div>
-    <select id="fixed-e-cycle" onchange="onFixedCycleChange()">
-      <option value="monthly">매월</option>
-      <option value="yearly">매년</option>
+    <div class="modal-label">종류</div>
+    <select id="fixed-e-kind" onchange="onFixedKindChange()">
+      <option value="normal">일반 (적금·보험비·구독료 등 — 금액 직접 입력)</option>
+      <option value="card">💳 카드값 (사용일→결제일 — 실제 카드 지출을 자동 합산)</option>
     </select>
-    <div class="modal-label" id="fixed-e-day-label">며칠에 나가나요? (선택)</div>
-    <div style="display:flex;gap:6px">
-      <select id="fixed-e-month" style="display:none;flex:1">
-        <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
-        <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
-        <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
-        <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+    <div id="fixed-e-normal-fields">
+      <div class="modal-label">항목명</div>
+      <input id="fixed-e-name" placeholder="예: 넷플릭스"/>
+      <div class="modal-label">금액</div>
+      <input id="fixed-e-amount" placeholder="예: 17000" inputmode="numeric"/>
+      <div class="modal-label">주기</div>
+      <select id="fixed-e-cycle" onchange="onFixedCycleChange()">
+        <option value="monthly">매월</option>
+        <option value="yearly">매년</option>
       </select>
-      <input id="fixed-e-day" placeholder="예: 15" inputmode="numeric" maxlength="2" style="flex:1"/>
+      <div class="modal-label" id="fixed-e-day-label">며칠에 나가나요? (선택)</div>
+      <div style="display:flex;gap:6px">
+        <select id="fixed-e-month" style="display:none;flex:1">
+          <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+          <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+          <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+          <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+        </select>
+        <input id="fixed-e-day" placeholder="예: 15" inputmode="numeric" maxlength="2" style="flex:1"/>
+      </div>
+      <div class="modal-label">결제 수단</div>
+      <select id="fixed-e-method">
+        <option value="card">💳 카드</option>
+        <option value="cash">💵 현금</option>
+      </select>
     </div>
-    <div class="modal-label">결제 수단</div>
-    <select id="fixed-e-method">
-      <option value="card">💳 카드</option>
-      <option value="cash">💵 현금</option>
-    </select>
+    <div id="fixed-e-card-fields" style="display:none">
+      <div class="modal-label">카드 이름</div>
+      <input id="fixed-e-card-name" placeholder="예: 신한카드"/>
+      <div class="modal-label">사용 마감일 (매월 며칠까지 쓴 걸 묶어서 결제하나요)</div>
+      <input id="fixed-e-usageday" placeholder="예: 15" inputmode="numeric" maxlength="2"/>
+      <div class="modal-label">결제일 (매월 며칠에 실제로 돈이 빠지나요)</div>
+      <input id="fixed-e-payday" placeholder="예: 25" inputmode="numeric" maxlength="2"/>
+      <div style="font-size:10.5px;color:#aaa;line-height:1.5;margin-top:2px">💡 가계부에서 "카드"로 결제수단 찍어두신 지출들을 사용 마감일 기준으로 자동 합산해서, 결제일에 현금으로 나가는 걸로 계산해요.</div>
+    </div>
     <div class="modal-btns" style="margin-top:10px">
       <button class="mbtn cancel" onclick="closeModal('fixedEditModal')">취소</button>
       <button class="mbtn ok" onclick="confirmFixedSave()">저장</button>
@@ -5996,6 +6017,7 @@ window.switchMoneyTab=function(name,el){
   document.querySelectorAll('.mtab-content').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('mtab-'+name).classList.add('active');
+  if(name==='balance')renderRealisticCash();
   if(name==='stats')renderMoneyStats();
   if(name==='saving')renderSavingStats();
   if(name==='fixed')renderFixedCosts();
@@ -6033,6 +6055,30 @@ function renderMoney(){
   renderRealisticCash();
 }
 // 현실 잔돈: 이번 달 수입 - 이번 달 현금 지출 - 아직 안 지난 현금성 고정비(카드값 결제일 포함)
+// 카드 사용 마감일(U)/결제일(P) 기준으로, refDate가 속한 "이번 달 결제"가 커버하는 사용기간[시작,끝]과 결제일을 계산
+function getCardCycle(usageDay,payDay,refDate){
+  const U=parseInt(usageDay),P=parseInt(payDay);
+  if(!U||!P)return null;
+  const y=refDate.getFullYear(),m=refDate.getMonth();
+  // 결제일(P)이 사용마감일(U)보다 크면 같은 달 마감분을 같은 달에 결제, 아니면 전달 마감분을 이번 달에 결제
+  const cutoffDate=P>U?new Date(y,m,U):new Date(y,m-1,U);
+  const payDate=new Date(y,m,P);
+  const cycleStart=new Date(cutoffDate.getFullYear(),cutoffDate.getMonth(),cutoffDate.getDate()+1);
+  return {payDate,cycleStart,cycleEnd:cutoffDate};
+}
+// 특정 기간(포함) 동안 "카드"로 결제수단 찍어둔 지출의 합계
+function sumCardSpend(cycleStart,cycleEnd){
+  let sum=0;
+  const cur=new Date(cycleStart.getFullYear(),cycleStart.getMonth(),cycleStart.getDate());
+  while(cur<=cycleEnd){
+    const key=fmt(cur);
+    (moneyData[key]||[]).forEach(it=>{
+      if(it.type==='out'&&it.payMethod==='card')sum+=it.amount;
+    });
+    cur.setDate(cur.getDate()+1);
+  }
+  return sum;
+}
 function renderRealisticCash(){
   const box=document.getElementById('realCashBox');
   if(!box)return;
@@ -6049,20 +6095,31 @@ function renderRealisticCash(){
   });
   const nowCash=totalIn-totalCashOut;
 
-  // 이번 달 안에서 아직 안 지난 현금성 고정비(카드값 결제일·적금·보험비 등)
+  // 이번 달 안에서 아직 안 지난 현금성 고정비(적금·보험비 등) + 아직 결제 안 된 카드값(실제 카드 지출 합산)
   const allFixed=[...(fixedCosts.fixed||[]),...(fixedCosts.semifixed||[])];
   const daysInMonth=new Date(y,m,0).getDate();
-  const upcoming=allFixed.filter(r=>{
-    if(r.method!=='cash')return false;
+  const upcoming=[];
+  allFixed.forEach(r=>{
+    if(r.kind==='card'){
+      const cyc=getCardCycle(r.usageDay,r.payDay,now);
+      if(!cyc)return;
+      if(cyc.payDate.getFullYear()===now.getFullYear()&&cyc.payDate.getMonth()===now.getMonth()&&cyc.payDate.getDate()>todayDay){
+        const amt=sumCardSpend(cyc.cycleStart,cyc.cycleEnd);
+        upcoming.push({day:cyc.payDate.getDate(),name:(r.name||'카드')+' 결제',amount:amt});
+      }
+      return;
+    }
+    if(r.method!=='cash')return;
     const d=parseInt(r.day);
-    if(!d||d<=todayDay||d>daysInMonth)return false;
+    if(!d||d<=todayDay||d>daysInMonth)return;
     if(r.cycle==='yearly'){
       const rm=parseInt(r.month)||1;
-      if(rm!==m)return false;
+      if(rm!==m)return;
     }
-    return true;
-  }).sort((a,b)=>(parseInt(a.day)||0)-(parseInt(b.day)||0));
-  const upcomingSum=upcoming.reduce((s,r)=>s+(parseAmount(r.amount)||0),0);
+    upcoming.push({day:d,name:r.name||'고정비',amount:parseAmount(r.amount)||0});
+  });
+  upcoming.sort((a,b)=>a.day-b.day);
+  const upcomingSum=upcoming.reduce((s,r)=>s+r.amount,0);
 
   const projected=nowCash-upcomingSum;
   const daysLeft=Math.max(1,daysInMonth-todayDay);
@@ -6071,7 +6128,7 @@ function renderRealisticCash(){
   document.getElementById('realCashNow').textContent=nowCash.toLocaleString()+'원';
   document.getElementById('realCashUpcoming').textContent='-'+upcomingSum.toLocaleString()+'원';
   document.getElementById('realCashUpcomingList').innerHTML=upcoming.length?
-    upcoming.map(r=>`<div class="real-cash-upcoming-item"><span>${r.day}일 · ${escapeHtml(r.name||'고정비')}</span><span>-${(parseAmount(r.amount)||0).toLocaleString()}원</span></div>`).join('')
+    upcoming.map(r=>`<div class="real-cash-upcoming-item"><span>${r.day}일 · ${escapeHtml(r.name)}</span><span>-${r.amount.toLocaleString()}원</span></div>`).join('')
     :'<div class="real-cash-upcoming-item">남은 현금성 고정비 없음</div>';
   const resultEl=document.getElementById('realCashResult');
   resultEl.textContent=projected.toLocaleString()+'원';
@@ -6575,9 +6632,9 @@ function renderFixedCosts(){
           <div class="fixed-row-main">
             <span class="drag-dots" style="color:#ccc;margin-right:4px;cursor:grab;font-size:13px">⠿</span>
             <span class="fixed-row-name" data-tooltip="${escapeHtml(r.name||'(이름없음)')}">${escapeHtml(r.name||'(이름없음)')}</span>
-            <span class="fixed-row-amount">${parseAmount(r.amount).toLocaleString()}원</span>
+            <span class="fixed-row-amount">${r.kind==='card'?'카드':parseAmount(r.amount).toLocaleString()+'원'}</span>
           </div>
-          <span class="fixed-row-meta">${r.day?(r.cycle==='yearly'?`매년 ${r.month||1}월 ${r.day}일`:`매월 ${r.day}일`):'날짜 미설정'} · ${r.method==='cash'?'💵현금':'💳카드'}</span>
+          <span class="fixed-row-meta">${r.kind==='card'?`💳 매월 ${r.usageDay}일 마감 → ${r.payDay}일 결제 (실제 카드 지출 자동 합산)`:(r.day?(r.cycle==='yearly'?`매년 ${r.month||1}월 ${r.day}일`:`매월 ${r.day}일`):'날짜 미설정')+` · ${r.method==='cash'?'💵현금':'💳카드'}`}</span>
           <div class="fixed-row-btns">
             <button class="fixed-row-edit-btn" onclick="openFixedEditModal('${type}',${i})">수정</button>
             <button class="fixed-del" onclick="deleteFixedRow('${type}',${i})">✕</button>
@@ -6616,46 +6673,78 @@ window.onFixedCycleChange=function(){
   document.getElementById('fixed-e-month').style.display=isYearly?'':'none';
   document.getElementById('fixed-e-day-label').textContent=isYearly?'며칠에 나가나요? (선택)':'매월 며칠에 나가나요? (선택)';
 };
+window.onFixedKindChange=function(){
+  const kind=document.getElementById('fixed-e-kind').value;
+  document.getElementById('fixed-e-normal-fields').style.display=kind==='card'?'none':'';
+  document.getElementById('fixed-e-card-fields').style.display=kind==='card'?'':'none';
+};
 window.openFixedAddModal=function(type){
   editingFixedType=type;editingFixedIdx=-1;
   document.getElementById('fixedEditTitle').textContent='고정비 추가';
+  document.getElementById('fixed-e-kind').value='normal';
   document.getElementById('fixed-e-name').value='';
   document.getElementById('fixed-e-amount').value='';
   document.getElementById('fixed-e-cycle').value='monthly';
   document.getElementById('fixed-e-month').value='1';
   document.getElementById('fixed-e-day').value='';
   document.getElementById('fixed-e-method').value='card';
+  document.getElementById('fixed-e-card-name').value='';
+  document.getElementById('fixed-e-usageday').value='';
+  document.getElementById('fixed-e-payday').value='';
   onFixedCycleChange();
+  onFixedKindChange();
   document.getElementById('fixedEditModal').style.display='flex';
 };
 window.openFixedEditModal=function(type,idx){
   const r=fixedCosts[type][idx];if(!r)return;
   editingFixedType=type;editingFixedIdx=idx;
   document.getElementById('fixedEditTitle').textContent='고정비 수정';
+  document.getElementById('fixed-e-kind').value=r.kind==='card'?'card':'normal';
   document.getElementById('fixed-e-name').value=r.name||'';
   document.getElementById('fixed-e-amount').value=r.amount||'';
   document.getElementById('fixed-e-cycle').value=r.cycle==='yearly'?'yearly':'monthly';
   document.getElementById('fixed-e-month').value=r.month||'1';
   document.getElementById('fixed-e-day').value=r.day||'';
   document.getElementById('fixed-e-method').value=r.method||'card';
+  document.getElementById('fixed-e-card-name').value=r.kind==='card'?(r.name||''):'';
+  document.getElementById('fixed-e-usageday').value=r.usageDay||'';
+  document.getElementById('fixed-e-payday').value=r.payDay||'';
   onFixedCycleChange();
+  onFixedKindChange();
   document.getElementById('fixedEditModal').style.display='flex';
 };
+function clampDay(v){
+  v=(v||'').replace(/[^0-9]/g,'');
+  if(!v)return '';
+  const n=parseInt(v);
+  return n<1?'1':n>31?'31':String(n);
+}
 window.confirmFixedSave=async function(){
-  const name=document.getElementById('fixed-e-name').value.trim();
-  if(!name){alert('항목명을 입력해주세요');return;}
-  const amount=document.getElementById('fixed-e-amount').value.trim();
-  const cycle=document.getElementById('fixed-e-cycle').value==='yearly'?'yearly':'monthly';
-  const month=cycle==='yearly'?parseInt(document.getElementById('fixed-e-month').value)||1:null;
-  let day=document.getElementById('fixed-e-day').value.trim();
-  day=day.replace(/[^0-9]/g,'');
-  if(day){const dn=parseInt(day);if(dn<1)day='1';else if(dn>31)day='31';else day=String(dn);}
-  const method=document.getElementById('fixed-e-method').value;
   const type=editingFixedType;
-  if(editingFixedIdx===-1){
-    fixedCosts[type].push({id:'fx_'+Date.now()+'_'+type+'_'+fixedCosts[type].length,name,amount,cycle,month,day,method});
+  const kind=document.getElementById('fixed-e-kind').value==='card'?'card':'normal';
+  let row;
+  if(kind==='card'){
+    const cardName=document.getElementById('fixed-e-card-name').value.trim();
+    if(!cardName){alert('카드 이름을 입력해주세요');return;}
+    const usageDay=clampDay(document.getElementById('fixed-e-usageday').value);
+    const payDay=clampDay(document.getElementById('fixed-e-payday').value);
+    if(!usageDay||!payDay){alert('사용 마감일과 결제일을 모두 입력해주세요');return;}
+    row={kind:'card',name:cardName,usageDay,payDay,method:'cash'};
   }else{
-    fixedCosts[type][editingFixedIdx]={...fixedCosts[type][editingFixedIdx],name,amount,cycle,month,day,method};
+    const name=document.getElementById('fixed-e-name').value.trim();
+    if(!name){alert('항목명을 입력해주세요');return;}
+    const amount=document.getElementById('fixed-e-amount').value.trim();
+    const cycle=document.getElementById('fixed-e-cycle').value==='yearly'?'yearly':'monthly';
+    const month=cycle==='yearly'?parseInt(document.getElementById('fixed-e-month').value)||1:null;
+    const day=clampDay(document.getElementById('fixed-e-day').value);
+    const method=document.getElementById('fixed-e-method').value;
+    row={kind:'normal',name,amount,cycle,month,day,method};
+  }
+  if(editingFixedIdx===-1){
+    row.id='fx_'+Date.now()+'_'+type+'_'+fixedCosts[type].length;
+    fixedCosts[type].push(row);
+  }else{
+    fixedCosts[type][editingFixedIdx]={...fixedCosts[type][editingFixedIdx],...row};
   }
   await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts,{merge:true});
   showSaving();
@@ -6709,6 +6798,25 @@ async function runFixedCostAutoRecord(){
   const allRows=[...(fixedCosts.fixed||[]),...(fixedCosts.semifixed||[])];
   let touched=false;
   for(const row of allRows){
+    if(!row.id)continue;
+    if(row.kind==='card'){
+      const pd=parseInt(row.payDay);
+      if(!pd||pd!==todayDay)continue;
+      const cyc=getCardCycle(row.usageDay,row.payDay,now);
+      if(!cyc)continue;
+      const amt=sumCardSpend(cyc.cycleStart,cyc.cycleEnd);
+      if(!amt)continue;
+      if(!moneyData[key])moneyData[key]=[];
+      const already=moneyData[key].some(it=>it.fixedId===row.id);
+      if(already)continue;
+      moneyData[key].push({
+        name:(row.name||'카드')+' 결제',type:'out',amount:amt,tag:'고정비',
+        payMethod:'cash',isSaving:false,fixedId:row.id,auto:true
+      });
+      await saveData('money',key,{items:moneyData[key]});
+      touched=true;
+      continue;
+    }
     const d=parseInt(row.day);
     if(!d||d!==todayDay)continue;
     if(row.cycle==='yearly'){
@@ -6716,7 +6824,7 @@ async function runFixedCostAutoRecord(){
       if(m!==todayMonth)continue;
     }
     const amt=parseAmount(row.amount);
-    if(!amt||!row.id)continue;
+    if(!amt)continue;
     if(!moneyData[key])moneyData[key]=[];
     const already=moneyData[key].some(it=>it.fixedId===row.id);
     if(already)continue;
