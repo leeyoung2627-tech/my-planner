@@ -957,6 +957,9 @@ body{opacity:0;transition:opacity .25s ease}
 .real-cash-upcoming-item{display:flex;justify-content:space-between;font-size:11px;color:#999;padding-left:8px}
 .real-cash-daily{font-size:11px;color:#999;margin-top:4px;text-align:right}
 .real-cash-warn{color:#D85A30!important}
+.real-cash-start-row{display:flex;align-items:center;gap:6px;font-size:11px;color:#999;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid #eee}
+.real-cash-start-row input[type="date"]{font-size:11px;padding:3px 5px;border:0.5px solid #ddd;border-radius:6px;font-family:inherit;color:#666}
+.real-cash-start-hint{color:#ccc;font-size:10px}
 .paymethod-row{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:2px}
 .paymethod-row select{width:100%}
 .paymethod-row select{flex:0 0 auto}
@@ -1670,14 +1673,24 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <div class="real-cash-box" id="realCashBox">
           <div class="real-cash-top">
             <span class="real-cash-label">💵 현실 잔돈</span>
-            <span class="real-cash-info" title="이번 달로 한정하지 않고 전체 기간 기준이에요. 보유 자금 = (지금까지 전체 수입) − (지금까지 현금으로 나간 지출). 카드로 긁은 개별 내역은 결제일 전까지는 안 빼고, 등록해두신 카드의 다음 결제일에 그때까지 쓴 카드 지출 합계를 한 번에 반영해요.">ⓘ</span>
+            <span class="real-cash-info" title="보유 자금은 '계산 시작일'부터 전체 기간 기준이에요. 보유 자금 = (시작일부터 지금까지 수입) − (시작일부터 지금까지 현금으로 나간 지출). 앞으로 나갈 돈은 아래 '나갈 돈 집계 기준'으로 정해둔 날짜까지만(그 달의 실제 날짜 기준, 오늘이 지났으면 다음 달 그 날짜까지) 반영해요. 카드로 긁은 개별 내역은 결제일 전까지는 안 빼고, 등록해두신 카드의 다음 결제일에 그때까지 쓴 카드 지출 합계를 한 번에 반영해요. 시작일 이전의 카드 지출도 계산에서 빠집니다.">ⓘ</span>
+          </div>
+          <div class="real-cash-start-row">
+            <span>계산 시작일</span>
+            <input type="date" id="realCashStartInput" onchange="onRealCashStartChange(this.value)"/>
+            <span class="real-cash-start-hint">이전 기록은 전부 제외돼요</span>
+          </div>
+          <div class="real-cash-start-row">
+            <span>나갈 돈 집계 기준</span>
+            <input type="number" id="realCashCutoffInput" min="1" max="31" style="width:44px" onchange="onRealCashCutoffChange(this.value)"/>
+            <span class="real-cash-start-hint">일까지 (지났으면 다음 달 그 날짜까지)</span>
           </div>
           <div class="real-cash-row">
             <span>지금 보유 자금</span>
             <span id="realCashNow">0원</span>
           </div>
           <div class="real-cash-row">
-            <span>앞으로 나갈 돈(고정비+카드값)</span>
+            <span>앞으로 나갈 돈</span>
             <span id="realCashUpcoming">-0원</span>
           </div>
           <div class="real-cash-upcoming-list" id="realCashUpcomingList"></div>
@@ -2652,6 +2665,8 @@ let habits=[],editingHabitId=null;
 let weekEvents={},moneyData={},mealData={},fixedCosts={fixed:[],semifixed:[]};
 let attendanceData={}; // {날짜: {in:'HH:MM'|null, out:'HH:MM'|null}} — 출근/퇴근 체크
 let moneyProgressBars=[]; // {id,name,color,target,current} — 대출 갚기/적금 붓기 등 필요할 때 추가하는 진행률 그래프
+let realCashStartDate=''; // 'YYYY-MM-DD' — 현실 잔돈 계산을 시작할 기준일(이 날짜 이전 기록은 계산에서 제외)
+let realCashCutoffDay=20; // "앞으로 나갈 돈"을 매달 며칠까지로 볼지(그 달의 날짜 기준, 오늘이 지났으면 다음 달 그 날짜까지)
 let savingBaseline={};
 let savingOrder=[];
 let loans=[]; // {id,name,principal,rate} rate=연이율(%)
@@ -3467,7 +3482,7 @@ async function saveAppearanceNow(){
 window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS,rcsS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -3505,6 +3520,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','moneyLedgerMemo')),
     getDocs(collection(db,'users',currentUser.uid,'attendance')),
     getDoc(doc(db,'users',currentUser.uid,'settings','moneyProgressBars')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','realCashStart')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   calBoards=(cbS.exists()&&cbS.data().items)?cbS.data().items:[];
@@ -3544,6 +3560,8 @@ async function loadAllData(){
   window._moneyLedgerMemoContent=mlmS.exists()?mlmS.data().text||'':'';
   attendanceData={};atS.forEach(d=>{attendanceData[d.id]=d.data();});
   moneyProgressBars=mpbS.exists()?(mpbS.data().items||[]):[];
+  realCashStartDate=rcsS.exists()?(rcsS.data().date||''):'';
+  realCashCutoffDay=rcsS.exists()&&rcsS.data().cutoffDay?parseInt(rcsS.data().cutoffDay):20;
   fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
   if(!fixedCosts.fixed)fixedCosts.fixed=[];
   if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
@@ -6117,7 +6135,8 @@ function getNextFixedPayment(row,now){
   return {date,name:row.name||'고정비',amount:amt};
 }
 // 카드값의 "다음 결제일"과 그때까지 실제로 쓴 카드 지출 합계(진행 중인 사이클이면 지금까지 쓴 만큼만)
-function getNextCardPayment(row,now){
+// startBound가 있으면, 그 이전에 쓴 카드 지출(이미 예전에 결제 끝난 것으로 보는 옛날 내역)은 집계에서 뺌
+function getNextCardPayment(row,now,startBound){
   const today0=startOfDay(now);
   let cyc=getCardCycle(row.usageDay,row.payDay,now);
   if(!cyc)return null;
@@ -6126,18 +6145,45 @@ function getNextCardPayment(row,now){
     cyc=getCardCycle(row.usageDay,row.payDay,nextRef);
     if(!cyc)return null;
   }
-  const amt=sumCardSpend(cyc.cycleStart,cyc.cycleEnd,row.id);
+  const cycleStart=(startBound&&startBound>cyc.cycleStart)?startBound:cyc.cycleStart;
+  if(cycleStart>cyc.cycleEnd)return null; // 시작일이 이 사이클보다 뒤면(=이 사이클 전체가 시작일 이전) 계산에서 제외
+  const amt=sumCardSpend(cycleStart,cyc.cycleEnd,row.id);
   if(amt<=0)return null; // 이번 사이클에 쓴 게 없으면 목록에 안 띄움
   return {date:cyc.payDate,name:(row.name||'카드')+' 결제',amount:amt};
 }
+window.onRealCashStartChange=async function(val){
+  realCashStartDate=val||'';
+  if(currentUser){
+    await setDoc(doc(db,'users',currentUser.uid,'settings','realCashStart'),{date:realCashStartDate},{merge:true});
+    showSaving();
+  }
+  renderRealisticCash();
+};
+window.onRealCashCutoffChange=async function(val){
+  const n=parseInt(val);
+  realCashCutoffDay=(n>=1&&n<=31)?n:20;
+  if(currentUser){
+    await setDoc(doc(db,'users',currentUser.uid,'settings','realCashStart'),{cutoffDay:realCashCutoffDay},{merge:true});
+    showSaving();
+  }
+  renderRealisticCash();
+};
 function renderRealisticCash(){
   const box=document.getElementById('realCashBox');
   if(!box)return;
   const now=new Date();
+  const startInput=document.getElementById('realCashStartInput');
+  if(startInput)startInput.value=realCashStartDate||'';
+  const cutoffInput=document.getElementById('realCashCutoffInput');
+  if(cutoffInput)cutoffInput.value=realCashCutoffDay;
+  const startBound=realCashStartDate?new Date(realCashStartDate+'T00:00:00'):null;
 
-  // 지금까지 전체 기간 누적: 수입 - 현금 지출 (카드로 긁은 개별 지출은 결제일에 현금으로 반영되므로 여기선 제외)
+  // '계산 시작일'부터 지금까지 누적: 수입 - 현금 지출 (카드로 긁은 개별 지출은 결제일에 현금으로 반영되므로 여기선 제외)
   let totalIn=0,totalCashOut=0;
   Object.keys(moneyData).forEach(k=>{
+    const parts=k.split('-').map(Number);
+    const d=new Date(parts[0],parts[1]-1,parts[2]);
+    if(startBound&&d<startBound)return;
     (moneyData[k]||[]).forEach(it=>{
       if(it.type==='in')totalIn+=it.amount;
       else if(it.type==='out'&&it.payMethod==='cash')totalCashOut+=it.amount;
@@ -6145,12 +6191,14 @@ function renderRealisticCash(){
   });
   const nowCash=totalIn-totalCashOut;
 
-  // 이번 달에 한정하지 않고, 등록된 고정비/카드값 각각의 "다음 결제" 건을 전부 모아서 가까운 순서로 나열
+  // 등록된 고정비/카드값 각각의 "다음 결제" 건을 모아서, 설정한 날짜까지만(그 달의 실제 날짜 기준, 지났으면 다음 달 그 날짜까지) 반영
+  const cutoffDay=realCashCutoffDay||20;
+  const cutoff=now.getDate()<=cutoffDay?clampDayInMonth(now.getFullYear(),now.getMonth(),cutoffDay):clampDayInMonth(now.getFullYear(),now.getMonth()+1,cutoffDay);
   const allFixed=[...(fixedCosts.fixed||[]),...(fixedCosts.semifixed||[])];
   const upcoming=[];
   allFixed.forEach(r=>{
-    const next=r.kind==='card'?getNextCardPayment(r,now):(r.method==='cash'?getNextFixedPayment(r,now):null);
-    if(next)upcoming.push(next);
+    const next=r.kind==='card'?getNextCardPayment(r,now,startBound):(r.method==='cash'?getNextFixedPayment(r,now):null);
+    if(next&&next.date<=cutoff)upcoming.push(next);
   });
   upcoming.sort((a,b)=>a.date-b.date);
   const upcomingSum=upcoming.reduce((s,r)=>s+r.amount,0);
