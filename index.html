@@ -2676,6 +2676,7 @@ let attendanceData={}; // {날짜: {in:'HH:MM'|null, out:'HH:MM'|null}} — 출�
 let moneyProgressBars=[]; // {id,name,color,target,current} — 대출 갚기/적금 붓기 등 필요할 때 추가하는 진행률 그래프
 let realCashStartDate=''; // 'YYYY-MM-DD' — 현실 잔돈 계산을 시작할 기준일(이 날짜 이전 기록은 계산에서 제외)
 let realCashCutoffDay=20; // "앞으로 나갈 돈"을 매달 며칠까지로 볼지(그 달의 날짜 기준, 오늘이 지났으면 다음 달 그 날짜까지)
+let syncedBgImage=''; // Firestore에 저장된(기기 간 동기화용, 로컬보다 압축을 더 한) 배경 이미지
 let savingBaseline={};
 let savingOrder=[];
 let loans=[]; // {id,name,principal,rate} rate=연이율(%)
@@ -3491,7 +3492,7 @@ async function saveAppearanceNow(){
 window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS,rcsS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS,rcsS,bgiS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -3530,6 +3531,7 @@ async function loadAllData(){
     getDocs(collection(db,'users',currentUser.uid,'attendance')),
     getDoc(doc(db,'users',currentUser.uid,'settings','moneyProgressBars')),
     getDoc(doc(db,'users',currentUser.uid,'settings','realCashStart')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','bgImage')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   calBoards=(cbS.exists()&&cbS.data().items)?cbS.data().items:[];
@@ -3574,6 +3576,7 @@ async function loadAllData(){
   moneyProgressBars=mpbS.exists()?(mpbS.data().items||[]):[];
   realCashStartDate=rcsS.exists()?(rcsS.data().date||''):'';
   realCashCutoffDay=rcsS.exists()&&rcsS.data().cutoffDay?parseInt(rcsS.data().cutoffDay):20;
+  syncedBgImage=bgiS.exists()?(bgiS.data().data||''):'';
   fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
   if(!fixedCosts.fixed)fixedCosts.fixed=[];
   if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
@@ -8082,7 +8085,12 @@ function loadTheme(){
   applyFont(currentFont);
   applyFontScale(currentFontScale);
   try{
-    const bgImg=localStorage.getItem('planner_bgImage');
+    let bgImg=localStorage.getItem('planner_bgImage');
+    if(!bgImg&&syncedBgImage){
+      // 이 기기엔 로컬 캐시가 없지만, 다른 기기에서 올려둔 동기화 배경이 있으면 그걸 가져와서 적용 + 다음부터 빠르게 뜨도록 로컬에도 캐싱
+      bgImg=syncedBgImage;
+      try{localStorage.setItem('planner_bgImage',bgImg);}catch(e){}
+    }
     if(bgImg)applyBgImage(bgImg);
   }catch(e){}
 }
@@ -8213,6 +8221,7 @@ function updateBgImagePreview(){
   const prev=document.getElementById('bgImagePreview');if(!prev)return;
   let img=null;
   try{img=localStorage.getItem('planner_bgImage');}catch(e){}
+  if(!img&&syncedBgImage)img=syncedBgImage;
   if(img){
     prev.style.backgroundImage=`url(${img})`;
     prev.textContent='';
@@ -8558,20 +8567,36 @@ window.onBgImageUpload=async function(event){
   if(!file)return;
   if(!file.type.startsWith('image/')){alert('이미지 파일만 선택할 수 있어요');event.target.value='';return;}
   try{
-    // 배경 이미지는 메모용 작은 이미지와 달리 화면 전체를 채우는 용도라, 해상도/용량 여유를 훨씬 넉넉히 줌
-    // (이 기기의 localStorage에만 저장되므로 Firestore 문서 용량 제한과 무관함 — 꽉 눌러 압축할 이유가 없음)
+    // 배경 이미지는 메모용 작은 이미지와 달리 화면 전체를 채우는 용도라, 이 기기에서 보여줄 용도로는
+    // 해상도/용량 여유를 훨씬 넉넉히 줌 (localStorage는 Firestore 문서 용량 제한과 무관함)
     const dataUrl=await _compressImage(file,2560,0.88,4000000);
     localStorage.setItem('planner_bgImage',dataUrl);
     applyBgImage(dataUrl);
     updateBgImagePreview();
+    // 다른 기기에서도 보이도록, Firestore 문서 용량(1MB) 안에 들어가게 따로 더 압축한 버전을 동기화용으로 저장
+    try{
+      const syncUrl=await _compressImage(file,1400,0.75,900000);
+      syncedBgImage=syncUrl;
+      if(currentUser){
+        await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{data:syncUrl},{merge:true});
+        showSaving();
+      }
+    }catch(syncErr){
+      console.error('배경 이미지 동기화 저장 실패:',syncErr);
+      alert('배경 이미지가 이 기기엔 적용됐지만, 다른 기기와 동기화하는 데는 실패했어요.');
+    }
   }catch(err){
     alert('이미지를 적용하지 못했어요. 다른 이미지로 시도해주세요.\n('+(err&&err.message?err.message:err)+')');
   }finally{
     event.target.value='';
   }
 };
-window.removeBgImage=function(){
+window.removeBgImage=async function(){
   localStorage.removeItem('planner_bgImage');
+  syncedBgImage='';
+  if(currentUser){
+    try{await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{data:''},{merge:true});showSaving();}catch(e){}
+  }
   document.body.style.backgroundImage='';
   document.body.style.backgroundSize='';
   document.body.style.backgroundPosition='';
