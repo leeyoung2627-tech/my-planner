@@ -1104,12 +1104,12 @@ body{opacity:0;transition:opacity .25s ease}
 
 /* 주요 디데이 카드 (일정 탭 상단) */
 .middle-col{display:flex;flex-direction:column;gap:16px;min-width:0}
-.dday-hero-card{background:var(--accent,#4472B8);border-radius:16px;padding:16px 18px;color:#fff;box-shadow:0 2px 14px #0000000a}
-.dday-hero-title-input{width:100%;background:transparent;border:none;color:#fff;font-size:15px;font-weight:700;padding:2px 0 12px;outline:none;font-family:inherit}
+.dday-hero-card{background:var(--accent,#4472B8);border-radius:16px;padding:16px 18px;color:#fff;box-shadow:0 2px 14px #0000000a;display:flex;align-items:center;gap:16px}
+.dday-hero-title-input{width:100%;background:transparent;border:none;color:#fff;font-size:15px;font-weight:700;padding:2px 0 10px;outline:none;font-family:inherit}
 .dday-hero-title-input::placeholder{color:rgba(255,255,255,.65)}
-.dday-hero-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.dday-hero-date-input{background:rgba(255,255,255,.18);border:none;border-radius:8px;color:#fff;font-size:12px;padding:6px 9px;color-scheme:dark;font-family:inherit;flex:1;min-width:0}
-.dday-hero-badge{font-size:14px;font-weight:700;color:#fff;background:rgba(255,255,255,.22);padding:5px 13px;border-radius:14px;white-space:nowrap;flex-shrink:0}
+.dday-hero-info{flex:1;min-width:0;display:flex;flex-direction:column}
+.dday-hero-date-input{background:rgba(255,255,255,.18);border:none;border-radius:8px;color:#fff;font-size:12px;padding:6px 9px;color-scheme:dark;font-family:inherit;width:100%;min-width:0;box-sizing:border-box}
+.dday-hero-badge{flex:0 0 auto;min-width:112px;text-align:center;padding-right:16px;border-right:1px solid rgba(255,255,255,.3);font-size:40px;font-weight:700;line-height:1;letter-spacing:-.5px;color:#fff;white-space:nowrap}
 
 .saving-indicator{position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;display:none;z-index:999}
 
@@ -1573,10 +1573,10 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <div class="middle-col">
   <!-- 주요 디데이 (완결/마감 등 하나만 크게 표시) — 일정칸과 분리된 독립 카드, 일정/가계부/식단/메모 탭과 무관하게 항상 보임 -->
   <div class="dday-hero-card" id="ddayHeroCard">
-    <input type="text" id="ddayHeroTitle" class="dday-hero-title-input" placeholder="주요 디데이 이름 (예: 완결까지)" onblur="saveDdayHero()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
-    <div class="dday-hero-row">
+    <div class="dday-hero-badge" id="ddayHeroBadge">D-DAY</div>
+    <div class="dday-hero-info">
+      <input type="text" id="ddayHeroTitle" class="dday-hero-title-input" placeholder="주요 디데이 이름 (예: 완결까지)" onblur="saveDdayHero()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
       <input type="date" id="ddayHeroDate" class="dday-hero-date-input" onchange="updateDdayHero();saveDdayHero()">
-      <div class="dday-hero-badge" id="ddayHeroBadge">D-DAY</div>
     </div>
   </div>
   <div class="right">
