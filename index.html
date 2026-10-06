@@ -2681,7 +2681,8 @@ let attendanceData={}; // {날짜: {in:'HH:MM'|null, out:'HH:MM'|null}} — 출�
 let moneyProgressBars=[]; // {id,name,color,target,current} — 대출 갚기/적금 붓기 등 필요할 때 추가하는 진행률 그래프
 let realCashStartDate=''; // 'YYYY-MM-DD' — 현실 잔돈 계산을 시작할 기준일(이 날짜 이전 기록은 계산에서 제외)
 let realCashCutoffDay=20; // "앞으로 나갈 돈"을 매달 며칠까지로 볼지(그 달의 날짜 기준, 오늘이 지났으면 다음 달 그 날짜까지)
-let syncedBgImage=''; // Firestore에 저장된(기기 간 동기화용, 로컬보다 압축을 더 한) 배경 이미지
+let syncedBgImage=''; // Firestore에 저장된(기기 간 동기화용, 예전 저화질 방식에서 넘어온 값) 배경 이미지
+let bgImageMeta=null; // Firestore 'settings/bgImage' 문서 {ver,count} — 배경 이미지 동기화 버전/조각 수
 let savingBaseline={};
 let savingOrder=[];
 let loans=[]; // {id,name,principal,rate} rate=연이율(%)
@@ -3383,6 +3384,7 @@ onAuthStateChanged(auth,async user=>{
       renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMoneyLedgerMemo();loadMemoBottleTexts();
       renderAttendanceBtns();updateAttendanceBtnsVisibility();
       renderMoneyProgressBars();
+      syncBgImageFromCloud();
       loadMindBar();renderCategoryLegend();loadDdayHero();
       renderCalBoardTabs();
       renderRoutineList();checkRoutineAlarms();
@@ -3582,6 +3584,7 @@ async function loadAllData(){
   realCashStartDate=rcsS.exists()?(rcsS.data().date||''):'';
   realCashCutoffDay=rcsS.exists()&&rcsS.data().cutoffDay?parseInt(rcsS.data().cutoffDay):20;
   syncedBgImage=bgiS.exists()?(bgiS.data().data||''):'';
+  bgImageMeta=bgiS.exists()?bgiS.data():null;
   fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
   if(!fixedCosts.fixed)fixedCosts.fixed=[];
   if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
@@ -8577,14 +8580,10 @@ window.onBgImageUpload=async function(event){
     localStorage.setItem('planner_bgImage',dataUrl);
     applyBgImage(dataUrl);
     updateBgImagePreview();
-    // 다른 기기에서도 보이도록, Firestore 문서 용량(1MB) 안에 들어가게 따로 더 압축한 버전을 동기화용으로 저장
+    // 다른 기기에서도 똑같이 보이도록, 이미지를 조각내서(Firestore 문서 1MB 제한 회피) 원본 화질 그대로 계정에 저장
     try{
-      const syncUrl=await _compressImage(file,1400,0.75,900000);
-      syncedBgImage=syncUrl;
-      if(currentUser){
-        await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{data:syncUrl},{merge:true});
-        showSaving();
-      }
+      await saveBgImageToCloud(dataUrl);
+      showSaving();
     }catch(syncErr){
       console.error('배경 이미지 동기화 저장 실패:',syncErr);
       alert('배경 이미지가 이 기기엔 적용됐지만, 다른 기기와 동기화하는 데는 실패했어요.');
@@ -8595,12 +8594,7 @@ window.onBgImageUpload=async function(event){
     event.target.value='';
   }
 };
-window.removeBgImage=async function(){
-  localStorage.removeItem('planner_bgImage');
-  syncedBgImage='';
-  if(currentUser){
-    try{await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{data:''},{merge:true});showSaving();}catch(e){}
-  }
+function clearBgImageStyles(){
   document.body.style.backgroundImage='';
   document.body.style.backgroundSize='';
   document.body.style.backgroundPosition='';
@@ -8609,7 +8603,72 @@ window.removeBgImage=async function(){
   // 이미지를 지우면 현재 테마의 페이지 배경색을 다시 보여줌
   document.body.style.backgroundColor=currentTheme.pagebg;
   updateBgImagePreview();
+}
+window.removeBgImage=async function(){
+  localStorage.removeItem('planner_bgImage');
+  syncedBgImage='';
+  clearBgImageStyles();
+  if(currentUser){
+    try{await removeBgImageFromCloud();showSaving();}catch(e){console.error('배경 이미지 삭제 동기화 실패:',e);}
+  }
 };
+// ── 배경 이미지 기기 간 동기화 (버전 + 조각 저장) ──
+const BG_CHUNK_SIZE=800000; // 문서 하나가 1MB를 안 넘게, 이미지 문자열을 이 길이씩 쪼갬
+function bgChunkRef(i){return doc(db,'users',currentUser.uid,'settings','bgImage_c'+i);}
+async function saveBgImageToCloud(dataUrl){
+  if(!currentUser)return;
+  const prevCount=(bgImageMeta&&bgImageMeta.count)||0;
+  const chunks=[];
+  for(let i=0;i<dataUrl.length;i+=BG_CHUNK_SIZE)chunks.push(dataUrl.slice(i,i+BG_CHUNK_SIZE));
+  for(let i=0;i<chunks.length;i++)await setDoc(bgChunkRef(i),{data:chunks[i]}); // 조각을 먼저 다 올리고
+  const ver=Date.now();
+  await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{ver,count:chunks.length,data:''}); // 마지막에 버전 문서를 갱신
+  for(let i=chunks.length;i<prevCount;i++){try{await deleteDoc(bgChunkRef(i));}catch(e){}}
+  bgImageMeta={ver,count:chunks.length,data:''};
+  try{localStorage.setItem('planner_bgImage_ver',String(ver));}catch(e){}
+}
+async function removeBgImageFromCloud(){
+  if(!currentUser)return;
+  const prevCount=(bgImageMeta&&bgImageMeta.count)||0;
+  const ver=Date.now();
+  await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{ver,count:0,data:''});
+  for(let i=0;i<prevCount;i++){try{await deleteDoc(bgChunkRef(i));}catch(e){}}
+  bgImageMeta={ver,count:0,data:''};
+  try{localStorage.setItem('planner_bgImage_ver',String(ver));}catch(e){}
+}
+// 로그인 후 호출: 다른 기기에서 올린/바꾼/지운 배경을 이 기기에 맞추고, 아직 동기화 안 된 이 기기의 배경은 계정에 올림
+async function syncBgImageFromCloud(){
+  if(!currentUser)return;
+  try{
+    const localImg=localStorage.getItem('planner_bgImage');
+    const localVer=localStorage.getItem('planner_bgImage_ver');
+    const meta=bgImageMeta;
+    if(meta&&meta.count!==undefined){
+      if(String(meta.ver)===localVer)return; // 이미 최신
+      if(meta.count>0){
+        let full='';
+        for(let i=0;i<meta.count;i++){
+          const snap=await getDoc(bgChunkRef(i));
+          if(!snap.exists())throw new Error('이미지 조각 '+i+' 누락');
+          full+=snap.data().data||'';
+        }
+        applyBgImage(full);
+        try{
+          localStorage.setItem('planner_bgImage',full);
+          localStorage.setItem('planner_bgImage_ver',String(meta.ver));
+        }catch(e){console.warn('이 기기 저장공간이 부족해 배경 이미지를 캐싱하지 못했어요(이번 접속에서만 보여요):',e);}
+        updateBgImagePreview();
+      }else{
+        localStorage.removeItem('planner_bgImage');
+        try{localStorage.setItem('planner_bgImage_ver',String(meta.ver));}catch(e){}
+        clearBgImageStyles();
+      }
+      return;
+    }
+    // 아직 동기화된 적 없음(또는 예전 저화질 방식) → 이 기기에 배경이 있으면 원본 화질 그대로 올림
+    if(localImg)await saveBgImageToCloud(localImg);
+  }catch(e){console.error('배경 이미지 동기화 실패:',e);}
+}
 window.setBgPattern=function(pattern,btn){
   currentPattern=pattern;
   applyPattern(pattern);
