@@ -710,6 +710,11 @@ body{opacity:0;transition:opacity .25s ease}
 .user-name{font-size:11px;color:#888}
 .logout-btn{font-size:11px;color:#aaa;background:none;border:0.5px solid #eee;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:inherit}
 .logout-btn:hover{background:#f5f5f5}
+/* 반투명 달력에서도 잘 보이게: 달력 카드 안의 흐린 글씨는 메인 글자색(검정 계열)으로, 기념일/일기장/링크 버튼은 원형 배경 */
+.left{--text-secondary:var(--text-main,#111)}
+.left .legend-item,.left .user-name,.left .today-btn,.left .nav-btn,.left .logout-btn,.left .vbtn:not(.active),.left .attend-btn:not(.checked),.left .cal-board-tab:not(.active),.left .cal-board-tab-add,.left .legend-add-btn{color:var(--text-main,#111)}
+.left .nav-btn,.left .today-btn,.left .logout-btn,.left .cal-board-tab-add{border-color:color-mix(in srgb,var(--text-main,#111) 40%,transparent)}
+.icon-group .vbtn.icon-vbtn{width:30px;height:30px;padding:0;border-radius:50%;background:var(--app-bg,#fff);box-shadow:0 1px 5px #0002;font-size:15px}
 
 .left-view{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column}
 
@@ -1109,7 +1114,7 @@ body{opacity:0;transition:opacity .25s ease}
 .dday-hero-title-input::placeholder{color:rgba(255,255,255,.65)}
 .dday-hero-info{flex:1;min-width:0;display:flex;flex-direction:column}
 .dday-hero-date-input{background:rgba(255,255,255,.18);border:none;border-radius:8px;color:#fff;font-size:12px;padding:6px 9px;color-scheme:dark;font-family:inherit;width:100%;min-width:0;box-sizing:border-box}
-.dday-hero-badge{flex:0 0 auto;min-width:112px;text-align:center;padding-right:16px;border-right:1px solid rgba(255,255,255,.3);font-size:40px;font-weight:700;line-height:1;letter-spacing:-.5px;color:#fff;white-space:nowrap}
+.dday-hero-badge{flex:0 0 auto;min-width:92px;text-align:center;padding-right:14px;border-right:1px solid rgba(255,255,255,.3);font-size:30px;font-weight:700;line-height:1;letter-spacing:-.5px;color:#fff;white-space:nowrap}
 
 .saving-indicator{position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;display:none;z-index:999}
 
