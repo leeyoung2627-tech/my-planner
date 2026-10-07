@@ -4329,6 +4329,21 @@ window.addEventListener('resize',()=>{
   const p=document.getElementById('tipPanel');
   if(p&&p.classList.contains('show'))positionFloatingPanel('tipToggle','tipPanel');
 });
+// 루틴/TIP 패널: 패널과 토글 버튼 바깥을 누르면 닫힘 (모달 안을 누르는 건 제외)
+// click이 아니라 pointerdown으로 잡아야, 패널 안 버튼이 목록을 다시 그려도 "안쪽 클릭"으로 정확히 판단됨
+document.addEventListener('pointerdown',(e)=>{
+  const t=e.target;
+  if(t.closest&&t.closest('.modal-bg'))return;
+  [['routinePanel','routineToggle'],['tipPanel','tipToggle']].forEach(([pid,tid])=>{
+    const panel=document.getElementById(pid);
+    if(!panel||!panel.classList.contains('show'))return;
+    if(panel.contains(t))return;
+    const toggle=document.getElementById(tid);
+    if(toggle&&toggle.contains(t))return; // 토글 버튼 클릭은 기존 열기/닫기 동작에 맡김
+    panel.classList.remove('show');
+    if(toggle)toggle.classList.remove('on');
+  });
+},true);
 
 function renderTipList(){
   const wrap=document.getElementById('tipListWrap');
