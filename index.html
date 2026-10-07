@@ -513,6 +513,7 @@ body{opacity:0;transition:opacity .25s ease}
 .bg-image-upload-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
 .bg-image-remove-btn{padding:6px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;border:0.5px solid #ddd;background:#fff;color:#D85A30;font-family:inherit}
 .bg-image-remove-btn:hover{background:#fdeeea;border-color:#D85A30}
+.bg-sync-status{font-size:10.5px;margin-top:4px;line-height:1.5;min-height:14px;color:#888}
 
 .theme-divider{border:none;border-top:0.5px solid #f0f0f0}
 .theme-reset-btn{width:100%;padding:7px;border:1px solid #eee;border-radius:8px;background:transparent;font-size:12px;color:#aaa;cursor:pointer;font-family:inherit}
@@ -2276,9 +2277,11 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <input type="file" id="bgImageInput" accept="image/*" style="display:none" onchange="onBgImageUpload(event)"/>
       </label>
       <button class="bg-image-remove-btn" onclick="removeBgImage()">배경 제거</button>
+      <button class="bg-image-remove-btn" style="color:var(--accent)" onclick="manualBgSync()" title="이 기기의 배경을 계정에 다시 올리거나, 계정의 배경을 불러와요">☁ 지금 동기화</button>
     </div>
   </div>
-  <div style="font-size:10.5px;color:#aaa;line-height:1.5">업로드한 이미지가 화면을 꽉 채워요(비율 유지, 넘치는 부분은 잘려서 보여요). 이 기기에만 저장돼요.</div>
+  <div style="font-size:10.5px;color:#aaa;line-height:1.5">업로드한 이미지가 화면을 꽉 채워요(비율 유지, 넘치는 부분은 잘려서 보여요). 계정에도 저장돼서 다른 기기에서 로그인해도 같은 배경이 보여요.</div>
+  <div id="bgSyncStatus" class="bg-sync-status"></div>
 
   <hr class="theme-divider"/>
   <div class="bg-panel-title">폰트</div>
@@ -3384,7 +3387,6 @@ onAuthStateChanged(auth,async user=>{
       renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMoneyLedgerMemo();loadMemoBottleTexts();
       renderAttendanceBtns();updateAttendanceBtnsVisibility();
       renderMoneyProgressBars();
-      syncBgImageFromCloud();
       loadMindBar();renderCategoryLegend();loadDdayHero();
       renderCalBoardTabs();
       renderRoutineList();checkRoutineAlarms();
@@ -3406,6 +3408,7 @@ onAuthStateChanged(auth,async user=>{
       // 캐릭터 아이콘 등이 영영 안 보이는 상태로 멈추지 않게 함
       console.error('초기 로딩 중 일부 기능에서 오류가 발생했어요:',err);
     }
+    syncBgImageFromCloud(); // 배경 이미지 계정 동기화 (위 초기화 중 오류가 나도 실행되도록 따로 호출)
     // 모든 준비 완료 후 부드럽게 표시
     requestAnimationFrame(()=>{
       document.body.style.opacity='1';
@@ -8586,7 +8589,8 @@ window.onBgImageUpload=async function(event){
       showSaving();
     }catch(syncErr){
       console.error('배경 이미지 동기화 저장 실패:',syncErr);
-      alert('배경 이미지가 이 기기엔 적용됐지만, 다른 기기와 동기화하는 데는 실패했어요.');
+      setBgSyncStatus('⚠ 동기화 실패: '+((syncErr&&syncErr.message)||syncErr),true);
+      alert('배경 이미지가 이 기기엔 적용됐지만, 계정 동기화에는 실패했어요.\n('+((syncErr&&syncErr.message)||syncErr)+')');
     }
   }catch(err){
     alert('이미지를 적용하지 못했어요. 다른 이미지로 시도해주세요.\n('+(err&&err.message?err.message:err)+')');
@@ -8612,20 +8616,43 @@ window.removeBgImage=async function(){
     try{await removeBgImageFromCloud();showSaving();}catch(e){console.error('배경 이미지 삭제 동기화 실패:',e);}
   }
 };
-// ── 배경 이미지 기기 간 동기화 (버전 + 조각 저장) ──
-const BG_CHUNK_SIZE=800000; // 문서 하나가 1MB를 안 넘게, 이미지 문자열을 이 길이씩 쪼갬
+// ── 배경 이미지 기기 간 동기화 (버전 + 압축본 + 원본 화질 조각) ──
+const BG_CHUNK_SIZE=800000; // 문서 하나가 1MB를 안 넘게, 원본 이미지 문자열을 이 길이씩 쪼갬
 function bgChunkRef(i){return doc(db,'users',currentUser.uid,'settings','bgImage_c'+i);}
+function setBgSyncStatus(msg,isErr){
+  const el=document.getElementById('bgSyncStatus');
+  if(!el)return;
+  el.textContent=msg;
+  el.style.color=isErr?'#D85A30':'#888';
+}
+function nowHM2(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+async function dataUrlToBlob(dataUrl){const r=await fetch(dataUrl);return await r.blob();}
+// 계정(Firestore)에 올림: ① 문서 하나에 들어가는 압축본(어느 기기에서든 확실히 뜨게) + ② 원본 화질 조각들
 async function saveBgImageToCloud(dataUrl){
-  if(!currentUser)return;
+  if(!currentUser)throw new Error('로그인 정보가 없어요');
+  setBgSyncStatus('☁ 계정에 올리는 중…',false);
   const prevCount=(bgImageMeta&&bgImageMeta.count)||0;
-  const chunks=[];
-  for(let i=0;i<dataUrl.length;i+=BG_CHUNK_SIZE)chunks.push(dataUrl.slice(i,i+BG_CHUNK_SIZE));
-  for(let i=0;i<chunks.length;i++)await setDoc(bgChunkRef(i),{data:chunks[i]}); // 조각을 먼저 다 올리고
+  let small='';
+  try{
+    const blob=await dataUrlToBlob(dataUrl);
+    small=await _compressImage(blob,1400,0.75,700000);
+    if(small.length>900000)small='';
+  }catch(e){console.warn('배경 압축본 만들기 실패:',e);}
+  let count=0,chunkErr='';
+  try{
+    const chunks=[];
+    for(let i=0;i<dataUrl.length;i+=BG_CHUNK_SIZE)chunks.push(dataUrl.slice(i,i+BG_CHUNK_SIZE));
+    for(let i=0;i<chunks.length;i++)await setDoc(bgChunkRef(i),{data:chunks[i]});
+    count=chunks.length;
+  }catch(e){chunkErr=(e&&e.message)||String(e);console.error('배경 원본 조각 저장 실패:',e);}
+  if(!small&&!count)throw new Error(chunkErr||'저장 가능한 형태를 만들지 못했어요');
   const ver=Date.now();
-  await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{ver,count:chunks.length,data:''}); // 마지막에 버전 문서를 갱신
-  for(let i=chunks.length;i<prevCount;i++){try{await deleteDoc(bgChunkRef(i));}catch(e){}}
-  bgImageMeta={ver,count:chunks.length,data:''};
+  await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{ver,count,data:small}); // 버전 문서는 맨 마지막에 갱신
+  for(let i=count;i<prevCount;i++){try{await deleteDoc(bgChunkRef(i));}catch(e){}}
+  bgImageMeta={ver,count,data:small};
+  syncedBgImage=small;
   try{localStorage.setItem('planner_bgImage_ver',String(ver));}catch(e){}
+  setBgSyncStatus(count>0?('☁ 계정에 저장됨 (원본 화질) · '+nowHM2()):('⚠ 계정에 압축본만 저장됨 (원본 화질 저장 실패: '+chunkErr+') · '+nowHM2()),!count);
 }
 async function removeBgImageFromCloud(){
   if(!currentUser)return;
@@ -8634,41 +8661,67 @@ async function removeBgImageFromCloud(){
   await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{ver,count:0,data:''});
   for(let i=0;i<prevCount;i++){try{await deleteDoc(bgChunkRef(i));}catch(e){}}
   bgImageMeta={ver,count:0,data:''};
+  syncedBgImage='';
   try{localStorage.setItem('planner_bgImage_ver',String(ver));}catch(e){}
+  setBgSyncStatus('☁ 계정에서도 배경을 지웠어요 · '+nowHM2(),false);
 }
 // 로그인 후 호출: 다른 기기에서 올린/바꾼/지운 배경을 이 기기에 맞추고, 아직 동기화 안 된 이 기기의 배경은 계정에 올림
-async function syncBgImageFromCloud(){
+async function syncBgImageFromCloud(force){
   if(!currentUser)return;
   try{
     const localImg=localStorage.getItem('planner_bgImage');
     const localVer=localStorage.getItem('planner_bgImage_ver');
     const meta=bgImageMeta;
-    if(meta&&meta.count!==undefined){
-      if(String(meta.ver)===localVer)return; // 이미 최신
-      if(meta.count>0){
+    if(meta&&meta.ver!==undefined){
+      if(!force&&String(meta.ver)===localVer){setBgSyncStatus('☁ 계정과 동기화됨',false);return;}
+      if((meta.count||0)>0||meta.data){
         let full='';
-        for(let i=0;i<meta.count;i++){
-          const snap=await getDoc(bgChunkRef(i));
-          if(!snap.exists())throw new Error('이미지 조각 '+i+' 누락');
-          full+=snap.data().data||'';
+        if((meta.count||0)>0){
+          try{
+            for(let i=0;i<meta.count;i++){
+              const snap=await getDoc(bgChunkRef(i));
+              if(!snap.exists())throw new Error('이미지 조각 '+i+' 누락');
+              full+=snap.data().data||'';
+            }
+          }catch(e){console.warn('원본 조각 읽기 실패 → 압축본으로 대체:',e);full='';}
         }
+        if(!full)full=meta.data||'';
+        if(!full)throw new Error('계정에 저장된 이미지를 읽지 못했어요');
         applyBgImage(full);
         try{
           localStorage.setItem('planner_bgImage',full);
           localStorage.setItem('planner_bgImage_ver',String(meta.ver));
-        }catch(e){console.warn('이 기기 저장공간이 부족해 배경 이미지를 캐싱하지 못했어요(이번 접속에서만 보여요):',e);}
+        }catch(e){console.warn('이 기기 저장공간이 부족해 배경을 캐싱하지 못했어요(이번 접속에서만 보여요):',e);}
         updateBgImagePreview();
+        setBgSyncStatus('☁ 계정의 배경을 불러왔어요 · '+nowHM2(),false);
       }else{
         localStorage.removeItem('planner_bgImage');
         try{localStorage.setItem('planner_bgImage_ver',String(meta.ver));}catch(e){}
         clearBgImageStyles();
+        setBgSyncStatus('☁ 계정에 저장된 배경이 없어요',false);
       }
       return;
     }
-    // 아직 동기화된 적 없음(또는 예전 저화질 방식) → 이 기기에 배경이 있으면 원본 화질 그대로 올림
+    // 아직 새 방식으로 동기화된 적 없음 → 이 기기에 배경이 있으면 계정에 올림
     if(localImg)await saveBgImageToCloud(localImg);
-  }catch(e){console.error('배경 이미지 동기화 실패:',e);}
+    else setBgSyncStatus(meta&&meta.data?'☁ 계정의 예전 방식 배경을 쓰는 중':'배경 이미지가 아직 없어요',false);
+  }catch(e){
+    console.error('배경 이미지 동기화 실패:',e);
+    setBgSyncStatus('⚠ 동기화 실패: '+((e&&e.message)||e),true);
+  }
 }
+// "지금 동기화" 버튼: 이 기기에 배경이 있으면 계정에 다시 올리고, 없으면 계정에서 불러옴
+window.manualBgSync=async function(){
+  if(!currentUser){setBgSyncStatus('⚠ 로그인 후에 쓸 수 있어요',true);return;}
+  try{
+    const localImg=localStorage.getItem('planner_bgImage');
+    if(localImg)await saveBgImageToCloud(localImg);
+    else await syncBgImageFromCloud(true);
+  }catch(e){
+    console.error('배경 이미지 수동 동기화 실패:',e);
+    setBgSyncStatus('⚠ 동기화 실패: '+((e&&e.message)||e),true);
+  }
+};
 window.setBgPattern=function(pattern,btn){
   currentPattern=pattern;
   applyPattern(pattern);
