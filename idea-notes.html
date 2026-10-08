@@ -169,14 +169,14 @@ textarea.field{min-height:64px;resize:vertical;line-height:1.5}
 .viewport.drop{outline:2px dashed var(--accent);outline-offset:-6px}
 #layer{position:absolute;left:0;top:0;transform-origin:0 0}
 #edges{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
-.mm-node{position:absolute;transform:translate(-50%,-50%);border-radius:999px;padding:9px 16px;font-size:14px;white-space:nowrap;max-width:240px;cursor:pointer;border:1.5px solid transparent;display:flex;align-items:center;gap:6px;line-height:1.3}
-.mm-node .t{overflow:hidden;text-overflow:ellipsis}
+.mm-node{position:absolute;transform:translate(-50%,-50%);border-radius:19px;padding:9px 16px;font-size:14px;width:max-content;max-width:240px;cursor:pointer;border:1.5px solid transparent;display:flex;align-items:center;gap:6px;line-height:1.45;text-align:center}
+.mm-node .t{white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
 .mm-node svg{flex-shrink:0}
-.mm-node.root{font-size:16px;font-weight:800;padding:14px 24px;background:var(--accent);color:var(--accent-on)}
+.mm-node.root{font-size:16px;font-weight:800;padding:14px 24px;border-radius:24px;max-width:280px;background:var(--accent);color:var(--accent-on)}
 .mm-node.l1{font-weight:700;color:#2e2e2e}
-.mm-node.deep{background:var(--card);color:var(--text);font-size:13px;padding:7px 14px}
+.mm-node.deep{background:var(--card);color:var(--text);font-size:13px;padding:7px 14px;border-radius:17px}
 .mm-node.sel{box-shadow:0 0 0 3px var(--canvas),0 0 0 5px var(--text)}
-.mm-node input{border:none;outline:none;background:transparent;font:inherit;color:inherit;width:170px;text-align:center;padding:0}
+.mm-node textarea{border:none;outline:none;background:transparent;font:inherit;color:inherit;width:200px;text-align:center;padding:0;resize:none;overflow:hidden;line-height:1.45;display:block}
 .map-hint{position:absolute;left:14px;top:12px;font-size:12px;color:var(--sub);pointer-events:none}
 .node-bar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:none;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:6px;max-width:calc(100% - 32px);z-index:5;cursor:default}
 .node-bar.show{display:flex}
@@ -199,6 +199,21 @@ textarea.field{min-height:64px;resize:vertical;line-height:1.5}
 .pm-title{font-size:12px;color:var(--sub);padding:6px 10px}
 .pop-menu button{display:block;width:100%;text-align:left;border:none;background:none;padding:9px 10px;border-radius:8px;font-size:13px;cursor:pointer}
 .pop-menu button:hover{background:var(--soft)}
+.mm-node .memo-badge{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accent-on);display:flex;align-items:center;justify-content:center;border:2px solid var(--canvas)}
+.memo-tip{position:fixed;display:none;z-index:45;max-width:300px;background:var(--card);color:var(--text);border:1px solid var(--border2);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;box-shadow:0 8px 24px rgba(0,0,0,.1);pointer-events:none}
+.memo-tip.show{display:block}
+.memo-tip .mt-label{display:block;font-size:11px;color:var(--sub);margin-bottom:4px}
+.memo-pop{position:fixed;display:none;z-index:55;width:320px;background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.12);flex-direction:column;gap:10px}
+.memo-pop.open{display:flex}
+.mp-title{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-text{min-height:120px;resize:vertical;font-size:13px;line-height:1.55}
+.mp-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mp-row .grow{flex:1}
+.mp-sec{border-top:1px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.mp-sec-title{font-size:12px;color:var(--sub)}
+.mp-sec .field{min-height:34px;padding:0 10px;font-size:12px}
+.mp-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);cursor:pointer}
+.mp-hint{font-size:11px;color:var(--sub)}
 #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);background:var(--accent);color:var(--accent-on);padding:10px 16px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60}
 #toast.show{opacity:1;transform:translateX(-50%)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -347,7 +362,7 @@ textarea.field{min-height:64px;resize:vertical;line-height:1.5}
           </aside>
           <div class="viewport" id="viewport">
             <div id="layer"><svg id="edges" aria-hidden="true"></svg></div>
-            <div class="map-hint">빈 곳을 끌면 화면 이동, 휠로 확대·축소, 더블클릭으로 이름 수정</div>
+            <div class="map-hint">빈 곳을 끌면 화면 이동, 휠로 확대·축소, 더블클릭으로 내용 수정, 우클릭으로 메모</div>
             <div class="node-bar" id="nodeBar"></div>
           </div>
         </div>
@@ -357,6 +372,8 @@ textarea.field{min-height:64px;resize:vertical;line-height:1.5}
 </div>
 
 <div id="sendMenu" class="pop-menu"></div>
+<div id="memoPop" class="memo-pop" role="dialog" aria-label="노드 메모"></div>
+<div id="memoTip" class="memo-tip"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script type="module">
@@ -388,6 +405,7 @@ const PALETTE = [
 ];
 const PIN_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 6 4 3v2H6v-2l4-3z"/><path d="M12 14v7"/></svg>';
 const PIN_ON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 6 4 3v2H6v-2l4-3z"/><path d="M12 14v7" fill="none"/></svg>';
+const MEMO_SVG = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
 const NOTE_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6"/></svg>';
 
 let currentUser = null;
@@ -440,6 +458,7 @@ onAuthStateChanged(auth, async user => {
     $('userEmailLabel').textContent = user.email || '';
     applySettings();
     await loadCloudData();
+    resetHistory();
     needCenter = true;
     renderAll();
   } else {
@@ -542,21 +561,24 @@ async function loadCloudData(){
 }
 async function saveCategories(silent){
   if(!silent) showSaving();
-  try{ await setDoc(doc(db,'users',currentUser.uid,'settings','ideaCategories'), { list: state.categories, colors: state.catColors }); }
+  markChanged();
+  try{ await track(setDoc(doc(db,'users',currentUser.uid,'settings','ideaCategories'), { list: state.categories, colors: state.catColors })); }
   catch(e){ alert('카테고리 저장 중 오류가 발생했어요.\n(' + e.message + ')'); }
 }
 async function saveNote(note){
   showSaving();
+  markChanged();
   try{
-    await setDoc(doc(db,'users',currentUser.uid,'ideaNotes',note.id), {
+    await track(setDoc(doc(db,'users',currentUser.uid,'ideaNotes',note.id), {
       category: note.category, content: note.content, tags: note.tags, createdAt: note.createdAt, pinned: !!note.pinned
-    });
+    }));
   }
   catch(e){ alert('저장 중 오류가 발생했어요.\n(' + e.message + ')'); }
 }
 async function removeNoteDoc(id){
   showSaving();
-  try{ await deleteDoc(doc(db,'users',currentUser.uid,'ideaNotes',id)); }
+  markChanged();
+  try{ await track(deleteDoc(doc(db,'users',currentUser.uid,'ideaNotes',id))); }
   catch(e){ alert('삭제 중 오류가 발생했어요.\n(' + e.message + ')'); }
 }
 function mapError(e){
@@ -570,26 +592,143 @@ const mapTimers = {};
 function saveMap(map){
   map.updatedAt = Date.now();
   showSaving();
-  clearTimeout(mapTimers[map.id]);
-  mapTimers[map.id] = setTimeout(async () => {
-    delete mapTimers[map.id];
+  markChanged();
+  if(mapTimers[map.id]) clearTimeout(mapTimers[map.id].t);
+  const run = async () => {
+    if(mapTimers[map.id] && mapTimers[map.id].run === run){ clearTimeout(mapTimers[map.id].t); delete mapTimers[map.id]; }
     try{
-      await setDoc(doc(db,'users',currentUser.uid,'mindmaps',map.id), {
+      await track(setDoc(doc(db,'users',currentUser.uid,'mindmaps',map.id), {
         title: map.title, nodes: map.nodes.map(cleanNode), createdAt: map.createdAt, updatedAt: map.updatedAt
-      });
+      }));
     }catch(e){ mapError(e); }
-  }, 500);
+  };
+  mapTimers[map.id] = { t: setTimeout(run, 500), run };
 }
+// 진행 중인 저장 추적 (Ctrl+S에서 끝날 때까지 기다림)
+const pendingWrites = new Set();
+function track(p){ pendingWrites.add(p); p.then(() => pendingWrites.delete(p), () => pendingWrites.delete(p)); return p; }
+async function flushAll(){
+  Object.values(mapTimers).map(m => m.run).forEach(run => run());
+  await Promise.allSettled([...pendingWrites]);
+}
+window.addEventListener('beforeunload', e => {
+  if(Object.keys(mapTimers).length || pendingWrites.size){ e.preventDefault(); e.returnValue = ''; }
+});
+
+// ── 되돌리기 / 다시 실행 ──
+// 저장이 일어날 때마다 직전 상태를 기록해 둠. 같은 순간에 일어난 저장들은 한 단계로 묶음.
+const HISTORY_MAX = 60;
+let undoStack = [], redoStack = [];
+let lastSnap = null, historyQueued = false, restoring = false;
+function snapshot(){
+  return JSON.stringify({ categories: state.categories, catColors: state.catColors, notes: state.notes, maps: state.maps.map(({ updatedAt, ...m }) => m) });
+}
+function markChanged(){
+  if(restoring || historyQueued) return;
+  historyQueued = true;
+  queueMicrotask(commitHistory);
+}
+function commitHistory(){
+  historyQueued = false;
+  const cur = snapshot();
+  if(lastSnap == null){ lastSnap = cur; return; }
+  if(cur === lastSnap) return;
+  undoStack.push({ snap: lastSnap, view, mapId: activeMapId });
+  if(undoStack.length > HISTORY_MAX) undoStack.shift();
+  redoStack = [];
+  lastSnap = cur;
+}
+function resetHistory(){ undoStack = []; redoStack = []; lastSnap = snapshot(); }
+function applySnapshot(entry){
+  const target = JSON.parse(entry.snap);
+  const cur = JSON.parse(lastSnap);
+  restoring = true;
+  try{
+    state.categories = target.categories;
+    state.catColors = target.catColors;
+    state.notes = target.notes;
+    state.maps = target.maps;
+    if(JSON.stringify([cur.categories, cur.catColors]) !== JSON.stringify([target.categories, target.catColors])) saveCategories();
+    const curNotes = new Map(cur.notes.map(n => [n.id, JSON.stringify(n)]));
+    const tgtIds = new Set(target.notes.map(n => n.id));
+    state.notes.forEach(n => { if(curNotes.get(n.id) !== JSON.stringify(n)) saveNote(n); });
+    cur.notes.forEach(n => { if(!tgtIds.has(n.id)) removeNoteDoc(n.id); });
+    const curMaps = new Map(cur.maps.map(m => [m.id, JSON.stringify(m)]));
+    const tgtMapIds = new Set(target.maps.map(m => m.id));
+    state.maps.forEach(m => { if(curMaps.get(m.id) !== JSON.stringify(m)) saveMap(m); });
+    cur.maps.forEach(m => { if(!tgtMapIds.has(m.id)) removeMapDoc(m.id); });
+  } finally {
+    restoring = false;
+  }
+  lastSnap = entry.snap;
+  // 화면 상태 정리
+  editingId = null; editingNodeId = null;
+  if(!state.categories.includes(activeCat)) activeCat = state.categories[0];
+  if(drawerCat && !state.categories.includes(drawerCat)) drawerCat = null;
+  view = entry.view;
+  history.replaceState(null, '', view === 'map' ? '#mindmap' : location.pathname + location.search);
+  if(entry.mapId && state.maps.some(m => m.id === entry.mapId)) activeMapId = entry.mapId;
+  if(!state.maps.some(m => m.id === activeMapId)){ activeMapId = state.maps[0] ? state.maps[0].id : null; needCenter = true; }
+  const map = curMap();
+  if(!map || !findNode(map, selectedNodeId)) selectedNodeId = null;
+  renderAll();
+}
+function undo(){
+  closeMemoPop(true); closeSendMenu(); hideMemoTip();
+  if(historyQueued) commitHistory();
+  const entry = undoStack.pop();
+  if(!entry){ toast('더 되돌릴 작업이 없어요'); return; }
+  redoStack.push({ snap: lastSnap, view, mapId: activeMapId });
+  applySnapshot(entry);
+  toast('되돌렸어요 (다시 실행: Ctrl+Y)');
+}
+function redo(){
+  closeMemoPop(true); closeSendMenu(); hideMemoTip();
+  if(historyQueued) commitHistory();
+  const entry = redoStack.pop();
+  if(!entry){ toast('다시 실행할 작업이 없어요'); return; }
+  undoStack.push({ snap: lastSnap, view, mapId: activeMapId });
+  applySnapshot(entry);
+  toast('다시 실행했어요');
+}
+
+const isSaveKey = ev => (ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's';
+// ── Ctrl+S: 열려 있는 편집 내용을 확정하고 바로 저장 ──
+async function saveNow(){
+  const active = document.activeElement;
+  if(active && active.id === 'contentInput' && active.value.trim()) addNote();
+  const editForm = document.querySelector('.card.edit-form .primary');
+  if(editForm) editForm.click();
+  finishEditing();
+  closeMemoPop(true);
+  const had = Object.keys(mapTimers).length + pendingWrites.size;
+  await flushAll();
+  $('savingTag').textContent = '';
+  toast(had ? '저장했어요' : '모두 저장돼 있어요');
+}
+document.addEventListener('keydown', e => {
+  if(!currentUser || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if(k === 's'){ e.preventDefault(); saveNow(); return; }
+  if(k !== 'z' && k !== 'y') return;
+  // 글자를 입력하는 칸 안에서는 브라우저 기본 되돌리기(글자 단위)를 그대로 씀
+  const t = e.target;
+  if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  e.preventDefault();
+  if(k === 'y' || (k === 'z' && e.shiftKey)) redo(); else undo();
+});
 function cleanNode(n){
   const o = { id:n.id, text:n.text, x:n.x, y:n.y, parent: n.parent == null ? null : n.parent };
   if(typeof n.color === 'number') o.color = n.color;
   if(n.noteId) o.noteId = n.noteId;
+  if(n.memo && n.memo.trim()) o.memo = n.memo;
   return o;
 }
 async function removeMapDoc(id){
-  clearTimeout(mapTimers[id]); delete mapTimers[id];
+  if(mapTimers[id]){ clearTimeout(mapTimers[id].t); delete mapTimers[id]; }
   showSaving();
-  try{ await deleteDoc(doc(db,'users',currentUser.uid,'mindmaps',id)); }
+  markChanged();
+  try{ await track(deleteDoc(doc(db,'users',currentUser.uid,'mindmaps',id))); }
   catch(e){ mapError(e); }
 }
 
@@ -598,6 +737,8 @@ function setView(v){
   view = v;
   history.replaceState(null, '', v === 'map' ? '#mindmap' : location.pathname + location.search);
   closeSendMenu();
+  closeMemoPop(true);
+  hideMemoTip();
   if(v === 'map') needCenter = true;
   renderAll();
 }
@@ -930,6 +1071,7 @@ function openSendMenu(note, anchor){
 }
 document.addEventListener('click', e => {
   if(!e.target.closest('#sendMenu')) closeSendMenu();
+  if(!e.target.closest('#memoPop') && !e.target.closest('#nodeBar')) closeMemoPop(true);
   if(!e.target.closest('#settingsPanel') && !e.target.closest('#settingsBtn')) $('settingsPanel').classList.remove('open');
 });
 function toast(msg){
@@ -989,8 +1131,8 @@ function placeNewChild(map, parent){
   return { x: parent.x + 170 * Math.cos(a + off), y: parent.y + 170 * Math.sin(a + off) };
 }
 function noteLabel(note){
-  const first = (note.content || '').split('\n')[0].trim();
-  return first.length > 30 ? first.slice(0, 30) + '…' : (first || '메모');
+  const text = (note.content || '').trim();
+  return text.length > 300 ? text.slice(0, 300) + '…' : (text || '메모');
 }
 function addNoteToMap(map, note, parentId, pos){
   const parent = (parentId && findNode(map, parentId)) || getRoot(map);
@@ -1018,6 +1160,7 @@ function createMap(){
   return map;
 }
 function openMap(id){
+  closeMemoPop(true);
   activeMapId = id;
   try{ localStorage.setItem('idea-notes-active-map', id); }catch(e){}
   selectedNodeId = null; editingNodeId = null; needCenter = true;
@@ -1120,6 +1263,7 @@ $('emptyCreateBtn').onclick = () => { if(createMap()) renderAll(); };
 
 function renderMap(){
   const map = curMap(); if(!map) return;
+  hideMemoTip();
   const layer = $('layer');
   layer.querySelectorAll('.mm-node').forEach(e => e.remove());
   Object.keys(nodeEls).forEach(k => delete nodeEls[k]);
@@ -1140,20 +1284,32 @@ function renderMap(){
       }
     }
     const note = nd.noteId ? state.notes.find(n => n.id === nd.noteId) : null;
-    if(note){ e.appendChild(icon(NOTE_SVG)); e.title = note.content; }
-    else e.title = nd.text;
+    if(note) e.appendChild(icon(NOTE_SVG));
+    if(nd.memo && nd.memo.trim()){
+      const b = h('span','memo-badge');
+      b.appendChild(icon(MEMO_SVG));
+      e.appendChild(b);
+      e.setAttribute('aria-description', '메모: ' + nd.memo);
+      e.addEventListener('mouseenter', () => showMemoTip(e, nd.memo));
+      e.addEventListener('mouseleave', hideMemoTip);
+    } else {
+      e.title = note ? note.content : nd.text;
+    }
     if(nd.id === editingNodeId){
-      const inp = document.createElement('input');
+      const inp = document.createElement('textarea');
       inp.value = nd.text;
-      inp.setAttribute('aria-label','노드 이름');
+      inp.rows = 1;
+      inp.setAttribute('aria-label','노드 내용');
+      const grow = () => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 'px'; };
+      inp.addEventListener('input', grow);
       inp.addEventListener('keydown', ev => {
-        ev.stopPropagation();
-        if(ev.key === 'Enter'){ ev.preventDefault(); commitEdit(nd.id, inp.value); }
+        if(!isSaveKey(ev)) ev.stopPropagation();
+        if(ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing){ ev.preventDefault(); commitEdit(nd.id, inp.value); }
         else if(ev.key === 'Escape'){ editingNodeId = null; renderMap(); }
       });
       inp.addEventListener('blur', () => commitEdit(nd.id, inp.value));
       e.appendChild(inp);
-      setTimeout(() => { inp.focus(); inp.select(); }, 0);
+      setTimeout(() => { grow(); inp.focus(); inp.select(); }, 0);
     } else {
       e.appendChild(h('span','t', nd.text));
     }
@@ -1201,7 +1357,7 @@ function commitEdit(id, val){
 }
 function finishEditing(){
   if(!editingNodeId) return;
-  const inp = $('layer').querySelector('.mm-node input');
+  const inp = $('layer').querySelector('.mm-node textarea');
   commitEdit(editingNodeId, inp ? inp.value : '');
 }
 function startEdit(id){
@@ -1223,7 +1379,8 @@ function renderNodeBar(map){
   const btn = (label, fn, cls) => { const b = h('button', 'nb' + (cls ? ' ' + cls : ''), label); b.onclick = fn; bar.appendChild(b); return b; };
   btn('하위 노드 (Tab)', () => addChild(nd.id));
   if(!isRoot) btn('형제 노드 (Enter)', () => addSibling(nd.id));
-  btn('이름 수정', () => startEdit(nd.id));
+  btn('내용 수정', () => startEdit(nd.id));
+  btn(nd.memo && nd.memo.trim() ? '메모 보기·수정' : '메모 적기', ev => { ev.stopPropagation(); const r = nodeEls[nd.id] ? nodeEls[nd.id].getBoundingClientRect() : bar.getBoundingClientRect(); openMemoPop(nd.id, r.right + 8, r.top); });
   if(!isRoot){
     const sw = h('div','swatches');
     PALETTE.forEach((p, i) => {
@@ -1347,7 +1504,7 @@ let drag = null;
 vp.addEventListener('pointerdown', e => {
   if(e.button !== 0) return;
   if(e.target.closest('#nodeBar')) return;
-  if(e.target.tagName === 'INPUT') return;
+  if(e.target.tagName === 'TEXTAREA') return;
   const map = curMap(); if(!map) return;
   finishEditing();
   const ne = e.target.closest('.mm-node');
@@ -1367,6 +1524,7 @@ window.addEventListener('pointermove', e => {
   const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
   if(!drag.moved && Math.hypot(dx, dy) < 4) return;
   drag.moved = true;
+  hideMemoTip();
   if(drag.type === 'pan'){
     panX = drag.px + dx; panY = drag.py + dy; applyTransform();
   } else {
@@ -1390,6 +1548,145 @@ vp.addEventListener('dblclick', e => {
   const ne = e.target.closest('.mm-node');
   if(ne) startEdit(ne.dataset.id);
 });
+
+// ── 노드 메모 (우클릭) ──
+vp.addEventListener('contextmenu', e => {
+  const ne = e.target.closest('.mm-node');
+  if(!ne) return;
+  e.preventDefault();
+  finishEditing();
+  selectNode(ne.dataset.id);
+  openMemoPop(ne.dataset.id, e.clientX, e.clientY);
+});
+function showMemoTip(el, memo){
+  if(drag || $('memoPop').classList.contains('open')) return;
+  const tip = $('memoTip');
+  tip.innerHTML = '';
+  tip.appendChild(h('span','mt-label','메모'));
+  tip.appendChild(document.createTextNode(memo));
+  tip.classList.add('show');
+  const r = el.getBoundingClientRect();
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let top = r.bottom + 8;
+  if(top + th > window.innerHeight - 10) top = Math.max(10, r.top - th - 8);
+  tip.style.top = top + 'px';
+  tip.style.left = Math.max(10, Math.min(r.left + r.width / 2 - tw / 2, window.innerWidth - tw - 10)) + 'px';
+}
+function hideMemoTip(){ $('memoTip').classList.remove('show'); }
+
+let memoNodeId = null;
+function closeMemoPop(save){
+  const pop = $('memoPop');
+  if(!pop.classList.contains('open')) return;
+  if(save){
+    const ta = pop.querySelector('.mp-text');
+    if(ta) saveNodeMemo(memoNodeId, ta.value);
+  }
+  pop.classList.remove('open');
+  memoNodeId = null;
+}
+function saveNodeMemo(id, val){
+  const map = curMap(); if(!map) return;
+  const nd = findNode(map, id); if(!nd) return;
+  const v = (val || '').replace(/\s+$/, '');
+  const old = nd.memo || '';
+  if(v === old) return;
+  if(v.trim()) nd.memo = v; else delete nd.memo;
+  saveMap(map); renderMap();
+}
+function openMemoPop(id, x, y){
+  const map = curMap(); if(!map) return;
+  const nd = findNode(map, id); if(!nd) return;
+  hideMemoTip();
+  closeMemoPop(true);
+  memoNodeId = id;
+  const pop = $('memoPop');
+  pop.innerHTML = '';
+  const short = nd.text.length > 24 ? nd.text.slice(0, 24) + '…' : nd.text;
+  pop.appendChild(h('div','mp-title', `'${short}' 메모`));
+
+  const ta = h('textarea','field mp-text');
+  ta.value = nd.memo || '';
+  ta.placeholder = '이 노드에 대한 생각, 설정, 참고할 점을 적어보세요';
+  ta.setAttribute('aria-label','메모 내용');
+  ta.addEventListener('keydown', ev => {
+    if(!isSaveKey(ev)) ev.stopPropagation();
+    if(ev.key === 'Escape'){ ev.preventDefault(); closeMemoPop(false); }
+    if(ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)){ ev.preventDefault(); closeMemoPop(true); }
+  });
+  pop.appendChild(ta);
+
+  const row = h('div','mp-row');
+  const saveB = h('button','btn-primary','저장');
+  saveB.onclick = () => closeMemoPop(true);
+  row.appendChild(saveB);
+  if(nd.memo){
+    const delB = h('button','btn','메모 지우기');
+    delB.onclick = () => { if(confirm('이 노드의 메모를 지울까요?')){ ta.value = ''; closeMemoPop(true); } };
+    row.appendChild(delB);
+  }
+  row.appendChild(h('span','grow'));
+  row.appendChild(h('span','mp-hint','Ctrl+Enter 저장, Esc 취소'));
+  pop.appendChild(row);
+
+  // 아이디어 노트로 옮기기
+  const sec = h('div','mp-sec');
+  sec.appendChild(h('div','mp-sec-title','아이디어 노트로 옮기기'));
+  const linked = nd.noteId ? state.notes.find(n => n.id === nd.noteId) : null;
+  const catRow = h('div','mp-row');
+  const sel = h('select','sel small');
+  sel.setAttribute('aria-label','옮길 카테고리');
+  state.categories.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    if(c === (linked ? linked.category : activeCat)) o.selected = true;
+    sel.appendChild(o);
+  });
+  catRow.appendChild(sel);
+  const tagIn = h('input','field grow');
+  tagIn.type = 'text'; tagIn.placeholder = '태그 (쉼표로 구분)'; tagIn.setAttribute('aria-label','태그');
+  tagIn.addEventListener('keydown', ev => { if(!isSaveKey(ev)) ev.stopPropagation(); });
+  catRow.appendChild(tagIn);
+  sec.appendChild(catRow);
+  const chkLabel = h('label','mp-check');
+  const chk = document.createElement('input'); chk.type = 'checkbox'; chk.checked = true;
+  chkLabel.appendChild(chk);
+  chkLabel.appendChild(document.createTextNode('노드 내용을 첫 줄에 함께 적기'));
+  sec.appendChild(chkLabel);
+  const moveRow = h('div','mp-row');
+  const moveB = h('button','btn','옮기기');
+  moveB.onclick = () => {
+    const memo = ta.value.trim();
+    if(!memo){ alert('옮길 메모 내용이 없어요. 먼저 메모를 적어주세요.'); ta.focus(); return; }
+    moveMemoToNote(nd.id, memo, sel.value, tagIn.value, chk.checked);
+  };
+  moveRow.appendChild(moveB);
+  moveRow.appendChild(h('span','mp-hint','옮기면 노드의 메모는 비워지고 새 메모와 연결돼요'));
+  sec.appendChild(moveRow);
+  pop.appendChild(sec);
+
+  pop.classList.add('open');
+  const pw = pop.offsetWidth, ph = pop.offsetHeight;
+  pop.style.left = Math.max(10, Math.min(x, window.innerWidth - pw - 10)) + 'px';
+  pop.style.top = Math.max(10, Math.min(y, window.innerHeight - ph - 10)) + 'px';
+  setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+}
+function moveMemoToNote(id, memo, category, tagsRaw, withNodeText){
+  const map = curMap(); if(!map) return;
+  const nd = findNode(map, id); if(!nd) return;
+  const tags = tagsRaw.trim() ? [...new Set(tagsRaw.split(',').map(t => t.trim()).filter(Boolean))] : [];
+  const content = withNodeText ? nd.text + '\n' + memo : memo;
+  const note = { id: Date.now() + '_' + Math.random().toString(36).slice(2,7), category, content, tags, createdAt: Date.now(), pinned: false };
+  state.notes.push(note);
+  saveNote(note);
+  delete nd.memo;
+  if(!nd.noteId) nd.noteId = note.id;
+  saveMap(map);
+  $('memoPop').classList.remove('open');
+  memoNodeId = null;
+  renderMap(); renderDrawer(map); renderSidebar();
+  toast(`아이디어 노트 '${category}'에 옮겼어요`);
+}
 
 // 서랍에서 끌어와 놓기
 vp.addEventListener('dragover', e => {
@@ -1444,6 +1741,28 @@ function roundRect(ctx, x, y, w, hh, r){
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
 }
+// 화면과 같은 규칙으로 줄바꿈: 직접 넣은 줄바꿈 유지, 띄어쓰기 단위로 넘기고, 너무 긴 낱말은 글자 단위로 자름
+function wrapText(ctx, text, maxW){
+  const out = [];
+  String(text || '').split('\n').forEach(para => {
+    const words = para.split(/(\s+)/).filter(w => w.length);
+    let line = '';
+    words.forEach(w => {
+      const test = line + w;
+      if(ctx.measureText(test).width <= maxW){ line = test; return; }
+      if(line.trim()) out.push(line.trimEnd());
+      line = /^\s+$/.test(w) ? '' : w;
+      while(ctx.measureText(line).width > maxW && line.length > 1){
+        let cut = line.length - 1;
+        while(cut > 1 && ctx.measureText(line.slice(0, cut)).width > maxW) cut--;
+        out.push(line.slice(0, cut));
+        line = line.slice(cut);
+      }
+    });
+    out.push(line.trimEnd());
+  });
+  return out.length ? out : [''];
+}
 async function exportImage(){
   const map = curMap(); if(!map || !map.nodes.length) return;
   try{ await document.fonts.ready; }catch(e){}
@@ -1459,14 +1778,13 @@ async function exportImage(){
     const size = isRoot ? 16 : d === 1 ? 14 : 13;
     const weight = isRoot ? 800 : d === 1 ? 700 : 400;
     ctx.font = `${weight} ${size}px ${FONT}`;
-    let text = nd.text;
-    if(ctx.measureText(text).width > 210){
-      while(text.length > 1 && ctx.measureText(text + '…').width > 210) text = text.slice(0, -1);
-      text += '…';
-    }
     const padX = isRoot ? 24 : d === 1 ? 16 : 14;
-    const hh = isRoot ? 48 : d === 1 ? 38 : 34;
-    return { nd, isRoot, d, size, weight, text, w: ctx.measureText(text).width + padX * 2, h: hh };
+    const padY = isRoot ? 14 : d === 1 ? 9 : 7;
+    const maxText = (isRoot ? 280 : 240) - padX * 2;
+    const lines = wrapText(ctx, nd.text, maxText);
+    const lineH = Math.round(size * 1.45);
+    const textW = Math.max(...lines.map(l => ctx.measureText(l).width), 1);
+    return { nd, isRoot, d, size, weight, lines, lineH, w: Math.ceil(textW) + padX * 2, h: lines.length * lineH + padY * 2 + 3 };
   });
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   info.forEach(o => {
@@ -1496,7 +1814,7 @@ async function exportImage(){
     const { nd } = o;
     const ci = branchColor(map, nd);
     const p = ci == null ? null : pal(ci);
-    roundRect(ctx, nd.x - o.w / 2, nd.y - o.h / 2, o.w, o.h, o.h / 2);
+    roundRect(ctx, nd.x - o.w / 2, nd.y - o.h / 2, o.w, o.h, o.isRoot ? 24 : o.d === 1 ? 19 : 17);
     let textColor;
     if(o.isRoot){ ctx.fillStyle = v('--accent'); ctx.fill(); textColor = v('--accent-on'); }
     else if(o.d === 1){ ctx.fillStyle = p ? p.fill : v('--soft'); ctx.fill(); textColor = p ? '#2e2e2e' : v('--text'); }
@@ -1507,7 +1825,14 @@ async function exportImage(){
     }
     ctx.fillStyle = textColor;
     ctx.font = `${o.weight} ${o.size}px ${FONT}`;
-    ctx.fillText(o.text, nd.x, nd.y + 1);
+    const top = nd.y - (o.lines.length * o.lineH) / 2 + o.lineH / 2 + 1;
+    o.lines.forEach((l, i) => ctx.fillText(l, nd.x, top + i * o.lineH));
+    if(nd.memo && nd.memo.trim()){
+      const bx = nd.x + o.w / 2 - 4, by = nd.y - o.h / 2 + 4;
+      ctx.beginPath(); ctx.arc(bx, by, 7, 0, Math.PI * 2);
+      ctx.fillStyle = v('--accent'); ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = v('--canvas'); ctx.stroke();
+    }
   });
   c.toBlob(blob => {
     if(!blob){ alert('이미지를 만들지 못했어요. 맵이 너무 크면 노드를 줄여서 다시 시도해 주세요.'); return; }
