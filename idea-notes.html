@@ -53,7 +53,10 @@ button,input,select,textarea{font:inherit;color:inherit;}
 .nav-item:hover{background:var(--soft)}
 .nav-item.active{background:var(--tint);font-weight:800}
 .nav-item .count{margin-left:auto;font-size:12px;font-weight:400;color:var(--sub)}
-.side-label{font-size:12px;color:var(--sub);padding:22px 10px 6px}
+.side-label{font-size:12px;color:var(--sub);padding:22px 10px 6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.side-label select{border:1px solid var(--border2);border-radius:8px;background:var(--card);font-size:11px;color:var(--sub);padding:3px 6px;max-width:120px}
+.side-hint{font-size:12px;color:var(--sub);padding:8px 12px;line-height:1.5}
+.av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#2e2e2e;flex-shrink:0}
 .side-list{display:flex;flex-direction:column;gap:2px}
 .side-row{display:flex;align-items:center;border-radius:10px;border:1px solid transparent}
 .side-row:hover{background:var(--soft)}
@@ -193,6 +196,56 @@ textarea.field{min-height:64px;resize:vertical;line-height:1.5}
 .zoom .zl{min-width:52px;font-size:12px;color:var(--sub)}
 .map-empty{max-width:420px;padding-top:40px;display:flex;flex-direction:column;gap:14px;align-items:flex-start}
 
+/* ── 캐릭터 만들기 ── */
+.chr-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.chr-id{display:flex;gap:14px;align-items:center;min-width:0;flex:1 1 320px}
+.chr-id-text{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.avatar-btn{width:56px;height:56px;border-radius:50%;border:none;font-size:22px;font-weight:800;color:#2e2e2e;cursor:pointer;flex-shrink:0}
+.chr-name{border:none;outline:none;background:transparent;font-size:24px;font-weight:800;padding:0;width:100%;min-width:0}
+.chr-name::placeholder{color:var(--sub);opacity:.6}
+.oneliner{margin:0;font-size:13px;color:var(--text);line-height:1.5}
+.oneliner.empty{color:var(--sub)}
+.chr-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.chr-meta{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;margin-bottom:16px}
+.work-wrap{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}
+.work-in{min-height:30px;border:1px solid var(--border);border-radius:10px;background:var(--soft);padding:0 10px;font-size:12px;width:180px}
+.progress{display:flex;align-items:center;gap:10px;flex:1 1 260px;max-width:440px}
+.bar{flex:1;height:6px;border-radius:3px;background:var(--tint);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:#6fae8c;transition:width .2s}
+.chr-cols{display:flex;gap:20px;align-items:flex-start}
+.chr-left{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.chr-right{width:270px;flex-shrink:0;position:sticky;top:16px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 32px);overflow-y:auto}
+.core{background:var(--soft);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.core-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.core-title{font-size:15px;font-weight:800}
+.core-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.q{display:flex;flex-direction:column;gap:6px}
+.ql{font-size:13px;color:var(--sub);line-height:1.5}
+.ql.strong{font-weight:700;color:var(--text)}
+.core-mark{display:inline-block;font-size:11px;padding:1px 7px;border-radius:8px;background:var(--tint);color:var(--text);margin-left:6px;vertical-align:1px}
+.qa{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;line-height:1.6;background:var(--bg);resize:none;overflow:hidden;min-height:42px;width:100%;display:block}
+.qa:focus{background:var(--card)}
+.core .qa{background:var(--card)}
+.csec{background:var(--card);border:1px solid var(--border);border-radius:16px;scroll-margin-top:16px}
+.csec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;padding:0 16px;border:none;background:none;font-size:15px;font-weight:800;cursor:pointer;text-align:left}
+.csec-head .cnt{font-size:12px;font-weight:400;color:var(--sub);white-space:nowrap}
+.csec.done .csec-head .cnt{color:#4f9172}
+.csec-body{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
+.toc-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px}
+.toc-title{font-size:13px;font-weight:800;padding:4px 10px 8px}
+.toc-item{display:flex;justify-content:space-between;gap:8px;width:100%;font-size:13px;padding:7px 10px;border-radius:8px;border:none;background:none;color:var(--sub);cursor:pointer;text-align:left}
+.toc-item:hover{background:var(--soft);color:var(--text)}
+.toc-item.done span:last-child{color:#4f9172}
+.rel-box{background:var(--soft);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.rel-title{font-size:13px;font-weight:800}
+.rel-title span{font-weight:400;color:var(--sub);margin-left:4px}
+.rel-note{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;cursor:pointer;text-align:left;width:100%}
+.rel-note:hover{border-color:var(--border2)}
+.rel-note .txt{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word}
+.rel-note .chip{display:inline-block;margin-top:6px}
+.rel-hint{font-size:12px;color:var(--sub);line-height:1.5}
+.save-hint{font-size:11px;color:var(--sub);text-align:right;min-height:14px}
+
 /* ── 팝업 ── */
 .pop-menu{position:fixed;display:none;z-index:50;background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:6px;min-width:220px;max-height:60vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.1)}
 .pop-menu.open{display:block}
@@ -249,6 +302,11 @@ textarea.field{min-height:64px;resize:vertical;line-height:1.5}
     <button class="nav-item" id="navMap">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="20" cy="15" r="1.5"/><circle cx="4" cy="15" r="1.5"/><path d="M12 9V5M14.6 13.5l4 1M9.4 13.5l-4 1"/></svg>
       마인드맵
+    </button>
+    <button class="nav-item" id="navChr">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      캐릭터 만들기
+      <span class="count" id="chrCount"></span>
     </button>
     <div class="side-label" id="sideLabel"></div>
     <div class="side-list" id="sideList"></div>
@@ -368,6 +426,53 @@ textarea.field{min-height:64px;resize:vertical;line-height:1.5}
         </div>
       </div>
     </section>
+    <!-- 캐릭터 만들기 탭 -->
+    <section id="chrView" style="display:none;">
+      <div id="chrEmpty" class="map-empty">
+        <h1>캐릭터 만들기</h1>
+        <p class="sub" id="chrEmptyMsg"></p>
+        <button class="btn-primary" id="chrEmptyCreate">+ 새 캐릭터</button>
+      </div>
+      <div id="chrMain">
+        <div class="chr-head">
+          <div class="chr-id">
+            <button class="avatar-btn" id="chrAvatar" title="대표 색 바꾸기" aria-label="대표 색 바꾸기"></button>
+            <div class="chr-id-text">
+              <input id="chrNameInput" class="chr-name" placeholder="캐릭터 이름" aria-label="캐릭터 이름" spellcheck="false">
+              <p class="oneliner" id="chrOneliner"></p>
+            </div>
+          </div>
+          <div class="chr-actions">
+            <div class="tools">
+              <button class="btn" id="chrSendBtn">+ 마인드맵에 보내기</button>
+              <button class="btn" id="chrCopyBtn">텍스트로 복사</button>
+            </div>
+            <span class="linked" id="chrLinked"></span>
+          </div>
+        </div>
+        <div class="chr-meta">
+          <label class="work-wrap">작품
+            <input id="chrWorkInput" class="work-in" list="chrWorkList" placeholder="작품 이름 (선택)" spellcheck="false">
+          </label>
+          <datalist id="chrWorkList"></datalist>
+          <div class="progress"><div class="bar"><i id="chrBar"></i></div><span class="sub" id="chrProgressText"></span></div>
+        </div>
+        <div class="chr-cols">
+          <div class="chr-left">
+            <div class="core">
+              <div class="core-head"><span class="core-title">핵심 3가지</span><span class="sub">이것만 먼저 잡아도 충분해요</span></div>
+              <div class="core-grid" id="chrCore"></div>
+            </div>
+            <div id="chrSections" class="chr-left"></div>
+            <div class="save-hint" id="chrSaveHint"></div>
+          </div>
+          <aside class="chr-right">
+            <div class="toc-box"><div class="toc-title">목차</div><div id="chrToc"></div></div>
+            <div class="rel-box" id="chrRelated"></div>
+          </aside>
+        </div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -403,6 +508,7 @@ const PALETTE = [
   { dot:'#C9C3E6', fill:'#E6E2F5' }, // 연보라
   { dot:'#E9C3A6', fill:'#F6E1D2' }  // 살구
 ];
+const PERSON_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
 const PIN_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 6 4 3v2H6v-2l4-3z"/><path d="M12 14v7"/></svg>';
 const PIN_ON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 6 4 3v2H6v-2l4-3z"/><path d="M12 14v7" fill="none"/></svg>';
 const MEMO_SVG = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
@@ -410,9 +516,11 @@ const NOTE_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" st
 
 let currentUser = null;
 const DEFAULT_CATS = ['캐릭터','장소','상황','장르'];
-let state = { categories: [...DEFAULT_CATS], catColors: {}, notes: [], maps: [] };
+let state = { categories: [...DEFAULT_CATS], catColors: {}, notes: [], maps: [], characters: [] };
 let settings = loadSettings();
-let view = location.hash === '#mindmap' ? 'map' : 'idea';
+let view = location.hash === '#mindmap' ? 'map' : location.hash === '#character' ? 'chr' : 'idea';
+const hashFor = v => v === 'map' ? '#mindmap' : v === 'chr' ? '#character' : location.pathname + location.search;
+let chrLoadError = null;
 let mode = 'cat';
 let activeCat = state.categories[0];
 let activeTag = null;
@@ -558,6 +666,18 @@ async function loadCloudData(){
     state.maps = [];
   }
   if(!state.maps.some(m => m.id === activeMapId)) activeMapId = state.maps[0] ? state.maps[0].id : null;
+
+  chrLoadError = null;
+  try{
+    const cs = await getDocs(collection(db,'users',currentUser.uid,'characters'));
+    state.characters = cs.docs.map(x => ({ id:x.id, ...x.data() }))
+      .map(c => ({ ...c, name: c.name || '', answers: (c.answers && typeof c.answers === 'object') ? c.answers : {}, createdAt: c.createdAt || 0, work: c.work || '' }))
+      .sort((a,b) => a.createdAt - b.createdAt);
+  }catch(e){
+    console.error(e);
+    chrLoadError = e;
+    state.characters = [];
+  }
 }
 async function saveCategories(silent){
   if(!silent) showSaving();
@@ -609,10 +729,11 @@ const pendingWrites = new Set();
 function track(p){ pendingWrites.add(p); p.then(() => pendingWrites.delete(p), () => pendingWrites.delete(p)); return p; }
 async function flushAll(){
   Object.values(mapTimers).map(m => m.run).forEach(run => run());
+  Object.values(chrTimers).map(m => m.run).forEach(run => run());
   await Promise.allSettled([...pendingWrites]);
 }
 window.addEventListener('beforeunload', e => {
-  if(Object.keys(mapTimers).length || pendingWrites.size){ e.preventDefault(); e.returnValue = ''; }
+  if(Object.keys(mapTimers).length || Object.keys(chrTimers).length || pendingWrites.size){ e.preventDefault(); e.returnValue = ''; }
 });
 
 // ── 되돌리기 / 다시 실행 ──
@@ -621,7 +742,7 @@ const HISTORY_MAX = 60;
 let undoStack = [], redoStack = [];
 let lastSnap = null, historyQueued = false, restoring = false;
 function snapshot(){
-  return JSON.stringify({ categories: state.categories, catColors: state.catColors, notes: state.notes, maps: state.maps.map(({ updatedAt, ...m }) => m) });
+  return JSON.stringify({ categories: state.categories, catColors: state.catColors, notes: state.notes, maps: state.maps.map(({ updatedAt, ...m }) => m), characters: state.characters });
 }
 function markChanged(){
   if(restoring || historyQueued) return;
@@ -633,7 +754,7 @@ function commitHistory(){
   const cur = snapshot();
   if(lastSnap == null){ lastSnap = cur; return; }
   if(cur === lastSnap) return;
-  undoStack.push({ snap: lastSnap, view, mapId: activeMapId });
+  undoStack.push({ snap: lastSnap, view, mapId: activeMapId, chrId: chrSelectedId });
   if(undoStack.length > HISTORY_MAX) undoStack.shift();
   redoStack = [];
   lastSnap = cur;
@@ -657,6 +778,11 @@ function applySnapshot(entry){
     const tgtMapIds = new Set(target.maps.map(m => m.id));
     state.maps.forEach(m => { if(curMaps.get(m.id) !== JSON.stringify(m)) saveMap(m); });
     cur.maps.forEach(m => { if(!tgtMapIds.has(m.id)) removeMapDoc(m.id); });
+    state.characters = target.characters || [];
+    const curChars = new Map((cur.characters || []).map(c => [c.id, JSON.stringify(c)]));
+    const tgtChrIds = new Set(state.characters.map(c => c.id));
+    state.characters.forEach(c => { if(curChars.get(c.id) !== JSON.stringify(c)) saveCharacterDoc(c); });
+    (cur.characters || []).forEach(c => { if(!tgtChrIds.has(c.id)) removeCharacterDoc(c.id); });
   } finally {
     restoring = false;
   }
@@ -666,28 +792,32 @@ function applySnapshot(entry){
   if(!state.categories.includes(activeCat)) activeCat = state.categories[0];
   if(drawerCat && !state.categories.includes(drawerCat)) drawerCat = null;
   view = entry.view;
-  history.replaceState(null, '', view === 'map' ? '#mindmap' : location.pathname + location.search);
+  history.replaceState(null, '', hashFor(view));
+  if(entry.chrId && state.characters.some(c => c.id === entry.chrId)) chrSelectedId = entry.chrId;
   if(entry.mapId && state.maps.some(m => m.id === entry.mapId)) activeMapId = entry.mapId;
   if(!state.maps.some(m => m.id === activeMapId)){ activeMapId = state.maps[0] ? state.maps[0].id : null; needCenter = true; }
   const map = curMap();
   if(!map || !findNode(map, selectedNodeId)) selectedNodeId = null;
   renderAll();
 }
+function flushChrTimers(){ Object.values(chrTimers).map(m => m.run).forEach(run => run()); }
 function undo(){
   closeMemoPop(true); closeSendMenu(); hideMemoTip();
+  flushChrTimers();
   if(historyQueued) commitHistory();
   const entry = undoStack.pop();
   if(!entry){ toast('더 되돌릴 작업이 없어요'); return; }
-  redoStack.push({ snap: lastSnap, view, mapId: activeMapId });
+  redoStack.push({ snap: lastSnap, view, mapId: activeMapId, chrId: chrSelectedId });
   applySnapshot(entry);
   toast('되돌렸어요 (다시 실행: Ctrl+Y)');
 }
 function redo(){
   closeMemoPop(true); closeSendMenu(); hideMemoTip();
+  flushChrTimers();
   if(historyQueued) commitHistory();
   const entry = redoStack.pop();
   if(!entry){ toast('다시 실행할 작업이 없어요'); return; }
-  undoStack.push({ snap: lastSnap, view, mapId: activeMapId });
+  undoStack.push({ snap: lastSnap, view, mapId: activeMapId, chrId: chrSelectedId });
   applySnapshot(entry);
   toast('다시 실행했어요');
 }
@@ -701,7 +831,7 @@ async function saveNow(){
   if(editForm) editForm.click();
   finishEditing();
   closeMemoPop(true);
-  const had = Object.keys(mapTimers).length + pendingWrites.size;
+  const had = Object.keys(mapTimers).length + Object.keys(chrTimers).length + pendingWrites.size;
   await flushAll();
   $('savingTag').textContent = '';
   toast(had ? '저장했어요' : '모두 저장돼 있어요');
@@ -721,6 +851,7 @@ function cleanNode(n){
   const o = { id:n.id, text:n.text, x:n.x, y:n.y, parent: n.parent == null ? null : n.parent };
   if(typeof n.color === 'number') o.color = n.color;
   if(n.noteId) o.noteId = n.noteId;
+  if(n.chrId) o.chrId = n.chrId;
   if(n.memo && n.memo.trim()) o.memo = n.memo;
   return o;
 }
@@ -735,7 +866,7 @@ async function removeMapDoc(id){
 // ── 공통 렌더 ──
 function setView(v){
   view = v;
-  history.replaceState(null, '', v === 'map' ? '#mindmap' : location.pathname + location.search);
+  history.replaceState(null, '', hashFor(v));
   closeSendMenu();
   closeMemoPop(true);
   hideMemoTip();
@@ -744,35 +875,43 @@ function setView(v){
 }
 $('navIdea').onclick = () => setView('idea');
 $('navMap').onclick = () => setView('map');
+$('navChr').onclick = () => setView('chr');
 
 function renderAll(){
   renderSidebar();
   $('ideaView').style.display = view === 'idea' ? '' : 'none';
   $('mapView').style.display = view === 'map' ? '' : 'none';
-  if(view === 'idea') renderIdea(); else renderMapView();
+  $('chrView').style.display = view === 'chr' ? '' : 'none';
+  if(view === 'idea') renderIdea(); else if(view === 'map') renderMapView(); else renderChrView();
 }
 
-function sideRow({ name, count, dot, active, onOpen, onEdit, onDel, editLabel, delLabel }){
+function sideRow({ name, count, dot, avatar, active, onOpen, onEdit, onDel, editLabel, delLabel }){
   const row = h('div', 'side-row' + (active ? ' active' : ''));
   const main = h('button', 'row-main');
   if(dot){ const d = h('span','dot'); d.style.background = dot; main.appendChild(d); }
+  if(avatar){ const a = h('span','av', avatar.text); a.style.background = avatar.fill; main.appendChild(a); }
   main.appendChild(h('span','nm', name));
   main.appendChild(h('span','row-count', String(count)));
   main.onclick = onOpen;
   row.appendChild(main);
   const act = h('div','row-act');
-  const ed = h('button','mini','✎'); ed.setAttribute('aria-label', editLabel); ed.title = editLabel;
-  ed.onclick = e => { e.stopPropagation(); onEdit(); };
+  if(onEdit){
+    const ed = h('button','mini','✎'); ed.setAttribute('aria-label', editLabel); ed.title = editLabel;
+    ed.onclick = e => { e.stopPropagation(); onEdit(); };
+    act.appendChild(ed);
+  }
   const del = h('button','mini','✕'); del.setAttribute('aria-label', delLabel); del.title = delLabel;
   del.onclick = e => { e.stopPropagation(); onDel(); };
-  act.appendChild(ed); act.appendChild(del);
+  act.appendChild(del);
   row.appendChild(act);
   return row;
 }
 function renderSidebar(){
   $('navIdea').classList.toggle('active', view === 'idea');
   $('navMap').classList.toggle('active', view === 'map');
+  $('navChr').classList.toggle('active', view === 'chr');
   $('ideaCount').textContent = state.notes.length;
+  $('chrCount').textContent = state.characters.length;
   const list = $('sideList');
   list.innerHTML = '';
   if(view === 'idea'){
@@ -787,6 +926,38 @@ function renderSidebar(){
       }));
     });
     $('sideAddBtn').textContent = '+ 카테고리';
+  } else if(view === 'chr'){
+    const lab = $('sideLabel');
+    lab.innerHTML = '';
+    lab.appendChild(h('span', null, '캐릭터'));
+    const works = chrWorks();
+    if(chrWorkFilter && !works.includes(chrWorkFilter)) chrWorkFilter = null;
+    if(works.length){
+      const sel = h('select');
+      sel.setAttribute('aria-label','작품으로 거르기');
+      [['', '모든 작품'], ...works.map(w => [w, w])].forEach(([v, t]) => {
+        const o = document.createElement('option'); o.value = v; o.textContent = t;
+        if((chrWorkFilter || '') === v) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.onchange = () => {
+        chrWorkFilter = sel.value || null;
+        const vis = visibleChars();
+        if(!vis.some(c => c.id === chrSelectedId)) chrSelectedId = vis[0] ? vis[0].id : chrSelectedId;
+        renderAll();
+      };
+      lab.appendChild(sel);
+    }
+    const vis = visibleChars();
+    if(!vis.length) list.appendChild(h('div','side-hint', state.characters.length ? '이 작품의 캐릭터가 없어요.' : '아직 만든 캐릭터가 없어요.'));
+    vis.forEach(c => {
+      list.appendChild(sideRow({
+        name: chrName(c), count: `${chrDone(c)}/${CHR_TOTAL}`, avatar: { text: chrInitial(c), fill: chrFill(c) },
+        active: c.id === chrSelectedId,
+        onOpen: () => selectCharacter(c.id), onDel: () => deleteCharacter(c), delLabel: '캐릭터 삭제'
+      }));
+    });
+    $('sideAddBtn').textContent = '+ 새 캐릭터';
   } else {
     $('sideLabel').textContent = '내 마인드맵';
     state.maps.forEach(m => {
@@ -801,6 +972,7 @@ function renderSidebar(){
 }
 $('sideAddBtn').onclick = () => {
   if(view === 'idea') addCategory();
+  else if(view === 'chr') addNewCharacter();
   else { if(createMap()) renderAll(); }
 };
 
@@ -943,7 +1115,7 @@ function noteCard(n){
   const maps = state.maps.filter(m => m.nodes.some(x => x.noteId === n.id));
   if(maps.length) left.appendChild(h('span','linked', '마인드맵 ' + maps.map(m => `'${m.title}'`).join(', ') + '에 있음'));
   const send = h('button','txt-btn send','+ 마인드맵에 보내기');
-  send.onclick = e => { e.stopPropagation(); openSendMenu(n, send); };
+  send.onclick = e => { e.stopPropagation(); openSendMenu(send, map => { addNoteToMap(map, n, null); toast(`'${map.title}'에 추가했어요`); renderAll(); }); };
   left.appendChild(send);
   foot.appendChild(left);
 
@@ -1038,27 +1210,434 @@ function addNote(){
   renderAll();
 }
 
+// ══════════ 캐릭터 만들기 ══════════
+// 질문지 (기존 캐릭터 만들기 페이지와 같은 순서·같은 저장 키 '섹션_질문')
+const CHR_QUESTIONS = [
+  { title: '1. 기본 정보', qs: [
+    '나이, 성별, 직업 또는 역할은 무엇인가?',
+    '겉으로 보이는 첫인상은 어떤가?',
+    '외형에서 가장 눈에 띄는 특징은 무엇인가?'
+  ]},
+  { title: '2. 성격', qs: [
+    '이 캐릭터의 기본 성격은 한마디로 무엇인가?',
+    '낯선 사람 앞과 편한 사람 앞의 모습이 다른가?',
+    '평소 자주 보이는 습관이나 말버릇이 있는가?',
+    '화났을 때, 당황했을 때, 슬플 때 어떻게 반응하는가?'
+  ]},
+  { title: '3. 욕망과 목표', qs: [
+    '이 캐릭터가 가장 원하는 것은 무엇인가?',
+    '지금 이야기 속에서 이루고 싶은 목표는 무엇인가?',
+    '그 목표를 왜 꼭 이루어야 하는가?',
+    '목표가 이루어지지 않으면 어떤 문제가 생기는가?'
+  ]},
+  { title: '4. 결핍과 상처', qs: [
+    '이 캐릭터에게 부족한 것은 무엇인가?',
+    '과거에 상처가 된 경험이 있는가?',
+    '그 경험이 지금 성격이나 행동에 어떤 영향을 주는가?',
+    '스스로도 잘 모르는 약점이 있는가?'
+  ]},
+  { title: '5. 두려움과 회피', qs: [
+    '이 캐릭터가 가장 두려워하는 것은 무엇인가?',
+    '힘들거나 불안할 때 어떤 식으로 도망치는가?',
+    '문제를 정면으로 해결하는 편인가, 피하는 편인가?',
+    '반복해서 망설이게 되는 상황은 무엇인가?'
+  ]},
+  { title: '6. 관계', qs: [
+    '누구와 가장 가까운가?',
+    '누구와 가장 부딪히는가?',
+    '다른 인물들과 비교했을 때 어떤 역할을 하는가?',
+    '관계 속에서 이 캐릭터가 주는 긴장감이나 매력은 무엇인가?'
+  ]},
+  { title: '7. 말투와 행동', qs: [
+    '말투는 직설적인가, 돌려 말하는가?',
+    '문장 길이가 짧은가, 긴가?',
+    '자주 쓰는 말이나 버릇이 있는가?',
+    '행동으로 감정을 드러내는 편인가, 숨기는 편인가?'
+  ]},
+  { title: '8. 이야기 속 역할', qs: [
+    '이 캐릭터는 주인공인가, 조력자인가, 방해자인가?',
+    '이 인물이 없으면 이야기가 어떻게 달라지는가?',
+    '이 캐릭터가 꼭 해야 하는 서사적 기능은 무엇인가?',
+    '독자가 이 캐릭터에게 느끼길 바라는 감정은 무엇인가?'
+  ]},
+  { title: '9. 성장 가능성', qs: [
+    '이 캐릭터는 무엇을 배우게 되는가?',
+    '이야기 시작 전과 끝에서 무엇이 달라지는가?',
+    '가장 크게 변하는 부분은 성격인가, 태도인가, 관계인가?',
+    '성장의 계기가 되는 사건은 무엇인가?'
+  ]},
+  { title: '10. 한 줄 정리', qs: [
+    '이 캐릭터를 한 문장으로 설명하면 무엇인가?',
+    '독자가 바로 기억할 수 있는 핵심 이미지는 무엇인가?',
+    '이 캐릭터의 가장 강한 매력은 무엇인가?'
+  ]}
+];
+const CHR_TOTAL = CHR_QUESTIONS.reduce((s, x) => s + x.qs.length, 0);
+const CHR_CORE = [
+  { key:'2_0', label:'욕망', sub:'가장 원하는 것' },
+  { key:'4_0', label:'두려움', sub:'가장 두려운 것' },
+  { key:'5_1', label:'충돌점', sub:'누구와 가장 부딪히나' }
+];
+const CHR_CORE_KEYS = new Set(CHR_CORE.map(k => k.key));
+const CHR_ONELINE_KEY = '9_0';
+let chrSelectedId = null;
+let chrWorkFilter = null;
+let chrOpen = new Set(['0']);
+try{
+  const raw = JSON.parse(localStorage.getItem('idea-notes-chr-open') || 'null');
+  if(Array.isArray(raw)) chrOpen = new Set(raw.map(String));
+}catch(e){}
+function saveChrOpen(){ try{ localStorage.setItem('idea-notes-chr-open', JSON.stringify([...chrOpen])); }catch(e){} }
+
+const chrName = c => (c.name && c.name.trim()) ? c.name.trim() : '이름 없는 캐릭터';
+const chrInitial = c => (c.name && c.name.trim()) ? [...c.name.trim()][0] : '?';
+function chrFill(c){
+  if(typeof c.color === 'number') return pal(c.color).fill;
+  const i = state.characters.indexOf(c);
+  return pal(i < 0 ? 0 : i).fill;
+}
+const isAnswered = v => !!(v && String(v).trim());
+function secDone(c, si){ return CHR_QUESTIONS[si].qs.filter((_, qi) => isAnswered(c.answers && c.answers[si + '_' + qi])).length; }
+function chrDone(c){ return CHR_QUESTIONS.reduce((s, _, si) => s + secDone(c, si), 0); }
+function curChr(){ return state.characters.find(c => c.id === chrSelectedId) || null; }
+function chrWorks(){ return [...new Set(state.characters.map(c => (c.work || '').trim()).filter(Boolean))].sort(); }
+function visibleChars(){ return state.characters.filter(c => !chrWorkFilter || (c.work || '').trim() === chrWorkFilter); }
+
+// 저장
+const chrTimers = {};
+function setChrHint(t){ const el = $('chrSaveHint'); if(el) el.textContent = t; }
+function saveCharacterDoc(c){
+  markChanged();
+  showSaving();
+  const p = track(setDoc(doc(db,'users',currentUser.uid,'characters',c.id), {
+    name: c.name || '', answers: c.answers || {}, createdAt: c.createdAt || Date.now(),
+    color: typeof c.color === 'number' ? c.color : null, work: (c.work || '').trim()
+  }));
+  p.then(() => { if(c.id === chrSelectedId) setChrHint('자동 저장됨'); },
+         e => { setChrHint('저장 실패 · 다시 시도해주세요'); alert('캐릭터 저장 중 오류가 발생했어요.\n(' + e.message + ')'); });
+  return p;
+}
+function scheduleChrSave(id){
+  if(chrTimers[id]) clearTimeout(chrTimers[id].t);
+  setChrHint('저장 중...');
+  const run = () => {
+    if(chrTimers[id]){ clearTimeout(chrTimers[id].t); delete chrTimers[id]; }
+    const c = state.characters.find(x => x.id === id);
+    if(c) saveCharacterDoc(c);
+  };
+  chrTimers[id] = { t: setTimeout(run, 700), run };
+}
+function removeCharacterDoc(id){
+  if(chrTimers[id]){ clearTimeout(chrTimers[id].t); delete chrTimers[id]; }
+  markChanged();
+  showSaving();
+  track(deleteDoc(doc(db,'users',currentUser.uid,'characters',id)))
+    .catch(e => alert('캐릭터 삭제 중 오류가 발생했어요.\n(' + e.message + ')'));
+}
+
+// 동작
+function leastUsedChrColor(){
+  const counts = PALETTE.map(() => 0);
+  state.characters.forEach(c => { if(typeof c.color === 'number') counts[((c.color % PALETTE.length) + PALETTE.length) % PALETTE.length]++; });
+  return counts.indexOf(Math.min(...counts));
+}
+function addNewCharacter(){
+  if(!currentUser) return;
+  const c = { id: 'chr_' + Date.now(), name: '', answers: {}, createdAt: Date.now(), color: leastUsedChrColor(), work: chrWorkFilter || '' };
+  state.characters.push(c);
+  chrSelectedId = c.id;
+  saveCharacterDoc(c);
+  if(view !== 'chr') setView('chr'); else renderAll();
+  window.scrollTo(0, 0);
+  setTimeout(() => $('chrNameInput').focus(), 0);
+}
+function deleteCharacter(c){
+  if(!confirm('"' + chrName(c) + '" 캐릭터를 삭제할까요?\n(실수로 지웠다면 Ctrl+Z로 되돌릴 수 있어요)')) return;
+  state.characters = state.characters.filter(x => x.id !== c.id);
+  removeCharacterDoc(c.id);
+  if(chrSelectedId === c.id){
+    const vis = visibleChars();
+    chrSelectedId = vis[0] ? vis[0].id : (state.characters[0] ? state.characters[0].id : null);
+  }
+  renderAll();
+}
+function selectCharacter(id){
+  chrSelectedId = id;
+  renderAll();
+  window.scrollTo(0, 0);
+}
+function goToCharacter(id){
+  chrSelectedId = id;
+  const c = state.characters.find(x => x.id === id);
+  if(c && chrWorkFilter && (c.work || '').trim() !== chrWorkFilter) chrWorkFilter = null;
+  setView('chr');
+  window.scrollTo(0, 0);
+}
+$('chrEmptyCreate').onclick = () => addNewCharacter();
+
+// 화면
+function autoGrow(ta){ ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+function makeAnswerArea(c, key, ariaLabel){
+  const ta = h('textarea','qa');
+  ta.rows = 1;
+  ta.spellcheck = false;
+  ta.value = c.answers[key] || '';
+  ta.dataset.key = key;
+  ta.setAttribute('aria-label', ariaLabel);
+  ta.addEventListener('input', () => {
+    c.answers[key] = ta.value;
+    document.querySelectorAll(`#chrView textarea[data-key="${key}"]`).forEach(o => {
+      if(o !== ta){ o.value = ta.value; autoGrow(o); }
+    });
+    autoGrow(ta);
+    updateChrProgress(c);
+    scheduleChrSave(c.id);
+  });
+  requestAnimationFrame(() => autoGrow(ta));
+  return ta;
+}
+function renderChrView(){
+  if(chrSelectedId && !state.characters.some(c => c.id === chrSelectedId)) chrSelectedId = null;
+  if(!chrSelectedId){
+    const vis = visibleChars();
+    chrSelectedId = vis[0] ? vis[0].id : (state.characters[0] ? state.characters[0].id : null);
+  }
+  const c = curChr();
+  $('chrEmpty').style.display = c ? 'none' : '';
+  $('chrMain').style.display = c ? '' : 'none';
+  if(!c){
+    $('chrEmptyMsg').textContent = chrLoadError
+      ? '캐릭터를 불러오지 못했어요. 새로고침 해주세요.'
+      : '아직 만든 캐릭터가 없어요. 새 캐릭터를 만들어 설계를 시작해보세요.';
+    return;
+  }
+  if(!c.answers || typeof c.answers !== 'object') c.answers = {};
+  setChrHint('');
+  renderChrHeader(c);
+  const nameIn = $('chrNameInput');
+  if(document.activeElement !== nameIn) nameIn.value = c.name || '';
+  const workIn = $('chrWorkInput');
+  if(document.activeElement !== workIn) workIn.value = c.work || '';
+  const dl = $('chrWorkList'); dl.innerHTML = '';
+  chrWorks().forEach(w => { const o = document.createElement('option'); o.value = w; dl.appendChild(o); });
+
+  const core = $('chrCore'); core.innerHTML = '';
+  CHR_CORE.forEach(k => {
+    const q = h('div','q');
+    q.appendChild(h('div','ql strong', `${k.label} · ${k.sub}`));
+    q.appendChild(makeAnswerArea(c, k.key, `${k.label} · ${k.sub}`));
+    core.appendChild(q);
+  });
+  renderChrSections(c);
+  renderChrRelated(c);
+  updateChrProgress(c);
+}
+function renderChrHeader(c){
+  const av = $('chrAvatar');
+  av.textContent = chrInitial(c);
+  av.style.background = chrFill(c);
+  const one = (c.answers[CHR_ONELINE_KEY] || '').trim();
+  const p = $('chrOneliner');
+  p.textContent = one || "10번 '한 줄 정리'의 첫 질문에 답하면 여기 보여요";
+  p.classList.toggle('empty', !one);
+  const maps = state.maps.filter(m => m.nodes.some(x => x.chrId === c.id));
+  $('chrLinked').textContent = maps.length ? '마인드맵 ' + maps.map(m => `'${m.title}'`).join(', ') + '에 있음' : '';
+}
+function renderChrSections(c){
+  const wrap = $('chrSections'); wrap.innerHTML = '';
+  CHR_QUESTIONS.forEach((sec, si) => {
+    const open = chrOpen.has(String(si));
+    const done = secDone(c, si);
+    const box = h('div', 'csec' + (done === sec.qs.length ? ' done' : ''));
+    box.id = 'chr-sec-' + si;
+    const head = h('button','csec-head');
+    head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    head.appendChild(h('span', null, sec.title));
+    head.appendChild(h('span','cnt', `${done}/${sec.qs.length} ${open ? '▴' : '▾'}`));
+    head.onclick = () => {
+      if(open) chrOpen.delete(String(si)); else chrOpen.add(String(si));
+      saveChrOpen();
+      renderChrSections(c);
+    };
+    box.appendChild(head);
+    if(open){
+      const body = h('div','csec-body');
+      sec.qs.forEach((qText, qi) => {
+        const key = si + '_' + qi;
+        const q = h('div','q');
+        const lab = h('div','ql', qText);
+        if(CHR_CORE_KEYS.has(key)) lab.appendChild(h('span','core-mark','핵심'));
+        q.appendChild(lab);
+        q.appendChild(makeAnswerArea(c, key, qText));
+        body.appendChild(q);
+      });
+      box.appendChild(body);
+    }
+    wrap.appendChild(box);
+  });
+}
+function updateChrProgress(c){
+  const done = chrDone(c);
+  $('chrBar').style.width = Math.round(done / CHR_TOTAL * 100) + '%';
+  $('chrProgressText').textContent = `${CHR_TOTAL}개 중 ${done}개 답함`;
+  CHR_QUESTIONS.forEach((sec, si) => {
+    const box = document.getElementById('chr-sec-' + si);
+    if(!box) return;
+    const d = secDone(c, si);
+    box.classList.toggle('done', d === sec.qs.length);
+    const cnt = box.querySelector('.csec-head .cnt');
+    if(cnt) cnt.textContent = `${d}/${sec.qs.length} ${chrOpen.has(String(si)) ? '▴' : '▾'}`;
+  });
+  const toc = $('chrToc'); toc.innerHTML = '';
+  CHR_QUESTIONS.forEach((sec, si) => {
+    const d = secDone(c, si);
+    const b = h('button', 'toc-item' + (d === sec.qs.length ? ' done' : ''));
+    b.appendChild(h('span', null, sec.title));
+    b.appendChild(h('span', null, `${d}/${sec.qs.length}`));
+    b.onclick = () => {
+      if(!chrOpen.has(String(si))){ chrOpen.add(String(si)); saveChrOpen(); renderChrSections(c); }
+      const el = document.getElementById('chr-sec-' + si);
+      if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+    toc.appendChild(b);
+  });
+  renderChrHeader(c);
+  renderSidebar();
+}
+function renderChrRelated(c){
+  const box = $('chrRelated'); box.innerHTML = '';
+  const name = (c.name || '').trim();
+  const title = h('div','rel-title','관련 메모');
+  if(name) title.appendChild(h('span', null, '#' + name));
+  box.appendChild(title);
+  if(!name){ box.appendChild(h('div','rel-hint','이름을 정하면, 같은 이름의 태그가 달린 아이디어 메모가 여기 모여요.')); return; }
+  const lower = name.toLowerCase();
+  const notes = sortNotes(state.notes.filter(n => n.tags.some(t => t.trim().toLowerCase() === lower)));
+  if(!notes.length){ box.appendChild(h('div','rel-hint', `아이디어 메모에 #${name} 태그를 달면 여기 모여요.`)); return; }
+  notes.slice(0, 5).forEach(n => {
+    const b = h('button','rel-note');
+    b.appendChild(h('div','txt', n.content));
+    const ch = h('span','chip', n.category); ch.style.background = catPal(n.category).fill;
+    b.appendChild(ch);
+    b.onclick = () => goToNote(n);
+    box.appendChild(b);
+  });
+  const all = h('button','txt-btn send', `아이디어 정리에서 모두 보기 (${notes.length}개)`);
+  all.onclick = () => {
+    const tag = notes[0].tags.find(t => t.trim().toLowerCase() === lower) || name;
+    mode = 'tag'; activeTag = tag; clearSearch();
+    setView('idea');
+  };
+  box.appendChild(all);
+}
+
+$('chrNameInput').addEventListener('input', e => {
+  const c = curChr(); if(!c) return;
+  c.name = e.target.value;
+  renderChrHeader(c);
+  renderChrRelated(c);
+  renderSidebar();
+  scheduleChrSave(c.id);
+});
+$('chrWorkInput').addEventListener('change', e => {
+  const c = curChr(); if(!c) return;
+  const v = e.target.value.trim();
+  if(v === (c.work || '').trim()) return;
+  c.work = v;
+  scheduleChrSave(c.id);
+  renderSidebar();
+  const dl = $('chrWorkList'); dl.innerHTML = '';
+  chrWorks().forEach(w => { const o = document.createElement('option'); o.value = w; dl.appendChild(o); });
+});
+$('chrAvatar').onclick = () => {
+  const c = curChr(); if(!c) return;
+  const curIdx = typeof c.color === 'number' ? c.color : Math.max(0, state.characters.indexOf(c)) % PALETTE.length;
+  c.color = (curIdx + 1) % PALETTE.length;
+  renderChrHeader(c);
+  renderSidebar();
+  scheduleChrSave(c.id);
+};
+
+// 마인드맵에 보내기
+function addCharToMap(map, c){
+  const root = getRoot(map);
+  const pos = placeNewChild(map, root);
+  const lines = [];
+  const one = (c.answers[CHR_ONELINE_KEY] || '').trim();
+  if(one) lines.push(one);
+  CHR_CORE.forEach(k => { const v = (c.answers[k.key] || '').trim(); if(v) lines.push(`${k.label}: ${v}`); });
+  const nd = { id:newId(), text:chrName(c), x:Math.round(pos.x), y:Math.round(pos.y), parent:root.id, chrId:c.id };
+  if(lines.length) nd.memo = lines.join('\n');
+  nd.color = typeof c.color === 'number' ? c.color : nextL1Color(map);
+  map.nodes.push(nd);
+  saveMap(map);
+  return nd;
+}
+$('chrSendBtn').onclick = e => {
+  e.stopPropagation();
+  const c = curChr(); if(!c) return;
+  flushChrTimers();
+  openSendMenu($('chrSendBtn'), map => {
+    addCharToMap(map, c);
+    toast(`'${map.title}'에 추가했어요`);
+    renderAll();
+  });
+};
+
+// 텍스트로 복사
+function chrToText(c){
+  const out = [chrName(c)];
+  if((c.work || '').trim()) out.push('작품: ' + c.work.trim());
+  const one = (c.answers[CHR_ONELINE_KEY] || '').trim();
+  if(one) out.push('한 줄: ' + one);
+  let any = false;
+  CHR_QUESTIONS.forEach((sec, si) => {
+    const rows = [];
+    sec.qs.forEach((q, qi) => {
+      const a = (c.answers[si + '_' + qi] || '').trim();
+      if(a) rows.push('- ' + q + '\n  ' + a.replace(/\n/g, '\n  '));
+    });
+    if(rows.length){ any = true; out.push('', sec.title, ...rows); }
+  });
+  if(!any) out.push('', '(아직 답한 질문이 없어요)');
+  return out.join('\n');
+}
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try{ ok = document.execCommand('copy'); }catch(err){}
+    ta.remove();
+    return ok;
+  }
+}
+$('chrCopyBtn').onclick = async () => {
+  const c = curChr(); if(!c) return;
+  const ok = await copyText(chrToText(c));
+  toast(ok ? '캐릭터 내용을 복사했어요' : '복사하지 못했어요. 브라우저 권한을 확인해 주세요.');
+};
+
 // ── 마인드맵으로 보내기 메뉴 ──
 function closeSendMenu(){ $('sendMenu').classList.remove('open'); }
-function openSendMenu(note, anchor){
+function openSendMenu(anchor, onPick){
   const m = $('sendMenu');
   m.innerHTML = '';
   m.appendChild(h('div','pm-title','어느 마인드맵에 보낼까요?'));
   state.maps.forEach(map => {
     const b = h('button', null, map.title);
-    b.onclick = () => {
-      closeSendMenu();
-      addNoteToMap(map, note, null);
-      toast(`'${map.title}'에 추가했어요`);
-      renderAll();
-    };
+    b.onclick = () => { closeSendMenu(); onPick(map); };
     m.appendChild(b);
   });
   const nb = h('button', null, '+ 새 마인드맵 만들어서 보내기');
   nb.onclick = () => {
     closeSendMenu();
     const map = createMap();
-    if(map){ addNoteToMap(map, note, null); toast(`'${map.title}'에 추가했어요`); renderAll(); }
+    if(map) onPick(map);
   };
   m.appendChild(nb);
   m.classList.add('open');
@@ -1285,6 +1864,8 @@ function renderMap(){
     }
     const note = nd.noteId ? state.notes.find(n => n.id === nd.noteId) : null;
     if(note) e.appendChild(icon(NOTE_SVG));
+    const chr = nd.chrId ? state.characters.find(c => c.id === nd.chrId) : null;
+    if(chr) e.appendChild(icon(PERSON_SVG));
     if(nd.memo && nd.memo.trim()){
       const b = h('span','memo-badge');
       b.appendChild(icon(MEMO_SVG));
@@ -1399,6 +1980,8 @@ function renderNodeBar(map){
   }
   const note = nd.noteId ? state.notes.find(n => n.id === nd.noteId) : null;
   if(note) btn('메모 보기', () => goToNote(note));
+  const chr = nd.chrId ? state.characters.find(c => c.id === nd.chrId) : null;
+  if(chr) btn('캐릭터 보기', () => goToCharacter(chr.id));
   if(!isRoot) btn('삭제 (Del)', () => deleteNode(nd.id), 'danger');
 }
 function goToNote(note){
