@@ -130,6 +130,8 @@ body{opacity:0;transition:opacity .25s ease}
 /* 노트 버튼 */
 .note-buttons{display:flex;flex-direction:column;gap:10px;z-index:1}
 .note-btn{width:64px;height:64px;background:var(--accent,#1558CC);border:1.5px solid var(--accent,#1558CC);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:11.5px;font-weight:600;color:#fff;text-align:center;line-height:1.3;text-decoration:none;transition:all .15s;user-select:none;padding:5px}
+.note-edit-save{width:100%;padding:7px 0;border-radius:10px;border:none;background:var(--accent);color:var(--accent-contrast,#fff);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.note-edit-cancel{width:100%;padding:6px 0;border-radius:10px;border:0.5px solid #ccc;background:transparent;color:var(--text-main,#222);font-size:11px;cursor:pointer;font-family:inherit}
 .note-btn:hover{filter:brightness(1.08);box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent);transform:translateY(-1px)}
 .note-btn:active{transform:scale(.97)}
 
@@ -1837,13 +1839,16 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <a class="note-btn" href="/goal-focus.html" target="_blank" title="프로젝트로 이동">프로젝트</a>
   <a class="note-btn" href="https://app.xmind.com/home/my-works/q4uVwW3kLT" target="_blank" title="Xmind 마인드맵">Xmind</a>
   <a class="note-btn" href="https://cafe.naver.com/greencaejj" target="_blank" title="우리끼리 카페">우리끼리</a>
-  <a class="note-btn" href="/character-builder.html" target="_blank" title="캐릭터 만들기로 이동">캐릭터<br>만들기</a>
   <a href="https://mail.naver.com/v2/folders/121" target="_blank" title="뉴스레터" style="
     width:34px;height:34px;border-radius:8px;background:#fff;border:1.5px solid #ddd;
     display:flex;align-items:center;justify-content:center;
     box-shadow:0 2px 6px #0001;text-decoration:none;transition:all .15s;flex-shrink:0;
     align-self:center;font-size:16px;
   " onmouseover="this.style.borderColor='#2DB400';this.style.boxShadow='0 3px 10px #2DB40030'" onmouseout="this.style.borderColor='#ddd';this.style.boxShadow='0 2px 6px #0001'">📰</a>
+  <div id="noteBtnEditBar" style="display:none;flex-direction:column;gap:6px;align-self:stretch">
+    <button class="note-edit-save" onclick="saveNoteBtnOrder()">저장</button>
+    <button class="note-edit-cancel" onclick="cancelNoteBtnEdit()">취소</button>
+  </div>
 </div>
 </div>
 
@@ -2722,6 +2727,8 @@ let moneyProgressBars=[]; // {id,name,color,target,current} — 대출 갚기/�
 let realCashStartDate=''; // 'YYYY-MM-DD' — 현실 잔돈 계산을 시작할 기준일(이 날짜 이전 기록은 계산에서 제외)
 let realCashCutoffDay=20; // "앞으로 나갈 돈"을 매달 며칠까지로 볼지(그 달의 날짜 기준, 오늘이 지났으면 다음 달 그 날짜까지)
 let syncedBgImage=''; // Firestore에 저장된(기기 간 동기화용, 예전 저화질 방식에서 넘어온 값) 배경 이미지
+let noteBtnOrder=null; // 오른쪽 링크버튼 순서(href 배열)
+let noteBtnEditing=false,noteBtnSnapshot=null,noteBtnDragEl=null;
 let declarations=[]; // 선언 문장 [{id,text}]
 let declareLog={}; // 날짜별로 따라 쓴 글 {날짜키:{선언id:글}}
 let declareDate=new Date(); // 따라쓰기 시트가 보여주는 날짜
@@ -3450,6 +3457,7 @@ onAuthStateChanged(auth,async user=>{
       // 캐릭터 아이콘 등이 영영 안 보이는 상태로 멈추지 않게 함
       console.error('초기 로딩 중 일부 기능에서 오류가 발생했어요:',err);
     }
+    applyNoteBtnOrder(noteBtnOrder); // 저장해둔 링크버튼 순서 적용
     syncBgImageFromCloud(); // 배경 이미지 계정 동기화 (위 초기화 중 오류가 나도 실행되도록 따로 호출)
     // 모든 준비 완료 후 부드럽게 표시
     requestAnimationFrame(()=>{
@@ -3544,7 +3552,7 @@ async function saveAppearanceNow(){
 window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS,rcsS,bgiS,decS,dgS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS,rcsS,bgiS,decS,dgS,nboS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -3586,6 +3594,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','bgImage')),
     getDoc(doc(db,'users',currentUser.uid,'settings','declarations')),
     getDocs(collection(db,'users',currentUser.uid,'declareLog')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','noteBtnOrder')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   calBoards=(cbS.exists()&&cbS.data().items)?cbS.data().items:[];
@@ -3634,6 +3643,7 @@ async function loadAllData(){
   bgImageMeta=bgiS.exists()?bgiS.data():null;
   declarations=decS.exists()?(decS.data().items||[]):[];
   declareLog={};dgS.forEach(d=>{declareLog[d.id]=d.data().texts||{};});
+  noteBtnOrder=nboS.exists()?(nboS.data().order||null):null;
   fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
   if(!fixedCosts.fixed)fixedCosts.fixed=[];
   if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
@@ -3895,6 +3905,79 @@ window.handleLeftBack=function(){
   else if(leftMode==='meal-cal')setLeftMode('meal-cal');
   else setLeftMode('cal');
 };
+
+// ══════════════════════════════════════════
+// ── 오른쪽 링크버튼 위치 편집 ──
+// 버튼 우클릭 → 전체가 편집 상태(끌어서 위아래 순서 변경, 저장/취소 버튼 표시) → 저장하면 계정에 저장
+// ══════════════════════════════════════════
+function noteBtnKey(a){return a.getAttribute('href')||'';}
+function getNoteBtnEls(){
+  const c=document.querySelector('.note-buttons');
+  return c?[...c.children].filter(el=>el.tagName==='A'):[];
+}
+function applyNoteBtnOrder(order){
+  const c=document.querySelector('.note-buttons');
+  if(!c||!Array.isArray(order)||!order.length)return;
+  const bar=document.getElementById('noteBtnEditBar');
+  const rank=k=>{const i=order.indexOf(k);return i<0?1e6:i;}; // 순서에 없는(새로 생긴) 버튼은 뒤로, 기존 순서 유지
+  getNoteBtnEls().map((el,i)=>({el,i,r:rank(noteBtnKey(el))}))
+    .sort((a,b)=>a.r-b.r||a.i-b.i)
+    .forEach(o=>c.insertBefore(o.el,bar));
+}
+function setNoteBtnEditing(on){
+  noteBtnEditing=on;
+  const c=document.querySelector('.note-buttons');
+  if(!c)return;
+  c.classList.toggle('editing',on);
+  const bar=document.getElementById('noteBtnEditBar');
+  if(bar)bar.style.display=on?'flex':'none';
+  getNoteBtnEls().forEach(a=>{if(on)a.draggable=true;else a.removeAttribute('draggable');});
+}
+window.saveNoteBtnOrder=async function(){
+  const order=getNoteBtnEls().map(noteBtnKey);
+  noteBtnOrder=order;
+  noteBtnSnapshot=null;
+  setNoteBtnEditing(false);
+  await saveData('settings','noteBtnOrder',{order});
+};
+window.cancelNoteBtnEdit=function(){
+  if(noteBtnSnapshot)applyNoteBtnOrder(noteBtnSnapshot);
+  noteBtnSnapshot=null;
+  setNoteBtnEditing(false);
+};
+(function(){
+  const c=document.querySelector('.note-buttons');
+  if(!c)return;
+  c.addEventListener('contextmenu',e=>{
+    if(!e.target.closest('a'))return;
+    e.preventDefault();
+    if(!noteBtnEditing){
+      noteBtnSnapshot=getNoteBtnEls().map(noteBtnKey);
+      setNoteBtnEditing(true);
+    }
+  });
+  c.addEventListener('click',e=>{if(noteBtnEditing&&e.target.closest('a'))e.preventDefault();},true); // 편집 중엔 링크가 열리지 않게
+  c.addEventListener('dragstart',e=>{
+    if(!noteBtnEditing)return;
+    const a=e.target.closest('a');
+    if(!a)return;
+    noteBtnDragEl=a;
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain',noteBtnKey(a));
+  });
+  c.addEventListener('dragover',e=>{
+    if(!noteBtnEditing||!noteBtnDragEl)return;
+    e.preventDefault();
+    const t=e.target.closest('a');
+    if(!t||t===noteBtnDragEl)return;
+    const r=t.getBoundingClientRect();
+    const after=e.clientY>r.top+r.height/2;
+    c.insertBefore(noteBtnDragEl,after?t.nextSibling:t);
+  });
+  c.addEventListener('drop',e=>{if(noteBtnEditing)e.preventDefault();});
+  c.addEventListener('dragend',()=>{noteBtnDragEl=null;});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&noteBtnEditing)cancelNoteBtnEdit();});
+})();
 
 // ══════════════════════════════════════════
 // ── 선언 (따라쓰기) ──
