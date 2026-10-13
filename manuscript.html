@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>원고 작업 실행</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAF8F4;--panel:#FFFFFF;--bd:#EEE8DD;--tx:#3B3832;--sub:#8A8376;
+  --ac:#7FAE77;--acl:#E1EFDA;--acd:#345A2C;--tr:#EDE8DE;--line:#A8CBA0;--warn:#B5523A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+button,input,select,textarea{font-family:inherit;color:var(--tx)}
+button{cursor:pointer;background:var(--panel);border:1px solid var(--bd);border-radius:999px;padding:6px 14px;font-size:13px}
+button:hover{border-color:var(--line)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tile:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+input,select,textarea{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:7px 10px;font-size:14px;width:100%}
+textarea{resize:vertical}
+.wrap{max-width:880px;margin:0 auto;padding:28px 20px 60px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.top a{color:var(--sub);text-decoration:none;font-size:13px}
+.top a:hover{color:var(--acd)}
+.title{font-size:22px;border:none;background:transparent;padding:2px 0;width:auto;flex:1;min-width:160px}
+.title:hover{background:var(--panel)}
+.user{font-size:12px;color:var(--sub)}
+.lvrow{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.lv{background:var(--acl);color:var(--acd);border-radius:8px;padding:2px 9px;font-size:13px}
+.meta{font-size:13px;color:var(--sub);display:flex;gap:14px;flex-wrap:wrap}
+.meta .warn{color:var(--warn)}
+.bar{height:9px;background:var(--tr);border-radius:5px;margin:4px 0 18px;overflow:hidden}
+.bar>div{height:100%;background:var(--ac);border-radius:5px;transition:width .4s}
+.quest{background:var(--acl);color:var(--acd);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.quest .ico{width:40px;height:40px;flex:none}
+.quest .k{font-size:12px;opacity:.85}
+.quest .v{font-size:19px;line-height:1.35}
+.quest .memo{font-size:13px;opacity:.85;margin-top:2px}
+.quest button{background:transparent;border-color:var(--acd);color:var(--acd);white-space:nowrap}
+.quest button:hover{background:var(--panel)}
+.chapter{display:flex;gap:12px;margin-bottom:10px}
+.ch-label{width:66px;flex:none;font-size:12px;color:var(--sub);padding-top:9px;border-right:2px solid var(--line);line-height:1.55}
+.ch-label b{font-weight:400;color:var(--tx);font-size:13px}
+.ch-grid{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:7px}
+.tile{border-radius:14px;padding:9px 11px;min-height:62px;cursor:pointer;position:relative;border:1px solid transparent}
+.tile:hover{border-color:currentColor}
+.tile .d{font-size:11px;opacity:.8;display:flex;gap:4px;align-items:center}
+.tile .t{font-size:14px;line-height:1.35;margin-top:2px;word-break:keep-all}
+.tile.done .t{text-decoration:line-through;opacity:.5}
+.tile.now{box-shadow:0 0 0 2px var(--ac)}
+.tile.late .d::after{content:'밀림';margin-left:auto;font-size:10px;color:var(--warn)}
+.tile.today .d{font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-top:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+details.settings{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;margin-bottom:20px}
+details.settings summary{cursor:pointer;font-size:14px;color:var(--sub)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:12px}
+.lbl{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
+.days{display:flex;gap:6px;flex-wrap:wrap}
+.days label{display:flex;align-items:center;justify-content:center;width:36px;height:34px;border-radius:10px;border:1px solid var(--bd);cursor:pointer;font-size:13px;background:var(--panel)}
+.days input{display:none}
+.days label.on{background:var(--acl);color:var(--acd);border-color:var(--line)}
+.overlay{position:fixed;inset:0;background:rgba(59,56,50,.28);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.overlay.open{display:flex}
+.sheet{background:var(--panel);border-radius:18px;padding:20px;width:100%;max-width:460px;max-height:90vh;overflow:auto;border:1px solid var(--bd)}
+.sheet h2{font-size:17px;font-weight:400;margin:0 0 12px}
+.sheet .row{margin-bottom:12px}
+.sheet .err{font-size:12px;color:var(--warn);min-height:1em}
+.sheet .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sheet .btns .sp{flex:1}
+.danger{color:var(--warn)}
+.primary{background:var(--acl);color:var(--acd);border-color:var(--line)}
+.login{text-align:center;padding:60px 20px}
+.toast{position:fixed;right:18px;bottom:18px;background:var(--acd);color:#fff;padding:7px 14px;border-radius:999px;font-size:12px;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+.crown{width:13px;height:13px;vertical-align:-2px}
+@media (max-width:560px){.ch-label{width:52px}.quest{flex-wrap:wrap}}
+@media (prefers-reduced-motion:reduce){.bar>div{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a href="/" title="플래너로 돌아가기">← 플래너</a>
+    <input class="title" id="projName" aria-label="원정 이름" value="공모전 원정">
+    <span class="user" id="userInfo"></span>
+  </div>
+
+  <div id="loginBox" class="login" style="display:none">
+    <p style="color:var(--sub)">구글 로그인하면 기기 사이에 진행 상황이 저장돼요.</p>
+    <button id="loginBtn" class="primary">구글로 로그인</button>
+  </div>
+
+  <div id="main" style="display:none">
+    <div class="lvrow">
+      <span class="lv" id="lv">Lv.1</span>
+      <span class="meta" id="meta"></span>
+      <span style="margin-left:auto;font-size:12px;color:var(--sub)" id="expTxt"></span>
+    </div>
+    <div class="bar"><div id="expBar" style="width:0"></div></div>
+
+    <div class="quest" id="quest"></div>
+
+    <details class="settings" id="settingsBox">
+      <summary>기간과 작업 요일 설정</summary>
+      <div class="grid2">
+        <div><span class="lbl">시작일</span><input type="date" id="startDate"></div>
+        <div><span class="lbl">마감일</span><input type="date" id="endDate"></div>
+        <div><span class="lbl">레벨당 필요 EXP</span><input type="number" id="lvSize" min="10" step="10"></div>
+      </div>
+      <div style="margin-top:12px"><span class="lbl">작업 요일</span><div class="days" id="days"></div></div>
+      <p style="font-size:12px;color:var(--sub);margin:12px 0 0">날짜를 직접 지정하지 않은 칸은 작업 요일에 순서대로 자동 배치돼요.</p>
+    </details>
+
+    <div id="board"></div>
+    <div class="legend" id="legend"></div>
+    <div class="actions">
+      <button id="addBtn">+ 퀘스트 추가</button>
+      <button id="clearDatesBtn">직접 지정한 날짜 모두 해제</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+  <div class="sheet">
+    <h2 id="edTitle">퀘스트 수정</h2>
+    <div class="row"><span class="lbl">이름</span><input id="edName"><div class="err" id="edErr"></div></div>
+    <div class="grid2" style="margin-top:0">
+      <div class="row"><span class="lbl">분류</span><select id="edCat"></select></div>
+      <div class="row"><span class="lbl">EXP</span><input type="number" id="edExp" min="0" step="10"></div>
+    </div>
+    <div class="row"><span class="lbl">날짜 직접 지정 (비우면 자동)</span><input type="date" id="edDate"></div>
+    <div class="row"><span class="lbl">메모</span><textarea id="edMemo" rows="3" placeholder="예: 3~12컷, 액션 컷은 동세부터"></textarea></div>
+    <div class="row"><label style="font-size:14px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="edDone" style="width:auto"> 완료</label></div>
+    <div class="btns">
+      <button id="edUp" aria-label="앞으로 옮기기">◀</button>
+      <button id="edDown" aria-label="뒤로 옮기기">▶</button>
+      <button id="edDel" class="danger">삭제</button>
+      <span class="sp"></span>
+      <button id="edCancel">취소</button>
+      <button id="edSave" class="primary">저장</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "179812397978",
+  appId: "1:179812397978:web:3525714542291e818e0023"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const CAT = {
+  '기획': ['#E8E0F5', '#4A3A70'],
+  '콘티': ['#DBECF3', '#24546A'],
+  '작화': ['#F7E1D4', '#7A4128'],
+  '기타': ['#F0ECE4', '#5A554B']
+};
+const WD = ['일','월','화','수','목','금','토'];
+const DEFAULT_TASKS = [
+  ['기획','시놉시스 초안'],['기획','시놉시스 다듬기'],['기획','1~3화 글콘티'],['기획','글콘티 점검'],
+  ['콘티','1화 콘티 전반'],['콘티','1화 콘티 후반'],['콘티','2화 그림콘티'],['콘티','3화 그림콘티'],['콘티','2·3화 콘티 정리'],
+  ['작화','1화 선화 1/5'],['작화','1화 선화 2/5'],['작화','1화 선화 3/5'],['작화','1화 선화 4/5'],['작화','1화 선화 5/5'],
+  ['작화','채색·식자 1/4'],['작화','채색·식자 2/4'],['작화','채색·식자 3/4'],['작화','채색·식자 4/4'],
+  ['기타','예비일'],['기타','최종 점검·제출']
+];
+
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse = s => { const a = s.split('-'); return new Date(+a[0], a[1]-1, +a[2]); };
+const fmt = s => { if(!s) return '날짜 없음'; const d = parse(s); return (d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')'; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2,10);
+const todayStr = () => ymd(new Date());
+
+function defaultState(){
+  return {
+    name: '공모전 원정',
+    start: todayStr(),
+    end: '2026-11-30',
+    days: [1,3,5],
+    lvSize: 100,
+    tasks: DEFAULT_TASKS.map(([cat,title]) => ({ id: uid(), cat, title, memo:'', date:'', exp:50, done:false }))
+  };
+}
+
+let S = null, user = null, editId = null, saveTimer = null;
+const $ = id => document.getElementById(id);
+const LOCAL_KEY = 'manuscriptBoard';
+
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1400); }
+
+function save(){
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(S)); } catch(e){}
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    if(!user) return;
+    try {
+      await setDoc(doc(db,'users',user.uid,'settings','manuscriptBoard'), { data: JSON.stringify(S), updated: Date.now() });
+      toast('저장됨');
+    } catch(e){
+      console.error(e);
+      toast('저장 실패 · 이 기기에만 임시 보관됨');
+    }
+  }, 600);
+}
+
+async function load(){
+  let loaded = null;
+  try {
+    const snap = await getDoc(doc(db,'users',user.uid,'settings','manuscriptBoard'));
+    if(snap.exists()) loaded = JSON.parse(snap.data().data);
+  } catch(e){
+    console.error(e);
+    try { loaded = JSON.parse(localStorage.getItem(LOCAL_KEY)); } catch(_){}
+    if(loaded) toast('서버에 연결 못 해서 이 기기 기록을 불러왔어요');
+  }
+  S = Object.assign(defaultState(), loaded || {});
+}
+
+/* 날짜 자동 배치 */
+function workDates(){
+  const out = [];
+  if(!S.start || !S.end) return out;
+  const d = parse(S.start), e = parse(S.end);
+  let guard = 0;
+  while(d <= e && guard++ < 800){
+    if(S.days.includes(d.getDay())) out.push(ymd(d));
+    d.setDate(d.getDate()+1);
+  }
+  return out;
+}
+function assignDates(){
+  const all = workDates();
+  const pinned = new Set(S.tasks.filter(t => t.date).map(t => t.date));
+  const pool = all.filter(x => !pinned.has(x));
+  let k = 0;
+  return S.tasks.map(t => t.date ? t.date : (pool[k++] || ''));
+}
+function weekKey(s){
+  if(!s) return 'none';
+  const d = parse(s);
+  d.setDate(d.getDate() - ((d.getDay()+6)%7));
+  return ymd(d);
+}
+
+const CROWN = '<svg class="crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 18h16M5 15 3.5 7l5 4L12 5l3.5 6 5-4L19 15z"/></svg>';
+const SWORD = '<svg class="ico" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M27 7h6v6L17 29l-6-6z"/><path d="M9 21l10 10M7 29l4 4M12 26l-6 6"/></svg>';
+
+function render(){
+  const D = assignDates();
+  const today = todayStr();
+  const nowIdx = S.tasks.findIndex(t => !t.done);
+  const totalExp = S.tasks.reduce((a,t) => a + (+t.exp||0), 0);
+  const gotExp = S.tasks.filter(t => t.done).reduce((a,t) => a + (+t.exp||0), 0);
+  const lvSize = Math.max(10, +S.lvSize || 100);
+  const lv = Math.floor(gotExp / lvSize) + 1;
+  const dd = S.end ? Math.round((parse(S.end) - parse(today)) / 864e5) : null;
+  const avail = workDates().length;
+  const missing = D.filter(x => !x).length;
+  const doneCnt = S.tasks.filter(t => t.done).length;
+
+  $('projName').value = S.name;
+  $('lv').textContent = 'Lv.' + lv;
+  $('expTxt').textContent = gotExp + ' / ' + totalExp + ' EXP';
+  $('expBar').style.width = (totalExp ? Math.round(gotExp/totalExp*100) : 0) + '%';
+  $('meta').innerHTML =
+    '<span>' + (dd === null ? '' : dd > 0 ? '마감 D-'+dd : dd === 0 ? '오늘 마감' : '마감 지남') + '</span>' +
+    '<span>작업 가능일 ' + avail + '일</span>' +
+    '<span>퀘스트 ' + doneCnt + ' / ' + S.tasks.length + '</span>' +
+    (missing ? '<span class="warn">날짜 부족 ' + missing + '칸</span>' : '');
+
+  const q = $('quest');
+  if(nowIdx < 0){
+    q.innerHTML = SWORD + '<div style="flex:1"><div class="k">모든 퀘스트 완료</div><div class="v">원정 클리어! 수고했어요</div></div>';
+  } else {
+    const t = S.tasks[nowIdx];
+    q.innerHTML = SWORD + '<div style="flex:1;min-width:0"><div class="k">현재 퀘스트 · ' + fmt(D[nowIdx]) + '</div><div class="v">' + esc(t.title) + '</div>' + (t.memo ? '<div class="memo">' + esc(t.memo) + '</div>' : '') + '</div><button id="questDone">완료 +' + (+t.exp||0) + ' EXP</button>';
+    $('questDone').onclick = () => { t.done = true; save(); render(); };
+  }
+
+  const groups = {};
+  S.tasks.forEach((t,i) => { const k = weekKey(D[i]); (groups[k] = groups[k] || []).push(i); });
+  const keys = Object.keys(groups).filter(k => k !== 'none').sort();
+  if(groups.none) keys.push('none');
+  let html = '';
+  keys.forEach((k, ci) => {
+    const label = k === 'none' ? '<b>날짜 없음</b>' : '<b>챕터 ' + (ci+1) + '</b><br>' + fmt(k).replace(/\(.\)/,'') + ' 주';
+    html += '<div class="chapter"><div class="ch-label">' + label + '</div><div class="ch-grid">';
+    groups[k].forEach(i => {
+      const t = S.tasks[i], c = CAT[t.cat] || CAT['기타'];
+      const cls = ['tile'];
+      if(t.done) cls.push('done');
+      if(i === nowIdx) cls.push('now');
+      if(D[i] === today) cls.push('today');
+      if(!t.done && D[i] && D[i] < today) cls.push('late');
+      html += '<div class="' + cls.join(' ') + '" tabindex="0" role="button" data-id="' + t.id + '" style="background:' + c[0] + ';color:' + c[1] + '">' +
+        '<div class="d">' + fmt(D[i]) + (t.date ? ' 📌' : '') + (t.done ? '<span style="margin-left:auto">' + CROWN + '</span>' : '') + '</div>' +
+        '<div class="t">' + esc(t.title) + '</div></div>';
+    });
+    html += '</div></div>';
+  });
+  $('board').innerHTML = html || '<p style="color:var(--sub)">아직 퀘스트가 없어요. 아래에서 추가해 보세요.</p>';
+  $('board').querySelectorAll('.tile').forEach(el => {
+    el.onclick = () => openEditor(el.dataset.id);
+    el.onkeydown = e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openEditor(el.dataset.id); } };
+  });
+
+  $('legend').innerHTML = Object.keys(CAT).map(k => '<span><i style="background:' + CAT[k][0] + ';border:1px solid ' + CAT[k][1] + '"></i>' + k + '</span>').join('') +
+    '<span>📌 직접 지정한 날짜</span>';
+
+  $('startDate').value = S.start; $('endDate').value = S.end; $('lvSize').value = S.lvSize;
+  $('days').innerHTML = WD.map((w,i) => '<label class="' + (S.days.includes(i) ? 'on' : '') + '"><input type="checkbox" value="' + i + '"' + (S.days.includes(i) ? ' checked' : '') + '>' + w + '</label>').join('');
+  $('days').querySelectorAll('input').forEach(c => c.onchange = () => {
+    S.days = [...$('days').querySelectorAll('input:checked')].map(x => +x.value);
+    save(); render();
+  });
+}
+
+/* 편집창 */
+function openEditor(id){
+  editId = id;
+  const t = S.tasks.find(x => x.id === id);
+  if(!t) return;
+  $('edTitle').textContent = '퀘스트 수정';
+  $('edName').value = t.title; $('edErr').textContent = '';
+  $('edCat').innerHTML = Object.keys(CAT).map(k => '<option' + (k === t.cat ? ' selected' : '') + '>' + k + '</option>').join('');
+  $('edExp').value = t.exp; $('edDate').value = t.date; $('edMemo').value = t.memo; $('edDone').checked = t.done;
+  $('overlay').classList.add('open');
+  setTimeout(() => $('edName').focus(), 30);
+}
+function closeEditor(){ $('overlay').classList.remove('open'); editId = null; }
+function idx(){ return S.tasks.findIndex(x => x.id === editId); }
+
+$('edName').oninput = () => { $('edErr').textContent = ''; };
+$('edSave').onclick = () => {
+  const name = $('edName').value.trim();
+  if(!name){ $('edErr').textContent = '이름을 입력해 주세요'; $('edName').focus(); return; }
+  const t = S.tasks[idx()];
+  t.title = name; t.cat = $('edCat').value; t.exp = Math.max(0, Math.round(+$('edExp').value || 0));
+  t.date = $('edDate').value; t.memo = $('edMemo').value.trim(); t.done = $('edDone').checked;
+  save(); render(); closeEditor();
+};
+$('edCancel').onclick = closeEditor;
+$('overlay').onclick = e => { if(e.target === $('overlay')) closeEditor(); };
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && $('overlay').classList.contains('open')) closeEditor(); });
+$('edUp').onclick = () => { const i = idx(); if(i > 0){ [S.tasks[i-1], S.tasks[i]] = [S.tasks[i], S.tasks[i-1]]; save(); render(); } };
+$('edDown').onclick = () => { const i = idx(); if(i < S.tasks.length-1){ [S.tasks[i+1], S.tasks[i]] = [S.tasks[i], S.tasks[i+1]]; save(); render(); } };
+$('edDel').onclick = () => {
+  const t = S.tasks[idx()];
+  if(!confirm('"' + t.title + '" 퀘스트를 삭제할까요?')) return;
+  S.tasks.splice(idx(), 1); save(); render(); closeEditor();
+};
+
+$('addBtn').onclick = () => {
+  const t = { id: uid(), cat:'기타', title:'새 퀘스트', memo:'', date:'', exp:50, done:false };
+  S.tasks.push(t); save(); render(); openEditor(t.id);
+  $('edTitle').textContent = '퀘스트 추가'; $('edName').select();
+};
+$('clearDatesBtn').onclick = () => {
+  if(!S.tasks.some(t => t.date)){ toast('직접 지정한 날짜가 없어요'); return; }
+  if(!confirm('직접 지정한 날짜를 모두 해제하고 자동 배치로 돌릴까요?')) return;
+  S.tasks.forEach(t => t.date = ''); save(); render();
+};
+$('projName').onchange = () => { S.name = $('projName').value.trim() || '원정'; save(); render(); };
+$('startDate').onchange = () => { S.start = $('startDate').value; save(); render(); };
+$('endDate').onchange = () => { S.end = $('endDate').value; save(); render(); };
+$('lvSize').onchange = () => { S.lvSize = Math.max(10, Math.round(+$('lvSize').value || 100)); save(); render(); };
+
+$('loginBtn').onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => { console.error(e); toast('로그인 실패'); });
+
+onAuthStateChanged(auth, async u => {
+  user = u;
+  if(!u){ $('loginBox').style.display = 'block'; $('main').style.display = 'none'; $('userInfo').textContent = ''; return; }
+  $('loginBox').style.display = 'none';
+  $('userInfo').textContent = u.displayName || '';
+  await load();
+  $('main').style.display = 'block';
+  render();
+});
+</script>
+</body>
+</html>
