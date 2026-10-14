@@ -12,6 +12,7 @@
 :root{
   --bg:#FAF8F4;--panel:#FFFFFF;--bd:#EEE8DD;--tx:#3B3832;--sub:#8A8376;
   --ac:#7FAE77;--acl:#E1EFDA;--acd:#345A2C;--tr:#EDE8DE;--line:#A8CBA0;--warn:#B5523A;
+  --soft:#F3EEDF;--softd:#7A6A3A;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--tx);font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif}
@@ -31,16 +32,49 @@ textarea{resize:vertical}
 .lvrow{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
 .lv{background:var(--acl);color:var(--acd);border-radius:8px;padding:2px 9px;font-size:13px}
 .meta{font-size:13px;color:var(--sub);display:flex;gap:14px;flex-wrap:wrap}
-.meta .warn{color:var(--warn)}
 .bar{height:9px;background:var(--tr);border-radius:5px;margin:4px 0 18px;overflow:hidden}
 .bar>div{height:100%;background:var(--ac);border-radius:5px;transition:width .4s}
-.quest{background:var(--acl);color:var(--acd);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-bottom:22px}
-.quest .ico{width:40px;height:40px;flex:none}
-.quest .k{font-size:12px;opacity:.85}
-.quest .v{font-size:19px;line-height:1.35}
-.quest .memo{font-size:13px;opacity:.85;margin-top:2px}
-.quest button{background:transparent;border-color:var(--acd);color:var(--acd);white-space:nowrap}
-.quest button:hover{background:var(--panel)}
+
+/* 오늘의 한 걸음 */
+.today{background:var(--acl);color:var(--acd);border-radius:18px;padding:16px 18px;margin-bottom:12px}
+.today .k{font-size:12px;opacity:.85}
+.today .v{font-size:20px;line-height:1.35;margin:2px 0 4px;word-break:keep-all}
+.today .line{font-size:13px;opacity:.9}
+.today .memo{font-size:13px;opacity:.85;margin-top:2px}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 10px}
+.mode{background:var(--panel);border:1.5px solid transparent;border-radius:14px;padding:10px 12px;text-align:left;color:var(--tx)}
+.mode .m{font-size:12px;color:var(--sub)}
+.mode .d{font-size:14px;line-height:1.35;margin-top:2px;word-break:keep-all}
+.mode .x{font-size:11px;color:var(--acd);margin-top:4px}
+.mode[aria-pressed="true"]{border-color:var(--acd);box-shadow:0 0 0 2px var(--acl) inset}
+.go{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.go .main{background:var(--acd);color:#fff;border-color:var(--acd)}
+.go .link{background:transparent;border-color:transparent;color:var(--acd);text-decoration:underline;text-underline-offset:3px;padding:6px 4px}
+.go .timer{font-size:22px;font-variant-numeric:tabular-nums;margin-left:auto;min-width:64px;text-align:right}
+@media (max-width:560px){.modes{grid-template-columns:1fr}.go .timer{margin-left:0}}
+
+/* 주간 기록 · 아이디어 주차장 */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+@media (max-width:680px){.two{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:14px 16px;min-width:0}
+.panel h2{font-size:15px;font-weight:400;margin:0 0 8px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{text-align:center;font-size:11px;color:var(--sub)}
+.day i{display:grid;place-items:center;height:34px;border-radius:10px;background:var(--tr);font-style:normal;font-size:12px;color:var(--sub);margin-top:3px}
+.day i.A{background:var(--ac);color:#fff}
+.day i.B{background:var(--line);color:var(--acd)}
+.day i.C,.day i.S{background:var(--acl);color:var(--acd);border:1px solid var(--line)}
+.day i.today{outline:2px dashed var(--acd);outline-offset:1px}
+.stats{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--sub);margin-top:10px}
+.stats b{font-weight:400;color:var(--acd);font-size:16px}
+.park{display:flex;gap:6px}
+.park button{white-space:nowrap}
+.ideas{list-style:none;padding:0;margin:8px 0 0;font-size:13px;color:var(--sub);max-height:150px;overflow:auto}
+.ideas li{padding:4px 0;border-bottom:1px dashed var(--bd);display:flex;gap:6px;align-items:center}
+.ideas li span{flex:1;min-width:0;word-break:break-all}
+.ideas li button{border:none;padding:2px 6px;color:var(--sub);background:transparent}
+
+/* 보드 */
 .chapter{display:flex;gap:12px;margin-bottom:10px}
 .ch-label{width:84px;flex:none;font-size:12px;color:var(--sub);padding-top:9px;border-right:2px solid var(--line);line-height:1.55}
 .ch-label b{font-weight:400;color:var(--tx);font-size:13px}
@@ -49,9 +83,11 @@ textarea{resize:vertical}
 .tile:hover{border-color:currentColor}
 .tile .d{font-size:11px;opacity:.8;display:flex;gap:4px;align-items:center}
 .tile .t{font-size:14px;line-height:1.35;margin-top:2px;word-break:keep-all}
+.tile .ph{font-size:10px;border-radius:5px;padding:0 5px;background:rgba(255,255,255,.7)}
+.tile .st{font-size:10px;opacity:.85}
 .tile.done .t{text-decoration:line-through;opacity:.5}
 .tile.now{box-shadow:0 0 0 2px var(--ac)}
-.tile.late .d::after{content:'밀림';margin-left:auto;font-size:10px;color:var(--warn)}
+.tile.carry .d::after{content:'다시 잡기';margin-left:auto;font-size:10px;color:var(--softd);background:var(--soft);border-radius:5px;padding:0 5px}
 .ch-label .cur{display:inline-block;margin-top:4px;background:var(--acl);color:var(--acd);border-radius:6px;padding:0 6px;font-size:11px}
 .chapter.past .ch-label{opacity:.65}
 .ch-add{border:1px dashed var(--line);background:transparent;border-radius:14px;min-height:62px;color:var(--sub);font-size:13px}
@@ -62,10 +98,13 @@ textarea{resize:vertical}
 details.settings{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;margin-bottom:20px}
 details.settings summary{cursor:pointer;font-size:14px;color:var(--sub)}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:480px){.grid3{grid-template-columns:1fr}}
 .lbl{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
+.hint{font-size:12px;color:var(--sub);margin:4px 0 0}
 .overlay{position:fixed;inset:0;background:rgba(59,56,50,.28);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
 .overlay.open{display:flex}
-.sheet{background:var(--panel);border-radius:18px;padding:20px;width:100%;max-width:460px;max-height:90vh;overflow:auto;border:1px solid var(--bd)}
+.sheet{background:var(--panel);border-radius:18px;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow:auto;border:1px solid var(--bd)}
 .sheet h2{font-size:17px;font-weight:400;margin:0 0 12px}
 .sheet .row{margin-bottom:12px}
 .sheet .err{font-size:12px;color:var(--warn);min-height:1em}
@@ -74,10 +113,10 @@ details.settings summary{cursor:pointer;font-size:14px;color:var(--sub)}
 .danger{color:var(--warn)}
 .primary{background:var(--acl);color:var(--acd);border-color:var(--line)}
 .login{text-align:center;padding:60px 20px}
-.toast{position:fixed;right:18px;bottom:18px;background:var(--acd);color:#fff;padding:7px 14px;border-radius:999px;font-size:12px;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast{position:fixed;right:18px;bottom:18px;background:var(--acd);color:#fff;padding:7px 14px;border-radius:999px;font-size:12px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:calc(100vw - 36px)}
 .toast.show{opacity:1}
 .crown{width:13px;height:13px;vertical-align:-2px}
-@media (max-width:560px){.ch-label{width:72px}.quest{flex-wrap:wrap}}
+@media (max-width:560px){.ch-label{width:72px}}
 @media (prefers-reduced-motion:reduce){.bar>div{transition:none}}
 </style>
 </head>
@@ -102,15 +141,30 @@ details.settings summary{cursor:pointer;font-size:14px;color:var(--sub)}
     </div>
     <div class="bar"><div id="expBar" style="width:0"></div></div>
 
-    <div class="quest" id="quest"></div>
+    <section class="today" id="today"></section>
+
+    <div class="two">
+      <section class="panel">
+        <h2>이번 주 기록</h2>
+        <div class="days" id="days"></div>
+        <div class="stats" id="stats"></div>
+      </section>
+      <section class="panel">
+        <h2>아이디어 주차장</h2>
+        <div class="park"><input id="ideaIn" placeholder="떠오른 거 적고 다시 작업으로" aria-label="아이디어"><button id="ideaBtn">주차</button></div>
+        <ul class="ideas" id="ideas"></ul>
+      </section>
+    </div>
 
     <details class="settings" id="settingsBox">
       <summary>원정 설정</summary>
       <div class="grid2">
         <div><span class="lbl">마감일 (D-day 표시용)</span><input type="date" id="endDate"></div>
         <div><span class="lbl">레벨당 필요 EXP</span><input type="number" id="lvSize" min="10" step="10"></div>
+        <div><span class="lbl">시작 EXP (2분만 시작)</span><input type="number" id="startExp" min="0" step="1"></div>
+        <div><span class="lbl">복귀 보너스 EXP</span><input type="number" id="comebackExp" min="0" step="5"></div>
       </div>
-      <p style="font-size:12px;color:var(--sub);margin:12px 0 0">챕터는 일요일부터 토요일까지 한 주 단위예요. 퀘스트를 누르면 다른 주로 옮길 수 있어요.</p>
+      <p class="hint" style="margin-top:12px">챕터는 일요일부터 토요일까지 한 주 단위예요. 퀘스트를 누르면 A/B/C 분량, 완료 기준, 단계를 바꿀 수 있어요.</p>
     </details>
 
     <div id="board"></div>
@@ -128,10 +182,21 @@ details.settings summary{cursor:pointer;font-size:14px;color:var(--sub)}
     <div class="row"><span class="lbl">이름</span><input id="edName"><div class="err" id="edErr"></div></div>
     <div class="grid2" style="margin-top:0">
       <div class="row"><span class="lbl">분류</span><select id="edCat"></select></div>
+      <div class="row"><span class="lbl">단계</span><select id="edPh"><option>러프</option><option>다듬기</option></select></div>
       <div class="row"><span class="lbl">EXP</span><input type="number" id="edExp" min="0" step="10"></div>
     </div>
     <div class="row"><span class="lbl">챕터 (주)</span><select id="edWeek"></select></div>
-    <div class="row"><span class="lbl">메모</span><textarea id="edMemo" rows="3" placeholder="예: 3~12컷, 액션 컷은 동세부터"></textarea></div>
+    <div class="row">
+      <span class="lbl">오늘 분량 (비워 두면 기본 문구)</span>
+      <div class="grid3">
+        <input id="edA" placeholder="A · 예: 1~20컷 러프" aria-label="A 분량">
+        <input id="edB" placeholder="B · 예: 1~10컷" aria-label="B 분량">
+        <input id="edC" placeholder="C · 예: 1~3컷 졸라맨" aria-label="C 분량">
+      </div>
+      <p class="hint">A를 끝내면 퀘스트 완료, B·C는 오늘 분량만 기록돼요.</p>
+    </div>
+    <div class="row"><span class="lbl">여기까지면 끝 (완료 기준)</span><input id="edLine" placeholder="예: 컷 배치와 시선 흐름만 보이면 끝"></div>
+    <div class="row"><span class="lbl">메모</span><textarea id="edMemo" rows="2" placeholder="예: 액션 컷은 동세부터"></textarea></div>
     <div class="row"><label style="font-size:14px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="edDone" style="width:auto"> 완료</label></div>
     <div class="btns">
       <button id="edUp" aria-label="앞으로 옮기기">◀</button>
@@ -169,6 +234,9 @@ const CAT = {
   '기타': ['#F0ECE4', '#5A554B']
 };
 const WD = ['일','월','화','수','목','금','토'];
+const MODE_NAME = { A:'A · 컨디션 좋음', B:'B · 보통', C:'C · 바닥인 날' };
+const MODE_RATE = { A:1, B:0.6, C:0.3 };
+const RANK = { S:0, C:1, B:2, A:3 };
 const DEFAULT_TASKS = [
   ['기획','시놉시스 초안'],['기획','시놉시스 다듬기'],['기획','1~3화 글콘티'],['기획','글콘티 점검'],
   ['콘티','1화 콘티 전반'],['콘티','1화 콘티 후반'],['콘티','2화 그림콘티'],['콘티','3화 그림콘티'],['콘티','2·3화 콘티 정리'],
@@ -180,7 +248,6 @@ const DEFAULT_TASKS = [
 const pad = n => String(n).padStart(2,'0');
 const ymd = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const parse = s => { const a = s.split('-'); return new Date(+a[0], a[1]-1, +a[2]); };
-const fmt = s => { if(!s) return '날짜 없음'; const d = parse(s); return (d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')'; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2,10);
 const todayStr = () => ymd(new Date());
@@ -190,6 +257,9 @@ function addDays(s, n){ const d = parse(s); d.setDate(d.getDate()+n); return ymd
 const thisWeek = () => ymd(sundayOf(new Date()));
 const weekLabel = w => { const a = parse(w), b = parse(addDays(w,6)); return (a.getMonth()+1)+'/'+a.getDate()+'~'+(b.getMonth()+1)+'/'+b.getDate(); };
 
+/* 제목으로 단계 추측: 다듬기·점검·정리·채색·최종이 들어가면 '다듬기', 나머지는 '러프' */
+const guessPh = title => /다듬|점검|정리|채색|식자|최종/.test(title) ? '다듬기' : '러프';
+
 function defaultState(){
   const w0 = thisWeek();
   return {
@@ -198,11 +268,19 @@ function defaultState(){
     extraWeeks: 0,
     end: '2026-11-30',
     lvSize: 100,
-    tasks: DEFAULT_TASKS.map(([cat,title], i) => ({ id: uid(), cat, title, memo:'', week: addDays(w0, 7*Math.floor(i/3)), exp:50, done:false }))
+    startExp: 5,
+    comebackExp: 20,
+    bonusExp: 0,
+    mode: 'B',
+    log: {},         // 'YYYY-MM-DD': 'S'(시작만) | 'C' | 'B' | 'A'
+    comebackDays: [],// 복귀 보너스를 받은 날
+    ideas: [],       // {text, date}
+    partialDay: '',  // B·C 분량 EXP를 받은 마지막 날 (하루 한 번)
+    tasks: DEFAULT_TASKS.map(([cat,title], i) => ({ id: uid(), cat, title, ph: guessPh(title), memo:'', A:'', B:'', C:'', line:'', steps:0, week: addDays(w0, 7*Math.floor(i/3)), exp:50, done:false }))
   };
 }
 
-/* 예전 버전(날짜 방식) 데이터를 주 단위로 옮기기 */
+/* 예전 버전 데이터를 지금 구조로 옮기기 (기존 퀘스트·완료 기록은 그대로 유지) */
 function migrate(st){
   if(!st.firstWeek) st.firstWeek = thisWeek();
   if(st.extraWeeks == null) st.extraWeeks = 0;
@@ -213,18 +291,29 @@ function migrate(st){
       k++;
     }
     delete t.date;
+    if(!t.ph) t.ph = guessPh(t.title || '');
+    ['A','B','C','line','memo'].forEach(f => { if(t[f] == null) t[f] = ''; });
+    if(t.steps == null) t.steps = 0;
   });
   delete st.start; delete st.days;
+  if(!st.log || typeof st.log !== 'object') st.log = {};
+  if(!Array.isArray(st.comebackDays)) st.comebackDays = [];
+  if(!Array.isArray(st.ideas)) st.ideas = [];
+  if(st.bonusExp == null) st.bonusExp = 0;
+  if(typeof st.partialDay !== 'string') st.partialDay = '';
+  if(st.startExp == null) st.startExp = 5;
+  if(st.comebackExp == null) st.comebackExp = 20;
+  if(!MODE_RATE[st.mode]) st.mode = 'B';
   const minW = st.tasks.reduce((m,t) => t.week < m ? t.week : m, st.firstWeek);
   st.firstWeek = minW;
   return st;
 }
 
-let S = null, user = null, editId = null, saveTimer = null;
+let S = null, user = null, editId = null, saveTimer = null, timerId = null, left = 0, timerKind = 0;
 const $ = id => document.getElementById(id);
 const LOCAL_KEY = 'manuscriptBoard';
 
-function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1400); }
+function toast(msg, ms){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms || 1600); }
 
 async function pushNow(){
   if(!user || !S) return;
@@ -257,7 +346,6 @@ async function load(){
   S = loaded ? migrate(Object.assign(defaultState(), loaded)) : defaultState();
 }
 
-/* 챕터(주) 목록: 첫 주부터 마감 주·이번 주·마지막 퀘스트 주 중 가장 늦은 주까지 */
 function weeks(){
   let last = S.firstWeek;
   const cands = [thisWeek()];
@@ -271,8 +359,112 @@ function weeks(){
 }
 function ordered(){ return S.tasks.map((t,i) => ({t,i})).sort((a,b) => a.t.week < b.t.week ? -1 : a.t.week > b.t.week ? 1 : a.i - b.i); }
 
+/* 하루 기록 남기기: 더 큰 분량으로만 덮어씀. 그날 첫 기록이고 어제가 비어 있으면 복귀 보너스 */
+function logDay(kind){
+  const d = todayStr();
+  const first = !S.log[d];
+  const hadBefore = Object.keys(S.log).some(x => x < d);
+  if(!S.log[d] || RANK[kind] > RANK[S.log[d]]) S.log[d] = kind;
+  if(first && hadBefore && !S.log[addDays(d,-1)] && !S.comebackDays.includes(d)){
+    S.comebackDays.push(d);
+    S.bonusExp += (+S.comebackExp || 0);
+    return true;
+  }
+  return false;
+}
+/* 이번 달(1일~말일) 복귀 횟수. 기록은 지우지 않고, 매달 1일에 화면 숫자만 0부터 다시 셈 */
+function comebackCount(){ const mo = todayStr().slice(0,7); return S.comebackDays.filter(d => d.slice(0,7) === mo).length; }
+
+function fmtTime(s){ return Math.floor(s/60) + ':' + pad(s%60); }
+function runTimer(sec){
+  clearInterval(timerId); left = sec; timerKind = sec;
+  const tick = () => { const el = $('timer'); if(el) el.textContent = left > 0 ? fmtTime(left) : ''; };
+  tick();
+  timerId = setInterval(() => {
+    left--; tick();
+    if(left <= 0){
+      clearInterval(timerId); left = 0;
+      toast(timerKind === 120 ? '2분 끝. 더 하고 싶으면 25분 이어서, 아니면 여기서 멈춰도 돼요' : '25분 끝! 5분 쉬고 작은 보상 챙기기', 3200);
+    }
+  }, 1000);
+}
+
 const CROWN = '<svg class="crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 18h16M5 15 3.5 7l5 4L12 5l3.5 6 5-4L19 15z"/></svg>';
-const SWORD = '<svg class="ico" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M27 7h6v6L17 29l-6-6z"/><path d="M9 21l10 10M7 29l4 4M12 26l-6 6"/></svg>';
+
+function renderToday(now, chNo){
+  const el = $('today');
+  if(!now){
+    el.innerHTML = '<div class="k">모든 퀘스트 완료</div><div class="v">원정 클리어! 수고했어요</div>';
+    return;
+  }
+  const t = now.t;
+  const txt = { A: t.A || t.title + ' 전부', B: t.B || t.title + ' 절반', C: t.C || t.title + ' 10분만' };
+  const exp = m => Math.round((+t.exp||0) * MODE_RATE[m]);
+  const started = !!S.log[todayStr()];
+  const m = S.mode;
+  const partialUsed = S.partialDay === todayStr();
+  const blocked = m !== 'A' && partialUsed;
+  el.innerHTML =
+    '<div class="k">오늘의 한 걸음 · 챕터 ' + chNo(t.week) + ' (' + weekLabel(t.week) + ') · ' + esc(t.cat) + ' · ' + esc(t.ph) + ' 단계' + (t.steps ? ' · 쌓은 날 ' + t.steps + '일' : '') + '</div>' +
+    '<div class="v">' + esc(t.title) + '</div>' +
+    (t.line ? '<div class="line">여기까지면 끝 → ' + esc(t.line) + '</div>' : (t.ph === '러프' ? '<div class="line">러프 단계: 퀄리티 판단은 다듬기 때로 미루기</div>' : '')) +
+    (t.memo ? '<div class="memo">' + esc(t.memo) + '</div>' : '') +
+    '<div class="modes" role="group" aria-label="오늘 분량">' +
+      ['A','B','C'].map(k => '<button class="mode" data-m="' + k + '" aria-pressed="' + (m === k) + '"><div class="m">' + MODE_NAME[k] + '</div><div class="d">' + esc(txt[k]) + '</div><div class="x">+' + exp(k) + ' EXP' + (k === 'A' ? ' · 퀘스트 완료' : '') + '</div></button>').join('') +
+    '</div>' +
+    '<div class="go">' +
+      (started
+        ? (blocked
+            ? '<button class="main" disabled style="opacity:.55;cursor:default">오늘 분량 기록 완료</button>'
+            : '<button class="main" id="doneBtn">' + m + ' 분량 완료 +' + exp(m) + ' EXP</button>') + '<button id="pomoBtn">25분 타이머</button>'
+        : '<button class="main" id="startBtn">2분만 시작 +' + (+S.startExp||0) + ' EXP</button>') +
+      (m !== 'A' ? '<button class="link" id="finishBtn">이 퀘스트 다 끝났어요</button>' : '') +
+      '<span class="timer" id="timer">' + (left > 0 ? fmtTime(left) : '') + '</span>' +
+    '</div>' +
+    (blocked ? '<div class="line" style="margin-top:8px">B·C 분량은 하루 한 번만 기록돼요. 오늘은 충분해요. 더 하고 싶으면 타이머로 이어가거나 A로 퀘스트를 끝내도 돼요.</div>' : '');
+
+  el.querySelectorAll('.mode').forEach(b => b.onclick = () => { S.mode = b.dataset.m; save(); render(); });
+  if($('startBtn')) $('startBtn').onclick = () => {
+    S.bonusExp += (+S.startExp || 0);
+    const back = logDay('S');
+    save(); render(); runTimer(120);
+    toast(back ? '돌아왔네요! 복귀 보너스 +' + S.comebackExp + ' EXP · 제일 어려운 걸 해냈어요' : '시작했으니 오늘은 이미 성공 +' + S.startExp + ' EXP', 2600);
+  };
+  if($('pomoBtn')) $('pomoBtn').onclick = () => runTimer(25*60);
+  if($('doneBtn')) $('doneBtn').onclick = () => {
+    if(m !== 'A' && S.partialDay === todayStr()){ render(); return; }
+    const back = logDay(m);
+    if(m === 'A'){ t.done = true; t.steps = (t.steps||0) + 1; }
+    else { t.steps = (t.steps||0) + 1; S.bonusExp += exp(m); S.partialDay = todayStr(); }
+    clearInterval(timerId); left = 0;
+    save(); render();
+    toast(back ? '복귀 보너스 +' + S.comebackExp + ' EXP 포함!' : (m === 'A' ? '퀘스트 완료! 작은 보상 하나 챙기세요' : m + ' 분량 완료! 오늘은 이걸로 충분해요'), 2400);
+  };
+  if($('finishBtn')) $('finishBtn').onclick = () => {
+    t.done = true; logDay('C'); save(); render();
+    toast('퀘스트 완료 +' + (+t.exp||0) + ' EXP');
+  };
+}
+
+function renderWeekLog(){
+  const cw = thisWeek(), td = todayStr();
+  let h = '';
+  for(let i = 0; i < 7; i++){
+    const d = addDays(cw, i), v = S.log[d];
+    const label = v === 'S' ? '시작' : v ? v : (d < td ? '쉼' : '');
+    h += '<div class="day">' + WD[i] + '<i class="' + (v || '') + (d === td ? ' today' : '') + '">' + label + '</i></div>';
+  }
+  $('days').innerHTML = h;
+  const active = Object.keys(S.log).filter(d => d >= cw && d <= addDays(cw,6)).length;
+  $('stats').innerHTML = '<span>이번 주 한 날 <b>' + active + '</b>일</span><span>' + (new Date().getMonth()+1) + '월에 돌아온 횟수 <b>' + comebackCount() + '</b>번</span>';
+}
+
+function renderIdeas(){
+  $('ideas').innerHTML = S.ideas.length
+    ? S.ideas.map((x,i) => '<li><span>' + esc(x.text) + '</span><button data-i="' + i + '" aria-label="삭제">×</button></li>').join('')
+    : '<li><span>아직 비어 있어요. 작업 중 떠오른 건 여기 두고 공모전 끝나고 꺼내 보기.</span></li>';
+  $('ideas').querySelectorAll('button[data-i]').forEach(b => b.onclick = () => { S.ideas.splice(+b.dataset.i, 1); save(); renderIdeas(); });
+}
 
 function render(){
   const W = weeks(), cw = thisWeek();
@@ -281,7 +473,8 @@ function render(){
   const now = ord.find(o => !o.t.done);
   const nowId = now ? now.t.id : null;
   const totalExp = S.tasks.reduce((a,t) => a + (+t.exp||0), 0);
-  const gotExp = S.tasks.filter(t => t.done).reduce((a,t) => a + (+t.exp||0), 0);
+  const doneExp = S.tasks.filter(t => t.done).reduce((a,t) => a + (+t.exp||0), 0);
+  const gotExp = doneExp + (+S.bonusExp||0);
   const lvSize = Math.max(10, +S.lvSize || 100);
   const lv = Math.floor(gotExp / lvSize) + 1;
   const dd = S.end ? Math.round((parse(S.end) - parse(todayStr())) / 864e5) : null;
@@ -290,21 +483,16 @@ function render(){
 
   $('projName').value = S.name;
   $('lv').textContent = 'Lv.' + lv;
-  $('expTxt').textContent = gotExp + ' / ' + totalExp + ' EXP';
-  $('expBar').style.width = (totalExp ? Math.round(gotExp/totalExp*100) : 0) + '%';
+  $('expTxt').textContent = '누적 ' + gotExp + ' EXP';
+  $('expBar').style.width = (totalExp ? Math.round(doneExp/totalExp*100) : 0) + '%';
   $('meta').innerHTML =
     '<span>' + (dd === null ? '' : dd > 0 ? '마감 D-'+dd : dd === 0 ? '오늘 마감' : '마감 지남') + '</span>' +
     '<span>퀘스트 ' + doneCnt + ' / ' + S.tasks.length + '</span>' +
     '<span>이번 주 남은 퀘스트 ' + thisWeekLeft + '개</span>';
 
-  const q = $('quest');
-  if(!now){
-    q.innerHTML = SWORD + '<div style="flex:1"><div class="k">모든 퀘스트 완료</div><div class="v">원정 클리어! 수고했어요</div></div>';
-  } else {
-    const t = now.t;
-    q.innerHTML = SWORD + '<div style="flex:1;min-width:0"><div class="k">현재 퀘스트 · 챕터 ' + chNo(t.week) + ' (' + weekLabel(t.week) + ')</div><div class="v">' + esc(t.title) + '</div>' + (t.memo ? '<div class="memo">' + esc(t.memo) + '</div>' : '') + '</div><button id="questDone">완료 +' + (+t.exp||0) + ' EXP</button>';
-    $('questDone').onclick = () => { t.done = true; save(); render(); };
-  }
+  renderToday(now, chNo);
+  renderWeekLog();
+  renderIdeas();
 
   let html = '';
   W.forEach((w, ci) => {
@@ -316,10 +504,11 @@ function render(){
       const cls = ['tile'];
       if(t.done) cls.push('done');
       if(t.id === nowId) cls.push('now');
-      if(!t.done && past) cls.push('late');
+      if(!t.done && past) cls.push('carry');
       html += '<div class="' + cls.join(' ') + '" tabindex="0" role="button" data-id="' + t.id + '" style="background:' + c[0] + ';color:' + c[1] + '">' +
-        '<div class="d">' + esc(t.cat) + ' · ' + (+t.exp||0) + ' EXP' + (t.done ? '<span style="margin-left:auto">' + CROWN + '</span>' : '') + '</div>' +
-        '<div class="t">' + esc(t.title) + '</div></div>';
+        '<div class="d">' + esc(t.cat) + ' <span class="ph">' + esc(t.ph) + '</span>' + (t.done ? '<span style="margin-left:auto">' + CROWN + '</span>' : '') + '</div>' +
+        '<div class="t">' + esc(t.title) + '</div>' +
+        (!t.done && t.steps ? '<div class="st">쌓은 날 ' + t.steps + '일</div>' : '') + '</div>';
     });
     html += '<button class="ch-add" data-week="' + w + '" aria-label="챕터 ' + (ci+1) + '에 퀘스트 추가">+ 추가</button>';
     html += '</div></div>';
@@ -334,10 +523,11 @@ function render(){
   $('legend').innerHTML = Object.keys(CAT).map(k => '<span><i style="background:' + CAT[k][0] + ';border:1px solid ' + CAT[k][1] + '"></i>' + k + '</span>').join('');
 
   $('endDate').value = S.end || ''; $('lvSize').value = S.lvSize;
+  $('startExp').value = S.startExp; $('comebackExp').value = S.comebackExp;
 }
 
 function addTask(week){
-  const t = { id: uid(), cat:'기타', title:'새 퀘스트', memo:'', week, exp:50, done:false };
+  const t = { id: uid(), cat:'기타', title:'새 퀘스트', ph:'러프', memo:'', A:'', B:'', C:'', line:'', steps:0, week, exp:50, done:false };
   S.tasks.push(t); save(); render(); openEditor(t.id);
   $('edTitle').textContent = '퀘스트 추가'; $('edName').select();
 }
@@ -350,7 +540,11 @@ function openEditor(id){
   $('edTitle').textContent = '퀘스트 수정';
   $('edName').value = t.title; $('edErr').textContent = '';
   $('edCat').innerHTML = Object.keys(CAT).map(k => '<option' + (k === t.cat ? ' selected' : '') + '>' + k + '</option>').join('');
-  $('edExp').value = t.exp; $('edWeek').innerHTML = weeks().map((w,i) => '<option value="' + w + '"' + (w === t.week ? ' selected' : '') + '>챕터 ' + (i+1) + ' · ' + weekLabel(w) + '</option>').join(''); $('edMemo').value = t.memo; $('edDone').checked = t.done;
+  $('edPh').value = t.ph || '러프';
+  $('edExp').value = t.exp;
+  $('edWeek').innerHTML = weeks().map((w,i) => '<option value="' + w + '"' + (w === t.week ? ' selected' : '') + '>챕터 ' + (i+1) + ' · ' + weekLabel(w) + '</option>').join('');
+  $('edA').value = t.A || ''; $('edB').value = t.B || ''; $('edC').value = t.C || ''; $('edLine').value = t.line || '';
+  $('edMemo').value = t.memo; $('edDone').checked = t.done;
   $('overlay').classList.add('open');
   setTimeout(() => $('edName').focus(), 30);
 }
@@ -362,8 +556,9 @@ $('edSave').onclick = () => {
   const name = $('edName').value.trim();
   if(!name){ $('edErr').textContent = '이름을 입력해 주세요'; $('edName').focus(); return; }
   const t = S.tasks[idx()];
-  t.title = name; t.cat = $('edCat').value; t.exp = Math.max(0, Math.round(+$('edExp').value || 0));
+  t.title = name; t.cat = $('edCat').value; t.ph = $('edPh').value; t.exp = Math.max(0, Math.round(+$('edExp').value || 0));
   t.week = $('edWeek').value; t.memo = $('edMemo').value.trim(); t.done = $('edDone').checked;
+  t.A = $('edA').value.trim(); t.B = $('edB').value.trim(); t.C = $('edC').value.trim(); t.line = $('edLine').value.trim();
   save(); render(); closeEditor();
 };
 $('edCancel').onclick = closeEditor;
@@ -379,6 +574,9 @@ document.addEventListener('keydown', e => {
     if(a && a.id === 'projName'){ S.name = a.value.trim() || '원정'; }
     if(a && a.id === 'endDate'){ S.end = a.value; }
     if(a && a.id === 'lvSize'){ S.lvSize = Math.max(10, Math.round(+a.value || 100)); }
+    if(a && a.id === 'startExp'){ S.startExp = Math.max(0, Math.round(+a.value || 0)); }
+    if(a && a.id === 'comebackExp'){ S.comebackExp = Math.max(0, Math.round(+a.value || 0)); }
+    if(a && a.id === 'ideaIn'){ $('ideaBtn').click(); }
     render(); save(true);
   }
 });
@@ -397,11 +595,22 @@ $('edDel').onclick = () => {
   S.tasks.splice(idx(), 1); save(); render(); closeEditor();
 };
 
+$('ideaBtn').onclick = () => {
+  const v = $('ideaIn').value.trim();
+  if(!v) return;
+  S.ideas.unshift({ text: v, date: todayStr() });
+  $('ideaIn').value = '';
+  save(); renderIdeas(); toast('주차 완료. 다시 작업으로!');
+};
+$('ideaIn').onkeydown = e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); $('ideaBtn').click(); } };
+
 $('addBtn').onclick = () => addTask(thisWeek() >= S.firstWeek ? thisWeek() : S.firstWeek);
 $('addWeekBtn').onclick = () => { S.extraWeeks = (S.extraWeeks||0) + 1; save(); render(); toast('챕터를 한 주 늘렸어요'); };
 $('projName').onchange = () => { S.name = $('projName').value.trim() || '원정'; $('projName').value = S.name; save(); };
 $('endDate').onchange = () => { S.end = $('endDate').value; save(); render(); };
 $('lvSize').onchange = () => { S.lvSize = Math.max(10, Math.round(+$('lvSize').value || 100)); save(); render(); };
+$('startExp').onchange = () => { S.startExp = Math.max(0, Math.round(+$('startExp').value || 0)); save(); render(); };
+$('comebackExp').onchange = () => { S.comebackExp = Math.max(0, Math.round(+$('comebackExp').value || 0)); save(); render(); };
 
 $('loginBtn').onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => { console.error(e); toast('로그인 실패'); });
 
