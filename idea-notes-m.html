@@ -301,7 +301,7 @@ input[type=color]{width:52px;height:38px;border:1px solid var(--border2);border-
     </button>
     <div class="inapp-hint hide" id="inappHint">카카오톡·인스타그램 같은 앱 안의 브라우저에서는 Google 로그인이 막혀 있어요.<br>오른쪽 위 메뉴에서 ‘다른 브라우저로 열기’를 눌러주세요.</div>
   </div>
-  <a class="back-link" href="/">← 플래너로 돌아가기</a>
+  <a class="back-link" href="./">← 플래너로 돌아가기</a>
 </div>
 
 <div id="app">
@@ -2295,7 +2295,7 @@ function openSettings(){
   list.appendChild(menuRow(I.refresh, '최신 내용 불러오기', () => { closeLayer(sh.layer); reloadData(false); }, { sub: 'PC에서 고친 내용' }));
   const pc = menuRow(I.pc, 'PC 화면으로 보기', () => { flushAll().then(() => { location.href = 'idea-notes.html' + location.hash; }); });
   list.appendChild(pc);
-  list.appendChild(menuRow(I.home, '플래너로', () => { flushAll().then(() => { location.href = '/'; }); }));
+  list.appendChild(menuRow(I.home, '플래너로', () => { flushAll().then(() => { location.href = './'; }); }));
   list.appendChild(menuRow(I.out, '로그아웃', async () => {
     closeLayer(sh.layer);
     await flushAll();
