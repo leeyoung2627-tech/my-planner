@@ -891,9 +891,16 @@ body{opacity:0;transition:opacity .25s ease}
 .declare-no{font-size:12px;color:#aaa;width:14px;padding-top:4px;flex-shrink:0}
 .declare-body{flex:1;min-width:0}
 .declare-text{font-size:15px;line-height:1.6;color:var(--text-main,#222);margin-bottom:6px;word-break:break-word}
-.declare-write{width:100%;box-sizing:border-box;border:none;border-bottom:1px dashed #bbb;outline:none;background:transparent;resize:none;font-family:inherit;font-size:15px;line-height:1.6;color:var(--text-main,#222);padding:4px 0;overflow:hidden}
-.declare-write:focus{border-bottom-color:var(--accent)}
-.declare-write::placeholder{color:#bbb}
+.declare-qa{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.declare-q{font-weight:700}
+.declare-a{color:#777}
+/* 따라쓰기 칸: 뒤에 답변이 연하게 깔리고, 이미 쓴 부분은 가려져서 "남은 글자"만 연하게 보임 */
+.declare-write-wrap{position:relative;border-bottom:1px dashed #bbb}
+.declare-write-wrap:focus-within{border-bottom-color:var(--accent)}
+.declare-ghost,.declare-write{font-family:inherit;font-size:15px;line-height:1.6;padding:4px 0;margin:0;width:100%;box-sizing:border-box;white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere;letter-spacing:normal}
+.declare-ghost{color:transparent;pointer-events:none;min-height:1.6em}
+.declare-ghost .g-rest{color:#c4c4c4}
+.declare-write{position:absolute;top:0;left:0;right:0;bottom:0;height:100%;border:none;outline:none;background:transparent;resize:none;overflow:hidden;color:var(--text-main,#222)}
 .declare-check{width:22px;height:22px;border-radius:50%;border:1.5px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;margin-top:2px}
 .declare-check.done{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast,#fff)}
 .section-title{font-size:11px;color:#aaa}
@@ -1477,6 +1484,31 @@ body.memo-edit-on .memo-text-handle{display:flex}
   transition:opacity .2s,width .2s,background .2s;
 }
 .tip-toggle:hover{opacity:1;width:34px;background:#fff}
+.box-toggle{
+  position:fixed;right:0;bottom:238px;z-index:70;
+  width:30px;height:64px;
+  background:rgba(255,255,255,.85);
+  border:0.5px solid #ddd;border-right:none;
+  border-radius:12px 0 0 12px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:-2px 2px 8px #0001;
+  writing-mode:vertical-rl;letter-spacing:2px;
+  font-size:11px;color:#888;opacity:.55;
+  transition:opacity .2s,width .2s,background .2s;
+}
+.box-toggle:hover{opacity:1;width:34px;background:#fff}
+.box-toggle.on{color:var(--accent);opacity:.85}
+.user-hidden{display:none!important}
+.box-row{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:0.5px solid #eee}
+.box-row:first-child{border-top:none}
+.box-row-emoji{font-size:20px;width:26px;text-align:center}
+.box-row-name{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--text-main,#222);line-height:1.3}
+.box-row-sub{font-size:10px;color:#aaa;font-weight:400}
+.box-switch{width:38px;height:22px;border-radius:11px;border:none;background:#ccc;position:relative;cursor:pointer;flex-shrink:0;transition:background .15s}
+.box-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px #0003}
+.box-switch.on{background:var(--accent)}
+.box-switch.on::after{left:18px}
+.box-hint{font-size:10.5px;color:#aaa;line-height:1.5;margin-top:4px}
 .tip-toggle.on{color:var(--accent);opacity:.85}
 .tip-card{background:#fff;border:1.5px solid #eee;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px;margin-bottom:8px;position:relative}
 .tip-flow{display:flex;flex-direction:column;align-items:stretch;gap:2px}
@@ -1785,7 +1817,7 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <span class="declare-tab-title">나의 선언</span>
         <button class="add-btn" onclick="addDeclaration()">＋ 추가</button>
       </div>
-      <div class="declare-tab-hint">여기에 적은 문장을 달력 자리에서 매일 따라 쓸 수 있어요.</div>
+      <div class="declare-tab-hint">질문과 답변을 따로 적어두면, 달력 자리에서 답변이 연하게 보여서 따라 쓸 수 있어요.</div>
       <div id="declareListWrap"></div>
     </div>
 
@@ -1901,6 +1933,14 @@ body.memo-edit-on .memo-text-handle{display:flex}
   <div class="routine-panel-title">💡 TIP · 내 행동 패턴</div>
   <div id="tipListWrap"></div>
   <button class="routine-add-btn" onclick="openTipCreateModal()">＋ 새 TIP 추가</button>
+</div>
+
+<!-- BOX 탭: 화면에 떠 있는 아이콘(운동일지 캐릭터, 습관 RPG 슬라임)을 숨기거나 다시 꺼내는 곳 -->
+<div class="box-toggle" id="boxToggle" onclick="toggleBoxPanel()" title="BOX 열기">BOX</div>
+<div class="routine-panel" id="boxPanel">
+  <div class="routine-panel-title">📦 BOX · 떠 있는 아이콘</div>
+  <div id="boxListWrap"></div>
+  <div class="box-hint">숨겨도 여기서 언제든 다시 꺼낼 수 있어요.</div>
 </div>
 
 <!-- TIP 추가/수정 모달 -->
@@ -2728,6 +2768,7 @@ let moneyProgressBars=[]; // {id,name,color,target,current} — 대출 갚기/�
 let realCashStartDate=''; // 'YYYY-MM-DD' — 현실 잔돈 계산을 시작할 기준일(이 날짜 이전 기록은 계산에서 제외)
 let realCashCutoffDay=20; // "앞으로 나갈 돈"을 매달 며칠까지로 볼지(그 달의 날짜 기준, 오늘이 지났으면 다음 달 그 날짜까지)
 let syncedBgImage=''; // Firestore에 저장된(기기 간 동기화용, 예전 저화질 방식에서 넘어온 값) 배경 이미지
+let hiddenItems={gym:false,slime:false}; // BOX 탭에서 숨김 처리한 떠 있는 아이콘
 let noteBtnOrder=null; // 오른쪽 링크버튼 순서(href 배열)
 let noteBtnEditing=false,noteBtnSnapshot=null,noteBtnDragEl=null;
 let declarations=[]; // 선언 문장 [{id,text}]
@@ -3074,7 +3115,8 @@ function closeOtherFloatingPanels(exceptPanelId){
   const groups=[
     {panelId:'memoBottlePicker',toggleId:'memoBottleToggle',toggleReflectsOpen:false},
     {panelId:'routinePanel',toggleId:'routineToggle',toggleReflectsOpen:true},
-    {panelId:'tipPanel',toggleId:'tipToggle',toggleReflectsOpen:true}
+    {panelId:'tipPanel',toggleId:'tipToggle',toggleReflectsOpen:true},
+    {panelId:'boxPanel',toggleId:'boxToggle',toggleReflectsOpen:true}
   ];
   groups.forEach(g=>{
     if(g.panelId===exceptPanelId)return;
@@ -3458,6 +3500,7 @@ onAuthStateChanged(auth,async user=>{
       // 캐릭터 아이콘 등이 영영 안 보이는 상태로 멈추지 않게 함
       console.error('초기 로딩 중 일부 기능에서 오류가 발생했어요:',err);
     }
+    applyHiddenItems(); // BOX 탭에서 숨겨둔 아이콘 적용
     applyNoteBtnOrder(noteBtnOrder); // 저장해둔 링크버튼 순서 적용
     syncBgImageFromCloud(); // 배경 이미지 계정 동기화 (위 초기화 중 오류가 나도 실행되도록 따로 호출)
     // 모든 준비 완료 후 부드럽게 표시
@@ -3553,7 +3596,7 @@ async function saveAppearanceNow(){
 window.queueSaveAppearance=queueSaveAppearance;
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS,rcsS,bgiS,decS,dgS,nboS]=await Promise.all([
+  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS,rcsS,bgiS,decS,dgS,nboS,hidS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
     getDocs(collection(db,'users',currentUser.uid,'money')),
@@ -3596,6 +3639,7 @@ async function loadAllData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','declarations')),
     getDocs(collection(db,'users',currentUser.uid,'declareLog')),
     getDoc(doc(db,'users',currentUser.uid,'settings','noteBtnOrder')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','hiddenItems')),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   calBoards=(cbS.exists()&&cbS.data().items)?cbS.data().items:[];
@@ -3642,9 +3686,10 @@ async function loadAllData(){
   realCashCutoffDay=rcsS.exists()&&rcsS.data().cutoffDay?parseInt(rcsS.data().cutoffDay):20;
   syncedBgImage=bgiS.exists()?(bgiS.data().data||''):'';
   bgImageMeta=bgiS.exists()?bgiS.data():null;
-  declarations=decS.exists()?(decS.data().items||[]):[];
+  declarations=decS.exists()?(decS.data().items||[]).map(normDecl):[];
   declareLog={};dgS.forEach(d=>{declareLog[d.id]=d.data().texts||{};});
   noteBtnOrder=nboS.exists()?(nboS.data().order||null):null;
+  hiddenItems={gym:false,slime:false,...(hidS.exists()?hidS.data():{})};
   fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
   if(!fixedCosts.fixed)fixedCosts.fixed=[];
   if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
@@ -3986,9 +4031,13 @@ window.cancelNoteBtnEdit=function(){
 // ══════════════════════════════════════════
 const declareSaveTimers={};
 let declareDragIdx=null;
+// 예전엔 문장 하나(text)만 있었음 → 그 문장을 "답변"으로 옮겨서 질문 칸은 비워둠
+function normDecl(d){
+  return {id:d.id||('dc_'+Date.now()+Math.random().toString(36).slice(2,6)),q:(d.q!=null?d.q:'')||'',a:(d.a!=null?d.a:(d.text||''))||''};
+}
 function normDeclare(t){return String(t||'').replace(/\s+/g,'');}
 function isDeclareDone(decl,typed){
-  const a=normDeclare(decl.text);
+  const a=normDeclare(decl.a);
   return a.length>0&&normDeclare(typed)===a;
 }
 // 숨겨진 상태(display:none)에서 높이를 재면 0이 나와 칸이 납작해지므로, 높이가 0이면 건드리지 않음
@@ -3999,64 +4048,76 @@ function autoGrowTa(el){
 }
 async function saveDeclarations(){
   if(!currentUser)return;
-  await saveData('settings','declarations',{items:declarations.filter(d=>d.text&&d.text.trim())});
+  const items=declarations.filter(d=>(d.q&&d.q.trim())||(d.a&&d.a.trim())).map(d=>({id:d.id,q:d.q||'',a:d.a||''}));
+  await saveData('settings','declarations',{items});
 }
 window.addDeclaration=function(){
-  declarations.push({id:'dc_'+Date.now(),text:''});
+  declarations.push({id:'dc_'+Date.now(),q:'',a:''});
   renderDeclareList();
-  const tas=document.querySelectorAll('#declareListWrap .declare-edit');
-  if(tas.length)tas[tas.length-1].focus();
+  const qs=document.querySelectorAll('#declareListWrap .declare-q');
+  if(qs.length)qs[qs.length-1].focus();
 };
 function renderDeclareList(){
   const wrap=document.getElementById('declareListWrap');
   if(!wrap)return;
   if(!declarations.length){
-    wrap.innerHTML='<div class="empty-hint">아직 선언이 없어요. ＋ 추가를 눌러 매일 따라 쓸 문장을 적어보세요.</div>';
+    wrap.innerHTML='<div class="empty-hint">아직 선언이 없어요. ＋ 추가를 눌러 질문과 답변을 적어보세요.</div>';
     return;
   }
   wrap.innerHTML='';
-  declarations.forEach((d,i)=>{
+  declarations.forEach(d=>{
     const row=document.createElement('div');
     row.className='declare-row';
-    row.innerHTML='<span class="declare-grip" title="끌어서 순서 바꾸기">⠿</span><textarea class="declare-edit" rows="1" spellcheck="false" placeholder="선언 문장을 적어주세요"></textarea><span class="declare-del" title="삭제">✕</span>';
-    const ta=row.querySelector('textarea');
-    ta.value=d.text||'';
-    ta.addEventListener('input',()=>autoGrowTa(ta));
-    ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();ta.blur();}});
-    ta.addEventListener('blur',async()=>{
-      const v=ta.value.trim();
-      if(v===(d.text||'')){
-        if(!v){declarations=declarations.filter(x=>x!==d);renderDeclareList();} // 아무것도 안 적고 나가면 빈 칸은 없앰
+    row.innerHTML='<span class="declare-grip" title="끌어서 순서 바꾸기">⠿</span><div class="declare-qa"><textarea class="declare-edit declare-q" rows="1" spellcheck="false" placeholder="질문 (예: 나는 어떤 사람이지?)"></textarea><textarea class="declare-edit declare-a" rows="1" spellcheck="false" placeholder="답변 (달력 자리에서 따라 쓸 문장)"></textarea></div><span class="declare-del" title="삭제">✕</span>';
+    const qTa=row.querySelector('.declare-q');
+    const aTa=row.querySelector('.declare-a');
+    qTa.value=d.q||'';
+    aTa.value=d.a||'';
+    [qTa,aTa].forEach(ta=>ta.addEventListener('input',()=>autoGrowTa(ta)));
+    qTa.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();aTa.focus();}}); // 질문에서 Enter → 답변 칸으로
+    aTa.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();aTa.blur();}});
+    // 질문↔답변 칸 사이를 오갈 땐 저장하지 않고, 이 줄을 완전히 벗어날 때 한 번에 저장 (다시 그리지 않아서 다음 칸 클릭이 끊기지 않음)
+    row.addEventListener('focusout',async e=>{
+      if(e.relatedTarget&&row.contains(e.relatedTarget))return;
+      const q=qTa.value.replace(/\s*\n\s*/g,' ').trim();
+      const a=aTa.value.replace(/\s*\n\s*/g,' ').trim();
+      if(!q&&!a){
+        const had=!!(d.q||d.a);
+        declarations=declarations.filter(x=>x!==d);
+        row.remove();
+        if(!declarations.length)renderDeclareList();
+        if(had){await saveDeclarations();showSaving();if(leftMode==='declare')renderDeclareSheet();}
         return;
       }
-      d.text=v;
-      if(!v){declarations=declarations.filter(x=>x!==d);}
+      if(q===(d.q||'')&&a===(d.a||''))return;
+      d.q=q;d.a=a;
       await saveDeclarations();
       showSaving();
-      renderDeclareList();
       if(leftMode==='declare')renderDeclareSheet();
     });
     row.querySelector('.declare-del').addEventListener('click',async()=>{
       if(!confirm('이 선언을 삭제할까요?'))return;
       declarations=declarations.filter(x=>x!==d);
+      row.remove();
+      if(!declarations.length)renderDeclareList();
       await saveDeclarations();
       showSaving();
-      renderDeclareList();
       if(leftMode==='declare')renderDeclareSheet();
     });
     // 순서 바꾸기: 손잡이(⠿)를 잡았을 때만 끌 수 있게 해서, 글자 선택/수정과 안 겹치게 함
     const grip=row.querySelector('.declare-grip');
     grip.addEventListener('mousedown',()=>{row.draggable=true;});
-    row.addEventListener('dragstart',e=>{declareDragIdx=i;row.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(i));});
+    row.addEventListener('dragstart',e=>{declareDragIdx=declarations.indexOf(d);row.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(declareDragIdx));});
     row.addEventListener('dragend',()=>{row.draggable=false;row.classList.remove('dragging');});
     row.addEventListener('dragover',e=>{e.preventDefault();row.classList.add('drag-over');});
     row.addEventListener('dragleave',()=>row.classList.remove('drag-over'));
     row.addEventListener('drop',async e=>{
       e.preventDefault();
       row.classList.remove('drag-over');
-      if(declareDragIdx==null||declareDragIdx===i)return;
+      const to=declarations.indexOf(d);
+      if(declareDragIdx==null||declareDragIdx===to||declareDragIdx<0)return;
       const [moved]=declarations.splice(declareDragIdx,1);
-      declarations.splice(i,0,moved);
+      declarations.splice(to,0,moved);
       declareDragIdx=null;
       await saveDeclarations();
       showSaving();
@@ -4064,7 +4125,8 @@ function renderDeclareList(){
       if(leftMode==='declare')renderDeclareSheet();
     });
     wrap.appendChild(row);
-    autoGrowTa(ta);
+    autoGrowTa(qTa);
+    autoGrowTa(aTa);
   });
 }
 function declareKey(){return fmt(declareDate);}
@@ -4097,7 +4159,7 @@ function renderDeclareSheet(){
   const wrap=document.getElementById('declareView');
   if(!wrap)return;
   const key=declareKey();
-  const items=declarations.filter(d=>d.text&&d.text.trim());
+  const items=declarations.filter(d=>d.a&&d.a.trim());
   const log=declareLog[key]||{};
   const isToday=key===fmt(new Date());
   const dayNames=['일','월','화','수','목','금','토'];
@@ -4120,7 +4182,7 @@ function renderDeclareSheet(){
     const empty=document.createElement('div');
     empty.className='empty-hint';
     empty.style.padding='1.5rem 0';
-    empty.textContent='아직 선언이 없어요. 오른쪽 선언 탭의 ＋ 추가 버튼으로 매일 따라 쓸 문장을 적어보세요.';
+    empty.textContent='아직 선언이 없어요. 오른쪽 선언 탭의 ＋ 추가 버튼으로 질문과 답변을 적어보세요.';
     wrap.appendChild(empty);
     updateProgress();
     return;
@@ -4128,14 +4190,19 @@ function renderDeclareSheet(){
   items.forEach((d,idx)=>{
     const row=document.createElement('div');
     row.className='declare-item';
-    row.innerHTML='<span class="declare-no">'+(idx+1)+'</span><div class="declare-body"><div class="declare-text"></div><textarea class="declare-write" rows="1" spellcheck="false" placeholder="여기에 따라 써보세요"></textarea></div><span class="declare-check" title="따라 쓰면 체크돼요">✓</span>';
-    row.querySelector('.declare-text').textContent=d.text;
+    row.innerHTML='<span class="declare-no">'+(idx+1)+'</span><div class="declare-body">'+(d.q?'<div class="declare-text"></div>':'')+'<div class="declare-write-wrap"><div class="declare-ghost"><span class="g-typed"></span><span class="g-rest"></span></div><textarea class="declare-write" rows="1" spellcheck="false"></textarea></div></div><span class="declare-check" title="따라 쓰면 체크돼요">✓</span>';
+    if(d.q)row.querySelector('.declare-text').textContent=d.q;
     const ta=row.querySelector('textarea');
+    const gTyped=row.querySelector('.g-typed');
+    const gRest=row.querySelector('.g-rest');
     const check=row.querySelector('.declare-check');
+    // 뒤에 깔린 연한 답변: 이미 쓴 글자만큼은 투명하게 가리고, 남은 글자만 연하게 보여줌
+    const syncGhost=()=>{gTyped.textContent=ta.value;gRest.textContent=d.a.slice(ta.value.length);};
     ta.value=log[d.id]||'';
+    syncGhost();
     check.classList.toggle('done',isDeclareDone(d,ta.value));
     ta.addEventListener('input',()=>{
-      autoGrowTa(ta);
+      syncGhost();
       if(!declareLog[key])declareLog[key]={};
       declareLog[key][d.id]=ta.value;
       check.classList.toggle('done',isDeclareDone(d,ta.value));
@@ -4145,7 +4212,6 @@ function renderDeclareSheet(){
     ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();ta.blur();}});
     ta.addEventListener('blur',()=>flushDeclareSave(key));
     wrap.appendChild(row);
-    autoGrowTa(ta);
   });
   updateProgress();
 }
@@ -4635,12 +4701,55 @@ window.addEventListener('resize',()=>{
   const p=document.getElementById('tipPanel');
   if(p&&p.classList.contains('show'))positionFloatingPanel('tipToggle','tipPanel');
 });
+// ── BOX 탭: 떠 있는 아이콘 숨기기/꺼내기 ──
+const BOX_ITEMS=[
+  {key:'gym',emoji:'🏋️',label:'운동일지 캐릭터',sub:'exercise.html',elId:'gymMascotWrap'},
+  {key:'slime',emoji:'🟢',label:'습관 RPG 슬라임',sub:'rpg-map.html',elId:'rpgSlimeBtn'}
+];
+function applyHiddenItems(){
+  BOX_ITEMS.forEach(it=>{
+    const el=document.getElementById(it.elId);
+    if(el)el.classList.toggle('user-hidden',!!hiddenItems[it.key]);
+  });
+}
+function renderBoxList(){
+  const wrap=document.getElementById('boxListWrap');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  BOX_ITEMS.forEach(it=>{
+    const shown=!hiddenItems[it.key];
+    const row=document.createElement('div');
+    row.className='box-row';
+    row.innerHTML='<span class="box-row-emoji">'+it.emoji+'</span><div class="box-row-name">'+it.label+'<div class="box-row-sub">'+it.sub+' · '+(shown?'화면에 보이는 중':'숨겨둠')+'</div></div><button class="box-switch'+(shown?' on':'')+'" title="'+(shown?'숨기기':'꺼내기')+'"></button>';
+    row.querySelector('.box-switch').addEventListener('click',()=>toggleHiddenItem(it.key));
+    wrap.appendChild(row);
+  });
+}
+async function toggleHiddenItem(key){
+  hiddenItems[key]=!hiddenItems[key];
+  applyHiddenItems();
+  renderBoxList();
+  if(!hiddenItems[key])window.dispatchEvent(new Event('resize')); // 다시 나타난 아이콘이 화면 안에 맞게 위치를 다시 잡도록
+  await saveData('settings','hiddenItems',{...hiddenItems});
+}
+window.toggleBoxPanel=function(){
+  const p=document.getElementById('boxPanel');
+  const willOpen=!p.classList.contains('show');
+  closeOtherFloatingPanels('boxPanel');
+  p.classList.toggle('show',willOpen);
+  document.getElementById('boxToggle').classList.toggle('on',willOpen);
+  if(willOpen){renderBoxList();positionFloatingPanel('boxToggle','boxPanel');}
+};
+window.addEventListener('resize',()=>{
+  const p=document.getElementById('boxPanel');
+  if(p&&p.classList.contains('show'))positionFloatingPanel('boxToggle','boxPanel');
+});
 // 루틴/TIP 패널: 패널과 토글 버튼 바깥을 누르면 닫힘 (모달 안을 누르는 건 제외)
 // click이 아니라 pointerdown으로 잡아야, 패널 안 버튼이 목록을 다시 그려도 "안쪽 클릭"으로 정확히 판단됨
 document.addEventListener('pointerdown',(e)=>{
   const t=e.target;
   if(t.closest&&t.closest('.modal-bg'))return;
-  [['routinePanel','routineToggle'],['tipPanel','tipToggle']].forEach(([pid,tid])=>{
+  [['routinePanel','routineToggle'],['tipPanel','tipToggle'],['boxPanel','boxToggle']].forEach(([pid,tid])=>{
     const panel=document.getElementById(pid);
     if(!panel||!panel.classList.contains('show'))return;
     if(panel.contains(t))return;
