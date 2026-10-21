@@ -31,9 +31,10 @@ function injectStyle(){
   s.id='sw-style';
   s.textContent=`
   #sw-root{position:fixed;left:0;top:0;width:0;height:0;z-index:2147483000;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;}
-  .sw-mascot-wrap{position:fixed;width:78px;height:78px;cursor:pointer;user-select:none;
+  .sw-mascot-wrap{position:fixed;width:78px;height:78px;cursor:pointer;user-select:none;touch-action:none;
     transition:left 2.2s cubic-bezier(.45,.05,.55,.95),top 2.2s cubic-bezier(.45,.05,.55,.95);
     filter:drop-shadow(0 6px 10px rgba(0,0,0,.18));}
+  .sw-mascot-wrap.sw-dragging{transition:none !important;cursor:grabbing;}
   .sw-mascot-img{width:100%;height:100%;object-fit:contain;animation:sw-bob 2.6s ease-in-out infinite;display:block;pointer-events:none;}
   @keyframes sw-bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-9px) rotate(3deg)}}
   .sw-bubble{position:absolute;bottom:88%;left:50%;transform:translateX(-50%) scale(.85);min-width:120px;max-width:220px;
@@ -49,6 +50,7 @@ function injectStyle(){
 
 /* ---------------- 마스코트 DOM ---------------- */
 let mascotEl=null, bubbleEl=null, moveTimer=null, bubbleTimer=null, mascotStarted=false;
+let dragState=null, justDragged=false; // 마우스/터치로 끌어서 옮기기
 
 function ensureMascot(){
   if(mascotEl)return;
@@ -66,7 +68,51 @@ function ensureMascot(){
   bubbleEl.className='sw-bubble';
   mascotEl.appendChild(bubbleEl);
 
+  // 끌어서 옮기기: 평소엔 지금처럼 알아서 떠다니고, 마우스(또는 터치)로 잡아 끌면 그 자리로 옮겨짐.
+  // 놓으면 잠깐 머문 뒤 다시 떠다니기 시작하고, 끌었을 때는 포트폴리오 링크가 열리지 않음.
+  mascotEl.addEventListener('pointerdown',(e)=>{
+    if(e.button!==undefined&&e.button!==0)return;
+    const r=mascotEl.getBoundingClientRect();
+    dragState={id:e.pointerId,startX:e.clientX,startY:e.clientY,offX:e.clientX-r.left,offY:e.clientY-r.top,moved:false};
+  });
+  mascotEl.addEventListener('pointermove',(e)=>{
+    if(!dragState||e.pointerId!==dragState.id)return;
+    if(!dragState.moved){
+      if(Math.hypot(e.clientX-dragState.startX,e.clientY-dragState.startY)<6)return; // 살짝 눌렀다 떼는 건 클릭으로 처리
+      dragState.moved=true;
+      const r=mascotEl.getBoundingClientRect(); // 이동 애니메이션 중이었다면 지금 보이는 자리에서 멈춤
+      mascotEl.classList.add('sw-dragging');
+      mascotEl.style.left=r.left+'px';
+      mascotEl.style.top=r.top+'px';
+      clearTimeout(moveTimer);
+      clearTimeout(bubbleTimer);
+      if(bubbleEl)bubbleEl.classList.remove('sw-show');
+      try{mascotEl.setPointerCapture(e.pointerId);}catch(_){}
+    }
+    const w=mascotEl.offsetWidth, h=mascotEl.offsetHeight;
+    const x=Math.min(Math.max(0,e.clientX-dragState.offX),Math.max(0,window.innerWidth-w));
+    const y=Math.min(Math.max(0,e.clientY-dragState.offY),Math.max(0,window.innerHeight-h));
+    mascotEl.style.left=x+'px';
+    mascotEl.style.top=y+'px';
+  });
+  const endDrag=(e)=>{
+    if(!dragState||e.pointerId!==dragState.id)return;
+    const moved=dragState.moved;
+    dragState=null;
+    try{mascotEl.releasePointerCapture(e.pointerId);}catch(_){}
+    if(moved){
+      justDragged=true;
+      setTimeout(()=>{justDragged=false;},80);
+      mascotEl.classList.remove('sw-dragging');
+      clearTimeout(moveTimer);
+      moveTimer=setTimeout(loopCycle,4500); // 놓은 자리에서 잠깐 머문 뒤 다시 떠다님
+    }
+  };
+  mascotEl.addEventListener('pointerup',endDrag);
+  mascotEl.addEventListener('pointercancel',endDrag);
+
   mascotEl.addEventListener('click',()=>{
+    if(justDragged)return; // 끌어서 옮긴 직후에는 링크 열지 않음
     if(IS_PORTFOLIO_PAGE)return;
     window.open(PORTFOLIO_HREF,'_blank','noopener');
   });
