@@ -913,12 +913,9 @@ body{opacity:0;transition:opacity .25s ease}
 .ev-check-main:hover{border-color:var(--accent)}
 .ev-check-main.done{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast,#fff)}
 .ev-repeat-tag{font-size:10.5px;font-weight:400;color:#999;margin-left:6px;white-space:nowrap}
-.sched-next-btn{font-size:11px;color:#999;border:0.5px solid #ccc;border-radius:6px;padding:2px 7px;cursor:pointer;white-space:nowrap;flex-shrink:0;opacity:0;transition:opacity .12s}
+.sched-next-btn{font-size:12px;line-height:1.2;color:#999;border:0.5px solid #ccc;border-radius:6px;padding:2px 7px;cursor:pointer;white-space:nowrap;flex-shrink:0;opacity:0;transition:opacity .12s}
 .item-row:hover .sched-next-btn,.sched-next-btn.show{opacity:1}
 .sched-next-btn:hover{color:var(--accent);border-color:var(--accent)}
-.sched-carry-banner{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:9px 12px;background:#FFF6E0;border-radius:8px;font-size:12px;color:#8A5A0B}
-.sched-carry-banner .act{cursor:pointer;font-weight:700;white-space:nowrap}
-.sched-week-summary{display:inline-block;font-size:11.5px;padding:3px 10px;border-radius:999px;background:var(--accent-light);color:var(--accent);margin-bottom:6px}
 .rep-seg{display:flex;border:0.5px solid #ccc;border-radius:8px;overflow:hidden;font-size:12px}
 .rep-seg span{flex:1;text-align:center;padding:7px 0;cursor:pointer;color:#777;border-left:0.5px solid #eee;user-select:none}
 .rep-seg span:first-child{border-left:none}
@@ -1713,7 +1710,6 @@ body.memo-edit-on .memo-text-handle{display:flex}
       </div>
       <!-- 일정 목록: 그 자리에서 바로 추가 -->
       <div id="schedulePane">
-        <div id="schedWeekSummary" class="sched-week-summary" style="display:none"></div>
         <div id="schedule-list"></div>
         <div class="inline-add-row">
           <select id="scheduleInlineCat" class="cat-select" onchange="updateCatSelectColor(this)"><option value="">카테고리</option></select>
@@ -5852,41 +5848,8 @@ window.moveEventToNextDay=async function(key,idx){
   if(pa.actual&&!confirm('"실제로 한 일"에 적어둔 내용은 옮겨지지 않아요. 계속할까요?'))return;
   await moveEventsToNextDay(key,[idx]);
 };
-window.moveAllUndoneToTomorrow=async function(){
-  const key=fmt(selDate);
-  const arr=evStore()[key]||[];
-  const lastPast=computeLastPastIdx(arr);
-  const idxs=[];
-  let hasActual=false;
-  arr.forEach((ev,i)=>{
-    const p=stripEvPrefixes(ev);
-    if(p.done||i>lastPast)return;
-    idxs.push(i);
-    if(splitPlanActual(splitEvTime(p.rest).text).actual)hasActual=true;
-  });
-  if(!idxs.length)return;
-  if(!confirm(idxs.length+'개를 내일로 옮길까요?'+(hasActual?'\n("실제로 한 일"에 적어둔 내용은 옮겨지지 않아요)':'')))return;
-  await moveEventsToNextDay(key,idxs);
-};
-// 이번 주 완료 현황 (기본 일정 달력만)
-function updateWeekSummary(){
-  const el=document.getElementById('schedWeekSummary');
-  if(!el)return;
-  if(activeBoardId){el.style.display='none';return;}
-  const ws=getWeekStart(selDate);
-  let total=0,done=0;
-  for(let i=0;i<7;i++){
-    const d=new Date(ws);d.setDate(ws.getDate()+i);
-    (weekEvents[fmt(d)]||[]).forEach(ev=>{total++;if(stripEvPrefixes(ev).done)done++;});
-  }
-  if(!total){el.style.display='none';return;}
-  el.style.display='';
-  el.textContent=(fmt(getWeekStart(today))===fmt(ws)?'이번 주':'그 주')+' '+done+' / '+total+' 완료';
-}
-
 function renderSchedule(){
   ensureRepeatsAround();
-  updateWeekSummary();
   const key=fmt(selDate);const evs=evStore()[key]||[];
   // 추가 달력(체크리스트 겸용)에서는 카테고리 선택 UI를 숨김 — 색은 우클릭으로 개별 지정
   const inlineCatEl=document.getElementById('scheduleInlineCat');
@@ -5914,7 +5877,7 @@ function renderSchedule(){
     const {time,plan,actual,cat,bg,done,rid}=p;
     const rule=rid?repeatRules.find(r=>r.id===rid):null;
     const repeatTag=rule?'<span class="ev-repeat-tag" title="반복 일정">↻ '+escapeHtml(repeatLabel(rule))+'</span>':'';
-    const nextBtn=done?'':'<span class="sched-next-btn'+(key===fmt(new Date())?' show':'')+'" title="내일로 미루기" onclick="event.stopPropagation();moveEventToNextDay(\''+key+'\','+idx+')">내일로 →</span>';
+    const nextBtn=done?'':'<span class="sched-next-btn'+(key===fmt(new Date())?' show':'')+'" title="내일로 넘기기" onclick="event.stopPropagation();moveEventToNextDay(\''+key+'\','+idx+')">→</span>';
     const past=idx<=lastPastIdx;
     const row=document.createElement('div');
     row.className='item-row'+(past?' past-time':'')+(activeBoardId&&done?' ev-done':'');
@@ -5960,16 +5923,6 @@ function renderSchedule(){
     });
     list.appendChild(row);
   });
-  // 오늘, 이미 시간이 지났는데 못 끝낸 일이 있으면 한 번에 내일로 옮길 수 있는 안내
-  if(key===fmt(new Date())){
-    const pastUndone=parsed.filter((p,i)=>!p.done&&i<=lastPastIdx).length;
-    if(pastUndone>0){
-      const banner=document.createElement('div');
-      banner.className='sched-carry-banner';
-      banner.innerHTML='<span>못 끝낸 일 '+pastUndone+'개</span><span class="act" onclick="moveAllUndoneToTomorrow()">전부 내일로 옮기기 →</span>';
-      list.appendChild(banner);
-    }
-  }
 }
 // 일정 완료/미완료 토글 (기본 일정 달력은 체크, 추가 달력은 도장) → 완료 시 달력에 도장 표시
 window.toggleEventDone=async function(key,idx){
