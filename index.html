@@ -2922,6 +2922,7 @@ let noteBtnEditing=false,noteBtnSnapshot=null,noteBtnDragEl=null;
 let declarations=[]; // 선언 문장 [{id,text}]
 let declareLog={}; // 날짜별로 따라 쓴 글 {날짜키:{선언id:글}}
 let declareDate=new Date(); // 따라쓰기 시트가 보여주는 날짜
+let bgMetaLoaded=false; // 배경 이미지 버전 문서를 이미 읽었는지 (첫 화면 로딩에서는 읽지 않고, 화면이 뜬 뒤에 읽음)
 let bgImageMeta=null; // Firestore 'settings/bgImage' 문서 {ver,count} — 배경 이미지 동기화 버전/조각 수
 let savingBaseline={};
 let savingOrder=[];
@@ -3616,6 +3617,72 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 // ── 불러오기 재시도 + 실패 안내 ──
 let lastDataSyncAt=Date.now();
+// 첫 화면에 필요 없는 큰 데이터(가계부·식단·메모·일기장·선언 등)는 화면이 뜬 뒤에 불러옴.
+// 그게 끝나기 전에 그 데이터를 쓰는 탭/화면을 누르면 "불러오는 중"을 띄우고 끝나면 이어서 열어줌 (덜 불러온 채로 저장하는 사고 방지)
+let deferredReady=false,deferredPromise=null,deferredGuardsInstalled=false;
+function showDeferredToast(){
+  let t=document.getElementById('deferredToast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='deferredToast';
+    t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:99998;background:#333;color:#fff;font-size:12.5px;padding:9px 18px;border-radius:20px;box-shadow:0 4px 16px #0003';
+    t.textContent='데이터를 불러오는 중이에요…';
+    document.body.appendChild(t);
+  }
+  t.style.display='block';
+}
+function hideDeferredToast(){const t=document.getElementById('deferredToast');if(t)t.style.display='none';}
+function afterDeferred(fn){
+  if(deferredReady){fn();return;}
+  showDeferredToast();
+  (deferredPromise||Promise.resolve()).then(()=>{hideDeferredToast();if(deferredReady)fn();});
+}
+async function loadDeferredWithRetry(){
+  const waits=[0,1500,4000];
+  for(let i=0;i<waits.length;i++){
+    if(waits[i])await new Promise(r=>setTimeout(r,waits[i]));
+    try{await loadDeferredData();return true;}
+    catch(e){console.error('나머지 데이터 불러오기 실패 ('+(i+1)+'/'+waits.length+'):',e);}
+  }
+  return false;
+}
+function renderDeferredViews(){
+  const safe=fn=>{try{fn();}catch(e){console.error('나머지 데이터 화면 갱신 오류:',e);}};
+  safe(renderMoney);safe(renderMeal);safe(renderFasting);safe(renderMemos);
+  safe(renderFolders);safe(renderMemoFilters);
+  safe(loadMealPlanNote);safe(loadMoneyLedgerMemo);
+  safe(renderMoneyProgressBars);safe(renderDeclareList);safe(renderAttendanceBtns);
+}
+function startDeferredLoad(){
+  deferredReady=false;
+  deferredPromise=(async()=>{
+    const ok=await loadDeferredWithRetry();
+    if(!ok){dataLoadFailed=true;showLoadFailureOverlay();return;} // 일부라도 못 불러왔으면 저장을 막고 안내
+    deferredReady=true;
+    lastDataSyncAt=Date.now();
+    renderDeferredViews();
+    runFixedCostAutoRecord();
+    if(!window._fixedCostAutoTimer){
+      window._fixedCostAutoTimer=setInterval(runFixedCostAutoRecord,30*60*1000); // 30분마다 재확인 (자정 넘겨도 놓치지 않게)
+    }
+  })();
+  return deferredPromise;
+}
+function installDeferredGuards(){
+  if(deferredGuardsInstalled)return;
+  deferredGuardsInstalled=true;
+  const wrap=(name,needs)=>{
+    const orig=window[name];
+    if(typeof orig!=='function')return;
+    window[name]=function(...args){
+      if(!deferredReady&&needs(...args)){afterDeferred(()=>window[name](...args));return;}
+      return orig.apply(this,args);
+    };
+  };
+  wrap('switchTab',n=>n!=='schedule'); // 가계부·식단·메모·선언 탭
+  wrap('switchView',v=>v==='daily');   // 하루 계획표
+  wrap('openDiaryLock',()=>true);      // 일기장
+}
 function showLoadFailureOverlay(){
   const app=document.getElementById('mainApp');
   if(app)app.style.display='none';
@@ -3653,7 +3720,7 @@ function isTypingNow(){
   return !!a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.isContentEditable);
 }
 async function refreshDaysFromServer(){
-  if(dayRefreshing||!currentUser||dataLoadFailed||isTypingNow())return false;
+  if(dayRefreshing||!currentUser||dataLoadFailed||!deferredReady||isTypingNow())return false;
   dayRefreshing=true;
   try{
     const uid=currentUser.uid;
@@ -3719,24 +3786,22 @@ onAuthStateChanged(auth,async user=>{
   if(user){
     currentUser=user;
     dataLoadFailed=false;
+    deferredReady=false;
+    bgMetaLoaded=false;bgImageMeta=null;syncedBgImage='';
     document.getElementById('loginWrap').style.display='none';
     document.getElementById('mainApp').style.display='grid';
     document.getElementById('userName').textContent=user.displayName?.split(' ')[0]||'';
     if(!(await loadAllDataWithRetry()))return; // 실패하면 안내 화면을 띄우고 여기서 멈춤(빈 화면으로 저장되는 사고 방지)
+    installDeferredGuards();
+    startDeferredLoad(); // 나머지 데이터는 화면을 그리는 동안 뒤에서 불러옴
     try{
       loadQuickLinksCloud();
-      renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderMoney();renderMeal();renderFasting();renderMemos();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMealPlanNote();loadMoneyLedgerMemo();loadMemoBottleTexts();
+      renderMonth();updateRightDate();renderHabits();renderSchedule();renderTodoList();renderDdays();renderAnniversaries();renderFolders();renderMemoFilters();loadHabitPostit();loadBgSetting();loadMemoBottleTexts();
       renderAttendanceBtns();updateAttendanceBtnsVisibility();
-      renderMoneyProgressBars();
-      renderDeclareList();
       loadMindBar();renderCategoryLegend();loadDdayHero();
       renderCalBoardTabs();
       renderRoutineList();checkRoutineAlarms();
       renderTipList();
-      runFixedCostAutoRecord();
-      if(!window._fixedCostAutoTimer){
-        window._fixedCostAutoTimer=setInterval(runFixedCostAutoRecord,30*60*1000); // 30분마다 재확인 (자정 넘겨도 놓치지 않게)
-      }
       if(!window._scheduleTimePastTimer){
         window._scheduleTimePastTimer=setInterval(()=>{renderSchedule();renderAttendanceBtns();},60*1000); // 1분마다 재확인 - 시간 지난 일정 자동으로 어둡게 + 출퇴근 버튼 날짜 바뀌면 리셋
       }
@@ -3848,55 +3913,33 @@ async function saveAppearanceNow(){
   }catch(err){console.error('appearance 저장 실패:',err);}
 }
 window.queueSaveAppearance=queueSaveAppearance;
+// 1단계(필수): 첫 화면(달력·일정·버튼 등)을 그리는 데 꼭 필요한 것만 불러옴 — 이게 끝나면 바로 화면을 보여줌
 async function loadAllData(){
   if(!currentUser)return;
-  const [evS,hbS,mnS,mlS,moS,nsS,ddS,bdS,tmS,avS,fdS,hpS,mpnS,fcS,ctS,msS,dyS,dpS,dlS,sbS,mmS,fsS,bmS,rtS,tpS,apS,lnS,fhS,gtS,mbS,scS,dhS,cbS,beS,mlmS,atS,mpbS,rcsS,bgiS,decS,dgS,nboS,hidS,rcvS,tlS,rrS]=await Promise.all([
+  const [evS, hbS, ddS, avS, fdS, rtS, tpS, tmS, hpS, ctS, apS, gtS, mbS, scS, dhS, cbS, beS, bmS, nboS, hidS, rrS, dpS, atTodayS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'events')),
     getDocs(collection(db,'users',currentUser.uid,'habits')),
-    getDocs(collection(db,'users',currentUser.uid,'money')),
-    getDocs(collection(db,'users',currentUser.uid,'meal')),
-    getDocs(collection(db,'users',currentUser.uid,'memos')),
-    getDocs(collection(db,'users',currentUser.uid,'nospend')),
     getDocs(collection(db,'users',currentUser.uid,'ddays')),
-    getDocs(collection(db,'users',currentUser.uid,'budget')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','topMemo')),
     getDocs(collection(db,'users',currentUser.uid,'anniversaries')),
     getDocs(collection(db,'users',currentUser.uid,'folders')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','habitPostit')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','customTags')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','mission')),
-    getDocs(collection(db,'users',currentUser.uid,'diary')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','diaryLock')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','dailyPlanner')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline')),
-    getDocs(collection(db,'users',currentUser.uid,'moneyMemo')),
-    getDocs(collection(db,'users',currentUser.uid,'fasting')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo')),
     getDocs(collection(db,'users',currentUser.uid,'routines')),
     getDocs(collection(db,'users',currentUser.uid,'tips')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','topMemo')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','habitPostit')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','customTags')),
     getDoc(doc(db,'users',currentUser.uid,'settings','appearance')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','loans')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','fastingConfig')),
     getDoc(doc(db,'users',currentUser.uid,'settings','generalTodos')),
     getDoc(doc(db,'users',currentUser.uid,'settings','mindBar')),
     getDoc(doc(db,'users',currentUser.uid,'settings','scheduleCategories')),
     getDoc(doc(db,'users',currentUser.uid,'settings','ddayHero')),
     getDoc(doc(db,'users',currentUser.uid,'settings','calBoards')),
     getDocs(collection(db,'users',currentUser.uid,'boardEvents')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','moneyLedgerMemo')),
-    getDocs(collection(db,'users',currentUser.uid,'attendance')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','moneyProgressBars')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','realCashStart')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','bgImage')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','declarations')),
-    getDocs(collection(db,'users',currentUser.uid,'declareLog')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','bottleMemo')),
     getDoc(doc(db,'users',currentUser.uid,'settings','noteBtnOrder')),
     getDoc(doc(db,'users',currentUser.uid,'settings','hiddenItems')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','receivables')),
-    getDoc(doc(db,'users',currentUser.uid,'settings','tagLimits')),
     getDoc(doc(db,'users',currentUser.uid,'settings','repeatRules')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','diaryLock')),
+    getDoc(doc(db,'users',currentUser.uid,'attendance',attendanceDayStr())),
   ]);
   weekEvents={};evS.forEach(d=>{weekEvents[d.id]=d.data().items||[];});
   calBoards=(cbS.exists()&&cbS.data().items)?cbS.data().items:[];
@@ -3908,65 +3951,23 @@ async function loadAllData(){
   });
   habits=[];hbS.forEach(d=>{habits.push({id:d.id,...d.data()});});
   habits.sort((a,b)=>(a.order??999)-(b.order??999));
-  moneyData={};mnS.forEach(d=>{moneyData[d.id]=d.data().items||[];});
-  mealData={};mlS.forEach(d=>{mealData[d.id]=d.data();});
-  memos=[];moS.forEach(d=>{memos.push({id:d.id,...d.data()});});
-  // order가 없는(한 번도 드래그로 안 옮겨본) 메모가 섞여 있으면, 비교 기준이 메모 쌍마다 달라져서
-  // (어떤 쌍은 order로, 어떤 쌍은 createdAt으로) 정렬이 뒤틀리는 문제가 있었음 → 기준 하나로 통일
-  memos.sort((a,b)=>{
-    const ao=a.order??Infinity,bo=b.order??Infinity;
-    if(ao!==bo)return ao-bo;
-    return (b.createdAt||0)-(a.createdAt||0);
-  });
-  noSpendData={};nsS.forEach(d=>{noSpendData[d.id]=d.data().done||false;});
-  fastingData={};fsS.forEach(d=>{fastingData[d.id]=d.data().done||false;});
-  fastingHours=(fhS.exists()&&fhS.data().hours)?fhS.data().hours:16;
   generalTodos=(gtS.exists()&&gtS.data().items)?gtS.data().items:[];
   mindBarText=mbS.exists()?(mbS.data().text||''):'';
   scheduleCategories=(scS.exists()&&scS.data().items)?scS.data().items:DEFAULT_SCHEDULE_CATEGORIES.slice();
   ddayHero=dhS.exists()?{title:dhS.data().title||'',date:dhS.data().date||''}:{title:'',date:''};
-  moneyMemoData={};mmS.forEach(d=>{moneyMemoData[d.id]={text:d.data().text||'',pending:d.data().pending||false};});
   ddayList=[];ddS.forEach(d=>{ddayList.push({id:d.id,...d.data()});});
   ddayList.sort((a,b)=>(a.order??new Date(a.date).getTime())-(b.order??new Date(b.date).getTime()));
-  budgetData={};bdS.forEach(d=>{budgetData[d.id]={amount:d.data().amount||0,tags:d.data().tags||[]};});
   topMemoContent=tmS.exists()?tmS.data().text||'':'';
   anniversaries=[];avS.forEach(d=>{anniversaries.push({id:d.id,...d.data()});});
   anniversaries.sort((a,b)=>nextAnnivDate(a)-nextAnnivDate(b));
   folders=[];fdS.forEach(d=>{folders.push({id:d.id,...d.data()});});
   folders.sort((a,b)=>(a.order??9999)-(b.order??9999));
   habitPostitContent=hpS.exists()?hpS.data().text||'':'';
-  window._mealPlanNoteContent=mpnS.exists()?mpnS.data().text||'':'';
-  window._moneyLedgerMemoContent=mlmS.exists()?mlmS.data().text||'':'';
-  attendanceData={};atS.forEach(d=>{attendanceData[d.id]=d.data();});
-  moneyProgressBars=mpbS.exists()?(mpbS.data().items||[]):[];
-  realCashStartDate=rcsS.exists()?(rcsS.data().date||''):'';
-  realCashBaseDate=rcsS.exists()?(rcsS.data().baseDate||''):'';
-  realCashBaseAmount=(rcsS.exists()&&rcsS.data().baseAmount!=null)?rcsS.data().baseAmount:null;
-  realCashCutoffDay=rcsS.exists()&&rcsS.data().cutoffDay?parseInt(rcsS.data().cutoffDay):20;
-  syncedBgImage=bgiS.exists()?(bgiS.data().data||''):'';
-  bgImageMeta=bgiS.exists()?bgiS.data():null;
-  declarations=decS.exists()?(decS.data().items||[]).map(normDecl):[];
-  declareLog={};dgS.forEach(d=>{declareLog[d.id]=d.data().texts||{};});
+  // 출근/퇴근 버튼 표시용으로 오늘(근무일 기준) 기록만 먼저 — 전체 기록은 뒤에서 불러옴
+  attendanceData={};if(atTodayS.exists())attendanceData[atTodayS.id]=atTodayS.data();
   noteBtnOrder=nboS.exists()?(nboS.data().order||null):null;
   hiddenItems={gym:false,slime:false,...(hidS.exists()?hidS.data():{})};
-  receivables=rcvS.exists()?(rcvS.data().items||[]):[];
-  tagLimits=tlS.exists()?(tlS.data().limits||{}):{};
   repeatRules=rrS.exists()?(rrS.data().items||[]):[];
-  fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
-  if(!fixedCosts.fixed)fixedCosts.fixed=[];
-  if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
-  // 기존 항목 중 id/day/method 없는 경우 채워넣기 (자동기록 기능 추가 이전 데이터 호환)
-  let fcNeedsSave=false;
-  ['fixed','semifixed'].forEach(type=>{
-    fixedCosts[type].forEach((r,i)=>{
-      if(!r.id){r.id='fx_'+Date.now()+'_'+type+'_'+i;fcNeedsSave=true;}
-      if(r.day===undefined){r.day='';fcNeedsSave=true;}
-      if(r.method===undefined){r.method='card';fcNeedsSave=true;}
-    });
-  });
-  if(fcNeedsSave){
-    try{await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts,{merge:true});}catch(e){console.error('fixedCosts 마이그레이션 저장 실패:',e);}
-  }
   if(ctS.exists()){
     const ct=ctS.data();
     if(ct.out)OUT_TAGS=ct.out;
@@ -3974,22 +3975,7 @@ async function loadAllData(){
     if(ct.memo)MEMO_CATS=ct.memo;
     if(ct.memoEmoji)MEMO_CAT_EMOJI={...MEMO_CAT_EMOJI,...ct.memoEmoji};
   }
-  // 미션 트래커
-  if(msS.exists()){
-    const md=msS.data();
-    missionData={title:md.title||'',nodes:md.nodes||[],color:md.color||'#7ec8e3',bubbleColor:md.bubbleColor||'#333',boxColor:md.boxColor||'#ffffff',charImg:md.charImg||null,charImgPos:md.charImgPos||{xp:0,yp:0,scale:1}};
-    document.documentElement.style.setProperty('--mt-bubble-color', missionData.bubbleColor);
-  }
-  // 일기장
-  diaryEntries={};dyS.forEach(d=>{diaryEntries[d.id]=d.data();});
   diaryPasswordHash=dpS.exists()?(dpS.data().hash||null):null;
-  // 하루 계획표
-  loadDailyData(dlS.exists()?dlS.data():null);
-  // 저축 상품별 초기 잔액(이전까지 저축한 금액)
-  savingBaseline=sbS.exists()?(sbS.data().items||{}):{};
-  savingOrder=sbS.exists()?(sbS.data().order||[]):[];
-  // 대출 목록(원금 + 연이율 → 월 이자 자동계산)
-  loans=lnS.exists()?(lnS.data().items||[]):[];
   bottleMemoContent={
     blue:(bmS.exists()?(bmS.data().blue||''):''),
     pink:(bmS.exists()?(bmS.data().pink||''):''),
@@ -4044,6 +4030,92 @@ async function loadAllData(){
   if(window.refreshMemoBottleUI)window.refreshMemoBottleUI();
   if(window.refreshMemoTextPos)window.refreshMemoTextPos();
   if(window.refreshSlimeBtnPos)window.refreshSlimeBtnPos();
+}
+// 2단계(나중): 가계부·식단·메모·일기장·선언 등 첫 화면에 안 필요한 큰 데이터는 화면이 뜬 뒤에 불러옴
+async function loadDeferredData(){
+  if(!currentUser)return;
+  const [mnS, mlS, moS, nsS, bdS, mpnS, fcS, msS, dyS, dlS, sbS, mmS, fsS, lnS, mlmS, atS, mpbS, rcsS, decS, dgS, rcvS, tlS, fhS]=await Promise.all([
+    getDocs(collection(db,'users',currentUser.uid,'money')),
+    getDocs(collection(db,'users',currentUser.uid,'meal')),
+    getDocs(collection(db,'users',currentUser.uid,'memos')),
+    getDocs(collection(db,'users',currentUser.uid,'nospend')),
+    getDocs(collection(db,'users',currentUser.uid,'budget')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','mealPlanNote')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','mission')),
+    getDocs(collection(db,'users',currentUser.uid,'diary')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','dailyPlanner')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','savingBaseline')),
+    getDocs(collection(db,'users',currentUser.uid,'moneyMemo')),
+    getDocs(collection(db,'users',currentUser.uid,'fasting')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','loans')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','moneyLedgerMemo')),
+    getDocs(collection(db,'users',currentUser.uid,'attendance')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','moneyProgressBars')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','realCashStart')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','declarations')),
+    getDocs(collection(db,'users',currentUser.uid,'declareLog')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','receivables')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','tagLimits')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','fastingConfig')),
+  ]);
+  moneyData={};mnS.forEach(d=>{moneyData[d.id]=d.data().items||[];});
+  mealData={};mlS.forEach(d=>{mealData[d.id]=d.data();});
+  memos=[];moS.forEach(d=>{memos.push({id:d.id,...d.data()});});
+  // order가 없는(한 번도 드래그로 안 옮겨본) 메모가 섞여 있으면, 비교 기준이 메모 쌍마다 달라져서
+  // (어떤 쌍은 order로, 어떤 쌍은 createdAt으로) 정렬이 뒤틀리는 문제가 있었음 → 기준 하나로 통일
+  memos.sort((a,b)=>{
+    const ao=a.order??Infinity,bo=b.order??Infinity;
+    if(ao!==bo)return ao-bo;
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
+  noSpendData={};nsS.forEach(d=>{noSpendData[d.id]=d.data().done||false;});
+  fastingData={};fsS.forEach(d=>{fastingData[d.id]=d.data().done||false;});
+  fastingHours=(fhS.exists()&&fhS.data().hours)?fhS.data().hours:16;
+  moneyMemoData={};mmS.forEach(d=>{moneyMemoData[d.id]={text:d.data().text||'',pending:d.data().pending||false};});
+  budgetData={};bdS.forEach(d=>{budgetData[d.id]={amount:d.data().amount||0,tags:d.data().tags||[]};});
+  window._mealPlanNoteContent=mpnS.exists()?mpnS.data().text||'':'';
+  window._moneyLedgerMemoContent=mlmS.exists()?mlmS.data().text||'':'';
+  attendanceData={};atS.forEach(d=>{attendanceData[d.id]=d.data();});
+  moneyProgressBars=mpbS.exists()?(mpbS.data().items||[]):[];
+  realCashStartDate=rcsS.exists()?(rcsS.data().date||''):'';
+  realCashBaseDate=rcsS.exists()?(rcsS.data().baseDate||''):'';
+  realCashBaseAmount=(rcsS.exists()&&rcsS.data().baseAmount!=null)?rcsS.data().baseAmount:null;
+  realCashCutoffDay=rcsS.exists()&&rcsS.data().cutoffDay?parseInt(rcsS.data().cutoffDay):20;
+  declarations=decS.exists()?(decS.data().items||[]).map(normDecl):[];
+  declareLog={};dgS.forEach(d=>{declareLog[d.id]=d.data().texts||{};});
+  receivables=rcvS.exists()?(rcvS.data().items||[]):[];
+  tagLimits=tlS.exists()?(tlS.data().limits||{}):{};
+  fixedCosts=fcS.exists()?fcS.data():{fixed:[],semifixed:[]};
+  if(!fixedCosts.fixed)fixedCosts.fixed=[];
+  if(!fixedCosts.semifixed)fixedCosts.semifixed=[];
+  // 기존 항목 중 id/day/method 없는 경우 채워넣기 (자동기록 기능 추가 이전 데이터 호환)
+  let fcNeedsSave=false;
+  ['fixed','semifixed'].forEach(type=>{
+    fixedCosts[type].forEach((r,i)=>{
+      if(!r.id){r.id='fx_'+Date.now()+'_'+type+'_'+i;fcNeedsSave=true;}
+      if(r.day===undefined){r.day='';fcNeedsSave=true;}
+      if(r.method===undefined){r.method='card';fcNeedsSave=true;}
+    });
+  });
+  if(fcNeedsSave){
+    try{await setDoc(doc(db,'users',currentUser.uid,'settings','fixedCosts'),fixedCosts,{merge:true});}catch(e){console.error('fixedCosts 마이그레이션 저장 실패:',e);}
+  }
+  // 미션 트래커
+  if(msS.exists()){
+    const md=msS.data();
+    missionData={title:md.title||'',nodes:md.nodes||[],color:md.color||'#7ec8e3',bubbleColor:md.bubbleColor||'#333',boxColor:md.boxColor||'#ffffff',charImg:md.charImg||null,charImgPos:md.charImgPos||{xp:0,yp:0,scale:1}};
+    document.documentElement.style.setProperty('--mt-bubble-color', missionData.bubbleColor);
+  }
+  // 일기장
+  diaryEntries={};dyS.forEach(d=>{diaryEntries[d.id]=d.data();});
+  // 하루 계획표
+  loadDailyData(dlS.exists()?dlS.data():null);
+  // 저축 상품별 초기 잔액(이전까지 저축한 금액)
+  savingBaseline=sbS.exists()?(sbS.data().items||{}):{};
+  savingOrder=sbS.exists()?(sbS.data().order||[]):[];
+  // 대출 목록(원금 + 연이율 → 월 이자 자동계산)
+  loans=lnS.exists()?(lnS.data().items||[]):[];
 }
 
 // ── 상단 메모 ──
@@ -4534,6 +4606,8 @@ function startNamedRoutine(keyword){
 }
 // 출근/퇴근 체크 시각을 오늘 일기장에 한 줄 기록
 async function appendAttendanceToDiary(kind,time){
+  if(!deferredReady&&deferredPromise)await deferredPromise; // 일기장 데이터가 다 불러와진 뒤에 기록 (덜 불러온 채로 그날 일기를 덮어쓰지 않게)
+  if(!deferredReady)return;
   const key=attendanceDayStr();
   const entry=diaryEntries[key]||{};
   const line=(kind==='in'?'🕐 출근 ':'🕐 퇴근 ')+time;
@@ -9772,6 +9846,23 @@ window.removeBgImage=async function(){
 // ── 배경 이미지 기기 간 동기화 (버전 + 압축본 + 원본 화질 조각) ──
 const BG_CHUNK_SIZE=800000; // 문서 하나가 1MB를 안 넘게, 원본 이미지 문자열을 이 길이씩 쪼갬
 function bgChunkRef(i){return doc(db,'users',currentUser.uid,'settings','bgImage_c'+i);}
+function bgSmallRef(){return doc(db,'users',currentUser.uid,'settings','bgImage_s');} // 압축본은 버전 문서와 따로 저장
+// 배경 이미지 버전 문서는 화면이 뜬 뒤(동기화 시점)에 읽음 — 예전엔 이 문서 안에 압축본이 들어 있어서 첫 화면 로딩 때마다 수백 KB를 받았음
+async function loadBgMeta(){
+  if(bgMetaLoaded)return;
+  const snap=await getDoc(doc(db,'users',currentUser.uid,'settings','bgImage'));
+  bgImageMeta=snap.exists()?snap.data():null;
+  bgMetaLoaded=true;
+  if(bgImageMeta&&bgImageMeta.ver!==undefined&&bgImageMeta.data&&bgImageMeta.data.length>1000){
+    // 예전 방식 정리: 압축본을 따로 옮기고 버전 문서는 가볍게 (한 번만 하면 이후 로딩이 가벼워짐)
+    try{
+      await setDoc(bgSmallRef(),{data:bgImageMeta.data});
+      await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{ver:bgImageMeta.ver,count:bgImageMeta.count||0,data:'',hasSmall:true});
+      syncedBgImage=bgImageMeta.data;
+      bgImageMeta={...bgImageMeta,data:'',hasSmall:true};
+    }catch(e){console.warn('배경 이미지 정보 정리 실패:',e);}
+  }
+}
 function setBgSyncStatus(msg,isErr){
   const el=document.getElementById('bgSyncStatus');
   if(!el)return;
@@ -9784,6 +9875,7 @@ async function dataUrlToBlob(dataUrl){const r=await fetch(dataUrl);return await 
 async function saveBgImageToCloud(dataUrl){
   if(!currentUser)throw new Error('로그인 정보가 없어요');
   setBgSyncStatus('☁ 계정에 올리는 중…',false);
+  await loadBgMeta();
   const prevCount=(bgImageMeta&&bgImageMeta.count)||0;
   let small='';
   try{
@@ -9800,19 +9892,23 @@ async function saveBgImageToCloud(dataUrl){
   }catch(e){chunkErr=(e&&e.message)||String(e);console.error('배경 원본 조각 저장 실패:',e);}
   if(!small&&!count)throw new Error(chunkErr||'저장 가능한 형태를 만들지 못했어요');
   const ver=Date.now();
-  await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{ver,count,data:small}); // 버전 문서는 맨 마지막에 갱신
+  if(small)await setDoc(bgSmallRef(),{data:small}); // 압축본은 따로 저장
+  await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{ver,count,data:'',hasSmall:!!small}); // 버전 문서(매번 읽는 것)는 가볍게, 맨 마지막에 갱신
   for(let i=count;i<prevCount;i++){try{await deleteDoc(bgChunkRef(i));}catch(e){}}
-  bgImageMeta={ver,count,data:small};
+  bgImageMeta={ver,count,data:'',hasSmall:!!small};
+  bgMetaLoaded=true;
   syncedBgImage=small;
   try{localStorage.setItem('planner_bgImage_ver',String(ver));}catch(e){}
   setBgSyncStatus(count>0?('☁ 계정에 저장됨 (원본 화질) · '+nowHM2()):('⚠ 계정에 압축본만 저장됨 (원본 화질 저장 실패: '+chunkErr+') · '+nowHM2()),!count);
 }
 async function removeBgImageFromCloud(){
   if(!currentUser)return;
+  await loadBgMeta();
   const prevCount=(bgImageMeta&&bgImageMeta.count)||0;
   const ver=Date.now();
   await setDoc(doc(db,'users',currentUser.uid,'settings','bgImage'),{ver,count:0,data:''});
   for(let i=0;i<prevCount;i++){try{await deleteDoc(bgChunkRef(i));}catch(e){}}
+  try{await deleteDoc(bgSmallRef());}catch(e){}
   bgImageMeta={ver,count:0,data:''};
   syncedBgImage='';
   try{localStorage.setItem('planner_bgImage_ver',String(ver));}catch(e){}
@@ -9822,12 +9918,13 @@ async function removeBgImageFromCloud(){
 async function syncBgImageFromCloud(force){
   if(!currentUser)return;
   try{
+    await loadBgMeta();
     const localImg=localStorage.getItem('planner_bgImage');
     const localVer=localStorage.getItem('planner_bgImage_ver');
     const meta=bgImageMeta;
     if(meta&&meta.ver!==undefined){
       if(!force&&String(meta.ver)===localVer){setBgSyncStatus('☁ 계정과 동기화됨',false);return;}
-      if((meta.count||0)>0||meta.data){
+      if((meta.count||0)>0||meta.data||meta.hasSmall){
         let full='';
         if((meta.count||0)>0){
           try{
@@ -9838,7 +9935,10 @@ async function syncBgImageFromCloud(force){
             }
           }catch(e){console.warn('원본 조각 읽기 실패 → 압축본으로 대체:',e);full='';}
         }
-        if(!full)full=meta.data||'';
+        if(!full){
+          if(meta.hasSmall){const sn=await getDoc(bgSmallRef());full=sn.exists()?(sn.data().data||''):'';}
+          else full=meta.data||'';
+        }
         if(!full)throw new Error('계정에 저장된 이미지를 읽지 못했어요');
         applyBgImage(full);
         try{
