@@ -310,7 +310,7 @@ const firstReach=(series,goal)=>{if(!goal)return null;for(let t=0;t<series.lengt
 /* ══════════ 데이터 ══════════ */
 const NOWY=NOW().y;
 const DEFAULT_PLAN=()=>({
-  birthYear:1993,endAge:100,
+  birthYear:1993,endAge:100,ageMode:'man',
   goalAmount:100000000,goalYM:(NOWY+5)+'-12',
   scenarioPct:20,includeInterest:true,redirectFreed:true,
   accounts:[],loans:[],yearGoals:{}
@@ -581,6 +581,15 @@ function loanModal(id){
 const yg=y=>plan.yearGoals[y]||{};
 const ygHas=y=>{const g=yg(y);return !!(num(g.asset)||(g.goal&&g.goal.trim())||(g.note&&g.note.trim())||g.done);};
 let showPast=false;
+// 나이 표기: 만 나이(생일 기준, 기본) 또는 세는 나이(태어난 해를 1살로 셈). 저장은 연도로 하니까 표기를 바꿔도 적어둔 목표는 그대로.
+const ageOff=()=>plan.ageMode==='korean'?1:0;
+const dispAge=a=>a+ageOff();
+function lifeParams(){
+  const by=num(plan.birthYear),endAge=Math.max(50,Math.min(120,num(plan.endAge)||100)),off=ageOff();
+  const curAge=NOWY-by,endInternal=endAge-off;
+  const startAge=showPast?0:Math.max(0,Math.min(curAge,endInternal));
+  return {by,endAge,off,curAge,endInternal,startAge};
+}
 const SN={GAP:34,PAD:28,CARD_W:124,CARD_H:84,LANE_GAP:10,STEM:22,LABEL0:50,LABEL:30,BOTTOM:22,R:24};
 // 화면 너비에 맞게 줄 바꿈(꺾임) 위치와 카드 자리를 계산. 한 줄에 칸이 자동으로 정해지고, 줄마다 방향이 번갈아 바뀜(오른쪽→왼쪽→…).
 // 가까운 나이끼리 카드가 겹치지 않게, 카드를 줄 아래로 서로 다른 길이로 매달아 층(lane)을 나눔.
@@ -626,21 +635,20 @@ function roundedPath(v,R){
   const l=v[v.length-1];return d+` L${l[0].toFixed(1)},${l[1].toFixed(1)}`;
 }
 function renderLife(){
-  const el=$('#v-life'),by=num(plan.birthYear),endAge=Math.max(50,Math.min(120,num(plan.endAge)||100));
-  const curAge=NOWY-by,left=Math.max(0,endAge-curAge);
+  const el=$('#v-life'),{by,endAge,curAge,endInternal}=lifeParams();
+  const left=Math.max(0,endAge-dispAge(curAge));
   const count=Object.keys(plan.yearGoals).filter(y=>ygHas(+y)).length;
   el.innerHTML=`
-  <div class="vh row between wrap"><div><h1>100세 로드맵</h1><p class="muted">${by}년생 · 올해 ${curAge}세 · ${endAge}세까지 ${left}년. 줄을 따라 나이가 이어져요. 나이를 눌러 그 해의 목표 금액과 메모를 적어보세요.</p></div>
-    <div class="row gap6 wrap"><label class="check"><input type="checkbox" id="showPast" ${showPast?'checked':''}> 지난 나이도 보기</label><button class="btn primary" data-act="year-edit" data-age="${Math.max(0,Math.min(curAge,endAge))}">＋ 올해 목표</button></div></div>
+  <div class="vh row between wrap"><div><h1>100세 로드맵</h1><p class="muted">${by}년생 · 올해 ${dispAge(curAge)}세(${plan.ageMode==='korean'?'세는 나이':'만 나이'}) · ${endAge}세까지 ${left}년. 줄을 따라 나이가 이어져요. 나이를 눌러 그 해의 목표 금액과 메모를 적어보세요.</p></div>
+    <div class="row gap6 wrap"><label class="check"><input type="checkbox" id="showPast" ${showPast?'checked':''}> 지난 나이도 보기</label><button class="btn primary" data-act="year-edit" data-age="${Math.max(0,Math.min(curAge,endInternal))}">＋ 올해 목표</button></div></div>
   <div class="card snake-card"><div class="snake" id="snake"></div>${count?'':'<div class="muted" style="font-size:13px;text-align:center;padding-top:8px">아직 적어둔 목표가 없어요. 줄 위의 나이를 눌러 첫 목표를 적어보세요.</div>'}</div>`;
   buildSnake();
 }
 function buildSnake(){
   const box=$('#snake');if(!box)return;
-  const by=num(plan.birthYear),endAge=Math.max(50,Math.min(120,num(plan.endAge)||100)),curAge=NOWY-by;
-  const startAge=showPast?0:Math.max(0,Math.min(curAge,endAge));
+  const {by,startAge,endInternal}=lifeParams();
   const W=Math.max(280,box.clientWidth||900);
-  const L=snakeLayout(W,startAge,endAge,age=>ygHas(by+age));
+  const L=snakeLayout(W,startAge,endInternal,age=>ygHas(by+age));
   const {PAD,CARD_W,CARD_H,R}=SN;
   const xL=PAD-16,xR=W-PAD+16;
   // 줄(경로): 줄마다 왼쪽 끝과 오른쪽 끝을 이어서 구불구불하게
@@ -662,11 +670,11 @@ function buildSnake(){
   let html=`<svg class="sn-svg" width="${W}" height="${L.H}" viewBox="0 0 ${W} ${L.H}" aria-hidden="true">${svg}</svg>`;
   L.pts.forEach(p=>{
     const year=by+p.age,has=ygHas(year),now=year===NOWY;
-    html+=`<button class="sn-tick${has?' has':''}${now?' now':''}" style="left:${p.x}px;top:${p.y}px" data-act="year-edit" data-age="${p.age}" title="${p.age}세 · ${year}년${yg(year).goal?' — '+esc(yg(year).goal):''}"><span class="sn-age">${p.age}</span>${now?'<span class="sn-now">지금</span>':''}</button>`;
+    html+=`<button class="sn-tick${has?' has':''}${now?' now':''}" style="left:${p.x}px;top:${p.y}px" data-act="year-edit" data-age="${p.age}" title="${dispAge(p.age)}세 · ${year}년${yg(year).goal?' — '+esc(yg(year).goal):''}"><span class="sn-age">${dispAge(p.age)}</span>${now?'<span class="sn-now">지금</span>':''}</button>`;
   });
   L.cards.forEach(c=>{
     const year=by+c.age,g=yg(year),a=num(g.asset);
-    html+=`<div class="sn-card${g.done?' done':''}" tabindex="0" role="button" data-act="year-edit" data-age="${c.age}" style="left:${c.left}px;top:${c.top}px;width:${CARD_W}px;height:${CARD_H}px" title="${c.age}세 · ${year}년${a?' · 목표 '+won(a):''}"><div class="sn-amt${a?'':' empty'}"><span>${a?wonShort(a)+'원':'목표 금액'}</span>${g.done?'<span>✓</span>':''}</div><div class="sn-memo">${esc(g.goal||g.note||'')}</div></div>`;
+    html+=`<div class="sn-card${g.done?' done':''}" tabindex="0" role="button" data-act="year-edit" data-age="${c.age}" style="left:${c.left}px;top:${c.top}px;width:${CARD_W}px;height:${CARD_H}px" title="${dispAge(c.age)}세 · ${year}년${a?' · 목표 '+won(a):''}"><div class="sn-amt${a?'':' empty'}"><span>${a?wonShort(a)+'원':'목표 금액'}</span>${g.done?'<span>✓</span>':''}</div><div class="sn-memo">${esc(g.goal||g.note||'')}</div></div>`;
   });
   box.style.height=L.H+'px';
   box.innerHTML=html;
@@ -675,7 +683,7 @@ function yearModal(age){
   const by=num(plan.birthYear),year=by+age,g=yg(year);
   const t=(year-NOW().y)*12+(12-NOW().m);
   const proj=(model&&t>0&&t<=15*12&&t<model.sims.base.series.length)?model.sims.base.series[t]:null;
-  openModal({title:`${age}세 · ${year}년`,hint:proj!=null?`지금 속도로 가면 이 해 말 순자산 약 ${won(proj)} (단순 계산)`:'',
+  openModal({title:`${dispAge(age)}세 · ${year}년`,hint:proj!=null?`지금 속도로 가면 이 해 말 순자산 약 ${won(proj)} (단순 계산)`:'',
     fields:[
       {k:'asset',label:'목표 금액(원)',type:'money',cls:'neon'},
       {k:'goal',label:'메모 · 목표',type:'textarea',ph:'예: 신용대출 정리, 비상금 1천만원'},
@@ -704,7 +712,10 @@ function renderSettings(){
     <div class="row gap6 wrap">
       <div class="field" style="flex:1;min-width:140px"><label for="sBirth">출생연도</label><input id="sBirth" type="number" min="1900" max="2100" value="${esc(plan.birthYear)}"></div>
       <div class="field" style="flex:1;min-width:140px"><label for="sEnd">로드맵 기준 나이</label><input id="sEnd" type="number" min="50" max="120" value="${esc(plan.endAge)}"></div>
-    </div></div>
+    </div>
+    <div class="field" style="max-width:340px;margin-top:10px"><label for="sAgeMode">나이 표기</label>
+      <select id="sAgeMode"><option value="man" ${plan.ageMode!=='korean'?'selected':''}>만 나이 (생일 기준)</option><option value="korean" ${plan.ageMode==='korean'?'selected':''}>세는 나이 (태어난 해를 1살)</option></select>
+      <div class="muted" style="font-size:12px;margin-top:4px">올해 ${NOWY-num(plan.birthYear)}세(만 나이) · ${NOWY-num(plan.birthYear)+1}세(세는 나이). 바꿔도 적어둔 목표는 그대로예요.</div></div></div>
   <div class="card"><h2>시나리오 가정</h2>
     <div class="field" style="max-width:260px"><label for="sPct">수입 변동 폭(±%)</label><input id="sPct" type="number" min="0" max="90" value="${esc(plan.scenarioPct)}"></div>
     <label class="check" style="margin-top:12px"><input type="checkbox" id="sInt" ${plan.includeInterest?'checked':''}> 저축·투자 상품의 이자(수익률)를 계산에 포함</label><br>
@@ -804,6 +815,7 @@ document.addEventListener('change',e=>{
   else if(t.id==='goalYM'){plan.goalYM=t.value;changed();}
   else if(t.id==='showPast'){showPast=t.checked;renderLife();}
   else if(t.id==='sBirth'){const v=Math.round(num(t.value));if(v>=1900&&v<=2100){plan.birthYear=v;changed();}}
+  else if(t.id==='sAgeMode'){plan.ageMode=t.value==='korean'?'korean':'man';changed();}
   else if(t.id==='sEnd'){const v=Math.round(num(t.value));if(v>=50&&v<=120){plan.endAge=v;changed();}}
   else if(t.id==='sPct'){plan.scenarioPct=Math.max(0,Math.min(90,num(t.value)));changed();}
   else if(t.id==='sInt'){plan.includeInterest=t.checked;changed();}
