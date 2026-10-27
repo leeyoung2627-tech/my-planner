@@ -4270,13 +4270,30 @@ function startNamedRoutine(keyword){
   if(r)showRoutineAlarm(r);
 }
 // 출근/퇴근 체크 시각을 오늘 일기장에 한 줄 기록
+// 출근/퇴근 시각을 그날 일기장에 기록 — 출근·퇴근 각각 "마지막 기록 한 줄"만 남김
+// (시간을 고치면 기존 줄을 새 시간으로 바꾸고, 체크를 취소하면 그 줄을 지움. 직접 쓴 다른 일기 내용은 그대로 둠)
 async function appendAttendanceToDiary(kind,time){
   if(!deferredReady&&deferredPromise)await deferredPromise; // 일기장 데이터가 다 불러와진 뒤에 기록 (덜 불러온 채로 그날 일기를 덮어쓰지 않게)
   if(!deferredReady)return;
   const key=attendanceDayStr();
   const entry=diaryEntries[key]||{};
-  const line=(kind==='in'?'🕐 출근 ':'🕐 퇴근 ')+time;
-  const text=(entry.text?entry.text+'\n':'')+line;
+  const label=kind==='in'?'출근':'퇴근';
+  const lineRe=new RegExp('^🕐 '+label+' \\d{1,2}:\\d{2}\\s*$');
+  const newLine=time?('🕐 '+label+' '+time):null;
+  const out=[];
+  let placed=false;
+  (entry.text||'').split('\n').forEach(l=>{
+    if(lineRe.test(l)){
+      if(newLine&&!placed){out.push(newLine);placed=true;} // 먼저 있던 줄 자리에서 새 시간으로 교체
+      return; // 같은 종류의 나머지(중복) 줄은 지움
+    }
+    out.push(l);
+  });
+  if(newLine&&!placed){
+    if(out.length===1&&out[0]==='')out[0]=newLine;else out.push(newLine);
+  }
+  const text=out.join('\n');
+  if(text===(entry.text||''))return; // 바뀐 게 없으면 저장하지 않음
   const updated={mood:entry.mood||null,result:entry.result||'',text};
   diaryEntries[key]=updated;
   await saveData('diary',key,updated);
@@ -4300,7 +4317,7 @@ async function promptAttendanceTime(kind){
   attendanceData[key]=rec;
   await saveData('attendance',key,rec);
   renderAttendanceBtns();
-  if(rec[kind])await appendAttendanceToDiary(kind,rec[kind]);
+  await appendAttendanceToDiary(kind,rec[kind]||null); // 시간을 고치면 기존 줄을 교체, 비워서 취소하면 줄을 지움
   if(kind==='in'&&wasEmpty&&rec.in)startNamedRoutine('작업실');
 }
 window.toggleAttendance=async function(kind){
@@ -4312,6 +4329,7 @@ window.toggleAttendance=async function(kind){
     attendanceData[key]=newRec;
     await saveData('attendance',key,newRec);
     renderAttendanceBtns();
+    await appendAttendanceToDiary(kind,null); // 취소하면 일기장에 적었던 그 줄도 지움
     return;
   }
   const time=nowHM();
