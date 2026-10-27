@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자산관리</title>
+<style>
+:root{
+  --paper:#FAF5EA; --card:#FFFDF8; --ink:#382E24; --accent:#4F7965; --accent-soft:#DCE6DE; --line:#E4D9C5;
+  --warn:#D68C45; --info:#5B8DB8; --danger:#B5654A;
+  --ink-soft:color-mix(in srgb,var(--ink) 58%,var(--card));
+  --ink-faint:color-mix(in srgb,var(--ink) 38%,var(--card));
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Pretendard',sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:64px}
+h1{font-size:20px;margin:0 0 2px;font-weight:700}
+h2{font-size:15px;margin:0 0 10px;font-weight:700}
+.muted{color:var(--ink-soft)} .faint{color:var(--ink-faint)}
+.hide{display:none!important}
+
+/* 로그인 */
+#loginWrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 26px;max-width:360px;width:100%;text-align:center}
+.login-card h1{margin-bottom:6px}
+
+/* 전체 레이아웃: 왼쪽 사이드바 + 본문 (폭이 좁아지면 아래쪽 메뉴로) */
+.app{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;background:var(--card);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+.brand{font-size:16px;font-weight:700;padding:2px 10px 14px}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink-soft)}
+.nav-btn:hover{background:var(--paper)}
+.nav-btn.active{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.nav-ico{width:20px;text-align:center}
+.side-foot{margin-top:auto;border-top:1px solid var(--line);padding:12px 10px 0}
+.side-foot .nw{font-size:15px;font-weight:700}
+.side-foot a,.side-foot button{display:block;background:none;border:none;padding:6px 0 0;font-size:12px;color:var(--ink-soft);text-decoration:none;text-align:left}
+.main{padding:26px 30px 70px;max-width:1000px;width:100%}
+.view{display:none}.view.active{display:block}
+.vh{margin-bottom:16px}
+.vh p{margin:0;font-size:13px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+.kpi .l{font-size:12px;color:var(--ink-soft)} .kpi .v{font-size:17px;font-weight:700;margin-top:2px}
+.kpi.main .v{font-size:20px}
+.pos{color:var(--accent)} .neg{color:var(--danger)}
+
+.btn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:7px 13px;font-size:13px}
+.btn:hover{background:var(--paper)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.small{padding:4px 10px;font-size:12px}
+.btn.danger{color:var(--danger)}
+.row{display:flex;align-items:center;gap:10px}.between{justify-content:space-between}.wrap{flex-wrap:wrap}.gap6{gap:6px}
+
+/* 목표 카드 */
+.goal-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:12px;margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:3px}
+.bar{position:relative;height:10px;border-radius:5px;background:var(--line);margin:10px 0 6px}
+.bar>i{display:block;height:100%;border-radius:5px;background:var(--accent)}
+.bar>b{position:absolute;top:-2px;width:1px;height:14px;background:var(--ink-faint)}
+.note{font-size:13px;margin-top:8px}
+.note.good{color:var(--accent)} .note.bad{color:var(--danger)}
+
+/* 차트 + 시나리오 */
+.chart svg{display:block;width:100%;height:auto}
+.scn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.scn>div{border-radius:10px;padding:9px 12px;border:1px solid var(--line)}
+.scn .t{font-size:12px} .scn .m{font-size:12px;color:var(--ink-soft)} .scn .d{font-size:15px;font-weight:700}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+
+.ms{font-size:13px}
+.ms>div{display:flex;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.ms>div:first-child{border-top:none}
+.ms .d{flex:0 0 62px;color:var(--ink-soft)}
+
+/* 목록 */
+.list-h,.list-r{display:grid;gap:8px;align-items:center;padding:9px 6px}
+.list-h{font-size:12px;color:var(--ink-faint);border-bottom:1px solid var(--line)}
+.list-r{border-bottom:1px solid var(--line);font-size:13px}
+.list-r.sel{background:var(--accent-soft);border-radius:8px}
+.cols-assets{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,.9fr) minmax(0,.6fr) minmax(0,.8fr) 52px}
+.cols-loans{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,.6fr) minmax(0,.9fr) minmax(0,.9fr) 52px}
+.chip{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.empty{text-align:center;padding:26px 10px;color:var(--ink-soft)}
+.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+
+/* 대출 시뮬레이터 */
+.sim input[type=range]{padding:0;border:none;background:none;accent-color:var(--accent)}
+.sim-res{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.sim-res>div{background:var(--accent-soft);border-radius:10px;padding:9px 12px}
+.sim-res .l{font-size:11px;color:var(--accent)} .sim-res .v{font-size:14px;font-weight:700;color:var(--accent)}
+
+/* 100세 로드맵 */
+.life-top{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start}
+.lg{display:grid;grid-template-columns:34px repeat(10,minmax(0,1fr));gap:4px;align-items:center}
+.lg .dl{font-size:11px;color:var(--ink-faint);text-align:right;padding-right:4px}
+.cell{position:relative;aspect-ratio:1;border:1px solid var(--line);border-radius:6px;background:transparent;font-size:11px;color:var(--ink-faint);padding:0;display:flex;align-items:center;justify-content:center}
+.cell.past{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.cell.now{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.cell.sel{outline:2px solid var(--warn);outline-offset:1px}
+.cell.has::after{content:'';position:absolute;right:3px;bottom:3px;width:5px;height:5px;border-radius:50%;background:var(--warn)}
+.cell.done::after{background:var(--accent)}
+.cell.empty-c{visibility:hidden}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--ink-soft);margin-top:8px}
+.yr-list>div{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-top:1px solid var(--line);cursor:pointer;font-size:13px}
+.yr-list>div:first-child{border-top:none}
+.yr-list .y{flex:0 0 78px;color:var(--ink-soft)}
+.yr-list .g{flex:1;min-width:0;word-break:break-word}
+.yr-list>div.sel{background:var(--accent-soft);border-radius:8px}
+.check{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.check input{width:auto}
+
+/* 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(40,30,20,.38);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border-radius:16px;padding:20px 22px;width:100%;max-width:400px;max-height:90vh;overflow:auto}
+.modal h2{margin-bottom:12px}
+.modal .f{margin-bottom:10px}
+.modal .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:8px 16px;border-radius:20px;font-size:12.5px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:80}
+#toast.show{opacity:.92}
+
+.bottom{display:none}
+
+@media(max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{display:none}
+  .main{padding:18px 14px 96px}
+  .bottom{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);z-index:40;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .bottom button{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:11px;color:var(--ink-soft);padding:6px 0}
+  .bottom button .nav-ico{font-size:18px}
+  .bottom button.active{color:var(--accent);font-weight:700}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .goal-grid,.life-top{grid-template-columns:minmax(0,1fr)}
+  .scn{grid-template-columns:minmax(0,1fr)}
+  /* 표는 줄 단위 카드로 */
+  .list-h{display:none}
+  .cols-assets,.cols-loans{grid-template-columns:minmax(0,1fr) auto auto}
+  .list-r .hide-m{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<div id="loginWrap" class="hide">
+  <div class="login-card">
+    <h1>자산관리</h1>
+    <p class="muted" style="margin:0 0 18px">저축 · 대출 · 목표 자산 · 100세 로드맵</p>
+    <button class="btn primary" id="loginBtn" style="width:100%;padding:10px">Google로 로그인</button>
+  </div>
+</div>
+
+<!-- 앱 -->
+<div id="appWrap" class="app hide">
+  <aside class="side">
+    <div class="brand">💰 자산관리</div>
+    <button class="nav-btn" data-view="home"><span class="nav-ico">🗺</span>목표 로드맵</button>
+    <button class="nav-btn" data-view="assets"><span class="nav-ico">🐷</span>저축·자산</button>
+    <button class="nav-btn" data-view="loans"><span class="nav-ico">🏦</span>대출</button>
+    <button class="nav-btn" data-view="life"><span class="nav-ico">🌱</span>100세 로드맵</button>
+    <button class="nav-btn" data-view="settings"><span class="nav-ico">⚙️</span>설정</button>
+    <div class="side-foot">
+      <div class="muted" style="font-size:11px">순자산</div>
+      <div class="nw" id="sideNW">-</div>
+      <a href="/">← 플래너로 돌아가기</a>
+      <button id="logoutBtn">로그아웃</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- 목표 로드맵 -->
+    <section class="view" id="v-home"></section>
+
+    <!-- 저축·자산 -->
+    <section class="view" id="v-assets"></section>
+
+    <!-- 대출 -->
+    <section class="view" id="v-loans"></section>
+
+    <!-- 100세 로드맵 -->
+    <section class="view" id="v-life"></section>
+
+    <!-- 설정 -->
+    <section class="view" id="v-settings"></section>
+
+  </main>
+</div>
+
+<nav class="bottom" id="bottomNav" style="display:none">
+  <button data-view="home"><span class="nav-ico">🗺</span>로드맵</button>
+  <button data-view="assets"><span class="nav-ico">🐷</span>저축</button>
+  <button data-view="loans"><span class="nav-ico">🏦</span>대출</button>
+  <button data-view="life"><span class="nav-ico">🌱</span>100세</button>
+  <button data-view="settings"><span class="nav-ico">⚙️</span>설정</button>
+</nav>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkSmyAwRUlpgZBUz0kXqCVoS29dYht7No",
+  authDomain: "my-planner-3728c.firebaseapp.com",
+  projectId: "my-planner-3728c",
+  storageBucket: "my-planner-3728c.firebasestorage.app",
+  messagingSenderId: "179812397978",
+  appId: "1:179812397978:web:3525714542291e818e0023"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+/* ══════════ 플래너와 같은 테마 색 적용 ══════════ */
+(function applyPlannerTheme(){
+  try{
+    const t=JSON.parse(localStorage.getItem('planner_theme_v2')||'null');
+    if(!t)return;
+    const r=document.documentElement.style;
+    if(t.accent)r.setProperty('--accent',t.accent);
+    if(t.accentLight)r.setProperty('--accent-soft',t.accentLight);
+    if(t.pagebg)r.setProperty('--paper',t.pagebg);
+    if(t.appbg)r.setProperty('--card',t.appbg);
+    if(t.text)r.setProperty('--ink',t.text);
+    if(t.bordercol)r.setProperty('--line',t.bordercol);
+  }catch(e){}
+})();
+
+/* ══════════ 작은 도우미 ══════════ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;};
+const won=n=>Math.round(n).toLocaleString('ko-KR')+'원';
+const wonShort=n=>{
+  const a=Math.abs(n);
+  if(a>=1e8)return (Math.round(n/1e7)/10)+'억';
+  if(a>=1e4)return Math.round(n/1e4).toLocaleString('ko-KR')+'만';
+  return Math.round(n).toLocaleString('ko-KR');
+};
+const comma=n=>n?Math.round(n).toLocaleString('ko-KR'):'';
+const ymStr=(y,m)=>y+'.'+String(m).padStart(2,'0');
+const toYM=s=>{const m=/^(\d{4})-(\d{1,2})$/.exec(s||'');return m?{y:+m[1],m:+m[2]}:null;};
+const addMonths=(y,m,k)=>{const t=y*12+(m-1)+k;return {y:Math.floor(t/12),m:t%12+1};};
+const diffMonths=(y1,m1,y2,m2)=>(y2*12+m2)-(y1*12+m1);
+const NOW=()=>{const d=new Date();return {y:d.getFullYear(),m:d.getMonth()+1};};
+
+/* ══════════ 계산 (화면과 분리된 순수 함수) ══════════ */
+// 대출: 매달 이자를 붙이고 월 상환액을 갚는 방식으로 완납까지 계산
+function loanSchedule(bal,ratePct,pmt){
+  if(bal<=0)return {months:0,interest:0,never:false};
+  const r=ratePct/1200;
+  if(pmt<=0||pmt<=bal*r+1e-9)return {months:null,interest:null,never:true}; // 이자도 못 갚는 상환액이면 끝나지 않음
+  let b=bal,n=0,interest=0;
+  while(b>0.5&&n<1200){const i=b*r;interest+=i;b=b+i-pmt;n++;}
+  return {months:n,interest,never:n>=1200};
+}
+// 앞으로의 순자산(= 저축·투자 − 대출) 변화를 한 달씩 계산.
+// factor: 수입이 변할 때 "저축액"이 변하는 비율 (대출 상환액은 의무라서 그대로). 끝난 대출의 상환액·만기 지난 납입액은 저축으로 돌린다고 가정(옵션).
+function simulate(p,factor,maxMonths){
+  maxMonths=maxMonths||480;
+  const now=NOW();
+  const accts=(p.accounts||[]).map(a=>({name:a.name,bal:num(a.balance),dep:num(a.monthly),rate:num(a.rate),mat:toYM(a.maturity),matDone:false}));
+  const loans=(p.loans||[]).map(l=>({name:l.name,bal:num(l.balance),rate:num(l.rate),pmt:num(l.monthly),orig:num(l.monthly),paid:false}));
+  let pool=0;
+  const nwNow=()=>accts.reduce((s,a)=>s+a.bal,0)+pool-loans.reduce((s,l)=>s+l.bal,0);
+  const series=[nwNow()],events=[];
+  for(let t=1;t<=maxMonths;t++){
+    const d=addMonths(now.y,now.m,t);
+    const key=d.y*100+d.m;
+    accts.forEach(a=>{
+      if(p.includeInterest&&a.rate>0)a.bal*=1+a.rate/1200;
+      const mk=a.mat?a.mat.y*100+a.mat.m:null;
+      if(!mk||key<=mk)a.bal+=a.dep*factor;
+      else if(p.redirectFreed)pool+=a.dep*factor;
+      if(mk&&key===mk&&!a.matDone){a.matDone=true;events.push({t,type:'maturity',name:a.name,amount:a.bal});}
+    });
+    loans.forEach(l=>{
+      if(l.bal<=0.5){if(l.orig>0&&p.redirectFreed)pool+=l.orig*factor;return;}
+      const owed=l.bal+l.bal*l.rate/1200;
+      const pay=Math.min(l.pmt,owed);
+      if(l.pmt>owed&&p.redirectFreed)pool+=(l.pmt-owed)*factor;
+      l.bal=Math.max(0,owed-pay);
+      if(l.bal<=0.5&&!l.paid){l.paid=true;l.bal=0;events.push({t,type:'payoff',name:l.name,pmt:l.orig});}
+    });
+    series.push(nwNow());
+  }
+  return {series,events};
+}
+const firstReach=(series,goal)=>{if(!goal)return null;for(let t=0;t<series.length;t++)if(series[t]>=goal)return t;return null;};
+
+/* ══════════ 데이터 ══════════ */
+const NOWY=NOW().y;
+const DEFAULT_PLAN=()=>({
+  birthYear:1993,endAge:100,
+  goalAmount:100000000,goalYM:(NOWY+5)+'-12',
+  scenarioPct:20,includeInterest:true,redirectFreed:true,
+  accounts:[],loans:[],yearGoals:{}
+});
+let plan=DEFAULT_PLAN();
+let user=null,loaded=false,saveTimer=null,model=null;
+let view='home',selLoan=null,selYear=NOWY,extraPay=100000;
+
+const planRef=()=>doc(db,'users',user.uid,'settings','assetPlan');
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1600);}
+function scheduleSave(){
+  if(!loaded||!user)return; // 불러오기 전에는 저장하지 않음(빈 화면으로 덮어쓰는 사고 방지)
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    try{await setDoc(planRef(),plan);toast('저장됨');}
+    catch(e){console.error(e);toast('저장 실패 — 인터넷 연결을 확인해주세요');}
+  },500);
+}
+async function loadPlan(){
+  const snap=await getDoc(planRef());
+  const d=snap.exists()?snap.data():{};
+  const base=DEFAULT_PLAN();
+  plan={...base,...d};
+  ['accounts','loans'].forEach(k=>{if(!Array.isArray(plan[k]))plan[k]=[];});
+  if(!plan.yearGoals||typeof plan.yearGoals!=='object')plan.yearGoals={};
+  loaded=true;
+}
+function changed(){scheduleSave();refreshModel();renderSide();renderView();}
+
+/* ══════════ 모델 (시나리오 3개) ══════════ */
+function refreshModel(){
+  const pct=Math.max(0,Math.min(90,num(plan.scenarioPct)))/100;
+  const sims={low:simulate(plan,1-pct),base:simulate(plan,1),high:simulate(plan,1+pct)};
+  const goal=num(plan.goalAmount);
+  const ym=toYM(plan.goalYM),now=NOW();
+  model={
+    sims,goal,pct,
+    nw0:sims.base.series[0],
+    assetsSum:(plan.accounts||[]).reduce((s,a)=>s+num(a.balance),0),
+    debtSum:(plan.loans||[]).reduce((s,l)=>s+num(l.balance),0),
+    deadline:ym?diffMonths(now.y,now.m,ym.y,ym.m):null,
+    arrive:{low:firstReach(sims.low.series,goal),base:firstReach(sims.base.series,goal),high:firstReach(sims.high.series,goal)},
+    growth:{low:sims.low.series[1]-sims.low.series[0],base:sims.base.series[1]-sims.base.series[0],high:sims.high.series[1]-sims.high.series[0]}
+  };
+}
+const arriveLabel=t=>{if(t==null)return '도달 못 함';const n=NOW();const d=addMonths(n.y,n.m,t);return ymStr(d.y,d.m);};
+
+/* ══════════ 화면 이동 ══════════ */
+function go(v){
+  view=v;
+  $$('.view').forEach(e=>e.classList.toggle('active',e.id==='v-'+v));
+  $$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  if(location.hash!=='#'+v)history.replaceState(null,'','#'+v);
+  renderView();window.scrollTo(0,0);
+}
+function renderSide(){
+  if(!model)return;
+  const e=$('#sideNW');e.textContent=won(model.nw0);e.className='nw '+(model.nw0<0?'neg':'');
+}
+function renderView(){
+  if(!model)return;
+  ({home:renderHome,assets:renderAssets,loans:renderLoans,life:renderLife,settings:renderSettings})[view]();
+}
+
+/* ══════════ 목표 로드맵 (첫 화면) ══════════ */
+function chartSVG(){
+  const m=model,now=NOW();
+  const W=680,H=240,L=58,R=668,T=22,B=206;
+  let Tm=Math.max(m.deadline&&m.deadline>0?m.deadline:0,...['low','base','high'].map(k=>m.arrive[k]||0),24)+6;
+  Tm=Math.min(Tm,360);
+  let yMax=Math.max(m.goal*1.1,...['low','base','high'].map(k=>Math.max(...m.sims[k].series.slice(0,Tm+1))),1);
+  let yMin=Math.min(0,...['low','base','high'].map(k=>Math.min(...m.sims[k].series.slice(0,Tm+1))));
+  const X=t=>L+t*(R-L)/Tm, Y=v=>B-(v-yMin)/(yMax-yMin)*(B-T);
+  const col={low:'var(--warn)',base:'var(--accent)',high:'var(--info)'};
+  let g='';
+  // y 눈금
+  for(let i=0;i<=4;i++){const v=yMin+(yMax-yMin)*i/4;g+=`<line x1="${L}" y1="${Y(v)}" x2="${R}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--ink-faint)">${wonShort(v)}</text>`;}
+  // x 눈금(해마다, 간격 자동)
+  const years=Math.ceil(Tm/12);const step=years>14?5:years>7?2:1;
+  for(let y=now.y+1;y<=now.y+years+1;y++){
+    if((y-now.y)%step)continue;
+    const t=(y-now.y)*12+(1-now.m);if(t<=0||t>Tm)continue;
+    g+=`<text x="${X(t)}" y="${H-10}" text-anchor="middle" font-size="11" fill="var(--ink-faint)">${y}</text>`;
+  }
+  // 목표선 + 기한
+  if(m.goal>0&&m.goal<=yMax)g+=`<line x1="${L}" y1="${Y(m.goal)}" x2="${R}" y2="${Y(m.goal)}" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="5 4"/><text x="${R}" y="${Y(m.goal)-5}" text-anchor="end" font-size="11" fill="var(--ink-soft)">목표 ${wonShort(m.goal)}</text>`;
+  if(m.deadline!=null&&m.deadline>0&&m.deadline<=Tm){const x=X(m.deadline);g+=`<line x1="${x}" y1="${T-6}" x2="${x}" y2="${B}" stroke="var(--danger)" stroke-width="1" stroke-dasharray="3 3"/><text x="${x-4}" y="${T-9}" text-anchor="end" font-size="11" fill="var(--danger)">목표 기한 ${plan.goalYM.replace('-','.')}</text>`;}
+  // 시나리오 선 (목표에 도달하면 그 지점에서 끝냄)
+  ['low','base','high'].forEach(k=>{
+    const s=m.sims[k].series,end=m.arrive[k]!=null?Math.min(m.arrive[k],Tm):Tm;
+    let pts=[];for(let t=0;t<=end&&t<s.length;t++)pts.push(X(t).toFixed(1)+','+Y(s[t]).toFixed(1));
+    g+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${col[k]}" stroke-width="2.2" stroke-linejoin="round"/>`;
+    if(m.arrive[k]!=null&&m.arrive[k]<=Tm)g+=`<circle cx="${X(m.arrive[k])}" cy="${Y(s[m.arrive[k]])}" r="4" fill="${col[k]}"><title>${arriveLabel(m.arrive[k])} 도달</title></circle>`;
+  });
+  g+=`<circle cx="${X(0)}" cy="${Y(m.nw0)}" r="4.5" fill="var(--ink)"><title>지금 ${won(m.nw0)}</title></circle>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="시나리오별 순자산 전망 그래프">${g}</svg>`;
+}
+function milestones(){
+  const m=model,now=NOW(),items=[];
+  m.sims.base.events.forEach(e=>{
+    const d=addMonths(now.y,now.m,e.t);
+    if(e.type==='maturity')items.push({t:e.t,txt:`${esc(e.name)} 만기 · 예상 ${won(e.amount)} — 재예치할지 옮길지 정해야 해요`});
+    if(e.type==='payoff')items.push({t:e.t,txt:`${esc(e.name)} 완납${e.pmt>0&&plan.redirectFreed?` · 월 ${won(e.pmt)}을 저축으로 돌릴 수 있어요`:''}`});
+  });
+  if(m.goal>0&&m.nw0<m.goal){
+    [0.25,0.5,0.75].forEach(r=>{
+      const t=firstReach(m.sims.base.series,m.goal*r);
+      if(t!=null&&t>0&&m.sims.base.series[0]<m.goal*r)items.push({t,txt:`순자산 ${wonShort(m.goal*r)} 돌파 (기본 시나리오)`});
+    });
+    if(m.arrive.base!=null)items.push({t:m.arrive.base,txt:`<b>목표 ${wonShort(m.goal)} 도달</b> (기본 시나리오)`});
+  }
+  return items.sort((a,b)=>a.t-b.t).slice(0,9).map(i=>{const d=addMonths(now.y,now.m,i.t);return `<div><span class="d">${ymStr(d.y,d.m)}</span><span>${i.txt}</span></div>`;}).join('');
+}
+function renderHome(){
+  const m=model,el=$('#v-home');
+  const empty=!plan.accounts.length&&!plan.loans.length;
+  const pct=m.goal>0?Math.max(0,Math.min(100,m.nw0/m.goal*100)):0;
+  let msg='',cls='';
+  if(!(m.goal>0)){msg='목표 금액을 입력해주세요.';}
+  else if(m.nw0>=m.goal){msg='이미 목표를 넘었어요. 목표를 더 높여볼까요?';cls='good';}
+  else if(m.arrive.base==null){msg='지금 입력된 저축·대출 정보로는 50년 안에 도달하지 못해요. 월 납입액을 입력했는지 확인해보세요.';cls='bad';}
+  else if(m.deadline!=null&&m.deadline>0){
+    const diff=m.deadline-m.arrive.base;
+    msg=diff>=0?`지금 속도면 ${arriveLabel(m.arrive.base)}에 도달해요. 목표 기한보다 ${diff}개월 빨라요.`:`지금 속도면 ${arriveLabel(m.arrive.base)}에 도달해서, 목표 기한보다 ${-diff}개월 늦어요.`;
+    cls=diff>=0?'good':'bad';
+  }else msg=`지금 속도면 ${arriveLabel(m.arrive.base)}에 도달해요.`;
+  const need=(m.goal>m.nw0&&m.deadline>0)?(m.goal-m.nw0)/m.deadline:null;
+  el.innerHTML=`
+  <div class="vh"><h1>목표 로드맵</h1><p class="muted">내가 목표 자산에 언제 도달하는지, 수입이 줄어도 괜찮은지 한눈에 봐요.</p></div>
+  ${empty?`<div class="card empty"><b>먼저 지금 가진 저축과 대출을 넣어주세요</b>그러면 아래 그래프와 도달 시점이 자동으로 계산돼요.<div class="row gap6 wrap" style="justify-content:center;margin-top:12px"><button class="btn primary" data-act="import">가계부에서 불러오기</button><button class="btn" data-act="add-account">저축·자산 직접 추가</button><button class="btn" data-act="add-loan">대출 직접 추가</button></div></div>`:''}
+  <div class="kpis">
+    <div class="kpi main"><div class="l">순자산</div><div class="v ${m.nw0<0?'neg':''}">${won(m.nw0)}</div></div>
+    <div class="kpi"><div class="l">저축·투자</div><div class="v">${won(m.assetsSum)}</div></div>
+    <div class="kpi"><div class="l">대출 잔액</div><div class="v ${m.debtSum>0?'neg':''}">${m.debtSum>0?'-':''}${won(m.debtSum)}</div></div>
+    <div class="kpi"><div class="l">월 순자산 증가(기본)</div><div class="v ${m.growth.base>0?'pos':''}">${m.growth.base>=0?'+':''}${won(m.growth.base)}</div></div>
+  </div>
+  <div class="goal-grid">
+    <div class="card" style="margin:0">
+      <h2>목표 설정</h2>
+      <div class="row gap6"><div class="field" style="flex:1"><label for="goalAmount">목표 순자산(원)</label><input id="goalAmount" inputmode="numeric" value="${comma(m.goal)}"></div>
+      <div class="field" style="flex:1"><label for="goalYM">목표 기한</label><input id="goalYM" type="month" value="${esc(plan.goalYM)}"></div></div>
+      <div class="bar"><i style="width:${pct}%"></i><b style="left:25%"></b><b style="left:50%"></b><b style="left:75%"></b></div>
+      <div class="row between muted" style="font-size:12px"><span>달성률 ${pct.toFixed(1)}%</span>${need!=null?`<span>기한까지 필요 월 약 ${won(need)}</span>`:''}</div>
+      <div class="note ${cls}">${msg}</div>
+    </div>
+    <div class="card" style="margin:0">
+      <h2>시나리오 가정</h2>
+      <p class="muted" style="font-size:13px;margin:0 0 6px">수입이 <b>±${Math.round(m.pct*100)}%</b> 변하면 저축액이 같은 비율로 변한다고 봐요. 대출 상환액은 의무라서 그대로예요.</p>
+      <p class="muted" style="font-size:12px;margin:0">${plan.redirectFreed?'끝난 대출의 상환액과 만기가 지난 납입액은 저축으로 돌린다고 가정해요.':'끝난 대출의 상환액은 따로 쓴다고 가정해요.'} 가정은 설정에서 바꿔요.</p>
+    </div>
+  </div>
+  <div class="card chart">
+    <h2>순자산 전망</h2>
+    ${chartSVG()}
+    <div class="scn">
+      <div style="background:color-mix(in srgb,var(--warn) 12%,var(--card))"><div class="t"><span class="dot" style="background:var(--warn)"></span>보수 · 수입 ${Math.round(m.pct*100)}% 줄면</div><div class="m">월 ${m.growth.low>=0?'+':''}${won(m.growth.low)}</div><div class="d">${arriveLabel(m.arrive.low)}</div></div>
+      <div style="background:var(--accent-soft)"><div class="t"><span class="dot" style="background:var(--accent)"></span>기본 · 지금 속도</div><div class="m">월 ${m.growth.base>=0?'+':''}${won(m.growth.base)}</div><div class="d">${arriveLabel(m.arrive.base)}</div></div>
+      <div style="background:color-mix(in srgb,var(--info) 12%,var(--card))"><div class="t"><span class="dot" style="background:var(--info)"></span>낙관 · 수입 ${Math.round(m.pct*100)}% 늘면</div><div class="m">월 ${m.growth.high>=0?'+':''}${won(m.growth.high)}</div><div class="d">${arriveLabel(m.arrive.high)}</div></div>
+    </div>
+  </div>
+  <div class="card"><h2>앞으로의 이정표</h2><div class="ms">${milestones()||'<div class="muted">저축·대출 정보와 목표를 입력하면 이정표가 나와요.</div>'}</div></div>`;
+}
+
+/* ══════════ 저축·자산 ══════════ */
+const ACCT_TYPES=['입출금·비상금','적금','예금','ISA','연금','투자','기타'];
+function renderAssets(){
+  const el=$('#v-assets'),A=plan.accounts;
+  const tot=A.reduce((s,a)=>s+num(a.balance),0),dep=A.reduce((s,a)=>s+num(a.monthly),0);
+  el.innerHTML=`
+  <div class="vh row between wrap"><div><h1>저축·자산</h1><p class="muted">상품별 잔액과 월 납입액을 관리해요. 로드맵 계산에 그대로 쓰여요.</p></div>
+    <div class="row gap6"><button class="btn" data-act="import">가계부에서 불러오기</button><button class="btn primary" data-act="add-account">＋ 추가</button></div></div>
+  <div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="kpi main"><div class="l">총 잔액</div><div class="v">${won(tot)}</div></div><div class="kpi"><div class="l">월 납입 합계</div><div class="v">${won(dep)}</div></div></div>
+  <div class="card">
+    ${A.length?`<div class="list-h cols-assets"><span>이름</span><span>잔액</span><span class="hide-m">월 납입</span><span class="hide-m">연 이율</span><span class="hide-m">만기</span><span></span></div>`+A.map(a=>`
+      <div class="list-r cols-assets"><span><b>${esc(a.name)}</b> <span class="chip">${esc(a.type||'기타')}</span></span><span>${won(num(a.balance))}</span><span class="hide-m">${num(a.monthly)?won(num(a.monthly)):'-'}</span><span class="hide-m">${num(a.rate)?num(a.rate)+'%':'-'}</span><span class="hide-m">${a.maturity?esc(a.maturity.replace('-','.')):'-'}</span><button class="btn small" data-act="edit-account" data-id="${esc(a.id)}">수정</button></div>`).join('')
+    :`<div class="empty"><b>등록된 저축·자산이 없어요</b>적금, ISA, 연금처럼 쌓고 있는 것들을 넣어주세요.</div>`}
+  </div>`;
+}
+function accountModal(id){
+  const a=plan.accounts.find(x=>x.id===id)||{id:'ac_'+Date.now(),name:'',type:'적금',balance:0,monthly:0,rate:0,maturity:''};
+  const isNew=!plan.accounts.some(x=>x.id===a.id);
+  openModal({title:isNew?'저축·자산 추가':'저축·자산 수정',
+    fields:[
+      {k:'name',label:'이름',type:'text',ph:'예: 청년 적금'},
+      {k:'type',label:'종류',type:'select',opts:ACCT_TYPES},
+      {k:'balance',label:'현재 잔액(원)',type:'money'},
+      {k:'monthly',label:'월 납입액(원)',type:'money'},
+      {k:'rate',label:'연 이율·수익률(%) — 모르면 비워도 돼요',type:'number'},
+      {k:'maturity',label:'만기 (없으면 비움)',type:'month'}
+    ],values:a,
+    onSave:v=>{
+      if(!v.name.trim()){toast('이름을 입력해주세요');return false;}
+      const o={id:a.id,name:v.name.trim(),type:v.type,balance:num(v.balance),monthly:num(v.monthly),rate:num(v.rate),maturity:v.maturity||''};
+      if(a.src)o.src=a.src;
+      const i=plan.accounts.findIndex(x=>x.id===a.id);
+      if(i>=0)plan.accounts[i]=o;else plan.accounts.push(o);
+      changed();return true;
+    },
+    onDelete:isNew?null:()=>{plan.accounts=plan.accounts.filter(x=>x.id!==a.id);changed();}
+  });
+}
+
+/* ══════════ 대출 ══════════ */
+function renderLoans(){
+  const el=$('#v-loans'),Ls=plan.loans;
+  const tot=Ls.reduce((s,l)=>s+num(l.balance),0),pm=Ls.reduce((s,l)=>s+num(l.monthly),0);
+  if(!selLoan||!Ls.some(l=>l.id===selLoan))selLoan=Ls[0]?Ls[0].id:null;
+  const now=NOW();
+  const rows=Ls.map(l=>{
+    const s=loanSchedule(num(l.balance),num(l.rate),num(l.monthly));
+    const end=s.months!=null?addMonths(now.y,now.m,s.months):null;
+    return {l,s,end};
+  });
+  const cur=rows.find(r=>r.l.id===selLoan);
+  el.innerHTML=`
+  <div class="vh row between wrap"><div><h1>대출</h1><p class="muted">잔액·금리·월 상환액으로 완납 시점과 남은 이자를 계산해요.</p></div>
+    <div class="row gap6"><button class="btn" data-act="import">가계부에서 불러오기</button><button class="btn primary" data-act="add-loan">＋ 추가</button></div></div>
+  <div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="kpi main"><div class="l">총 대출 잔액</div><div class="v ${tot>0?'neg':''}">${won(tot)}</div></div><div class="kpi"><div class="l">월 상환 합계</div><div class="v">${won(pm)}</div></div></div>
+  <div class="card">
+    ${Ls.length?`<div class="list-h cols-loans"><span>대출명</span><span>잔액</span><span class="hide-m">금리</span><span class="hide-m">완납 예상</span><span class="hide-m">남은 이자</span><span></span></div>`+rows.map(r=>`
+      <div class="list-r cols-loans ${r.l.id===selLoan?'sel':''}" data-act="sel-loan" data-id="${esc(r.l.id)}" style="cursor:pointer"><span><b>${esc(r.l.name)}</b><br><span class="faint" style="font-size:12px">월 ${won(num(r.l.monthly))} 상환</span></span><span>${won(num(r.l.balance))}</span><span class="hide-m">${num(r.l.rate)}%</span><span class="hide-m">${r.s.never?'<span class="neg">끝나지 않음</span>':(r.end?ymStr(r.end.y,r.end.m):'-')}</span><span class="hide-m">${r.s.interest!=null?won(r.s.interest):'-'}</span><button class="btn small" data-act="edit-loan" data-id="${esc(r.l.id)}">수정</button></div>`).join('')
+    :`<div class="empty"><b>등록된 대출이 없어요</b>있다면 잔액·금리·월 상환액을 넣어주세요.</div>`}
+  </div>
+  ${cur?simPanel(cur):''}`;
+}
+function simPanel(r){
+  const l=r.l,bal=num(l.balance),rate=num(l.rate),pmt=num(l.monthly),now=NOW();
+  const max=Math.max(500000,Math.round(pmt*2/10000)*10000);
+  if(extraPay>max)extraPay=max;
+  const s0=loanSchedule(bal,rate,pmt),s1=loanSchedule(bal,rate,pmt+extraPay);
+  let res='';
+  if(s0.never&&s1.never)res=`<div class="sim-res" style="grid-template-columns:1fr"><div style="background:color-mix(in srgb,var(--danger) 12%,var(--card))"><div class="l" style="color:var(--danger)">알림</div><div class="v" style="color:var(--danger)">월 상환액이 이자보다 적어서 원금이 줄지 않아요. 상환액을 확인해주세요.</div></div></div>`;
+  else if(s0.never)res=`<div class="sim-res" style="grid-template-columns:1fr"><div><div class="l">추가 상환 효과</div><div class="v">추가 ${won(extraPay)}을 내면 ${arriveFmt(now,s1.months)}에 끝나요.</div></div></div>`;
+  else{
+    const dm=s0.months-s1.months,di=s0.interest-s1.interest;
+    res=`<div class="sim-res"><div><div class="l">완납 시점</div><div class="v">${arriveFmt(now,s0.months)} → ${arriveFmt(now,s1.months)}</div><div class="l">${dm>0?dm+'개월 빨라져요':'변화 없음'}</div></div><div><div class="l">이자 절약</div><div class="v">약 ${won(di)}</div><div class="l">총 이자 ${wonShort(s0.interest)} → ${wonShort(s1.interest)}</div></div></div>`;
+  }
+  return `<div class="card sim"><div class="row between wrap"><h2 style="margin:0">추가 상환 시뮬레이터 · ${esc(l.name)}</h2><span class="muted" style="font-size:12px">월 ${won(pmt)} 상환 중</span></div>
+    <div class="row" style="margin-top:12px"><span class="muted" style="white-space:nowrap">월 추가 상환</span><input type="range" id="extraRange" min="0" max="${max}" step="10000" value="${extraPay}"><b id="extraVal" style="white-space:nowrap">+${won(extraPay)}</b></div>
+    <div id="simRes">${res}</div></div>`;
+}
+const arriveFmt=(now,months)=>{const d=addMonths(now.y,now.m,months);return ymStr(d.y,d.m);};
+function loanModal(id){
+  const l=plan.loans.find(x=>x.id===id)||{id:'ln_'+Date.now(),name:'',balance:0,rate:0,monthly:0};
+  const isNew=!plan.loans.some(x=>x.id===l.id);
+  openModal({title:isNew?'대출 추가':'대출 수정',
+    fields:[
+      {k:'name',label:'대출 이름',type:'text',ph:'예: 주택담보대출'},
+      {k:'balance',label:'현재 잔액(원)',type:'money'},
+      {k:'rate',label:'연 금리(%)',type:'number'},
+      {k:'monthly',label:'월 상환액(원) — 원리금 합계',type:'money'}
+    ],values:l,
+    onSave:v=>{
+      if(!v.name.trim()){toast('이름을 입력해주세요');return false;}
+      const o={id:l.id,name:v.name.trim(),balance:num(v.balance),rate:num(v.rate),monthly:num(v.monthly)};
+      if(l.src)o.src=l.src;
+      const i=plan.loans.findIndex(x=>x.id===l.id);
+      if(i>=0)plan.loans[i]=o;else plan.loans.push(o);
+      selLoan=l.id;changed();return true;
+    },
+    onDelete:isNew?null:()=>{plan.loans=plan.loans.filter(x=>x.id!==l.id);changed();}
+  });
+}
+
+/* ══════════ 100세 로드맵 ══════════ */
+const yg=y=>plan.yearGoals[y]||{};
+const ygHas=y=>{const g=yg(y);return !!(g.goal||g.asset||g.note);};
+function renderLife(){
+  const el=$('#v-life'),by=num(plan.birthYear),endAge=Math.max(50,Math.min(120,num(plan.endAge)||100));
+  const curAge=NOWY-by,left=Math.max(0,endAge-curAge);
+  if(selYear<by||selYear>by+endAge)selYear=Math.min(Math.max(NOWY,by),by+endAge);
+  // 나이 격자 (10칸씩)
+  let grid='';
+  const rows=Math.floor(endAge/10)+1;
+  for(let r=0;r<rows;r++){
+    grid+=`<div class="dl">${r*10}대</div>`;
+    for(let c=0;c<10;c++){
+      const age=r*10+c;
+      if(age>endAge){grid+='<div class="cell empty-c"></div>';continue;}
+      const y=by+age,g=yg(y);
+      const cls=['cell',y<NOWY?'past':'',y===NOWY?'now':'',y===selYear?'sel':'',ygHas(y)?'has':'',g.done?'done':''].filter(Boolean).join(' ');
+      grid+=`<button class="${cls}" data-act="pick-year" data-y="${y}" title="${y}년 · ${age}세${g.goal?' — '+esc(g.goal):''}">${age}</button>`;
+    }
+  }
+  const years=Object.keys(plan.yearGoals).map(Number).filter(y=>ygHas(y)).sort((a,b)=>a-b);
+  const g=yg(selYear),age=selYear-by;
+  const proj=(()=>{
+    if(!model)return null;
+    const t=(selYear-NOW().y)*12+(12-NOW().m);
+    if(t<=0||t>15*12||t>=model.sims.base.series.length)return null;
+    return model.sims.base.series[t];
+  })();
+  el.innerHTML=`
+  <div class="vh"><h1>100세 로드맵</h1><p class="muted">${by}년생 · 올해 ${curAge}세 · ${endAge}세까지 ${left}년. 해마다 목표를 적어두고, 지나간 해는 회고를 남겨요.</p></div>
+  <div class="life-top">
+    <div class="card" style="margin:0">
+      <h2>나의 ${endAge}년</h2>
+      <div class="lg">${grid}</div>
+      <div class="legend"><span><span class="dot" style="background:var(--accent-soft)"></span>지난 해</span><span><span class="dot" style="background:var(--accent)"></span>올해</span><span><span class="dot" style="background:var(--warn)"></span>목표 있음</span></div>
+    </div>
+    <div class="card" style="margin:0">
+      <div class="row between"><h2 style="margin:0">${selYear}년 · ${age}세</h2><div class="row gap6"><button class="btn small" data-act="year-prev">‹</button><button class="btn small" data-act="year-now">올해</button><button class="btn small" data-act="year-next">›</button></div></div>
+      <div class="field" style="margin-top:10px"><label for="yGoal">이 해의 목표</label><textarea id="yGoal" placeholder="예: 신용대출 정리, 비상금 1천만원">${esc(g.goal||'')}</textarea></div>
+      <div class="field" style="margin-top:8px"><label for="yAsset">이 해 말 목표 순자산(원, 선택)</label><input id="yAsset" inputmode="numeric" value="${comma(num(g.asset))}"></div>
+      ${proj!=null?`<div class="muted" style="font-size:12px;margin-top:4px">지금 속도 예상 ${won(proj)} <span class="faint">(단순 계산)</span></div>`:''}
+      <div class="field" style="margin-top:8px"><label for="yNote">회고·메모</label><textarea id="yNote" style="min-height:48px" placeholder="한 해를 보내고 한 줄 남겨요">${esc(g.note||'')}</textarea></div>
+      <div class="row between wrap" style="margin-top:10px"><label class="check"><input type="checkbox" id="yDone" ${g.done?'checked':''}> 달성했어요</label>
+        ${num(g.asset)>0?`<button class="btn small" data-act="year-as-goal">이 금액을 메인 목표로</button>`:''}</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px"><h2>목표를 적어둔 해</h2>
+    ${years.length?`<div class="yr-list">${years.map(y=>{const q=yg(y);return `<div class="${y===selYear?'sel':''}" data-act="pick-year" data-y="${y}"><span class="y">${y} · ${y-by}세</span><span class="g">${q.done?'✅ ':''}${esc(q.goal||'')||'<span class="faint">(목표 금액만 있음)</span>'}${num(q.asset)>0?` <span class="chip">${wonShort(num(q.asset))}</span>`:''}</span></div>`;}).join('')}</div>`
+    :'<div class="muted" style="font-size:13px">아직 적어둔 목표가 없어요. 위에서 연도를 골라 첫 목표를 적어보세요.</div>'}
+  </div>`;
+}
+function saveYear(){
+  const goal=$('#yGoal').value,asset=num($('#yAsset').value),note=$('#yNote').value,done=$('#yDone').checked;
+  if(!goal.trim()&&!asset&&!note.trim()&&!done)delete plan.yearGoals[selYear];
+  else plan.yearGoals[selYear]={goal,asset,note,done};
+  scheduleSave();
+  // 격자·목록의 표시만 가볍게 갱신 (입력 중 포커스가 끊기지 않게 전체를 다시 그리지 않음)
+  const cell=$(`.cell[data-y="${selYear}"]`);
+  if(cell){cell.classList.toggle('has',ygHas(selYear));cell.classList.toggle('done',!!done);}
+}
+
+/* ══════════ 설정 ══════════ */
+function renderSettings(){
+  const el=$('#v-settings');
+  el.innerHTML=`
+  <div class="vh"><h1>설정</h1><p class="muted">계산에 쓰이는 가정들이에요. 바꾸면 로드맵이 바로 다시 계산돼요.</p></div>
+  <div class="card"><h2>기본 정보</h2>
+    <div class="row gap6 wrap">
+      <div class="field" style="flex:1;min-width:140px"><label for="sBirth">출생연도</label><input id="sBirth" type="number" min="1900" max="2100" value="${esc(plan.birthYear)}"></div>
+      <div class="field" style="flex:1;min-width:140px"><label for="sEnd">로드맵 기준 나이</label><input id="sEnd" type="number" min="50" max="120" value="${esc(plan.endAge)}"></div>
+    </div></div>
+  <div class="card"><h2>시나리오 가정</h2>
+    <div class="field" style="max-width:260px"><label for="sPct">수입 변동 폭(±%)</label><input id="sPct" type="number" min="0" max="90" value="${esc(plan.scenarioPct)}"></div>
+    <label class="check" style="margin-top:12px"><input type="checkbox" id="sInt" ${plan.includeInterest?'checked':''}> 저축·투자 상품의 이자(수익률)를 계산에 포함</label><br>
+    <label class="check" style="margin-top:8px"><input type="checkbox" id="sRedir" ${plan.redirectFreed?'checked':''}> 끝난 대출의 상환액·만기 지난 납입액을 저축으로 돌린다고 가정</label>
+  </div>
+  <div class="card"><h2>데이터</h2>
+    <div class="row gap6 wrap"><button class="btn" data-act="import">가계부에서 불러오기</button><button class="btn" data-act="export">내 데이터 내려받기(JSON)</button></div>
+    <p class="muted" style="font-size:12px;margin:10px 0 0">입력한 내용은 플래너와 같은 계정에 저장돼요. 다른 컴퓨터·폰에서 로그인하면 똑같이 보여요.</p>
+  </div>`;
+}
+
+/* ══════════ 가계부에서 불러오기 ══════════ */
+async function importFromPlanner(){
+  try{
+    toast('가계부를 읽는 중…');
+    const uid=user.uid;
+    const [lnS,sbS,mnS]=await Promise.all([
+      getDoc(doc(db,'users',uid,'settings','loans')),
+      getDoc(doc(db,'users',uid,'settings','savingBaseline')),
+      getDocs(collection(db,'users',uid,'money'))
+    ]);
+    const totals={};
+    mnS.forEach(d=>(d.data().items||[]).forEach(it=>{if(it.type==='out'&&it.isSaving){const t=it.tag||'저축';totals[t]=(totals[t]||0)+(it.amount||0);}}));
+    const base=sbS.exists()?(sbS.data().items||{}):{};
+    const tags=[...new Set([...Object.keys(base),...Object.keys(totals)])];
+    const loans=lnS.exists()?(lnS.data().items||[]):[];
+    const newAccts=tags.filter(t=>!plan.accounts.some(a=>a.src==='tag:'+t));
+    const newLoans=loans.filter(l=>!plan.loans.some(x=>x.src==='loan:'+l.id));
+    if(!newAccts.length&&!newLoans.length){toast('새로 가져올 항목이 없어요');return;}
+    if(!confirm(`저축 상품 ${newAccts.length}개, 대출 ${newLoans.length}개를 가져올까요?\n\n가계부 기록 기준이라 실제 통장과 다를 수 있어요. 가져온 뒤 잔액과 월 납입·상환액을 확인해서 고쳐주세요.`))return;
+    newAccts.forEach(t=>plan.accounts.push({id:'ac_'+Date.now()+Math.random().toString(36).slice(2,6),name:t,type:'적금',balance:(num(base[t])||0)+(totals[t]||0),monthly:0,rate:0,maturity:'',src:'tag:'+t}));
+    newLoans.forEach(l=>plan.loans.push({id:'ln_'+Date.now()+Math.random().toString(36).slice(2,6),name:l.name||'대출',balance:num(l.principal),rate:num(l.rate),monthly:0,src:'loan:'+l.id}));
+    changed();
+    toast('가져왔어요 — 월 납입·상환액을 입력해주세요');
+  }catch(e){console.error(e);toast('불러오기에 실패했어요');}
+}
+
+/* ══════════ 모달 ══════════ */
+function openModal({title,fields,values,onSave,onDelete}){
+  const m=$('#modal');
+  m.innerHTML=`<h2>${esc(title)}</h2><form id="mForm">`+fields.map(f=>{
+    const v=values[f.k];
+    let inp='';
+    if(f.type==='select')inp=`<select name="${f.k}">${f.opts.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+    else if(f.type==='month')inp=`<input name="${f.k}" type="month" value="${esc(v||'')}">`;
+    else if(f.type==='money')inp=`<input name="${f.k}" inputmode="numeric" value="${comma(num(v))}" placeholder="0">`;
+    else if(f.type==='number')inp=`<input name="${f.k}" inputmode="decimal" value="${v?esc(v):''}" placeholder="0">`;
+    else inp=`<input name="${f.k}" type="text" value="${esc(v||'')}" placeholder="${esc(f.ph||'')}">`;
+    return `<div class="f"><label class="muted" style="font-size:12px;display:block;margin-bottom:3px">${esc(f.label)}</label>${inp}</div>`;
+  }).join('')+`<div class="btns">${onDelete?'<button type="button" class="btn danger" id="mDel" style="margin-right:auto">삭제</button>':''}<button type="button" class="btn" id="mCancel">취소</button><button type="submit" class="btn primary">저장</button></div></form>`;
+  $('#modalBg').classList.add('show');
+  $$('input[inputmode="numeric"]',m).forEach(i=>i.addEventListener('blur',()=>{i.value=comma(num(i.value));}));
+  const close=()=>$('#modalBg').classList.remove('show');
+  $('#mCancel').onclick=close;
+  if(onDelete)$('#mDel').onclick=()=>{if(confirm('삭제할까요?')){onDelete();close();}};
+  $('#mForm').onsubmit=e=>{
+    e.preventDefault();
+    const fd=new FormData(e.target),v={};
+    fields.forEach(f=>v[f.k]=fd.get(f.k));
+    if(onSave(v)!==false)close();
+  };
+  setTimeout(()=>{const first=$('#mForm input,#mForm select');if(first)first.focus();},30);
+}
+$('#modalBg').addEventListener('mousedown',e=>{if(e.target.id==='modalBg')e.target.classList.remove('show');});
+
+/* ══════════ 이벤트 연결 ══════════ */
+document.addEventListener('click',e=>{
+  const nav=e.target.closest('[data-view]');
+  if(nav){go(nav.dataset.view);return;}
+  const a=e.target.closest('[data-act]');
+  if(!a)return;
+  const act=a.dataset.act,id=a.dataset.id;
+  if(act==='add-account')accountModal();
+  else if(act==='edit-account'){e.stopPropagation();accountModal(id);}
+  else if(act==='add-loan')loanModal();
+  else if(act==='edit-loan'){e.stopPropagation();loanModal(id);}
+  else if(act==='sel-loan'){selLoan=id;renderLoans();}
+  else if(act==='import')importFromPlanner();
+  else if(act==='export'){
+    const blob=new Blob([JSON.stringify(plan,null,1)],{type:'application/json'});
+    const l=document.createElement('a');l.href=URL.createObjectURL(blob);l.download='자산관리백업_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.json';
+    document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(l.href),1500);
+  }
+  else if(act==='pick-year'){selYear=+a.dataset.y;renderLife();}
+  else if(act==='year-prev'){selYear--;renderLife();}
+  else if(act==='year-next'){selYear++;renderLife();}
+  else if(act==='year-now'){selYear=NOWY;renderLife();}
+  else if(act==='year-as-goal'){
+    const g=yg(selYear);plan.goalAmount=num(g.asset);plan.goalYM=selYear+'-12';
+    changed();toast('메인 목표로 설정했어요 (로드맵에서 확인)');
+  }
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='extraRange'){
+    extraPay=+t.value;
+    const pm=plan.loans.find(l=>l.id===selLoan);
+    if(pm){const tmp=document.createElement('div');tmp.innerHTML=simPanel({l:pm});$('#simRes').innerHTML=$('#simRes',tmp).innerHTML;$('#extraVal').textContent='+'+won(extraPay);}
+  }
+  else if(t.id==='yGoal'||t.id==='yAsset'||t.id==='yNote')saveYear();
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='goalAmount'){plan.goalAmount=num(t.value);changed();}
+  else if(t.id==='goalYM'){plan.goalYM=t.value;changed();}
+  else if(t.id==='yDone'){saveYear();renderLife();}
+  else if(t.id==='yAsset'){t.value=comma(num(t.value));renderLife();}
+  else if(t.id==='sBirth'){const v=Math.round(num(t.value));if(v>=1900&&v<=2100){plan.birthYear=v;changed();}}
+  else if(t.id==='sEnd'){const v=Math.round(num(t.value));if(v>=50&&v<=120){plan.endAge=v;changed();}}
+  else if(t.id==='sPct'){plan.scenarioPct=Math.max(0,Math.min(90,num(t.value)));changed();}
+  else if(t.id==='sInt'){plan.includeInterest=t.checked;changed();}
+  else if(t.id==='sRedir'){plan.redirectFreed=t.checked;changed();}
+});
+document.addEventListener('focusout',e=>{if(e.target.id==='goalAmount')e.target.value=comma(num(e.target.value));});
+window.addEventListener('hashchange',()=>{const v=location.hash.slice(1);if(['home','assets','loans','life','settings'].includes(v)&&v!==view)go(v);});
+
+/* ══════════ Ctrl+S 저장 ══════════ */
+// 평소엔 입력하면 자동으로 저장되지만, Ctrl+S(맥은 Cmd+S)를 누르면 기다리지 않고 바로 저장함. 브라우저의 "페이지 저장" 창은 뜨지 않게 막음.
+async function saveNow(){
+  if(!user||!loaded){toast('아직 불러오는 중이에요');return;}
+  clearTimeout(saveTimer);
+  try{await setDoc(planRef(),plan);toast('저장됨 (Ctrl+S)');}
+  catch(e){console.error(e);toast('저장 실패 — 인터넷 연결을 확인해주세요');}
+}
+window.addEventListener('keydown',async e=>{
+  if(e.isComposing||e.keyCode===229)return; // 한글 입력 조합 중이면 무시
+  if(!((e.ctrlKey||e.metaKey)&&!e.altKey&&(e.key==='s'||e.key==='S')))return;
+  e.preventDefault();e.stopPropagation();
+  if($('#modalBg').classList.contains('show')){const b=$('#mForm button[type="submit"]');if(b)b.click();} // 열려 있는 입력 창은 저장 버튼을 누른 것처럼
+  const a=document.activeElement;
+  if(a&&a!==document.body&&['INPUT','TEXTAREA','SELECT'].includes(a.tagName)&&!$('#modalBg').classList.contains('show')){a.dispatchEvent(new Event('change',{bubbles:true}));a.blur();} // 입력 중이던 칸의 내용을 확정
+  if(view==='life'&&$('#yGoal'))saveYear();
+  await new Promise(r=>setTimeout(r,0)); // 위 변경이 반영된 뒤에 저장
+  await saveNow();
+},{capture:true});
+
+/* ══════════ 로그인 ══════════ */
+$('#loginBtn').onclick=async()=>{try{await signInWithPopup(auth,provider);}catch(e){alert('로그인 실패: '+e.message);}};
+$('#logoutBtn').onclick=()=>signOut(auth);
+
+// 다른 컴퓨터에서 고친 내용 따라가기: 창으로 돌아올 때(2분 이상 지났으면) 다시 읽음. 입력 중이거나 창이 열려 있으면 건너뜀.
+let hiddenAt=0;
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState==='hidden'){hiddenAt=Date.now();return;}
+  if(!user||!loaded||!hiddenAt||Date.now()-hiddenAt<120000)return;
+  const a=document.activeElement;
+  if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'))return;
+  if($('#modalBg').classList.contains('show'))return;
+  try{await loadPlan();refreshModel();renderSide();renderView();}catch(e){console.warn(e);}
+  hiddenAt=0;
+});
+
+onAuthStateChanged(auth,async u=>{
+  user=u;
+  if(!u){loaded=false;$('#appWrap').classList.add('hide');$('#bottomNav').style.display='none';$('#loginWrap').classList.remove('hide');return;}
+  $('#loginWrap').classList.add('hide');
+  try{await loadPlan();}
+  catch(e){console.error(e);alert('데이터를 불러오지 못했어요. 저장된 내용은 안전해요. 새로고침해주세요.');return;} // 불러오기 실패 시 저장이 막힌 채로 멈춤
+  $('#appWrap').classList.remove('hide');
+  $('#bottomNav').style.display='';
+  refreshModel();renderSide();
+  const v=location.hash.slice(1);
+  go(['home','assets','loans','life','settings'].includes(v)?v:'home');
+});
+
+// 테스트용으로 계산 함수를 바깥에서 쓸 수 있게 노출
+window.__asset={loanSchedule,simulate,firstReach,addMonths,diffMonths,toYM,num,won,wonShort};
+</script>
+</body>
+</html>
