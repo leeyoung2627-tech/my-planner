@@ -590,37 +590,48 @@ function lifeParams(){
   const startAge=showPast?0:Math.max(0,Math.min(curAge,endInternal));
   return {by,endAge,off,curAge,endInternal,startAge};
 }
-const SN={GAP:34,PAD:28,CARD_W:124,CARD_H:84,LANE_GAP:10,STEM:22,LABEL0:50,LABEL:30,BOTTOM:22,R:24};
-// 화면 너비에 맞게 줄 바꿈(꺾임) 위치와 카드 자리를 계산. 한 줄에 칸이 자동으로 정해지고, 줄마다 방향이 번갈아 바뀜(오른쪽→왼쪽→…).
-// 가까운 나이끼리 카드가 겹치지 않게, 카드를 줄 아래로 서로 다른 길이로 매달아 층(lane)을 나눔.
+const SN={GAP:34,PAD:28,CARD_W:124,CARD_H:84,STEM:22,LABEL0:50,LABEL:30,BOTTOM:22,R:24};
+// 화면 너비에 맞게 줄 바꿈(꺾임) 위치와 카드 자리를 계산.
+// 메모가 있는 나이는 카드 폭만큼 줄 위에서 자리를 더 차지해서, 카드가 아래로 쌓이지 않고 오른쪽으로 나란히 놓임.
+// 각 나이 점은 자기 카드의 왼쪽 위 모서리 바로 위에 있어서 어느 나이의 메모인지 바로 보임. 줄마다 방향이 번갈아 바뀜(→ ← →).
 function snakeLayout(W,startAge,endAge,hasCard){
-  const {GAP,PAD,CARD_W,CARD_H,LANE_GAP,STEM,LABEL0,LABEL,BOTTOM}=SN;
-  const N=endAge-startAge+1;
-  const perRow=Math.max(2,Math.floor((W-2*PAD)/GAP)+1);
-  const step=(W-2*PAD)/(perRow-1);
-  const rows=Math.ceil(N/perRow);
-  const pts=[];
-  for(let i=0;i<N;i++){const r=Math.floor(i/perRow),c=i%perRow;pts.push({age:startAge+i,row:r,x:PAD+(r%2===0?c:perRow-1-c)*step});}
-  const rowInfo=[];let top=0;
-  for(let r=0;r<rows;r++){
-    const items=pts.filter(p=>p.row===r&&hasCard(p.age)).sort((a,b)=>a.x-b.x);
-    const lastRight=[],placed=[];
-    items.forEach(p=>{
-      const left=Math.max(4,Math.min(W-CARD_W-4,p.x-CARD_W/2));
-      let lane=0;while(lane<lastRight.length&&left<lastRight[lane]+8)lane++;
-      lastRight[lane]=left+CARD_W;
-      placed.push({age:p.age,left,lane,tickX:p.x});
-    });
-    const lanes=lastRight.length;
-    const lineY=top+(r===0?LABEL0:LABEL);
-    const h=(r===0?LABEL0:LABEL)+(lanes?STEM+lanes*(CARD_H+LANE_GAP):16)+BOTTOM;
-    rowInfo.push({top,lineY,lanes,h,placed});
-    top+=h;
+  const {GAP,PAD,CARD_W,CARD_H,STEM,LABEL0,LABEL,BOTTOM}=SN;
+  const SLOT_CARD=CARD_W+10,TICK_IN=16;
+  const avail=W-2*PAD;
+  // 1) 나이를 줄 단위로 나눔 (메모 있는 나이는 넓은 칸, 없는 나이는 좁은 칸)
+  const rowsAges=[];let curRow=[],sum=0;
+  for(let a=startAge;a<=endAge;a++){
+    const w=hasCard(a)?SLOT_CARD:GAP;
+    if(curRow.length&&sum+w>avail){rowsAges.push(curRow);curRow=[];sum=0;}
+    curRow.push({a,w});sum+=w;
   }
-  pts.forEach(p=>{p.y=rowInfo[p.row].lineY;});
-  const cards=[];
-  rowInfo.forEach(ri=>ri.placed.forEach(c=>cards.push({age:c.age,left:c.left,top:ri.lineY+SN.STEM+c.lane*(CARD_H+LANE_GAP),tickX:c.tickX,lineY:ri.lineY,lane:c.lane})));
-  return {pts,rowInfo,cards,H:top,perRow,step,rows};
+  if(curRow.length)rowsAges.push(curRow);
+  const rows=rowsAges.length;
+  const pts=[],cards=[],rowInfo=[];let top=0,perRow=0;
+  rowsAges.forEach((items,r)=>{
+    perRow=Math.max(perRow,items.length);
+    const sumW=items.reduce((t,i)=>t+i.w,0);
+    const extra=r<rows-1?(avail-sumW)/items.length:0; // 마지막 줄 말고는 줄 끝까지 꽉 채워서 꺾이는 곳에서 이어지게
+    const anyCard=items.some(i=>hasCard(i.a));
+    const lab=r===0?LABEL0:LABEL;
+    const lineY=top+lab;
+    let cum=0;
+    items.forEach(it=>{
+      const w=it.w+extra;
+      const slotLeft=r%2===0?PAD+cum:PAD+avail-cum-w;
+      cum+=w;
+      if(hasCard(it.a)){
+        const left=slotLeft+(w-CARD_W)/2,tx=left+TICK_IN;
+        pts.push({age:it.a,row:r,x:tx,y:lineY});
+        cards.push({age:it.a,left,top:lineY+STEM,tickX:tx,lineY,lane:0});
+      }else pts.push({age:it.a,row:r,x:slotLeft+w/2,y:lineY});
+    });
+    const h=lab+(anyCard?STEM+CARD_H:16)+BOTTOM;
+    rowInfo.push({top,lineY,lanes:anyCard?1:0,h});
+    top+=h;
+  });
+  pts.sort((x,y)=>x.age-y.age);
+  return {pts,rowInfo,cards,H:top,perRow,rows};
 }
 function roundedPath(v,R){
   let d='M'+v[0][0]+','+v[0][1];
@@ -666,7 +677,7 @@ function buildSnake(){
   let svg=`<path d="${roundedPath(verts,R)}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
   const end=verts[verts.length-1];
   svg+=`<path d="M${end[0]-dir*9},${end[1]-6} L${end[0]},${end[1]} L${end[0]-dir*9},${end[1]+6}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
-  L.cards.forEach(c=>{const sx=Math.max(c.left+10,Math.min(c.left+CARD_W-10,c.tickX));svg+=`<line x1="${c.tickX}" y1="${c.lineY+6}" x2="${sx}" y2="${c.top}" stroke="var(--ink-faint)" stroke-width="1.5"/>`;});
+  L.cards.forEach(c=>{svg+=`<line x1="${c.tickX}" y1="${c.lineY+6}" x2="${c.tickX}" y2="${c.top}" stroke="var(--ink-faint)" stroke-width="1.5"/>`;});
   let html=`<svg class="sn-svg" width="${W}" height="${L.H}" viewBox="0 0 ${W} ${L.H}" aria-hidden="true">${svg}</svg>`;
   L.pts.forEach(p=>{
     const year=by+p.age,has=ygHas(year),now=year===NOWY;
