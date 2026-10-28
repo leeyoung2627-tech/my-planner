@@ -335,6 +335,7 @@ body{opacity:0;transition:opacity .25s ease}
 .stats-grand-total{text-align:center;font-size:12px;color:#666;background:#f4f4f4;border-radius:10px;padding:8px 0;margin-bottom:14px}
 .stats-grand-total b{color:var(--accent);font-size:14px}
 .stats-section-title{font-size:12.5px;font-weight:700;color:#333;margin:4px 0 10px;display:flex;align-items:center;gap:5px}
+.stats-note{font-size:11.5px;color:var(--text-faint);margin-top:6px;line-height:1.5}
 .stats-section-divider{border-top:1px dashed #ddd;margin:18px 0}
 /* 고정비 */
 .fixed-section-title{font-size:12px;font-weight:700;color:#555;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid #eee}
@@ -7113,7 +7114,7 @@ function renderTagLimits(){
   Object.keys(moneyData).forEach(k=>{
     if(!k.startsWith(prefix))return;
     (moneyData[k]||[]).forEach(it=>{
-      if(spendKind(it)!=='spend')return; // 카드값 결제·엄마 카드·저축은 한도 계산에서 제외
+      if(spendKind(it)==='cardBill')return; // 카드값 결제만 제외 (태그에 직접 한도를 걸었다면 그 태그의 지출은 그대로 셈)
       const t=it.tag||'';
       spent[t]=(spent[t]||0)+it.amount;
     });
@@ -7346,7 +7347,7 @@ function buildStatsBlock(entries,tagItems,total,idPrefix,m,opts){
           <div class="pie-legend-row" onclick="toggleTagDetail('${idPrefix}-${idx}',this)">
             <div style="display:flex;align-items:center">
               <div class="pie-legend-dot" style="background:${getTagColor(tag)}"></div>
-              <span>${escapeHtml(tag)}</span>
+              <span>${escapeHtml(tag)}</span>${(opts.badges&&opts.badges[tag])?`<span style="font-size:10px;margin-left:6px;color:var(--text-faint)">${escapeHtml(opts.badges[tag])}</span>`:''}
             </div>
             <div style="display:flex;gap:8px;color:#666;align-items:center">
               <span>${total>0?Math.round(amt/total*100):0}%</span>
@@ -7364,15 +7365,21 @@ function renderMoneyStats(){
   const y=statsCur.getFullYear(),m=statsCur.getMonth()+1;
   const mKey=`${y}-${m}`;
   // 해당 월 데이터 집계: 고정비(태그='고정비') / 고정비 제외로 나눠서 집계
+  // 돈 쓴 기록이 있는 태그는 전부 보여줌 (엄마가 쓴 내 카드·저축 표시한 태그 포함). 카드값 결제만 따로 "참고"로 빼서 보여줌(카드로 쓴 금액이 이미 태그별로 들어 있어서 또 더하면 두 번 세게 되니까).
   const tagMapNF={},tagItemsNF={};let totalNF=0;
   const nameMapFX={},nameItemsFX={};let totalFX=0;
+  const tagKind={};            // 태그별: 일반 지출이 있는지 / 저축뿐인지
+  const billItems=[];let totalBill=0,momTot=0,saveTot=0;
   Object.keys(moneyData).sort().forEach(k=>{
     if(!k.startsWith(mKey+'-'))return;
     const day=k.split('-')[2];
     moneyData[k].forEach(i=>{
       if(i.type!=='out')return;
-      if(spendKind(i)!=='spend')return; // 카드값 결제·엄마 카드·저축은 지출 통계에서 제외
+      const kind=spendKind(i);
+      if(kind==='cardBill'){billItems.push({day,memo:i.name||'카드값 결제',amount:i.amount});totalBill+=i.amount;return;}
       const t=i.tag||'(미분류)';
+      if(kind==='mom')momTot+=i.amount;
+      if(kind==='saving')saveTot+=i.amount;
       if(t==='고정비'){
         const nk=i.name||'(이름없음)';
         nameMapFX[nk]=(nameMapFX[nk]||0)+i.amount;
@@ -7384,6 +7391,8 @@ function renderMoneyStats(){
         if(!tagItemsNF[t])tagItemsNF[t]=[];
         tagItemsNF[t].push({day,memo:i.name||'',amount:i.amount});
         totalNF+=i.amount;
+        const tk=tagKind[t]||(tagKind[t]={other:false,saving:false});
+        if(kind==='saving')tk.saving=true;else tk.other=true;
       }
     });
   });
@@ -7392,18 +7401,37 @@ function renderMoneyStats(){
   // 상세 내역은 날짜(일) 순서대로 정렬
   Object.values(tagItemsNF).forEach(arr=>arr.sort((a,b)=>parseInt(a.day)-parseInt(b.day)));
   Object.values(nameItemsFX).forEach(arr=>arr.sort((a,b)=>parseInt(a.day)-parseInt(b.day)));
+  billItems.sort((a,b)=>parseInt(a.day)-parseInt(b.day));
+  // 태그 옆에 붙는 작은 꼬리표
+  const badges={};
+  Object.keys(tagKind).forEach(t=>{
+    if(t===MOM_SPEND_TAG)badges[t]='내 지출 아님';
+    else if(tagKind[t].saving&&!tagKind[t].other)badges[t]='저축';
+  });
+  const noteParts=[];
+  if(momTot>0)noteParts.push(`엄마가 쓴 내 카드 ${momTot.toLocaleString()}원`);
+  if(saveTot>0)noteParts.push(`저축 ${saveTot.toLocaleString()}원`);
+  const noteHtml=noteParts.length?`<div class="stats-note">이 합계에는 ${noteParts.join(' · ')}이 들어 있어요. (가계부 내역 탭의 "월 지출"에서는 빠지는 항목이에요)</div>`:'';
+  const billHtml=billItems.length?`
+    <div class="stats-section-divider"></div>
+    <div class="stats-section-title">💳 카드값 결제 (참고)</div>
+    <div class="pie-legend">${billItems.map(it=>`<div class="tag-detail-item" style="padding:6px 4px"><span>${m}월 ${it.day}일 · ${escapeHtml(it.memo)}</span><span>${it.amount.toLocaleString()}원</span></div>`).join('')}</div>
+    <div class="pie-total">카드값 결제 합계 ${totalBill.toLocaleString()}원</div>
+    <div class="stats-note">카드로 쓴 금액은 위의 태그별 지출에 이미 들어 있어서, 카드값 결제는 총 지출에 또 더하지 않았어요.</div>`:'';
   el.innerHTML=`
     <div class="stats-month-nav">
       <button onclick="statsMove(-1)">‹</button>
       <span>${y}년 ${m}월 지출 통계</span>
       <button onclick="statsMove(1)">›</button>
     </div>
-    ${buildStatsBlock(entriesNF,tagItemsNF,totalNF,'nf',m,{showPie:true,totalLabel:'고정비 제외 총 지출'})}
+    ${buildStatsBlock(entriesNF,tagItemsNF,totalNF,'nf',m,{showPie:true,totalLabel:'고정비 제외 총 지출',badges})}
+    ${noteHtml}
 
     <div class="stats-section-divider"></div>
 
     <div class="stats-section-title">📌 고정비</div>
     ${buildStatsBlock(entriesFX,nameItemsFX,totalFX,'fx',m,{showPie:false,totalLabel:'고정비 총 지출'})}
+    ${billHtml}
   `;
 }
 window.statsMove=function(dir){
