@@ -465,10 +465,10 @@ body{opacity:0;transition:opacity .25s ease}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 
 /* 날짜 칸 2배 높이 */
-.day-cell{height:128px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:transparent}
+.day-cell{height:120px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden;background:transparent}
 .dn{color:var(--text-sub);font-weight:500}
-.day-cell-events{display:flex;flex-direction:column;gap:2px;width:100%;align-items:stretch;margin-top:2px;overflow:hidden}
-.day-cell-ev{font-size:11px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:2px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0;cursor:grab}
+.day-cell-events{display:flex;flex-direction:column;gap:1.5px;width:100%;align-items:stretch;margin-top:2px;overflow:hidden}
+.day-cell-ev{font-size:10.5px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:1.5px 4.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.4;flex-shrink:0;cursor:grab}
 .day-cell-ev.dragging{opacity:.4}
 /* 일정 글자를 가로로 살짝 납작하게(88%): 칸 폭은 그대로인데 글자가 더 많이 들어감. 숫자 0.88을 바꾸면 납작한 정도가 바뀜 (1이면 원래대로) */
 .day-cell-ev .ev-flat{display:block;width:calc(100% / 0.88);transform:scaleX(0.88);transform-origin:left center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
