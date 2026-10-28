@@ -129,13 +129,14 @@ body{opacity:0;transition:opacity .25s ease}
 .diary-save-hint{font-size:10.5px;color:#777;text-shadow:0 1px 2px rgba(255,255,255,.6)}
 .diary-save-btn{padding:6px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-family:inherit}
 /* 앱 레이아웃 */
-.app{display:grid;grid-template-columns:1000px 450px 215px 64px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;box-shadow:none}
+.app{display:grid;grid-template-columns:1000px 450px 215px 72px;align-items:start;gap:20px;min-height:calc(100vh - 230px);border:none;border-radius:0;overflow:visible;background:transparent;box-shadow:none}
 
 /* 노트 버튼 */
 .note-buttons{display:flex;flex-direction:column;gap:10px;z-index:1}
-.note-btn{width:64px;height:64px;background:var(--accent,#1558CC);border:1.5px solid var(--accent,#1558CC);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:11.5px;font-weight:600;color:#fff;text-align:center;line-height:1.3;text-decoration:none;transition:all .15s;user-select:none;padding:5px}
+.note-btn{width:72px;height:72px;background:var(--accent,#1558CC);border:1.5px solid var(--accent,#1558CC);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0001;font-family:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:12.5px;font-weight:600;color:#fff;text-align:center;line-height:1.3;text-decoration:none;transition:all .15s;user-select:none;padding:5px}
 .note-edit-save{width:100%;padding:7px 0;border-radius:10px;border:none;background:var(--accent);color:var(--accent-contrast,#fff);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
 .note-edit-cancel{width:100%;padding:6px 0;border-radius:10px;border:0.5px solid #ccc;background:transparent;color:var(--text-main,#222);font-size:11px;cursor:pointer;font-family:inherit}
+.note-btn svg{width:45px;height:45px}
 .note-btn:hover{filter:brightness(1.08);box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent);transform:translateY(-1px)}
 .note-btn:active{transform:scale(.97)}
 
