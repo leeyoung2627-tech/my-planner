@@ -496,6 +496,97 @@ body{opacity:0;transition:opacity .25s ease}
 .money-day-memo-text{font-size:10px;color:#4F7A1F;line-height:1.3;background:#E4F5CF;border-radius:4px;padding:1px 4px;margin-top:1px;max-width:100%;width:100%;box-sizing:border-box;overflow:hidden;white-space:normal;word-break:break-all;overflow-wrap:break-word}
 .money-day-memo-text.pending{color:#1F6E9C;font-weight:700;background:#CFE9FA}
 
+
+/* ── 식단: 기준 체크 카드 / 음식 목록 / 음식 추가·등록·기준 설정 창 / 달력 판정 색 ── */
+.ms-card{background:#fff;border:0.5px solid #e6e6e6;border-radius:10px;padding:12px 14px;margin-bottom:8px;flex-shrink:0}
+.ms-empty{font-size:12px;color:var(--text-faint);line-height:1.7}
+.ms-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.ms-big{font-size:21px;font-weight:600;color:var(--text-main)}
+.ms-big small{font-size:12px;font-weight:400;color:var(--text-sub)}
+.ms-chip{font-size:11px;padding:2px 9px;border-radius:999px;white-space:nowrap;text-align:center}
+.ms-bar{position:relative;height:8px;border-radius:4px;background:#ececec;margin:8px 0 10px}
+.ms-bar.sm{height:6px;margin:0}
+.ms-bar i{position:absolute;top:0;height:100%;display:block}
+.ms-bar .band{background:#DDF0E3}
+.ms-bar .fill{left:0;border-radius:4px}
+.ms-bar .goal{top:-3px;width:1.5px;height:calc(100% + 6px);background:#444}
+.ms-row{display:grid;grid-template-columns:54px minmax(0,1fr) 84px 62px;gap:8px;align-items:center;font-size:12px;margin-bottom:7px;color:var(--text-main)}
+.ms-val{text-align:right;color:var(--text-sub)}
+.ms-lim{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;padding-top:9px;border-top:0.5px dashed #ddd}
+.ms-note{font-size:10.5px;color:var(--text-faint);margin-top:7px;line-height:1.5}
+.ms-link{color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.ms-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.ms-sk{font-size:12px;color:var(--text-sub)}
+.ms-item{display:flex;align-items:center;gap:6px;font-size:12.5px;padding:3px 2px 3px 6px;cursor:pointer;border-radius:6px}
+.ms-item:hover{background:#f4f7f4}
+.ms-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-main)}
+.ms-name small{color:var(--text-faint);font-size:11px;margin-left:5px}
+.ms-ik{font-size:12px;color:var(--text-sub);min-width:34px;text-align:right}
+.ms-x{color:var(--text-ghost);cursor:pointer;padding:0 4px}
+.ms-x:hover{color:#d9534f}
+.ms-add{font-size:12px;color:var(--accent);cursor:pointer;padding:3px 6px;display:inline-block}
+.meal-slot .meal-text{font-size:12px;min-height:18px;color:var(--text-sub);line-height:1.5}
+.modal.meal-modal{width:min(440px,92vw);max-height:90vh;overflow:auto}
+.mf-chips{display:flex;flex-wrap:wrap;gap:5px}
+.mf-chip{font-size:11.5px;padding:3px 9px;border-radius:999px;border:0.5px solid #ddd;color:#666;cursor:pointer;user-select:none}
+.mf-chip.zero{border-color:var(--accent);color:var(--accent)}
+.mf-chip.on{background:var(--accent);color:var(--accent-contrast,#fff);border-color:var(--accent)}
+.mf-list{max-height:220px;overflow:auto;border-top:0.5px solid #eee}
+.mf-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 6px;border-bottom:0.5px solid #f0f0f0;cursor:pointer}
+.mf-row:hover{background:#f6f8fb}
+.mf-row.on{background:var(--accent-light,#eaf2ff)}
+.mf-nm{font-size:13px;color:#222}
+.mf-sub{font-size:11px;color:#999}
+.mf-kc{font-size:12.5px;color:#555;white-space:nowrap}
+.mf-tag{font-size:10px;background:#eee;color:#666;padding:0 5px;border-radius:4px;margin-left:5px}
+.mf-empty{font-size:12px;color:#999;padding:14px 6px;text-align:center}
+.mf-detail{display:none;border:0.5px solid #ddd;border-radius:10px;padding:10px 12px}
+.mf-dh{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;margin-bottom:6px}
+.mf-star{font-size:18px;cursor:pointer;color:#e0a800}
+.mf-q{display:flex;align-items:center;gap:8px}
+.mf-q button{width:28px;height:28px;border:0.5px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;font-size:14px;color:#444}
+.modal .mf-q input{width:64px;text-align:center}
+.mf-ql{font-size:12px;color:#777;white-space:nowrap}
+.mf-ul{font-size:12px;color:#777}
+.mf-nut{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:8px;text-align:center;font-size:10.5px;color:#777}
+.mf-nut div{background:#f5f6f8;border-radius:7px;padding:5px 0}
+.mf-nut b{display:block;font-size:13px;color:#222}
+.mf-nut2{font-size:11px;color:#777;margin-top:6px;line-height:1.5}
+.mf-acts{font-size:11.5px;margin-top:6px;color:#999}
+.mc-row{display:flex;gap:8px}
+.mc-row>div{flex:1;min-width:0}
+.mc-seg{display:flex;border:0.5px solid #ddd;border-radius:8px;overflow:hidden;font-size:12px}
+.mc-seg span{flex:1;text-align:center;padding:7px 0;cursor:pointer;color:#777}
+.mc-seg span+span{border-left:0.5px solid #eee}
+.mc-seg span.on{background:var(--accent);color:var(--accent-contrast,#fff);font-weight:600}
+.mc-grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.mc-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.mc-grid4 label,.mc-grid3 label{display:block;font-size:11px;color:#777;margin-bottom:2px}
+.mc-grid4 .hl input{background:var(--accent-light,#eaf2ff);border-color:var(--accent)}
+.mc-chk{display:flex;align-items:center;gap:6px;font-size:12px;color:#666;cursor:pointer}
+.modal .mc-chk input{width:auto}
+.mc-more summary{font-size:12px;color:#777;cursor:pointer;margin-bottom:6px}
+.mg-pct,.mg-lh{display:flex;align-items:center;gap:6px;font-size:12px;color:#666}
+.modal .mg-pct input,.modal .mg-lh input{width:56px;text-align:center}
+.meal-day-cell.st-ok{background:#E4F5E8}
+.meal-day-cell.st-over{background:#FDE8E4}
+.meal-day-cell.st-under{background:#E3F0FB}
+.meal-day-cell.selected{border-color:#5BA86B}
+.meal-day-cell.selected:not([class*="st-"]){background:#EEF8EF}
+.mdk{font-size:12px;font-weight:600;margin-top:1px}
+.st-ok .mdk{color:#2E7D4F}
+.st-over .mdk{color:#C0392B}
+.st-under .mdk{color:#2F76B5}
+.mdd{display:flex;gap:3px;margin-top:3px}
+.mdd u{width:7px;height:7px;border-radius:50%;display:inline-block;text-decoration:none}
+.mdd u.ok{background:#3FA66B}
+.mdd u.over{background:#E0584A}
+.mdd u.under{background:#4A90D9}
+.meal-cal-sum{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-sub);margin:0 0 8px}
+.meal-cal-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--text-sub);margin-top:8px}
+.meal-cal-legend span{display:inline-flex;align-items:center;gap:4px}
+.meal-cal-legend em{width:10px;height:10px;border-radius:3px;border:0.5px solid;display:inline-block}
+.mcl-hint{color:var(--text-faint)}
 .meal-cal-wrap{padding:.65rem .85rem;background:transparent}
 .meal-day-cell{min-height:110px;display:flex;flex-direction:column;align-items:flex-start;padding:5px 4px;border-radius:6px;cursor:pointer;border:0.5px solid transparent;font-size:12px;gap:2px;overflow:hidden}
 .meal-day-cell:hover{background:#f5fbf5}
@@ -1607,14 +1698,15 @@ body.memo-edit-on .memo-text-handle{display:flex}
         <span class="fs-label" onclick="toggleFasting()">공복 <span class="fs-hours-edit" id="fsHoursEdit" contenteditable="true" spellcheck="false" title="클릭해서 시간 수정" onclick="event.stopPropagation()" onblur="saveFastingHours(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">16</span>시간 이상 달성 🤍</span>
         <span class="fs-badge" id="fsBadge" onclick="toggleFasting()">♥ 달성!</span>
       </div>
+      <div id="meal-summary"></div>
+      <div id="meal-list"></div>
       <div style="background:#fff;border:0.5px solid #eee;border-radius:8px;padding:10px 12px;flex-shrink:0">
         <div style="font-size:11px;color:var(--text-faint);margin-bottom:5px">🗒️ 식단 계획 메모</div>
         <div contenteditable="true" id="mealPlanNote" spellcheck="false"
-          style="font-size:13px;color:#222;outline:none;min-height:160px;max-height:320px;overflow-y:auto;line-height:1.7"
+          style="font-size:13px;color:#222;outline:none;min-height:90px;max-height:320px;overflow-y:auto;line-height:1.7"
           data-ph="식단 계획, 먹고 싶은 것, 주의할 것..."
           onblur="saveMealPlanNote()"></div>
       </div>
-      <div id="meal-list"></div>
     </div>
 
     <div id="tab-declare" class="tab-content">
@@ -2009,9 +2101,21 @@ body.memo-edit-on .memo-text-handle{display:flex}
       <span class="font-scale-label-txt">🔲 달력 칸 투명도</span>
       <input type="range" id="calBgAlphaSlider" min="20" max="100" step="5" value="100" oninput="onCalBgAlphaInput(this.value)"/>
     </div>
-    <div class="font-scale-row" style="margin-top:8px">
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-sub);cursor:pointer"><input type="checkbox" id="fitScreenChk" onchange="onFitScreenToggle(this.checked)"/> 창이 좁으면 화면을 줄여서 한 번에 맞추기</label>
+    <div class="font-scale-row" style="margin-top:8px;flex-wrap:wrap">
+      <span class="font-scale-label-txt">🖥 화면 크기 맞춤</span>
+      <select id="scaleModeSel" onchange="onScaleMode(this.value)" style="flex:1;min-width:150px;font-size:12px;padding:4px 6px;border:1px solid var(--border-col,#ddd);border-radius:6px;background:var(--app-bg,#fff);color:var(--text-main,#222)">
+        <option value="width">창이 좁을 때만 줄이기 (기본)</option>
+        <option value="auto">모니터 크기에 자동으로 맞추기</option>
+        <option value="manual">직접 비율 정하기</option>
+        <option value="off">맞추지 않음 (100%)</option>
+      </select>
     </div>
+    <div class="font-scale-row" id="uiScaleRow" style="display:none">
+      <span class="font-scale-label-txt">↔ 비율</span>
+      <input type="range" id="uiScaleSlider" min="50" max="130" step="5" value="100" oninput="onUiScale(this.value)"/>
+      <span id="uiScaleLabel" style="font-size:12px;min-width:38px;text-align:right">100%</span>
+    </div>
+    <div style="font-size:11px;color:var(--text-faint);margin:2px 0 4px">이 설정은 지금 쓰는 컴퓨터에만 저장돼요. 다른 컴퓨터는 거기서 따로 맞추면 돼요.</div>
     <div class="color-row">
       <span class="color-label">🖊️ 메인 폰트 색</span>
       <div class="color-input-wrap">
@@ -2394,6 +2498,87 @@ body.memo-edit-on .memo-text-handle{display:flex}
   </div>
 </div>
 
+<!-- 식단: 음식 추가 -->
+<div class="modal-bg" id="mealFoodModal" style="display:none">
+  <div class="modal meal-modal">
+    <h3 id="mfTitle">음식 추가</h3>
+    <input id="mfSearch" placeholder="음식 검색 (예: 제로콜라, 닭가슴살)" oninput="mfSearchInput(this.value)" autocomplete="off"/>
+    <div class="mf-chips" id="mfChips"></div>
+    <div class="mf-list" id="mfList"></div>
+    <div class="mf-detail" id="mfDetail"></div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('mealFoodModal')">닫기</button>
+      <button class="mbtn cancel" onclick="openMealCustomModal()">직접 등록</button>
+      <button class="mbtn ok" id="mfAddBtn" onclick="mfConfirm()">추가</button>
+    </div>
+  </div>
+</div>
+<!-- 식단: 내 음식 등록 -->
+<div class="modal-bg" id="mealCustomModal" style="display:none">
+  <div class="modal meal-modal">
+    <h3 id="mcTitle">내 음식 등록</h3>
+    <div class="mc-row"><div style="flex:1.6"><div class="modal-label">이름</div><input id="mc-name" placeholder="예: 단백질 쉐이크 (바닐라)"/></div><div style="flex:1"><div class="modal-label">분류</div><select id="mc-cat"></select></div></div>
+    <div class="modal-label">입력 기준 (영양성분표를 보고 그대로)</div>
+    <div class="mc-seg"><span id="mc-basis-serv" class="on" onclick="mcBasis('serv')">1회 제공량 기준</span><span id="mc-basis-100" onclick="mcBasis('100')">100g(ml) 기준</span></div>
+    <div class="mc-row">
+      <div><div class="modal-label">1회 제공량</div><input id="mc-amount" inputmode="decimal" value="1"/></div>
+      <div><div class="modal-label">단위</div><select id="mc-unit"></select></div>
+      <div><div class="modal-label">보조 표기(선택)</div><input id="mc-extra" placeholder="예: 355ml"/></div>
+    </div>
+    <div class="mc-grid4">
+      <div class="hl"><label>칼로리</label><input id="mc-kcal" inputmode="decimal"/></div>
+      <div><label>탄수화물 g</label><input id="mc-c" inputmode="decimal"/></div>
+      <div><label>단백질 g</label><input id="mc-p" inputmode="decimal"/></div>
+      <div><label>지방 g</label><input id="mc-f" inputmode="decimal"/></div>
+    </div>
+    <label class="mc-chk"><input type="checkbox" id="mc-auto"/> 탄·단·지로 칼로리 자동 계산 (칼로리를 모를 때)</label>
+    <details class="mc-more"><summary>자세한 성분 (선택)</summary>
+      <div class="mc-grid3">
+        <div><label>당류 g</label><input id="mc-sugar" inputmode="decimal"/></div>
+        <div><label>나트륨 mg</label><input id="mc-sodium" inputmode="decimal"/></div>
+        <div><label>카페인 mg</label><input id="mc-caf" inputmode="decimal"/></div>
+        <div><label>포화지방 g</label><input id="mc-sat" inputmode="decimal"/></div>
+        <div><label>식이섬유 g</label><input id="mc-fiber" inputmode="decimal"/></div>
+        <div><label>콜레스테롤 mg</label><input id="mc-chol" inputmode="decimal"/></div>
+      </div>
+    </details>
+    <label class="mc-chk"><input type="checkbox" id="mc-fav"/> 즐겨찾기에 추가</label>
+    <div class="modal-btns">
+      <button class="mbtn cancel" id="mcDelBtn" style="margin-right:auto;color:#d9534f" onclick="mcDelete()">삭제</button>
+      <button class="mbtn cancel" onclick="closeModal('mealCustomModal')">취소</button>
+      <button class="mbtn ok" onclick="mcSave()">저장</button>
+    </div>
+  </div>
+</div>
+<!-- 식단: 하루 기준 설정 -->
+<div class="modal-bg" id="mealGoalModal" style="display:none">
+  <div class="modal meal-modal">
+    <h3>하루 기준 설정</h3>
+    <div class="modal-label">목표량 (직접 입력)</div>
+    <div class="mc-grid4">
+      <div class="hl"><label>칼로리</label><input id="mg-kcal" inputmode="decimal"/></div>
+      <div><label>탄수화물 g</label><input id="mg-c" inputmode="decimal"/></div>
+      <div><label>단백질 g</label><input id="mg-p" inputmode="decimal"/></div>
+      <div><label>지방 g</label><input id="mg-f" inputmode="decimal"/></div>
+    </div>
+    <div class="modal-label">칼로리 비율(%)로 탄·단·지 채우기</div>
+    <div class="mg-pct"><input id="mg-pc" value="50"/><span>:</span><input id="mg-pp" value="20"/><span>:</span><input id="mg-pf" value="30"/><button class="mbtn cancel" onclick="mgFillByPct()">계산해서 채우기</button></div>
+    <div class="modal-label">판정 기준 (목표 대비 %)</div>
+    <div class="mg-lh"><span>미달</span><input id="mg-low" inputmode="numeric"/><span>% 미만 · 초과</span><input id="mg-high" inputmode="numeric"/><span>% 초과</span></div>
+    <div class="modal-label">상한 항목 (넘는지만 알려줘요)</div>
+    <div class="mc-grid3">
+      <div><label>당류 g 이하</label><input id="mg-sugar" inputmode="decimal"/></div>
+      <div><label>나트륨 mg 이하</label><input id="mg-sodium" inputmode="decimal"/></div>
+      <div><label>카페인 mg 이하</label><input id="mg-caf" inputmode="decimal"/></div>
+    </div>
+    <div class="ms-note">처음 값은 일반적인 성인 기준이에요. 본인 상황에 맞게 직접 바꿔 쓰세요.</div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" style="margin-right:auto" onclick="mgReset()">기본값</button>
+      <button class="mbtn cancel" onclick="closeModal('mealGoalModal')">취소</button>
+      <button class="mbtn ok" onclick="mgSave()">저장</button>
+    </div>
+  </div>
+</div>
 <!-- 반복 일정 삭제 방식 선택 -->
 <div class="modal-bg" id="repeatDeleteModal" style="display:none">
   <div class="modal">
@@ -2590,6 +2775,8 @@ let repState={freq:'none',days:[]};
 let pendingRepeatDelete=null;
 let receivables=[]; // 받을 돈(아직 못 받은 돈) [{id,name,amount,date}]
 let tagLimits={}; // 태그별 한 달 한도 {태그:금액}
+const DEFAULT_MEAL_GOALS={kcal:2000,c:250,p:100,f:65,low:90,high:110,sugar:50,sodium:2000,caf:400};
+let mealGoals={...DEFAULT_MEAL_GOALS},customFoods=[],foodPrefs={favs:[],recent:[]}; // 식단: 하루 기준 / 내가 등록한 음식 / 즐겨찾기·최근
 let realCashBaseDate='',realCashBaseAmount=null; // 실제 통장 잔고 기준(날짜, 금액)
 let hiddenItems={gym:false,slime:false}; // BOX 탭에서 숨김 처리한 떠 있는 아이콘
 let noteBtnOrder=null; // 오른쪽 링크버튼 순서(href 배열)
@@ -3711,7 +3898,7 @@ async function loadAllData(){
 // 2단계(나중): 가계부·식단·메모·일기장·선언 등 첫 화면에 안 필요한 큰 데이터는 화면이 뜬 뒤에 불러옴
 async function loadDeferredData(){
   if(!currentUser)return;
-  const [mnS, mlS, moS, nsS, bdS, mpnS, fcS, dyS, dlS, sbS, mmS, fsS, lnS, mlmS, atS, mpbS, rcsS, decS, dgS, rcvS, tlS, fhS]=await Promise.all([
+  const [mnS, mlS, moS, nsS, bdS, mpnS, fcS, dyS, dlS, sbS, mmS, fsS, lnS, mlmS, atS, mpbS, rcsS, decS, dgS, rcvS, tlS, fhS, mgS, cfS, fpS]=await Promise.all([
     getDocs(collection(db,'users',currentUser.uid,'money')),
     getDocs(collection(db,'users',currentUser.uid,'meal')),
     getDocs(collection(db,'users',currentUser.uid,'memos')),
@@ -3734,6 +3921,9 @@ async function loadDeferredData(){
     getDoc(doc(db,'users',currentUser.uid,'settings','receivables')),
     getDoc(doc(db,'users',currentUser.uid,'settings','tagLimits')),
     getDoc(doc(db,'users',currentUser.uid,'settings','fastingConfig')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','mealGoals')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','customFoods')),
+    getDoc(doc(db,'users',currentUser.uid,'settings','foodPrefs')),
   ]);
   moneyData={};mnS.forEach(d=>{moneyData[d.id]=d.data().items||[];});
   mealData={};mlS.forEach(d=>{mealData[d.id]=d.data();});
@@ -3786,6 +3976,10 @@ async function loadDeferredData(){
   savingOrder=sbS.exists()?(sbS.data().order||[]):[];
   // 대출 목록(원금 + 연이율 → 월 이자 자동계산)
   loans=lnS.exists()?(lnS.data().items||[]):[];
+  // 식단 기준·내 음식·즐겨찾기
+  mealGoals={...DEFAULT_MEAL_GOALS,...(mgS.exists()?mgS.data():{})};
+  customFoods=cfS.exists()?(cfS.data().items||[]):[];
+  foodPrefs=fpS.exists()?{favs:fpS.data().favs||[],recent:fpS.data().recent||[]}:{favs:[],recent:[]};
 }
 
 // ── 상단 메모 ──
@@ -5178,29 +5372,6 @@ function renderMoneyCal(){
 
 // ── 식단 전용 달력 ──
 const MEAL_LABELS={breakfast:'아침',lunch:'점심',dinner:'저녁',snack:'간식'};
-function renderMealCal(){
-  document.getElementById('periodLabel').textContent=cur.getFullYear()+'년 '+(cur.getMonth()+1)+'월 식단';
-  const start=new Date(cur.getFullYear(),cur.getMonth(),1).getDay();
-  const total=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
-  const prevTotal=new Date(cur.getFullYear(),cur.getMonth(),0).getDate();
-  let html='<div class="dow-row">'+DAYS.map(d=>`<div class="dow">${d}</div>`).join('')+'</div><div class="month-grid">';
-  for(let i=0;i<start;i++)html+=`<div class="meal-day-cell other"><span class="mln">${prevTotal-start+1+i}</span></div>`;
-  for(let d=1;d<=total;d++){
-    const dt=new Date(cur.getFullYear(),cur.getMonth(),d);
-    const key=fmt(dt);
-    const isToday=fmt(dt)===fmt(today),isSel=fmt(dt)===fmt(selDate);
-    const data=mealData[key]||{};
-    const slots=['breakfast','lunch','dinner','snack'];
-    const filled=slots.filter(s=>data[s]&&data[s].trim());
-    const itemsHtml=filled.length>0?`<div class="meal-day-items">${filled.map(s=>`<div class="meal-day-item"><span class="mlabel">${MEAL_LABELS[s]}</span>${data[s]}</div>`).join('')}</div>`:'';
-    const fastHtml=fastingData[key]?`<span class="meal-day-fast" title="공복 ${fastingHours}시간 달성">♥</span>`:'';
-    html+=`<div class="meal-day-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><span class="mln">${d}</span>${fastHtml}${itemsHtml}</div>`;
-  }
-  const rem=(7-(start+total)%7)%7;
-  for(let i=1;i<=rem&&rem<7;i++)html+=`<div class="meal-day-cell other"><span class="mln">${i}</span></div>`;
-  html+='</div>';
-  document.getElementById('mealCalView').innerHTML=html;
-}
 
 function getWeekStart(d){const s=new Date(d);s.setDate(d.getDate()-d.getDay());return s;}
 function renderWeek(){
@@ -8039,18 +8210,6 @@ async function runFixedCostAutoRecord(){
 }
 
 // ── 식단 ──
-function renderMeal(){
-  const key=fmt(selDate);const data=mealData[key]||{};
-  const slots=[['breakfast','아침'],['lunch','점심'],['dinner','저녁'],['snack','간식']];
-  document.getElementById('meal-list').innerHTML=slots.map(([k,label])=>`
-    <div class="meal-slot">
-      <div class="meal-label">${label}</div>
-      <div class="meal-text" contenteditable="true" spellcheck="false" data-ph="입력하세요" data-key="${k}"
-        oninput="mealInput(this,'${key}','${k}')"
-        onblur="mealBlur(this,'${key}','${k}')"
-        style="outline:none">${data[k]||''}</div>
-    </div>`).join('');
-}
 function loadMealPlanNote(){
   // 고정 메모 — 날짜 무관하게 'settings/mealPlanNote'에서 로드 (예전 글자크기 슬라이더 버그로 박힌 font-size는 정리해서 보여줌)
   const el=document.getElementById('mealPlanNote');if(!el)return;
@@ -8163,6 +8322,610 @@ window.mealBlur=async function(el,dateKey,mealKey){
   await saveData('meal',dateKey,mealData[dateKey]);
   if(leftMode==='meal-cal')renderMealCal();
 };
+
+// ══════════════════════════════════════════
+// ── 식단: 음식 DB + 영양 기록 + 하루 기준 체크 ──
+// 끼니마다 음식을 골라 담으면 칼로리·탄수화물·단백질·지방(+당류·나트륨·카페인 등)이 자동으로 합산되고, 하루 기준과 비교해서 미달/적당/초과를 알려줌.
+// 기록은 meal/{날짜}.foods.{끼니} 배열에 저장(음식 영양값을 그때 값으로 복사해 둬서, 나중에 목록이 바뀌어도 지난 기록은 그대로). 예전에 글로 적은 내용은 각 끼니의 "메모"로 남음.
+// ══════════════════════════════════════════
+const MEAL_SLOTS=['breakfast','lunch','dinner','snack'];
+const MEAL_CATS=['밥·면·빵','국·찌개','반찬','고기·생선','계란·두부','과일·채소','유제품','편의점','외식','과자·스낵','디저트','음료','제로 음료'];
+// [이름, 분류, 1회 양, 단위, 보조표기, 칼로리, 탄수화물g, 단백질g, 지방g, 당류g, 나트륨mg, 카페인mg]  — 평균적인 값이라 제품마다 조금씩 다를 수 있음 (틀린 건 "내 값으로 수정"으로 고칠 수 있음)
+const MEAL_DB_RAW=[
+["흰밥","밥·면·빵",1,"공기","210g",310,68,5.5,0.6,0,5,0],
+["현미밥","밥·면·빵",1,"공기","210g",300,64,6,2,1,5,0],
+["잡곡밥","밥·면·빵",1,"공기","210g",305,65,7,1.5,1,5,0],
+["김치볶음밥","밥·면·빵",1,"인분","400g",620,88,15,22,5,1500,0],
+["비빔밥","밥·면·빵",1,"인분","500g",580,95,18,13,8,1100,0],
+["제육덮밥","밥·면·빵",1,"인분","",760,105,30,25,12,1700,0],
+["김밥","밥·면·빵",1,"줄","250g",450,75,14,9,6,1100,0],
+["참치마요 삼각김밥","밥·면·빵",1,"개","110g",200,32,5,5,3,450,0],
+["신라면","밥·면·빵",1,"봉지","120g",505,79,10,16,4,1790,0],
+["짜장 라면(짜파게티류)","밥·면·빵",1,"봉지","140g",610,92,12,21,8,1100,0],
+["불닭볶음면","밥·면·빵",1,"봉지","140g",530,81,11,17,8,1200,0],
+["컵라면(소컵)","밥·면·빵",1,"개","65g",300,46,7,11,3,1300,0],
+["칼국수","밥·면·빵",1,"인분","",480,85,16,7,4,1800,0],
+["잔치국수","밥·면·빵",1,"인분","",480,85,16,6,6,1500,0],
+["비빔국수","밥·면·빵",1,"인분","",560,95,14,13,18,1300,0],
+["물냉면","밥·면·빵",1,"인분","",520,100,15,5,10,1700,0],
+["비빔냉면","밥·면·빵",1,"인분","",620,115,16,10,25,1600,0],
+["짜장면","밥·면·빵",1,"인분","",800,130,22,22,18,2000,0],
+["짬뽕","밥·면·빵",1,"인분","",680,95,30,19,8,2800,0],
+["우동","밥·면·빵",1,"인분","",450,85,13,6,5,2000,0],
+["토마토 스파게티","밥·면·빵",1,"인분","",600,95,20,15,14,1000,0],
+["크림 파스타","밥·면·빵",1,"인분","",800,85,24,40,8,1100,0],
+["떡국","밥·면·빵",1,"인분","",480,95,17,5,3,1400,0],
+["식빵","밥·면·빵",1,"장","35g",95,17,3,1.5,2,150,0],
+["통밀식빵","밥·면·빵",1,"장","35g",85,16,3.5,1,1.5,145,0],
+["베이글","밥·면·빵",1,"개","100g",270,53,10,1.5,6,430,0],
+["크루아상","밥·면·빵",1,"개","",230,26,5,12,5,250,0],
+["콘플레이크 시리얼","밥·면·빵",30,"g","",115,26,2,0.5,3,200,0],
+["그래놀라","밥·면·빵",50,"g","",220,34,5,8,10,60,0],
+["오트밀","밥·면·빵",40,"g","",150,27,5,3,1,3,0],
+["가래떡","밥·면·빵",100,"g","",230,52,4,0.4,0,5,0],
+["군고구마","밥·면·빵",200,"g","",250,58,3.5,0.5,22,40,0],
+["삶은 감자","밥·면·빵",150,"g","",115,26,3,0.2,1.5,5,0],
+["김치찌개","국·찌개",1,"인분","",200,10,15,11,3,1600,0],
+["된장찌개","국·찌개",1,"인분","",130,10,10,6,2,1500,0],
+["순두부찌개","국·찌개",1,"인분","",210,8,15,13,2,1500,0],
+["부대찌개","국·찌개",1,"인분","",450,35,25,24,6,2100,0],
+["미역국","국·찌개",1,"그릇","",100,8,6,5,1,900,0],
+["콩나물국","국·찌개",1,"그릇","",40,4,4,1,1,800,0],
+["북엇국","국·찌개",1,"그릇","",90,4,12,3,0,1000,0],
+["계란국","국·찌개",1,"그릇","",80,3,6,5,1,800,0],
+["설렁탕(밥 포함)","국·찌개",1,"그릇","",550,60,28,20,1,1200,0],
+["갈비탕","국·찌개",1,"그릇","",480,45,35,16,3,1500,0],
+["삼계탕","국·찌개",1,"그릇","",900,52,70,45,2,1600,0],
+["육개장","국·찌개",1,"그릇","",350,30,25,15,4,1900,0],
+["감자탕","국·찌개",1,"인분","",650,30,45,35,4,2200,0],
+["어묵탕","국·찌개",1,"그릇","",120,12,8,4,4,1100,0],
+["김치","반찬",50,"g","",12,2.5,1,0.2,1,500,0],
+["깍두기","반찬",50,"g","",20,4,1,0.2,2,600,0],
+["멸치볶음","반찬",30,"g","",90,8,9,3,5,350,0],
+["계란말이","반찬",100,"g","",170,3,12,12,1,350,0],
+["시금치나물","반찬",70,"g","",35,3,3,2,0.5,200,0],
+["콩나물무침","반찬",70,"g","",35,3,3,2,0.5,200,0],
+["어묵볶음","반찬",70,"g","",110,12,7,4,5,450,0],
+["감자조림","반찬",100,"g","",130,22,3,3,10,500,0],
+["두부조림","반찬",100,"g","",170,6,12,11,3,450,0],
+["잡채","반찬",150,"g","",270,40,6,10,8,500,0],
+["제육볶음","반찬",150,"g","",330,12,24,20,8,800,0],
+["불고기","반찬",150,"g","",300,15,26,15,12,700,0],
+["조미김","반찬",1,"봉","4g",20,1,1.5,1.5,0,60,0],
+["장조림","반찬",50,"g","",90,4,10,4,3,500,0],
+["채소 샐러드(드레싱 제외)","반찬",150,"g","",30,6,2,0.3,3,25,0],
+["닭갈비","반찬",200,"g","채소 포함",380,22,32,18,10,900,0],
+["닭가슴살(삶은)","고기·생선",100,"g","",110,0,23,1.5,0,60,0],
+["훈제 닭가슴살","고기·생선",100,"g","",105,1,22,1.5,0.5,360,0],
+["닭다리 구이(껍질 포함)","고기·생선",1,"개","120g",250,0,25,16,0,100,0],
+["삼겹살 구이","고기·생선",100,"g","",330,0,17,29,0,60,0],
+["목살 구이","고기·생선",100,"g","",230,0,19,17,0,60,0],
+["소고기 등심 구이","고기·생선",100,"g","",250,0,21,18,0,60,0],
+["소고기 안심 구이","고기·생선",100,"g","",190,0,21,11,0,55,0],
+["돼지 안심","고기·생선",100,"g","",130,0,22,4,0,55,0],
+["돼지 앞다리살","고기·생선",100,"g","",180,0,19,11,0,55,0],
+["스팸(햄)","고기·생선",50,"g","",170,2,9,14,1,540,0],
+["비엔나 소시지","고기·생선",50,"g","5개",140,3,6,12,1,450,0],
+["연어(생)","고기·생선",100,"g","",200,0,20,13,0,60,0],
+["참치캔(기름 뺀)","고기·생선",100,"g","",150,0,25,5,0,350,0],
+["고등어구이","고기·생선",1,"토막","80g",200,0,17,14,0,350,0],
+["삼치구이","고기·생선",1,"토막","80g",140,0,17,8,0,300,0],
+["새우","고기·생선",75,"g","5마리",80,0,18,1,0,250,0],
+["오징어","고기·생선",100,"g","",90,1,18,1.5,0,250,0],
+["어묵꼬치","고기·생선",1,"개","40g",60,6,3,2,2,300,0],
+["훈제오리","고기·생선",100,"g","",250,1,18,19,0,500,0],
+["육포","고기·생선",30,"g","",90,5,13,2,4,600,0],
+["삶은 계란","계란·두부",1,"개","50g",75,0.5,6.5,5,0.5,65,0],
+["계란후라이","계란·두부",1,"개","",95,0.5,6.5,7.5,0.5,90,0],
+["계란찜","계란·두부",1,"인분","",100,3,8,6,1,350,0],
+["훈제란","계란·두부",1,"개","",80,0.5,7,5.5,0.5,150,0],
+["두부","계란·두부",150,"g","1/2모",120,3,12,7,0.5,10,0],
+["낫또","계란·두부",1,"팩","45g",90,6,8,5,0,10,0],
+["바나나","과일·채소",1,"개","",90,23,1,0.3,12,1,0],
+["사과","과일·채소",1,"개","200g",100,26,0.5,0.3,20,2,0],
+["귤","과일·채소",1,"개","80g",35,9,0.6,0.1,7,1,0],
+["오렌지","과일·채소",1,"개","200g",90,22,1.8,0.2,17,0,0],
+["딸기","과일·채소",150,"g","10개",50,12,1,0.5,8,2,0],
+["포도","과일·채소",100,"g","",60,16,0.5,0.1,15,1,0],
+["방울토마토","과일·채소",100,"g","10개",20,4,1,0.2,3,5,0],
+["토마토","과일·채소",1,"개","200g",36,8,1.6,0.4,5,10,0],
+["수박","과일·채소",200,"g","",60,15,1.2,0.2,12,2,0],
+["참외","과일·채소",1,"개","300g",90,22,3,0.3,18,5,0],
+["키위","과일·채소",1,"개","100g",60,14,1.1,0.5,9,3,0],
+["복숭아","과일·채소",1,"개","200g",80,20,1.6,0.4,17,0,0],
+["아보카도","과일·채소",100,"g","1/2개",160,9,2,15,0.7,7,0],
+["블루베리","과일·채소",100,"g","",57,14,0.7,0.3,10,1,0],
+["오이","과일·채소",1,"개","100g",14,3,0.7,0.1,2,2,0],
+["당근","과일·채소",1,"개","100g",37,8,1,0.2,5,60,0],
+["브로콜리(데침)","과일·채소",100,"g","",35,5,3,0.4,1.5,30,0],
+["양배추","과일·채소",100,"g","",25,5,1.3,0.1,3,15,0],
+["파프리카","과일·채소",1,"개","",30,7,1,0.3,5,5,0],
+["양상추","과일·채소",100,"g","",15,3,1,0.2,1.5,25,0],
+["우유","유제품",200,"ml","",130,9.5,6.5,7,9.5,90,0],
+["저지방 우유","유제품",200,"ml","",90,10,6.5,2,9.5,90,0],
+["플레인 요거트","유제품",1,"개","85g",60,7,3,2.5,6,50,0],
+["그릭요거트(무가당)","유제품",100,"g","",100,4,10,5,3,40,0],
+["과일 요거트","유제품",1,"개","85g",95,16,2.5,2.5,14,50,0],
+["슬라이스 치즈","유제품",1,"장","18g",60,1,3.5,4.5,0.5,200,0],
+["모짜렐라 치즈","유제품",30,"g","",90,1,6.5,7,0.5,140,0],
+["요구르트(야쿠르트류)","유제품",1,"병","65ml",55,11.5,1,0.5,10,25,0],
+["햄치즈 샌드위치","편의점",1,"개","150g",340,36,14,16,5,800,0],
+["닭가슴살 샐러드","편의점",1,"개","250g",220,15,24,7,6,500,0],
+["프로틴바","편의점",1,"개","50g",190,17,15,7,4,150,0],
+["단백질 쉐이크","편의점",330,"ml","1병",190,12,24,5,6,180,0],
+["소시지 핫바","편의점",1,"개","",250,30,8,11,4,600,0],
+["컵밥(참치마요)","편의점",1,"개","",420,70,12,10,6,900,0],
+["토스트(길거리)","편의점",1,"개","",330,35,12,16,10,600,0],
+["후라이드 치킨","외식",1,"조각","약 100g",280,10,20,17,0,420,0],
+["양념 치킨","외식",1,"조각","",330,22,18,19,12,600,0],
+["치즈 피자","외식",1,"조각","L 1/8판",280,32,12,11,3,600,0],
+["페퍼로니 피자","외식",1,"조각","L 1/8판",310,32,13,14,3,720,0],
+["빅맥","외식",1,"개","215g",583,48,27,30,8,1010,0],
+["감자튀김","외식",1,"개","M 사이즈",340,44,4,17,0,200,0],
+["떡볶이","외식",1,"인분","300g",450,85,10,8,18,1500,0],
+["순대","외식",1,"인분","200g",350,40,15,15,3,900,0],
+["분식 튀김","외식",1,"개","",100,10,3,5,1,150,0],
+["돈까스","외식",1,"인분","200g",650,45,30,38,5,900,0],
+["족발","외식",100,"g","",220,2,25,13,1,500,0],
+["라멘","외식",1,"그릇","",550,70,25,19,3,2500,0],
+["초밥","외식",1,"개","",50,8,3,1,2,80,0],
+["회(광어)","외식",100,"g","",115,0,22,2,0,80,0],
+["새우깡","과자·스낵",1,"봉지","90g",440,60,6,20,6,840,0],
+["포카칩 오리지널","과자·스낵",1,"봉지","66g",350,35,4,21,1,250,0],
+["감자칩","과자·스낵",1,"봉지","60g",320,33,4,19,0.5,300,0],
+["꼬깔콘","과자·스낵",1,"봉지","",350,40,4,19,3,430,0],
+["칸쵸","과자·스낵",1,"갑","54g",270,36,3,13,13,95,0],
+["초코파이","과자·스낵",1,"개","35g",150,21,1.5,6.5,12,50,0],
+["홈런볼","과자·스낵",1,"봉","46g",235,28,3,12,11,100,0],
+["오레오 쿠키","과자·스낵",3,"개","34g",160,23,1.5,7,13,150,0],
+["빼빼로","과자·스낵",1,"갑","37g",190,25,3,9,11,60,0],
+["몽쉘","과자·스낵",1,"개","33g",140,20,1.5,6,12,50,0],
+["젤리(곰젤리)","과자·스낵",80,"g","",275,61,5,0.1,38,20,0],
+["밀크초콜릿","과자·스낵",1,"바","43g",230,25,3,13,24,35,8],
+["다크초콜릿","과자·스낵",30,"g","3조각",170,12,2,13,8,10,25],
+["하루견과","과자·스낵",1,"봉","25g",150,7,5,12,2,5,0],
+["아몬드","과자·스낵",30,"g","",175,6,6.5,15,1.2,0,0],
+["땅콩","과자·스낵",30,"g","",175,5,8,15,1,2,0],
+["팝콘","과자·스낵",20,"g","1컵",95,15,3,3,0.2,150,0],
+["메로나(아이스바)","디저트",1,"개","",80,16,1,1.8,13,35,0],
+["콘 아이스크림","디저트",1,"개","",240,30,3,12,24,60,0],
+["얼음과자(스크류바류)","디저트",1,"개","",70,17,0,0.5,14,10,0],
+["도넛(글레이즈드)","디저트",1,"개","",250,30,3,13,12,230,0],
+["생크림 케이크","디저트",100,"g","1조각",340,40,5,18,28,150,0],
+["마카롱","디저트",1,"개","",110,16,2,4.5,14,20,0],
+["팥빙수","디저트",1,"그릇","",550,100,10,12,60,100,0],
+["호떡","디저트",1,"개","",250,40,4,8,13,200,0],
+["붕어빵","디저트",1,"개","",100,17,3,2,6,100,0],
+["콜라","음료",250,"ml","1캔",100,25,0,0,25,10,24],
+["콜라","음료",355,"ml","1캔",140,35,0,0,35,14,34],
+["사이다","음료",250,"ml","1캔",100,25,0,0,25,15,0],
+["환타 오렌지","음료",250,"ml","1캔",110,27,0,0,27,10,0],
+["포카리스웨트","음료",500,"ml","",125,31,0,0,28,235,0],
+["이온음료(스포츠)","음료",600,"ml","",130,32,0,0,30,270,0],
+["오렌지주스(과즙 100%)","음료",200,"ml","",90,21,1.5,0.3,18,5,0],
+["사과주스","음료",200,"ml","",95,23,0.2,0.2,21,5,0],
+["두유","음료",190,"ml","1팩",125,15,6,4.5,8,90,0],
+["아몬드 음료(오리지널)","음료",190,"ml","1팩",55,9,1,1.8,7,80,0],
+["아메리카노(스타벅스 톨)","음료",355,"ml","",10,2,1,0,0,10,150],
+["아메리카노(투썸 레귤러)","음료",355,"ml","",10,2,0.7,0,0,10,177],
+["카페라떼(톨)","음료",355,"ml","",190,18,12,7,17,150,75],
+["바닐라라떼(톨)","음료",355,"ml","",250,34,10,8,31,160,75],
+["믹스커피","음료",1,"봉","12g",50,9,0.5,1.5,6,25,50],
+["녹차","음료",200,"ml","1잔",2,0,0,0,0,2,30],
+["홍차","음료",200,"ml","1잔",2,0,0,0,0,5,40],
+["보리차","음료",200,"ml","1잔",0,0,0,0,0,0,0],
+["레드불","음료",250,"ml","1캔",112,27,1,0,27,105,80],
+["몬스터 에너지","음료",355,"ml","1캔",150,38,0,0,37,180,100],
+["핫식스","음료",250,"ml","1캔",120,29,0,0,28,50,60],
+["박카스","음료",100,"ml","1병",70,17,0,0,14,25,30],
+["비타500","음료",100,"ml","1병",60,15,0,0,13,10,0],
+["식혜","음료",200,"ml","1컵",100,24,0.5,0,18,15,0],
+["단백질 쉐이크(RTD)","음료",330,"ml","1병",190,12,24,5,6,180,0],
+["맥주","음료",500,"ml","1잔",210,17,1.7,0,0,15,0],
+["소주","음료",50,"ml","1잔",70,0,0,0,0,0,0],
+["소주","음료",360,"ml","1병",400,3,0,0,3,0,0],
+["막걸리","음료",750,"ml","1병",375,28,6,0,10,20,0],
+["와인","음료",150,"ml","1잔",125,4,0.1,0,1.5,5,0],
+["코카콜라 제로","제로 음료",250,"ml","1캔",0,0,0,0,0,25,24],
+["코카콜라 제로","제로 음료",355,"ml","1캔",0,0,0,0,0,40,34],
+["코카콜라 제로","제로 음료",500,"ml","1페트",0,0,0,0,0,55,48],
+["코카콜라 제로제로(무카페인)","제로 음료",250,"ml","1캔",0,0,0,0,0,25,0],
+["펩시 제로 슈거","제로 음료",250,"ml","1캔",0,0,0,0,0,25,49],
+["펩시 제로 슈거","제로 음료",355,"ml","1캔",0,0,0,0,0,35,69],
+["펩시 제로 슈거","제로 음료",500,"ml","1페트",0,0,0,0,0,50,97],
+["칠성사이다 제로","제로 음료",250,"ml","1캔",0,0,0,0,0,30,0],
+["칠성사이다 제로","제로 음료",355,"ml","1캔",0,0,0,0,0,40,0],
+["스프라이트 제로","제로 음료",250,"ml","1캔",0,0,0,0,0,35,0],
+["스프라이트 제로","제로 음료",355,"ml","1캔",0,0,0,0,0,50,0],
+["밀키스 제로","제로 음료",250,"ml","1캔",0,0,0,0,0,40,0],
+["제로 콜라(기타 브랜드)","제로 음료",250,"ml","1캔",0,0,0,0,0,25,24],
+["제로 사이다(기타 브랜드)","제로 음료",250,"ml","1캔",0,0,0,0,0,30,0],
+["탄산수(레몬·라임향)","제로 음료",350,"ml","1병",0,0,0,0,0,5,0],
+["탄산수(플레인)","제로 음료",355,"ml","1병",0,0,0,0,0,10,0],
+["레드불 슈거프리","제로 음료",250,"ml","1캔",5,0.5,0,0,0,105,80],
+["몬스터 울트라(제로슈거)","제로 음료",355,"ml","1캔",10,3,0,0,0,150,100],
+["파워에이드 제로","제로 음료",600,"ml","1병",5,1,0,0,0,200,0],
+["마요네즈","반찬",13,"g","1큰술",90,0.5,0,10,0.3,80,0],
+["케첩","반찬",15,"g","1큰술",15,4,0,0,3.5,150,0],
+["고추장","반찬",15,"g","1큰술",30,6,1,0.3,3,500,0],
+["참기름","반찬",1,"작은술","",40,0,0,4.5,0,0,0],
+["올리브유","반찬",1,"큰술","",120,0,0,13.5,0,0,0],
+["버터","반찬",10,"g","",72,0,0,8,0,5,0],
+["땅콩버터","반찬",16,"g","1큰술",95,3,4,8,1.5,60,0],
+["꿀","반찬",20,"g","1큰술",60,16,0,0,16,1,0],
+["설탕","반찬",4,"g","1작은술",16,4,0,0,4,0,0],
+["샐러드 드레싱(참깨)","반찬",15,"g","1큰술",70,3,0.5,6.5,2,150,0]
+];
+const mnum=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;};
+const MEAL_N_KEYS=['kcal','c','p','f','sugar','sodium','caf','sat','fiber','chol'];
+function mealHash(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h+str.charCodeAt(i))|0;return (h>>>0).toString(36);}
+let _mealDB=null;
+function getMealDB(){
+  if(_mealDB)return _mealDB;
+  _mealDB=MEAL_DB_RAW.map(r=>({id:'b_'+mealHash(r[0]+'|'+r[2]+r[3]),name:r[0],cat:r[1],amount:r[2],unit:r[3],extra:r[4],builtin:true,n:{kcal:r[5],c:r[6],p:r[7],f:r[8],sugar:r[9],sodium:r[10],caf:r[11]}}));
+  return _mealDB;
+}
+function allFoods(){
+  const hidden=new Set(customFoods.map(f=>f.base).filter(Boolean)); // 내 값으로 고친 음식은 원래 항목을 숨김
+  return [...customFoods,...getMealDB().filter(f=>!hidden.has(f.id))];
+}
+const findFood=id=>allFoods().find(f=>f.id===id)||null;
+function qtyLabel(it,qty){
+  const a=mnum(it.amount)||1,q=qty==null?1:mnum(qty);
+  const n=Math.round(a*q*10)/10;
+  if(it.unit==='g'||it.unit==='ml')return n+it.unit;
+  return n+it.unit+((q===1&&it.extra)?' ('+it.extra+')':'');
+}
+function mealFoodsArr(key,slot){
+  if(!mealData[key])mealData[key]={};
+  if(!mealData[key].foods)mealData[key].foods={};
+  if(!mealData[key].foods[slot])mealData[key].foods[slot]=[];
+  return mealData[key].foods[slot];
+}
+function itemKcal(it){return ((it.n&&Number(it.n.kcal))||0)*(mnum(it.qty)||0);}
+function mealTotals(key){
+  const foods=((mealData[key]||{}).foods)||{};
+  const t={count:0,slots:{}};MEAL_N_KEYS.forEach(k=>t[k]=0);
+  MEAL_SLOTS.forEach(sl=>{
+    let sk=0;
+    (foods[sl]||[]).forEach(it=>{
+      const q=mnum(it.qty)||0;
+      MEAL_N_KEYS.forEach(k=>{const v=it.n&&it.n[k];if(v!=null&&v!==''&&!isNaN(v))t[k]+=Number(v)*q;});
+      sk+=itemKcal(it);t.count++;
+    });
+    t.slots[sl]=sk;
+  });
+  return t;
+}
+function judgeNut(v,goal,g){if(!(goal>0))return null;const pct=v/goal*100;return pct<g.low-1e-9?'under':(pct>g.high+1e-9?'over':'ok');} // 딱 90%·110%는 "적당"으로 (소수점 오차 방지)
+const MS_COL={ok:'#3FA66B',over:'#E0584A',under:'#4A90D9'};
+const MS_BG={ok:'#E4F5E8',over:'#FDE8E4',under:'#E3F0FB'};
+const MS_TXT={ok:'#2E7D4F',over:'#C0392B',under:'#2F76B5'};
+function msChip(st,v,goal){
+  if(!st)return '';
+  const diff=Math.round(Math.abs(v-goal));
+  const txt=st==='ok'?'적당':(st==='over'?'초과 +':'미달 -')+diff.toLocaleString();
+  return `<span class="ms-chip" style="background:${MS_BG[st]};color:${MS_TXT[st]}">${txt}</span>`;
+}
+function msBar(v,goal,st,g,small){
+  const max=Math.max(120,g.high+10);
+  const w=Math.min(100,v/goal*100/max*100);
+  return `<div class="ms-bar${small?' sm':''}"><i class="band" style="left:${g.low/max*100}%;width:${(g.high-g.low)/max*100}%"></i><i class="fill" style="width:${w}%;background:${MS_COL[st]}"></i><i class="goal" style="left:${100/max*100}%"></i></div>`;
+}
+function renderMealSummary(key){
+  const el=document.getElementById('meal-summary');if(!el)return;
+  const g=mealGoals,t=mealTotals(key);
+  if(!t.count){
+    el.innerHTML=`<div class="ms-card ms-empty">음식을 추가하면 칼로리·탄수화물·단백질·지방을 하루 기준과 비교해 줘요.<br>목표 ${Math.round(g.kcal).toLocaleString()} kcal · 탄 ${Math.round(g.c)}g · 단 ${Math.round(g.p)}g · 지 ${Math.round(g.f)}g <span class="ms-link" onclick="openMealGoalModal()">기준 설정</span></div>`;
+    return;
+  }
+  const ks=judgeNut(t.kcal,g.kcal,g);
+  const rows=[['탄수화물','c'],['단백질','p'],['지방','f']].map(([lb,k])=>{
+    const st=judgeNut(t[k],g[k],g);
+    return st?`<div class="ms-row"><span>${lb}</span>${msBar(t[k],g[k],st,g,true)}<span class="ms-val">${Math.round(t[k])} / ${Math.round(g[k])}g</span>${msChip(st,t[k],g[k])}</div>`:'';
+  }).join('');
+  const lim=[['당류','sugar','g'],['나트륨','sodium','mg'],['카페인','caf','mg']].filter(([,k])=>g[k]>0).map(([lb,k,u])=>{
+    const v=t[k],over=v>g[k];
+    return `<span class="ms-chip" style="background:${over?MS_BG.over:MS_BG.ok};color:${over?MS_TXT.over:MS_TXT.ok}">${lb} ${Math.round(v).toLocaleString()} / ${Math.round(g[k]).toLocaleString()}${u}${over?' 초과':''}</span>`;
+  }).join('');
+  el.innerHTML=`<div class="ms-card">
+    <div class="ms-top"><div class="ms-big">${Math.round(t.kcal).toLocaleString()}<small> / ${Math.round(g.kcal).toLocaleString()} kcal</small></div>${ks?msChip(ks,t.kcal,g.kcal):''}</div>
+    ${ks?msBar(t.kcal,g.kcal,ks,g):''}${rows}
+    <div class="ms-lim">${lim}</div>
+    <div class="ms-note">당류·나트륨·카페인은 값이 입력된 음식만 합산해요. <span class="ms-link" onclick="openMealGoalModal()">기준 설정</span></div>
+  </div>`;
+}
+function renderMeal(){
+  const key=fmt(selDate);const data=mealData[key]||{};const foods=data.foods||{};
+  renderMealSummary(key);
+  const slots=[['breakfast','아침'],['lunch','점심'],['dinner','저녁'],['snack','간식']];
+  document.getElementById('meal-list').innerHTML=slots.map(([k,label])=>{
+    const arr=foods[k]||[];
+    const kc=Math.round(arr.reduce((t,it)=>t+itemKcal(it),0));
+    const rows=arr.map((it,i)=>`<div class="ms-item" onclick="openMealFoodModal('${k}',${i})" title="눌러서 수량 수정"><span class="ms-name">${escapeHtml(it.name)}<small>${escapeHtml(qtyLabel(it,it.qty))}</small></span><span class="ms-ik">${Math.round(itemKcal(it))}</span><span class="ms-x" onclick="event.stopPropagation();delMealItem('${k}',${i})" title="삭제">×</span></div>`).join('');
+    return `<div class="meal-slot">
+      <div class="ms-head"><span class="meal-label">${label}</span><span class="ms-sk">${arr.length?kc.toLocaleString()+' kcal':''}</span></div>
+      ${rows}
+      <div class="ms-add" onclick="openMealFoodModal('${k}')">＋ 음식 추가</div>
+      <div class="meal-text" contenteditable="true" spellcheck="false" data-ph="메모" data-key="${k}"
+        oninput="mealInput(this,'${key}','${k}')"
+        onblur="mealBlur(this,'${key}','${k}')"
+        style="outline:none">${data[k]||''}</div>
+    </div>`;
+  }).join('');
+}
+async function saveMealDay(key){await saveData('meal',key,mealData[key]);}
+window.delMealItem=async function(slot,idx){
+  const key=fmt(selDate);
+  const arr=mealFoodsArr(key,slot);
+  if(!arr[idx])return;
+  arr.splice(idx,1);
+  await saveMealDay(key);
+  renderMeal();
+  if(leftMode==='meal-cal')renderMealCal();
+};
+
+// ── 음식 추가 창 ──
+let mfState={slot:'breakfast',cat:'밥·면·빵',q:'',sel:null,qty:1,editIdx:null};
+window.openMealFoodModal=function(slot,editIdx){
+  const key=fmt(selDate);
+  mfState={slot,cat:foodPrefs.recent.length?'최근':(foodPrefs.favs.length?'즐겨찾기':'밥·면·빵'),q:'',sel:null,qty:1,editIdx:null};
+  document.getElementById('mfSearch').value='';
+  if(editIdx!=null){
+    const it=(((mealData[key]||{}).foods||{})[slot]||[])[editIdx];
+    if(it){mfState.editIdx=editIdx;mfState.sel={id:it.fid,name:it.name,amount:it.amount,unit:it.unit,extra:it.extra||'',n:{...it.n},builtin:!!(findFood(it.fid)&&findFood(it.fid).builtin)};mfState.qty=it.qty;}
+  }
+  document.getElementById('mfTitle').textContent=(mfState.editIdx!=null?'음식 수정':'음식 추가')+' · '+MEAL_LABELS[slot];
+  document.getElementById('mfAddBtn').textContent=mfState.editIdx!=null?'수정 저장':MEAL_LABELS[slot]+'에 추가';
+  document.getElementById('mealFoodModal').style.display='flex';
+  mfRender();
+  if(mfState.editIdx==null)setTimeout(()=>{const e=document.getElementById('mfSearch');if(e)e.focus();},30);
+};
+window.mfSearchInput=function(v){mfState.q=v;mfRenderList();};
+function mfRender(){mfRenderChips();mfRenderList();mfRenderDetail();}
+function mfRenderChips(){
+  const chips=[['최근','최근'],['즐겨찾기','★ 즐겨찾기'],['제로 음료','제로 음료'],['내 음식','내 음식'],...MEAL_CATS.filter(c=>c!=='제로 음료').map(c=>[c,c])];
+  document.getElementById('mfChips').innerHTML=chips.map(([c,l])=>`<span class="mf-chip${c==='제로 음료'?' zero':''}${mfState.cat===c&&!mfState.q?' on':''}" onclick="mfCat('${c}')">${l}</span>`).join('');
+}
+window.mfCat=function(c){mfState.cat=c;mfState.q='';document.getElementById('mfSearch').value='';mfRenderChips();mfRenderList();};
+function mfFilteredFoods(){
+  const q=mfState.q.trim().toLowerCase().replace(/\s+/g,'');
+  if(q){
+    const list=allFoods().filter(f=>(f.name+(f.extra||'')).toLowerCase().replace(/\s+/g,'').includes(q));
+    return list.sort((a,b)=>(a.name.toLowerCase().replace(/\s+/g,'').startsWith(q)?0:1)-(b.name.toLowerCase().replace(/\s+/g,'').startsWith(q)?0:1));
+  }
+  const c=mfState.cat;
+  if(c==='최근')return foodPrefs.recent.map(findFood).filter(Boolean);
+  if(c==='즐겨찾기')return foodPrefs.favs.map(findFood).filter(Boolean);
+  if(c==='내 음식')return customFoods.slice();
+  return allFoods().filter(f=>f.cat===c);
+}
+function mfRenderList(){
+  const list=mfFilteredFoods().slice(0,120);
+  const box=document.getElementById('mfList');
+  if(!list.length){
+    const c=mfState.cat;
+    box.innerHTML=`<div class="mf-empty">${mfState.q?'검색 결과가 없어요. "직접 등록"으로 추가할 수 있어요.':(c==='최근'?'아직 먹은 음식이 없어요.':(c==='즐겨찾기'?'즐겨찾기한 음식이 없어요. 음식을 고른 뒤 별(☆)을 눌러보세요.':(c==='내 음식'?'아직 직접 등록한 음식이 없어요.':'음식이 없어요.')))}</div>`;
+    return;
+  }
+  box.innerHTML=list.map(f=>{
+    const n=f.n||{};
+    const sub=`${escapeHtml(qtyLabel(f,1))} · 탄 ${Math.round(n.c||0)} · 단 ${Math.round(n.p||0)} · 지 ${Math.round(n.f||0)}${n.caf>0?' · 카페인 '+Math.round(n.caf)+'mg':''}`;
+    return `<div class="mf-row${mfState.sel&&mfState.sel.id===f.id?' on':''}" data-id="${f.id}" onclick="mfPick('${f.id}')"><div><div class="mf-nm">${escapeHtml(f.name)}${f.builtin?'':'<span class="mf-tag">내 음식</span>'}</div><div class="mf-sub">${sub}</div></div><span class="mf-kc">${Math.round(n.kcal||0)} kcal</span></div>`;
+  }).join('');
+}
+window.mfPick=function(id){
+  const f=findFood(id);if(!f)return;
+  mfState.sel={...f,n:{...f.n}};mfState.qty=1;
+  document.querySelectorAll('#mfList .mf-row').forEach(r=>r.classList.toggle('on',r.dataset.id===id));
+  mfRenderDetail();
+};
+function mfNutHtml(){
+  const f=mfState.sel,q=mnum(mfState.qty)||0,n=f.n||{};
+  const sc=k=>(n[k]==null||n[k]==='')?null:Number(n[k])*q;
+  const r1=v=>v==null?'-':(Math.round(v*10)/10);
+  const extra=[['당류','sugar','g'],['나트륨','sodium','mg'],['카페인','caf','mg'],['포화지방','sat','g'],['식이섬유','fiber','g'],['콜레스테롤','chol','mg']].filter(([,k])=>n[k]!=null&&n[k]!==''&&Number(n[k])>0).map(([lb,k,u])=>`${lb} ${r1(sc(k))}${u}`).join(' · ');
+  return {nut:`<div>칼로리<b>${r1(sc('kcal'))}</b></div><div>탄수화물<b>${r1(sc('c'))}g</b></div><div>단백질<b>${r1(sc('p'))}g</b></div><div>지방<b>${r1(sc('f'))}g</b></div>`,extra:extra||'세부 성분 정보 없음'};
+}
+function mfRenderDetail(){
+  const box=document.getElementById('mfDetail'),f=mfState.sel;
+  if(!f){box.style.display='none';box.innerHTML='';return;}
+  const isFav=foodPrefs.favs.includes(f.id),isCustom=!!customFoods.find(c=>c.id===f.id);
+  const h=mfNutHtml();
+  box.style.display='block';
+  box.innerHTML=`<div class="mf-dh"><b>${escapeHtml(f.name)}</b><span class="mf-star" id="mfStar" onclick="mfToggleFav()" title="즐겨찾기">${isFav?'★':'☆'}</span></div>
+    <div class="mf-q"><span class="mf-ql">수량</span><button onclick="mfQty(-0.5)">−</button><input id="mfQty" value="${mnum(mfState.qty)}" inputmode="decimal" oninput="mfQtyInput(this.value)"/><button onclick="mfQty(0.5)">＋</button><span class="mf-ul" id="mfUnit">${escapeHtml(qtyLabel(f,mfState.qty))}</span></div>
+    <div class="mf-nut" id="mfNut">${h.nut}</div>
+    <div class="mf-nut2" id="mfNut2">${h.extra}</div>
+    <div class="mf-acts">${isCustom?'<span class="ms-link" onclick="mfEditCustom()">수정</span> · <span class="ms-link" onclick="mfDeleteCustom()">삭제</span>':(f.builtin?'<span class="ms-link" onclick="mfCopyToCustom()">값이 다르면 내 값으로 수정</span>':'')}</div>`;
+}
+function mfUpdatePreview(){
+  const f=mfState.sel;if(!f)return;
+  const h=mfNutHtml();
+  const a=document.getElementById('mfNut');if(a)a.innerHTML=h.nut;
+  const b=document.getElementById('mfNut2');if(b)b.textContent=h.extra;
+  const u=document.getElementById('mfUnit');if(u)u.textContent=qtyLabel(f,mfState.qty);
+}
+window.mfQtyInput=function(v){mfState.qty=mnum(v);mfUpdatePreview();};
+window.mfQty=function(d){
+  mfState.qty=Math.max(0.5,Math.round((mnum(mfState.qty)+d)*10)/10);
+  const e=document.getElementById('mfQty');if(e)e.value=mfState.qty;
+  mfUpdatePreview();
+};
+window.mfToggleFav=async function(){
+  const f=mfState.sel;if(!f)return;
+  const i=foodPrefs.favs.indexOf(f.id);
+  if(i>=0)foodPrefs.favs.splice(i,1);else foodPrefs.favs.unshift(f.id);
+  const st=document.getElementById('mfStar');if(st)st.textContent=foodPrefs.favs.includes(f.id)?'★':'☆';
+  if(mfState.cat==='즐겨찾기'&&!mfState.q)mfRenderList();
+  await saveData('settings','foodPrefs',foodPrefs);
+};
+window.mfConfirm=async function(){
+  const f=mfState.sel;
+  if(!f){alert('먹은 음식을 골라주세요');return;}
+  const qty=mnum(mfState.qty);
+  if(!(qty>0)){alert('수량을 입력해주세요');return;}
+  const key=fmt(selDate);
+  const item={id:'mi_'+Date.now().toString(36),fid:f.id,name:f.name,qty,amount:f.amount,unit:f.unit,extra:f.extra||'',n:{...f.n}};
+  const arr=mealFoodsArr(key,mfState.slot);
+  if(mfState.editIdx!=null&&arr[mfState.editIdx])arr[mfState.editIdx]={...arr[mfState.editIdx],...item,id:arr[mfState.editIdx].id};
+  else arr.push(item);
+  if(mfState.editIdx==null){ // 최근 먹은 음식 맨 앞으로 (최대 30개)
+    foodPrefs.recent=[f.id,...foodPrefs.recent.filter(x=>x!==f.id)].slice(0,30);
+    saveData('settings','foodPrefs',foodPrefs);
+  }
+  closeModal('mealFoodModal');
+  await saveMealDay(key);
+  renderMeal();
+  if(leftMode==='meal-cal')renderMealCal();
+};
+
+// ── 내 음식 등록/수정 ──
+let mcState={editId:null,base:null};
+const MC_UNITS=['g','ml','개','캔','병','봉지','봉','공기','그릇','인분','조각','장','줄','잔','컵','갑','바','팩','큰술','작은술'];
+function mcSetBasis(b){
+  document.getElementById('mc-basis-serv').classList.toggle('on',b==='serv');
+  document.getElementById('mc-basis-100').classList.toggle('on',b==='100');
+}
+window.mcBasis=mcSetBasis;
+window.openMealCustomModal=function(prefill,editId){
+  mcState={editId:editId||null,base:(prefill&&prefill.base)||null};
+  document.getElementById('mc-cat').innerHTML=MEAL_CATS.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('mc-unit').innerHTML=MC_UNITS.map(u=>`<option>${u}</option>`).join('');
+  const f=prefill||{name:document.getElementById('mfSearch')?document.getElementById('mfSearch').value:'',cat:'음료',amount:1,unit:'개',extra:'',n:{}};
+  const n=f.n||{};
+  const setv=(id,v)=>{document.getElementById(id).value=(v==null||v==='')?'':v;};
+  setv('mc-name',f.name);document.getElementById('mc-cat').value=f.cat||'음료';
+  setv('mc-amount',f.amount||1);document.getElementById('mc-unit').value=f.unit||'개';setv('mc-extra',f.extra||'');
+  setv('mc-kcal',n.kcal);setv('mc-c',n.c);setv('mc-p',n.p);setv('mc-f',n.f);
+  setv('mc-sugar',n.sugar);setv('mc-sodium',n.sodium);setv('mc-caf',n.caf);setv('mc-sat',n.sat);setv('mc-fiber',n.fiber);setv('mc-chol',n.chol);
+  document.getElementById('mc-auto').checked=false;
+  document.getElementById('mc-fav').checked=!!(f.id&&foodPrefs.favs.includes(f.id));
+  mcSetBasis('serv');
+  document.getElementById('mcTitle').textContent=editId?'내 음식 수정':(prefill&&prefill.base?'내 값으로 수정':'내 음식 등록');
+  document.getElementById('mcDelBtn').style.display=editId?'':'none';
+  document.getElementById('mealCustomModal').style.display='flex';
+  setTimeout(()=>document.getElementById('mc-name').focus(),30);
+};
+window.mcSave=async function(){
+  const name=document.getElementById('mc-name').value.trim();
+  if(!name){alert('이름을 입력해주세요');return;}
+  const amount=mnum(document.getElementById('mc-amount').value)||1;
+  const unit=document.getElementById('mc-unit').value;
+  const basis100=document.getElementById('mc-basis-100').classList.contains('on');
+  const read=id=>{const v=document.getElementById(id).value.trim();return v===''?null:mnum(v);};
+  const n={kcal:read('mc-kcal'),c:read('mc-c'),p:read('mc-p'),f:read('mc-f'),sugar:read('mc-sugar'),sodium:read('mc-sodium'),caf:read('mc-caf'),sat:read('mc-sat'),fiber:read('mc-fiber'),chol:read('mc-chol')};
+  if(document.getElementById('mc-auto').checked)n.kcal=Math.round(4*(n.c||0)+4*(n.p||0)+9*(n.f||0));
+  if(n.kcal==null){alert('칼로리를 입력하거나 "자동 계산"을 체크해주세요');return;}
+  if(basis100){
+    if(unit!=='g'&&unit!=='ml'){alert('"100g(ml) 기준"은 단위가 g 또는 ml일 때만 쓸 수 있어요');return;}
+    const k=amount/100;
+    Object.keys(n).forEach(x=>{if(n[x]!=null)n[x]=Math.round(n[x]*k*10)/10;});
+  }
+  ['c','p','f'].forEach(x=>{if(n[x]==null)n[x]=0;});
+  Object.keys(n).forEach(x=>{if(n[x]==null)delete n[x];});
+  const food={id:mcState.editId||('c_'+Date.now().toString(36)),name,cat:document.getElementById('mc-cat').value,amount,unit,extra:document.getElementById('mc-extra').value.trim(),n};
+  if(mcState.base)food.base=mcState.base;
+  const old=mcState.editId?customFoods.find(x=>x.id===mcState.editId):null;
+  if(old&&old.base&&!food.base)food.base=old.base;
+  const i=customFoods.findIndex(x=>x.id===food.id);
+  if(i>=0)customFoods[i]=food;else customFoods.unshift(food);
+  const wantFav=document.getElementById('mc-fav').checked,isFav=foodPrefs.favs.includes(food.id);
+  if(wantFav&&!isFav)foodPrefs.favs.unshift(food.id);
+  if(!wantFav&&isFav)foodPrefs.favs=foodPrefs.favs.filter(x=>x!==food.id);
+  closeModal('mealCustomModal');
+  await saveData('settings','customFoods',{items:customFoods});
+  await saveData('settings','foodPrefs',foodPrefs);
+  if(document.getElementById('mealFoodModal').style.display!=='none'){ // 음식 추가 창에서 왔으면 방금 만든 음식을 바로 선택
+    mfState.cat='내 음식';mfState.q='';document.getElementById('mfSearch').value='';
+    mfState.sel={...food,n:{...food.n}};mfState.qty=1;mfRender();
+  }
+};
+window.mcDelete=async function(){
+  if(!mcState.editId||!confirm('이 음식을 삭제할까요? (이미 기록한 날의 식단은 그대로 남아요)'))return;
+  customFoods=customFoods.filter(x=>x.id!==mcState.editId);
+  foodPrefs.favs=foodPrefs.favs.filter(x=>x!==mcState.editId);
+  foodPrefs.recent=foodPrefs.recent.filter(x=>x!==mcState.editId);
+  closeModal('mealCustomModal');
+  await saveData('settings','customFoods',{items:customFoods});
+  await saveData('settings','foodPrefs',foodPrefs);
+  if(mfState.sel&&mfState.sel.id===mcState.editId)mfState.sel=null;
+  if(document.getElementById('mealFoodModal').style.display!=='none')mfRender();
+};
+window.mfEditCustom=function(){const f=mfState.sel;if(f)openMealCustomModal(customFoods.find(x=>x.id===f.id)||f,f.id);};
+window.mfDeleteCustom=function(){const f=mfState.sel;if(!f)return;mcState.editId=f.id;mcDelete();};
+window.mfCopyToCustom=function(){
+  const f=mfState.sel;if(!f)return;
+  openMealCustomModal({...f,id:null,base:f.id,n:{...f.n}},null);
+};
+
+// ── 하루 기준 설정 ──
+window.openMealGoalModal=function(){
+  const g=mealGoals,setv=(id,v)=>{document.getElementById(id).value=v;};
+  setv('mg-kcal',g.kcal);setv('mg-c',g.c);setv('mg-p',g.p);setv('mg-f',g.f);
+  setv('mg-low',g.low);setv('mg-high',g.high);setv('mg-sugar',g.sugar);setv('mg-sodium',g.sodium);setv('mg-caf',g.caf);
+  document.getElementById('mealGoalModal').style.display='flex';
+};
+window.mgFillByPct=function(){
+  const kcal=mnum(document.getElementById('mg-kcal').value),pc=mnum(document.getElementById('mg-pc').value),pp=mnum(document.getElementById('mg-pp').value),pf=mnum(document.getElementById('mg-pf').value);
+  if(!(kcal>0)){alert('먼저 칼로리 목표를 입력해주세요');return;}
+  if(Math.abs(pc+pp+pf-100)>5){alert('탄·단·지 비율의 합이 100%가 되게 입력해주세요 (지금 '+(pc+pp+pf)+'%)');return;}
+  document.getElementById('mg-c').value=Math.round(kcal*pc/100/4);
+  document.getElementById('mg-p').value=Math.round(kcal*pp/100/4);
+  document.getElementById('mg-f').value=Math.round(kcal*pf/100/9);
+};
+window.mgReset=function(){
+  const g=DEFAULT_MEAL_GOALS,setv=(id,v)=>{document.getElementById(id).value=v;};
+  setv('mg-kcal',g.kcal);setv('mg-c',g.c);setv('mg-p',g.p);setv('mg-f',g.f);setv('mg-low',g.low);setv('mg-high',g.high);setv('mg-sugar',g.sugar);setv('mg-sodium',g.sodium);setv('mg-caf',g.caf);
+};
+window.mgSave=async function(){
+  const r=id=>mnum(document.getElementById(id).value);
+  const g={kcal:r('mg-kcal'),c:r('mg-c'),p:r('mg-p'),f:r('mg-f'),low:r('mg-low')||90,high:r('mg-high')||110,sugar:r('mg-sugar'),sodium:r('mg-sodium'),caf:r('mg-caf')};
+  if(!(g.kcal>0)){alert('칼로리 목표를 입력해주세요');return;}
+  if(g.low>=g.high){alert('미달 기준은 초과 기준보다 작아야 해요 (예: 90 / 110)');return;}
+  mealGoals=g;
+  closeModal('mealGoalModal');
+  await saveData('settings','mealGoals',mealGoals);
+  renderMeal();
+  if(leftMode==='meal-cal')renderMealCal();
+};
+
+// ── 식단 달력(왼쪽): 날짜마다 칼로리 + 기준 판정 색 + 탄·단·지 점 ──
+function renderMealCal(){
+  document.getElementById('periodLabel').textContent=cur.getFullYear()+'년 '+(cur.getMonth()+1)+'월 식단';
+  const start=new Date(cur.getFullYear(),cur.getMonth(),1).getDay();
+  const total=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
+  const prevTotal=new Date(cur.getFullYear(),cur.getMonth(),0).getDate();
+  const g=mealGoals;
+  const cnt={ok:0,over:0,under:0,none:0};
+  let cells='';
+  for(let i=0;i<start;i++)cells+=`<div class="meal-day-cell other"><span class="mln">${prevTotal-start+1+i}</span></div>`;
+  for(let d=1;d<=total;d++){
+    const dt=new Date(cur.getFullYear(),cur.getMonth(),d);
+    const key=fmt(dt);
+    const isToday=key===fmt(today),isSel=key===fmt(selDate);
+    const data=mealData[key]||{};
+    const t=mealTotals(key);
+    const legacy=MEAL_SLOTS.filter(s=>data[s]&&String(data[s]).trim());
+    const fastHtml=fastingData[key]?`<span class="meal-day-fast" title="공복 ${fastingHours}시간 달성">♥</span>`:'';
+    let st='',body='';
+    if(t.count){
+      const ks=judgeNut(t.kcal,g.kcal,g);
+      st=ks?' st-'+ks:'';
+      if(ks)cnt[ks]++;
+      const dots=['c','p','f'].map(k=>{const s=judgeNut(t[k],g[k],g);return s?`<u class="${s}"></u>`:'';}).join('');
+      body=`<div class="mdk">${Math.round(t.kcal).toLocaleString()}</div><div class="mdd">${dots}</div>`;
+    }else if(legacy.length){
+      body=`<div class="meal-day-items">${legacy.map(s=>`<div class="meal-day-item"><span class="mlabel">${MEAL_LABELS[s]}</span>${data[s]}</div>`).join('')}</div>`;
+    }else if(dt<=today){cnt.none++;}
+    cells+=`<div class="meal-day-cell${st}${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})"><span class="mln">${d}</span>${fastHtml}${body}</div>`;
+  }
+  const rem=(7-(start+total)%7)%7;
+  for(let i=1;i<=rem&&rem<7;i++)cells+=`<div class="meal-day-cell other"><span class="mln">${i}</span></div>`;
+  const head=`<div class="meal-cal-sum"><span>적당 ${cnt.ok}일 · 초과 ${cnt.over}일 · 미달 ${cnt.under}일 · 기록 없음 ${cnt.none}일</span><span class="ms-link" onclick="openMealGoalModal()">⚙ 기준 설정</span></div>`;
+  const legend=`<div class="meal-cal-legend"><span><em style="background:${MS_BG.ok};border-color:${MS_COL.ok}"></em>적당</span><span><em style="background:${MS_BG.over};border-color:${MS_COL.over}"></em>초과</span><span><em style="background:${MS_BG.under};border-color:${MS_COL.under}"></em>미달</span><span class="mcl-hint">칸 색은 칼로리 기준 · 아래 점 세 개는 탄수화물·단백질·지방 순서</span></div>`;
+  document.getElementById('mealCalView').innerHTML=head+'<div class="dow-row">'+DAYS.map(d=>`<div class="dow">${d}</div>`).join('')+'</div><div class="month-grid">'+cells+'</div>'+legend;
+}
 
 // ── 메모 ──
 window.cycleMemoCategory=async function(id){
@@ -9218,8 +9981,7 @@ function updatePanelPreviews(){
   const navbgInp=document.getElementById('inp-navbg');if(navbgInp)navbgInp.value=t.navbg||t.appbg;
   const navtextInp=document.getElementById('inp-navtext');if(navtextInp)navtextInp.value=t.navtext||t.text;
   const bcInp=document.getElementById('inp-bordercol');if(bcInp)bcInp.value=t.bordercol||'#dddddd';
-  const fitChk=document.getElementById('fitScreenChk');
-  if(fitChk)fitChk.checked=localStorage.getItem('planner_fit_screen')!=='0';
+  syncScaleControls();
   const calAlphaSlider=document.getElementById('calBgAlphaSlider');
   if(calAlphaSlider)calAlphaSlider.value=Math.round((t.calBgAlpha??1)*100);
   const pInp=document.getElementById('inp-pattern');
@@ -9841,21 +10603,55 @@ function applyFontScale(scale){
   const slider=document.getElementById('fontScaleSlider');
   if(slider)slider.value=Math.round(scale*100);
 }
-// ── 창이 좁으면 화면 전체를 같은 비율로 줄여서 한 화면에 맞춤 (가로 스크롤 대신) ──
-// 칸 크기·간격·배치는 그대로 두고 전체만 비율로 줄이니, 큰 모니터에서는 지금과 완전히 똑같음. 떠 있는 캐릭터/패널은 따로라 영향 없음.
+// ── 화면(모니터) 크기에 맞춰 사이트 전체를 같은 비율로 줄이기/키우기 ──
+// 설정은 "이 컴퓨터(브라우저)"에만 저장돼서, 집 컴퓨터는 그대로 두고 작은 모니터 컴퓨터만 따로 맞출 수 있음.
+// 방식: width = 창이 좁을 때만 줄임(기본, 예전과 같음) / auto = 가로·세로 모두 화면에 맞춰 자동 / manual = 직접 비율 / off = 맞추지 않음
+// 칸 크기·간격·배치는 그대로 두고 전체만 비율로 바꾸니, 큰 모니터에서는 지금과 완전히 똑같음. 떠 있는 캐릭터/패널은 따로라 영향 없음.
+function getScaleMode(){
+  const m=localStorage.getItem('planner_scale_mode');
+  if(m==='width'||m==='auto'||m==='manual'||m==='off')return m;
+  return localStorage.getItem('planner_fit_screen')==='0'?'off':'width'; // 예전 "창이 좁으면 줄이기" 체크 설정 이어받기
+}
 function fitAppToScreen(){
   const app=document.getElementById('mainApp');
   if(!app)return;
   app.style.zoom='';
-  if(localStorage.getItem('planner_fit_screen')==='0'||app.style.display==='none')return;
-  const natural=app.offsetWidth; // 줄이기 전 원래 너비(칸 폭 + 간격)
-  const avail=document.documentElement.clientWidth-32; // 좌우 여백 16px씩 뺀, 실제로 쓸 수 있는 너비
-  if(!natural||avail>=natural)return;
-  app.style.zoom=String(Math.max(0.55,avail/natural));
+  if(app.style.display==='none')return;
+  const mode=getScaleMode();
+  let z=1;
+  if(mode==='manual'){
+    z=parseFloat(localStorage.getItem('planner_ui_scale'))||1;
+  }else if(mode==='width'||mode==='auto'){
+    const natW=app.offsetWidth; // 줄이기 전 원래 너비(칸 폭 + 간격)
+    const availW=document.documentElement.clientWidth-32; // 좌우 여백 16px씩 뺀, 실제로 쓸 수 있는 너비
+    if(natW)z=Math.min(1,availW/natW);
+    if(mode==='auto'){
+      const left=app.querySelector('.left');
+      const natH=left?left.offsetHeight:0; // 달력 카드의 원래 높이
+      const top=app.getBoundingClientRect().top+window.scrollY;
+      const availH=window.innerHeight-top-12;
+      if(natH)z=Math.min(z,availH/natH);
+    }
+  }
+  z=Math.max(0.5,Math.min(1.3,z));
+  if(Math.abs(z-1)>0.005)app.style.zoom=String(z);
 }
-window.onFitScreenToggle=function(on){
-  try{localStorage.setItem('planner_fit_screen',on?'1':'0');}catch(e){}
-  fitAppToScreen();
+function syncScaleControls(){
+  const sel=document.getElementById('scaleModeSel');
+  if(sel)sel.value=getScaleMode();
+  const row=document.getElementById('uiScaleRow');
+  if(row)row.style.display=getScaleMode()==='manual'?'flex':'none';
+  const v=Math.round((parseFloat(localStorage.getItem('planner_ui_scale'))||1)*100);
+  const sl=document.getElementById('uiScaleSlider'),lb=document.getElementById('uiScaleLabel');
+  if(sl)sl.value=v;if(lb)lb.textContent=v+'%';
+}
+window.onScaleMode=function(mode){
+  try{localStorage.setItem('planner_scale_mode',mode);}catch(e){}
+  syncScaleControls();fitAppToScreen();
+};
+window.onUiScale=function(val){
+  try{localStorage.setItem('planner_ui_scale',String(parseInt(val,10)/100));}catch(e){}
+  syncScaleControls();fitAppToScreen();
 };
 window.addEventListener('resize',()=>{cancelAnimationFrame(window._fitRaf);window._fitRaf=requestAnimationFrame(fitAppToScreen);});
 window.onFontScaleInput=function(val){
