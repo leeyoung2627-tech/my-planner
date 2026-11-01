@@ -1268,125 +1268,102 @@ function fontSizeControl(get, set){
   return g;
 }
 
-// 아이디어 크게 보기 — 글자 크기는 항상, '수정'을 누르면 글 고치기 + 일부 글자 색
+// 아이디어 크게 보기 — 열면 바로 고칠 수 있음 (글자 크기·일부 글자 색 포함). 나갈 때 자동 저장
 const NOTE_FS_DEFAULT = 16;
-function openNoteView(note, startEdit){
-  let editing = false, discard = false, category = note.category, te = null, fsTimer = null;
+function openNoteView(note){
+  let discard = false, category = note.category, fsTimer = null, saveTimer = null;
   const flushFs = () => { if(fsTimer){ clearTimeout(fsTimer); fsTimer = null; saveNote(note); } };
+  // 앱을 내리거나 화면이 꺼질 때도 저장
+  const onHide = () => { if(document.visibilityState === 'hidden'){ flushFs(); commitEdit(true); } };
+  document.addEventListener('visibilitychange', onHide);
   const pg = openPage({ title: '아이디어', onClose: () => {
+    document.removeEventListener('visibilitychange', onHide);
+    clearTimeout(saveTimer);
     flushFs();
-    if(editing && !discard) commitEdit();
+    if(!discard) commitEdit();
     renderTab(); if(mapPage) mapPage.render();
   }});
-  const headBtn = h('button','head-btn');
-  pg.actions.appendChild(headBtn);
-  const content = h('div');
-  pg.body.appendChild(content);
-  const bar = h('div','np-mbar');
-  pg.el.appendChild(bar);
-  let body = null;
+  const done = h('button','head-btn','완료');
+  done.onclick = () => closeLayer(pg.layer);
+  pg.actions.appendChild(done);
   const fs = () => note.fontSize || NOTE_FS_DEFAULT;
 
-  // 고친 내용 반영 — 내용이 비어 있으면 false
-  function commitEdit(){
-    if(!body) return true;
+  const meta = h('div','np-m-meta');
+  const chip = h('span','chip', category); chip.style.background = catPal(category).fill;
+  meta.appendChild(chip);
+  if(note.createdAt) meta.appendChild(h('span', null, '작성 ' + relTime(note.createdAt)));
+  pg.body.appendChild(meta);
+
+  const body = h('div','np-body np-mbody editing');
+  body.style.fontSize = fs() + 'px';
+  fillRich(body, note.content, note.colors);
+  makeRichEditable(body);
+  body.setAttribute('aria-label','아이디어 내용');
+  pg.body.appendChild(body);
+
+  const m = h('div','compose-meta');
+  m.appendChild(h('div','lbl','분류'));
+  m.appendChild(catPicker(category, c => { category = c; chip.textContent = c; chip.style.background = catPal(c).fill; }));
+  m.appendChild(h('div','lbl','태그'));
+  const te = tagEditor(note.tags);
+  m.appendChild(te.el);
+  pg.body.appendChild(m);
+
+  // 고친 내용 반영. quiet: 자동 저장(태그 입력 중인 글자는 건드리지 않음)
+  function commitEdit(quiet){
     const r = trimRich(readRich(body));
-    const tags = te ? te.get() : note.tags;
-    if(!r.text){ toast('내용이 비어 있어서 바꾸지 않았어요'); return false; }
-    const changed = r.text !== note.content || category !== note.category
+    if(!r.text){ if(!quiet) toast('내용이 비어 있어서 바꾸지 않았어요'); return; }
+    const tags = quiet ? note.tags : te.get(); // 자동 저장 땐 태그는 그대로, 닫을 때 반영
+    if(r.text !== note.content || category !== note.category
       || JSON.stringify(tags) !== JSON.stringify(note.tags)
-      || JSON.stringify(r.colors) !== JSON.stringify(cleanColors(note.colors, note.content.length));
-    if(changed){
+      || JSON.stringify(r.colors) !== JSON.stringify(cleanColors(note.colors, note.content.length))){
       note.content = r.text; note.colors = r.colors; note.category = category; note.tags = tags;
       saveNote(note);
     }
-    return true;
   }
-  function draw(){
-    content.innerHTML = '';
-    bar.innerHTML = '';
-    te = null;
-    headBtn.textContent = editing ? '완료' : '수정';
-    pg.setTitle(editing ? '아이디어 수정' : '아이디어');
+  // 쓰는 도중에도 잠깐 멈추면 저장 (앱이 갑자기 꺼져도 남도록)
+  body.addEventListener('input', () => { clearTimeout(saveTimer); saveTimer = setTimeout(() => commitEdit(true), 1500); });
 
-    const meta = h('div','np-m-meta');
-    const chip = h('span','chip', category); chip.style.background = catPal(category).fill;
-    meta.appendChild(chip);
-    if(note.createdAt) meta.appendChild(h('span', null, '작성 ' + relTime(note.createdAt)));
-    if(note.pinned) meta.appendChild(h('span', null, '· 고정됨'));
-    content.appendChild(meta);
-
-    body = h('div','np-body np-mbody' + (editing ? ' editing' : ''));
-    body.style.fontSize = fs() + 'px';
-    fillRich(body, note.content, note.colors);
-    content.appendChild(body);
-
-    if(editing){
-      makeRichEditable(body);
-      body.setAttribute('aria-label','아이디어 내용');
-      const m = h('div','compose-meta');
-      m.appendChild(h('div','lbl','분류'));
-      m.appendChild(catPicker(category, c => { category = c; chip.textContent = c; chip.style.background = catPal(c).fill; }));
-      m.appendChild(h('div','lbl','태그'));
-      te = tagEditor(note.tags);
-      m.appendChild(te.el);
-      content.appendChild(m);
-    } else {
-      body.onclick = () => { if(!String(getSelection())) startEditing(); };
-      if(note.tags.length){
-        const tg = h('div','chips');
-        tg.style.marginTop = '12px';
-        note.tags.forEach(t => tg.appendChild(h('span','tag', '#' + t)));
-        content.appendChild(tg);
-      }
-      const acts = h('div','act-list');
-      const pinRow = menuRow(note.pinned ? I.pinOn : I.pin, note.pinned ? '고정 풀기' : '맨 위에 고정', () => {
-        note.pinned = !note.pinned; saveNote(note); draw();
-        toast(note.pinned ? '맨 위에 고정했어요' : '고정을 풀었어요');
-      });
-      acts.appendChild(pinRow);
-      acts.appendChild(menuRow(I.send, '마인드맵에 보내기', () => {
-        openSendSheet(map => { addNoteToMap(map, note, null); toast(`'${map.title}'에 추가했어요`); draw(); });
-      }));
-      acts.appendChild(menuRow(I.copy, '내용 복사', async () => { toast(await copyText(note.content) ? '복사했어요' : '복사하지 못했어요'); }));
-      acts.appendChild(menuRow(I.trash, '삭제', () => {
-        discard = true;
-        const copy = { ...note, tags: [...note.tags] };
-        state.notes = state.notes.filter(x => x.id !== note.id);
-        removeNoteDoc(note.id);
-        closeLayer(pg.layer);
-        renderTab(); if(mapPage) mapPage.render();
-        undoToast('메모를 삭제했어요', () => { state.notes.push(copy); saveNote(copy); renderTab(); });
-      }, { danger: true }));
-      content.appendChild(acts);
-      const maps = state.maps.filter(m => m.nodes.some(x => x.noteId === note.id));
-      if(maps.length) content.appendChild(h('div','meta-line', '마인드맵 ' + maps.map(m => `'${m.title}'`).join(', ') + '에 있음'));
-    }
-
-    // 아래 도구줄: 글자 크기(항상) + 글자 색(수정 중)
-    bar.appendChild(fontSizeControl(fs, v => {
-      note.fontSize = v;
-      body.style.fontSize = v + 'px';
-      clearTimeout(fsTimer);
-      fsTimer = setTimeout(() => { fsTimer = null; saveNote(note); }, 600);
-    }));
-    if(editing) bar.appendChild(colorSwatches(() => body));
-    else bar.appendChild(h('span','np-hint','색은 수정에서 바꿀 수 있어요'));
-  }
-  function startEditing(){
-    editing = true;
-    draw();
-    body.focus();
-  }
-  headBtn.onclick = () => {
-    if(!editing){ startEditing(); return; }
-    if(!commitEdit()) return;
-    editing = false;
-    draw();
+  const acts = h('div','act-list');
+  const pinRow = menuRow(note.pinned ? I.pinOn : I.pin, note.pinned ? '고정 풀기' : '맨 위에 고정', () => {
+    note.pinned = !note.pinned; saveNote(note);
+    pinRow.querySelector('span').textContent = note.pinned ? '고정 풀기' : '맨 위에 고정';
+    toast(note.pinned ? '맨 위에 고정했어요' : '고정을 풀었어요');
+  });
+  acts.appendChild(pinRow);
+  acts.appendChild(menuRow(I.send, '마인드맵에 보내기', () => {
+    commitEdit();
+    openSendSheet(map => { addNoteToMap(map, note, null); toast(`'${map.title}'에 추가했어요`); drawLinked(); });
+  }));
+  acts.appendChild(menuRow(I.copy, '내용 복사', async () => { toast(await copyText(trimRich(readRich(body)).text) ? '복사했어요' : '복사하지 못했어요'); }));
+  acts.appendChild(menuRow(I.trash, '삭제', () => {
+    discard = true;
+    const copy = { ...note, tags: [...note.tags] };
+    state.notes = state.notes.filter(x => x.id !== note.id);
+    removeNoteDoc(note.id);
+    closeLayer(pg.layer);
     renderTab(); if(mapPage) mapPage.render();
+    undoToast('메모를 삭제했어요', () => { state.notes.push(copy); saveNote(copy); renderTab(); });
+  }, { danger: true }));
+  pg.body.appendChild(acts);
+  const metaLine = h('div','meta-line');
+  pg.body.appendChild(metaLine);
+  const drawLinked = () => {
+    const maps = state.maps.filter(mm => mm.nodes.some(x => x.noteId === note.id));
+    metaLine.textContent = maps.length ? '마인드맵 ' + maps.map(mm => `'${mm.title}'`).join(', ') + '에 있음' : '';
   };
-  editing = !!startEdit;
-  draw();
+  drawLinked();
+
+  // 아래 도구줄: 글자 크기 + 글자 색
+  const bar = h('div','np-mbar');
+  bar.appendChild(fontSizeControl(fs, v => {
+    note.fontSize = v;
+    body.style.fontSize = v + 'px';
+    clearTimeout(fsTimer);
+    fsTimer = setTimeout(() => { fsTimer = null; saveNote(note); }, 600);
+  }));
+  bar.appendChild(colorSwatches(() => body));
+  pg.el.appendChild(bar);
 }
 
 // 아이디어 쓰기 화면 — 뒤로 가면 자동 저장
