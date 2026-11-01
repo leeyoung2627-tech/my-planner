@@ -175,7 +175,7 @@ textarea.field{min-height:64px;resize:vertical;line-height:1.5}
 .np-sep{width:1px;height:20px;background:var(--border2)}
 .np-hint{font-size:11px;color:var(--sub)}
 .np-page .np-body{min-height:260px;padding:22px 2px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.np-page .np-body.editing{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:20px 22px;cursor:text}
+.np-page .np-body.editing{background:var(--bg);border:1px solid var(--border2);border-radius:12px;padding:20px 22px;cursor:text}
 .np-page .np-body.editing:focus{border-color:var(--accent)}
 .np-meta .np-cat{color:#2e2e2e;font-weight:700;border-color:transparent;min-height:30px;border-radius:10px}
 .np-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:14px 0}
@@ -391,7 +391,7 @@ textarea.field{min-height:64px;resize:vertical;line-height:1.5}
 
       <div id="catView">
         <div class="box add-box">
-          <textarea id="contentInput" class="field" placeholder="아이디어를 적어보세요..." aria-label="새 아이디어"></textarea>
+          <textarea id="contentInput" class="field" spellcheck="false" placeholder="아이디어를 적어보세요..." aria-label="새 아이디어"></textarea>
           <div class="add-row">
             <input type="text" id="tagInput" class="field" placeholder="태그 (쉼표로 구분, 예: 츤데레, 밤거리, 우연한 만남)" aria-label="태그">
             <select id="catSelect" class="sel" aria-label="카테고리"></select>
@@ -1292,6 +1292,7 @@ function setRichSel(el, s, e){
 function makeRichEditable(el){
   el.contentEditable = 'plaintext-only';
   if(el.contentEditable !== 'plaintext-only') el.contentEditable = 'true';
+  el.spellcheck = false; // 맞춤법 빨간 물결줄 끄기
   el.setAttribute('role', 'textbox');
   el.setAttribute('aria-multiline', 'true');
   el.addEventListener('paste', e => {
@@ -1514,7 +1515,7 @@ function renderNotePage(n){
   // 태그
   const tags = h('div','np-tags');
   const ti = h('input','field'); ti.id = 'npTags'; ti.type = 'text';
-  ti.value = n.tags.join(', '); ti.placeholder = '태그 (쉼표로 구분, 예: 츤데레, 밤거리)'; ti.setAttribute('aria-label','태그');
+  ti.spellcheck = false; ti.value = n.tags.join(', '); ti.placeholder = '태그 (쉼표로 구분, 예: 츤데레, 밤거리)'; ti.setAttribute('aria-label','태그');
   ti.addEventListener('input', scheduleNoteSave);
   ti.addEventListener('blur', () => { if(noteSaveTimer) commitNotePage(); });
   ti.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); commitNotePage(); ti.blur(); } });

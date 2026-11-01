@@ -1039,6 +1039,7 @@ function tagEditor(initial){
   const wrap = h('div');
   const box = h('div','tag-editor');
   const inp = h('input');
+  inp.spellcheck = false;
   inp.type = 'text'; inp.placeholder = '태그 입력 후 쉼표나 엔터'; inp.setAttribute('aria-label','태그 추가'); inp.enterKeyHint = 'enter';
   const sugg = h('div','sugg');
   wrap.append(box, sugg);
@@ -1202,6 +1203,7 @@ function setRichSel(el, s, e){
 function makeRichEditable(el){
   el.contentEditable = 'plaintext-only';
   if(el.contentEditable !== 'plaintext-only') el.contentEditable = 'true';
+  el.spellcheck = false; // 맞춤법 빨간 물결줄 끄기
   el.setAttribute('role', 'textbox');
   el.setAttribute('aria-multiline', 'true');
   el.addEventListener('paste', e => {
@@ -1383,6 +1385,7 @@ function openNoteEditor(note, preset = {}){
   pg.actions.appendChild(done);
 
   const ta = h('textarea','compose-ta');
+  ta.spellcheck = false;
   ta.placeholder = '떠오른 아이디어를 적어보세요...';
   ta.setAttribute('aria-label','아이디어 내용');
   ta.value = note ? note.content : (preset.content || (draft && draft.content) || '');
